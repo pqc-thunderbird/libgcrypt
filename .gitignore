@@ -124,3 +124,6 @@ tests/t-rsa-15
 tests/t-rsa-pss
 tests/t-rsa-testparm
 tests/testdrv
+
+.ycm_extra_conf.py
+cscope.out
