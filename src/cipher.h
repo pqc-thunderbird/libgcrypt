@@ -220,6 +220,7 @@ extern gcry_pk_spec_t _gcry_pubkey_spec_elg;
 extern gcry_pk_spec_t _gcry_pubkey_spec_elg_e;
 extern gcry_pk_spec_t _gcry_pubkey_spec_dsa;
 extern gcry_pk_spec_t _gcry_pubkey_spec_ecc;
+extern gcry_pk_spec_t _gcry_pubkey_spec_kyber;
 
 
 #endif /*G10_CIPHER_H*/
