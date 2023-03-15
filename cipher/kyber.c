@@ -9,16 +9,36 @@
 #include "cipher.h"
 #include "pubkey-internal.h"
 
-void kyber_dummy()
-{
-  printf("hello I am Kyber\n");
-}
 
 
 static gcry_err_code_t
 kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
 {
+
   gpg_err_code_t ec = 0;
+
+  unsigned int nbits;
+  ec = _gcry_pk_util_get_nbits (genparms, &nbits);
+  if (ec)
+    return ec;
+
+/*
+  if (!ec)
+    {
+      ec = sexp_build (r_skey, NULL,
+                       "(key-data"
+                       " (public-key"
+                       "  (rsa(n%m)(e%m)))"
+                       " (private-key"
+                       "  (rsa(n%m)(e%m)(d%m)(p%m)(q%m)(u%m)))"
+                       " %S)",
+                       sk.n, sk.e,
+                       sk.n, sk.e, sk.d, sk.p, sk.q, sk.u,
+                       swap_info);
+
+    }
+    */
+
   return ec;
 }
 
@@ -90,16 +110,16 @@ compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparam)
 static const char *kyber_names[] =
   {
     "kyber",
-    "openpgp-kyber",
+    "openpgp-kyber", // ? leave?
     NULL,
   };
 
 gcry_pk_spec_t _gcry_pubkey_spec_kyber =
   {
     GCRY_PK_KYBER, { 0, 1 },
-    (GCRY_PK_USAGE_SIGN | GCRY_PK_USAGE_ENCR),
+    (GCRY_PK_USAGE_ENCAP), // TODOMTG: can the key usage "encryption" remain or do we need new KU "encap"?
     "Kyber", kyber_names,
-    "ne", "nedpqu", "a", "s", "n", // TODOMTG: means what?
+    "p", "s", "a", "", "p", // elements of pub-key, sec-key, ciphertext, signature, key-grip
     kyber_generate,
     kyber_check_secret_key,
     NULL, // encrypt
