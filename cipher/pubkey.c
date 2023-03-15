@@ -48,6 +48,9 @@ static gcry_pk_spec_t * const pubkey_list[] =
 #if USE_ELGAMAL
     &_gcry_pubkey_spec_elg,
 #endif
+//#if USE_KYBER // TODOMTG: enable this preproc flag
+    &_gcry_pubkey_spec_kyber,
+//#endif
     NULL
   };
 
@@ -330,6 +333,56 @@ _gcry_pk_encrypt (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t s_pkey)
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (spec->encrypt)
     rc = spec->encrypt (r_ciph, s_data, keyparms);
+  else
+    rc = GPG_ERR_NOT_IMPLEMENTED;
+
+ leave:
+  sexp_release (keyparms);
+  return rc;
+}
+
+
+/*
+   Do a PK encapsulate operation
+
+   Caller has to provide a public key as the SEXP pkey and data as a
+   SEXP with just one MPI in it. Alternatively S_DATA might be a
+   complex S-Expression, similar to the one used for signature
+   verification.  This provides a flag which allows to handle PKCS#1
+   block type 2 padding.  The function returns a sexp which may be
+   passed to to pk_decrypt.
+
+   Returns: 0 or an errorcode.
+
+   s_data = See comment for _gcry_pk_util_data_to_mpi
+   s_pkey = <key-as-defined-in-sexp_to_key>
+   r_ciph = (enc-val
+               (<algo>
+                 (<param_name1> <mpi>)
+                 ...
+                 (<param_namen> <mpi>)
+               ))
+
+*/
+gcry_err_code_t
+_gcry_pk_encap(gcry_sexp_t *r_ciph, gcry_sexp_t* shared_key, gcry_sexp_t s_pkey)
+{
+  gcry_err_code_t rc;
+  gcry_pk_spec_t *spec;
+  gcry_sexp_t keyparms;
+
+  *r_ciph = NULL;
+
+  rc = spec_from_sexp (s_pkey, 0, &spec, &keyparms);
+  if (rc)
+    goto leave;
+
+  if (spec->flags.disabled)
+    rc = GPG_ERR_PUBKEY_ALGO;
+  else if (!spec->flags.fips && fips_mode ())
+    rc = GPG_ERR_PUBKEY_ALGO;
+  else if (spec->encap)
+    rc = spec->encap(r_ciph, shared_key, keyparms);
   else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 

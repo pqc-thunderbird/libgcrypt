@@ -1150,7 +1150,8 @@ enum gcry_pk_algos
     GCRY_PK_ELG   = 20,     /* Elgamal       */
     GCRY_PK_ECDSA = 301,    /* (only for external use).  */
     GCRY_PK_ECDH  = 302,    /* (only for external use).  */
-    GCRY_PK_EDDSA = 303     /* (only for external use).  */
+    GCRY_PK_EDDSA = 303,    /* (only for external use).  */
+    GCRY_PK_KYBER = 401     /* Crystals-Kyber */
   };
 
 /* Flags describing usage capabilities of a PK algorithm. */
@@ -1158,6 +1159,7 @@ enum gcry_pk_algos
 #define GCRY_PK_USAGE_ENCR 2   /* Good for encryption. */
 #define GCRY_PK_USAGE_CERT 4   /* Good to certify other keys. */
 #define GCRY_PK_USAGE_AUTH 8   /* Good for authentication. */
+#define GCRY_PK_USAGE_ENCAP 16   /* Good for encapsulation. */
 #define GCRY_PK_USAGE_UNKN 128 /* Unknown usage flag. */
 
 /* Modes used with gcry_pubkey_get_sexp.  */

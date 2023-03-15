@@ -257,6 +257,31 @@ check_rsa_keys (void)
 
 
 static void
+check_kyber_keys (void)
+{
+//#if USE_KYBER // TODOMTG: find out why this is not set. See ./configure.ac
+  gcry_sexp_t keyparm, key;
+  int rc;
+
+  if (verbose)
+    info ("creating Kyber768 key\n");
+  rc = gcry_sexp_new (&keyparm,
+                      "(genkey\n"
+                      " (kyber\n"
+                      "  (nbits 3:768)\n"
+                      " ))", 0, 1);
+  if (rc)
+    die ("error creating S-expression: %s\n", gpg_strerror (rc));
+  rc = gcry_pk_genkey (&key, keyparm);
+  gcry_sexp_release (keyparm);
+  if (rc)
+    die ("error generating Kyber key: %s\n", gpg_strerror (rc));
+
+//#endif /* USE_KYBER */
+}
+
+
+static void
 check_elg_keys (void)
 {
 #if USE_ELGAMAL
@@ -758,6 +783,7 @@ main (int argc, char **argv)
       check_elg_keys ();
       check_dsa_keys ();
       check_ecc_keys ();
+      check_kyber_keys ();
       check_nonce ();
     }
   else
@@ -771,6 +797,8 @@ main (int argc, char **argv)
           check_dsa_keys ();
         else if (!strcmp (*argv, "ecc"))
           check_ecc_keys ();
+        else if (!strcmp (*argv, "kyber"))
+          check_kyber_keys ();
         else if (!strcmp (*argv, "nonce"))
           check_nonce ();
         else
