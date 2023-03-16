@@ -3,6 +3,8 @@
 #include <stdio.h>
 
 #include "kyber.h"
+#include "kyber-common.h"
+#include "kyber_kem.h"
 
 #include "g10lib.h"
 //#include "mpi.h"
@@ -14,13 +16,15 @@
 static gcry_err_code_t
 kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
 {
-
   gpg_err_code_t ec = 0;
 
+  uint8_t pk[CRYPTO_PUBLICKEYBYTES];
+  uint8_t sk[CRYPTO_SECRETKEYBYTES];
   unsigned int nbits;
   ec = _gcry_pk_util_get_nbits (genparms, &nbits);
   if (ec)
     return ec;
+ crypto_kem_keypair(pk, sk);
 
 /*
   if (!ec)
@@ -28,9 +32,9 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
       ec = sexp_build (r_skey, NULL,
                        "(key-data"
                        " (public-key"
-                       "  (rsa(n%m)(e%m)))"
+                       "  (kyber(p%m)))"
                        " (private-key"
-                       "  (rsa(n%m)(e%m)(d%m)(p%m)(q%m)(u%m)))"
+                       "  (kyber(s%m)))"
                        " %S)",
                        sk.n, sk.e,
                        sk.n, sk.e, sk.d, sk.p, sk.q, sk.u,
@@ -38,6 +42,7 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
 
     }
     */
+
 
   return ec;
 }
