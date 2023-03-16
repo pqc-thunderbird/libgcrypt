@@ -68,8 +68,12 @@ libcipher_la_SOURCES = \
 	hash-common.c hash-common.h \
 	dsa-common.c rsa-common.c \
 	sha1.h \
-	kyber.c \
-	kyber.h
+	kyber.c kyber-common.c \
+	kyber.h kyber-common.h \
+	kyber_kem.c \
+	kyber_kem.h \
+	kyber_indcpa.c kyber_ntt.c kyber_poly.c kyber_polyvec.c kyber_randombytes.c kyber_symmetric.c \
+	kyber_indcpa.h kyber_ntt.h kyber_poly.h kyber_polyvec.h kyber_randombytes.h kyber_symmetric.h \
 
 EXTRA_libcipher_la_SOURCES = \
 	asm-common-aarch64.h \
@@ -157,8 +161,12 @@ EXTRA_libcipher_la_SOURCES = \
 	blake2.c \
 	blake2b-amd64-avx2.S blake2b-amd64-avx512.S \
 	blake2s-amd64-avx.S blake2s-amd64-avx512.S \
-	kyber.c \
-	kyber.h
+	kyber.c kyber-common.c \
+	kyber.h kyber-common.h \
+	kyber_kem.c \
+	kyber_kem.h \
+	kyber_indcpa.c kyber_ntt.c kyber_poly.c kyber_polyvec.c kyber_randombytes.c kyber_symmetric.c \
+	kyber_indcpa.h kyber_ntt.h kyber_poly.h kyber_polyvec.h kyber_randombytes.h kyber_symmetric.h \
 
 gost28147.lo: gost-sb.h
 gost-sb.h: gost-s-box$(EXEEXT_FOR_BUILD)
