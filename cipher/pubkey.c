@@ -48,9 +48,9 @@ static gcry_pk_spec_t * const pubkey_list[] =
 #if USE_ELGAMAL
     &_gcry_pubkey_spec_elg,
 #endif
-//#if USE_KYBER // TODOMTG: enable this preproc flag
+#if USE_KYBER
     &_gcry_pubkey_spec_kyber,
-//#endif
+#endif
     NULL
   };
 
