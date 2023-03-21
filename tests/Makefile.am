@@ -25,10 +25,14 @@ tests_bin = \
         version t-secmem mpitests t-sexp t-convert \
 	t-mpi-bit t-mpi-point t-lock \
 	prime basic keygen pubkey hmac hashtest t-kdf keygrip \
-	aeswrap random
+	aeswrap random kyber-test
 
 if USE_RSA
 tests_bin += pkcs1v2 t-rsa-pss t-rsa-15 t-rsa-testparm
+endif
+
+if USE_KYBER
+tests_bin += kyber-test
 endif
 
 if USE_DSA

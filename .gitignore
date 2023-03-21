@@ -127,3 +127,6 @@ tests/testdrv
 
 .ycm_extra_conf.py
 cscope.out
+tests/kyber-test
+full_rebuild.sh
+thorough_clean.sh
