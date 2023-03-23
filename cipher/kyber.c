@@ -5,12 +5,12 @@
 //#include "gcrypt.h"
 #include "kyber.h"
 #include "kyber-common.h"
-#include "kyber_kem.h"
 
 #include "g10lib.h"
 //#include "mpi.h"
 #include "cipher.h"
 #include "pubkey-internal.h"
+#include "kyber_verify.h"
 
 //TODOMTG: key size for key gen: public key bit size
 
@@ -73,6 +73,42 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
                gcry_sexp_t keyparms)
 {
   gpg_err_code_t ec = 0;
+  unsigned char shared_secret[KYBER_SSBYTES];
+  unsigned char ciphertext[KYBER_CIPHERTEXTBYTES];
+  unsigned char private_key[KYBER_SECRETKEYBYTES];
+
+  gcry_mpi_t sk = NULL;
+  gcry_mpi_t ct = NULL;
+  size_t nwritten = 0;
+
+  /* Extract the key.  */
+  ec = sexp_extract_param (keyparms, NULL, "/s",
+      sk,
+      NULL);
+  if (ec)
+    goto leave;
+
+  if(mpi_get_nbits(sk) != KYBER_SECRETKEYBYTES*8)
+  {
+    printf("error: mpi_get_nbits(sk) != KYBER_SECRETKEYBYTES*8");
+  }
+  ec = sexp_extract_param (s_data, NULL, "/c",
+      ct,
+      NULL);
+  if (ec)
+    goto leave;
+
+  if(mpi_get_nbits(ct) != KYBER_CIPHERTEXTBYTES*8)
+    printf("error: mpi_get_nbits(sk) != KYBER_CIPHERTEXTBYTES*8\n");
+
+  crypto_kem_dec(shared_secret, ciphertext, private_key);
+
+  _gcry_mpi_print(GCRYMPI_FMT_USG, private_key, sizeof(private_key), &nwritten, sk);
+  if(nwritten != KYBER_SECRETKEYBYTES)
+  {
+    printf("nwritten != KYBER_SECRETKEYBYTES\n");
+  }
+leave:
   return ec;
 }
 
