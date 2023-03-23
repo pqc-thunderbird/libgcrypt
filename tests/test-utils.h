@@ -29,12 +29,31 @@
 #define xfree(a)      gcry_free ((a))
 #define pass()        do { ; } while (0)
 
+
+/* Prepend FNAME with the srcdir environment variable's value and
+ * return an allocated filename.  */
+char *
+prepend_srcdir (const char *fname)
+{
+  static const char *srcdir;
+  char *result;
+
+  if (!srcdir && !(srcdir = getenv ("srcdir")))
+    srcdir = ".";
+
+  result = xmalloc (strlen (srcdir) + 1 + strlen (fname) + 1);
+  strcpy (result, srcdir);
+  strcat (result, "/");
+  strcat (result, fname);
+  return result;
+}
+
 /* Read next line but skip over empty and comment lines.  Caller must
    xfree the result.  */
 static char *
 read_textline (FILE *fp, int *lineno)
 {
-  char line[4096];
+  char line[40000];
   char *p;
 
   do
