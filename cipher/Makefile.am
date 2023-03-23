@@ -157,7 +157,7 @@ EXTRA_libcipher_la_SOURCES = \
 	blake2s-amd64-avx.S blake2s-amd64-avx512.S \
 	kyber.c kyber-common.c \
 	kyber.h kyber-common.h \
-	kyber_kem.h \
+	kyber_verify.h kyber_verify.c \
 	kyber_indcpa.c kyber_ntt.c kyber_poly.c kyber_polyvec.c kyber_randombytes.c kyber_symmetric.c \
 	kyber_indcpa.h kyber_ntt.h kyber_poly.h kyber_polyvec.h kyber_randombytes.h kyber_symmetric.h
 
