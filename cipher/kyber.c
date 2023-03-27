@@ -74,11 +74,11 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
 {
   gpg_err_code_t ec = 0;
   unsigned char shared_secret[KYBER_SSBYTES];
-  unsigned char shared_secret_str[KYBER_SSBYTES*2+1];
+  unsigned char shared_secret_str[KYBER_SSBYTES*2+5];
   unsigned char ciphertext[KYBER_CIPHERTEXTBYTES];
-  unsigned char ciphertext_str[KYBER_CIPHERTEXTBYTES*2+1];
+  unsigned char ciphertext_str[KYBER_CIPHERTEXTBYTES*2+5];
   unsigned char private_key[KYBER_SECRETKEYBYTES];
-  unsigned char private_key_str[KYBER_SECRETKEYBYTES*2+1];
+  unsigned char private_key_str[KYBER_SECRETKEYBYTES*2+5];
 
   gcry_mpi_t sk = NULL;
   gcry_mpi_t ct = NULL;
@@ -116,15 +116,17 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
    _gcry_mpi_print(GCRYMPI_FMT_USG, ciphertext, sizeof(ciphertext), &nwritten, ct);
   if(nwritten != KYBER_CIPHERTEXTBYTES)
   {
-    printf("nwritten != KYBER_CIPHERTEXTBYTES\n");
+    printf("%u = nwritten != KYBER_CIPHERTEXTBYTES = %u\n", nwritten, KYBER_CIPHERTEXTBYTES);
+    goto leave;
   }
 
    _gcry_mpi_print(GCRYMPI_FMT_HEX, ciphertext_str, sizeof(ciphertext_str), &nwritten, ct);
-  if(nwritten != KYBER_CIPHERTEXTBYTES*2+1)
+  /*if(nwritten != KYBER_CIPHERTEXTBYTES*2+1)
   {
-    printf("nwritten != KYBER_CIPHERTEXTBYTES*2+1\n");
-  }
-  printf("kyber ciphertext to decrypt: %s", ciphertext_str);
+    printf("%u = nwritten != KYBER_CIPHERTEXTBYTES = %u\n", nwritten, KYBER_CIPHERTEXTBYTES);
+    goto leave;
+  }*/
+  printf("kyber ciphertext to decrypt: %s\n", ciphertext_str);
 
 
    _gcry_mpi_print(GCRYMPI_FMT_USG, private_key, sizeof(private_key), &nwritten, sk);
@@ -134,11 +136,11 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
   }
 
    _gcry_mpi_print(GCRYMPI_FMT_HEX, private_key_str, sizeof(private_key_str), &nwritten, sk);
-  if(nwritten != KYBER_SECRETKEYBYTES*2+1)
+  /*if(nwritten != KYBER_SECRETKEYBYTES*2+1)
   {
     printf("nwritten != KYBER_SECRETKEYBYTES*2+1\n");
-  }
-  printf("kyber private_key used to decrypt: %s", private_key_str);
+  }*/
+  printf("kyber private_key used to decrypt: %s\n", private_key_str);
 
 
   // ========== perform the decryption ===============
