@@ -119,9 +119,9 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
     printf("%ul = nwritten != KYBER_CIPHERTEXTBYTES = %ul\n", nwritten, KYBER_CIPHERTEXTBYTES);
     goto leave;
   }
-  _gcry_mpi_release(ct);
 
    _gcry_mpi_print(GCRYMPI_FMT_HEX, ciphertext_str, sizeof(ciphertext_str), &nwritten, ct);
+  _gcry_mpi_release(ct);
   /*if(nwritten != KYBER_CIPHERTEXTBYTES*2+1)
   {
     printf("%u = nwritten != KYBER_CIPHERTEXTBYTES = %u\n", nwritten, KYBER_CIPHERTEXTBYTES);
