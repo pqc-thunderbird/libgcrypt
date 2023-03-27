@@ -58,6 +58,7 @@ static void test_hex_decoding()
     {
       fail("error with kyber hex decoding test");
     }
+    xfree(buffer);
 
   }
   info ("success: kyber hex decoding test\n");
@@ -269,7 +270,10 @@ static void check_kyber_kat(const char * fname)
       for(unsigned i = 0; i < sizeof(test_vec)/sizeof(test_vec[0]); i++)
       {
           test_vec_desc_entry *e = &test_vec[i];
-          //xfree(e.result_buf);
+          if(e->result_buf)
+          {
+            xfree(e->result_buf);
+          }
           e->result_buf = NULL;
           e->result_buf_len = 0;
       }
@@ -282,9 +286,16 @@ static void check_kyber_kat(const char * fname)
       ciphertext_sx = NULL;
       gcry_sexp_release(shared_secret_sx);
       shared_secret_sx = NULL;
+      gcry_sexp_release(shared_secret_expected_sx);
+      shared_secret_expected_sx = NULL;
+      gcry_mpi_release(ss_expected);
+      ss_expected = NULL;
+      gcry_mpi_release(ss);
+      ss = NULL;
 
 
   }
+  xfree (line);
 leave:
   line = line;
   /*gcry_sexp_release(public_key_sx);
