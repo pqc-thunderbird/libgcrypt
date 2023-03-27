@@ -87,10 +87,13 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
   _gcry_sexp_dump(keyparms);
   /* Extract the key MPI from the SEXP.  */
   ec = sexp_extract_param (keyparms, NULL, "/s",
-      sk,
+      &sk,
       NULL);
   if (ec)
+  {
+    printf("error from sexp_extract_param (keyparms)\n");
     goto leave;
+  }
 
   if(mpi_get_nbits(sk) != KYBER_SECRETKEYBYTES*8)
   {
@@ -100,7 +103,7 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
 
   /* Extract the key Ciphertext from the SEXP.  */
   ec = sexp_extract_param (s_data, NULL, "/c",
-      ct,
+      &ct,
       NULL);
   if (ec)
     goto leave;
@@ -135,7 +138,7 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
   {
     printf("nwritten != KYBER_SECRETKEYBYTES*2+1\n");
   }
-  printf("kyber private_key to decrypt: %s", private_key_str);
+  printf("kyber private_key used to decrypt: %s", private_key_str);
 
 
   // ========== perform the decryption ===============
