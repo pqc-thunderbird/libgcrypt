@@ -146,6 +146,7 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
   // ========== perform the decryption ===============
   crypto_kem_dec(shared_secret, ciphertext, private_key);
 
+  ec = sexp_build (r_plain, NULL, "(value %b)", (int)KYBER_SSBYTES, shared_secret);
 leave:
   return ec;
 }

@@ -75,10 +75,10 @@ static void check_kyber_kat(const char * fname)
 {
   const size_t nb_kat_tests = 1;
   FILE *fp;
-  int lineno = 0, ntests = 0;
+  int lineno = 0;
   char *line;
   //unsigned char* public_key = NULL, *private_key = , *ciphertext, *shared_secret;
-  size_t public_key_len, private_key_len, ciphertext_len, shared_secret_len;
+  //size_t public_key_len, private_key_len, ciphertext_len, shared_secret_len;
 
   info ("Checking Kyber KAT.\n");
 
@@ -86,12 +86,12 @@ static void check_kyber_kat(const char * fname)
   if (!fp)
     die ("error opening '%s': %s\n", fname, strerror (errno));
 
-  typedef enum {
+  enum {
     public_key_idx = 0,
     privat_key_idx = 1,
     ciphertext_idx = 2,
-    shared_secret_idex = 3
-  } test_vec_idx;
+    shared_secret_idx = 3
+  } ;
   test_vec_desc_entry test_vec[] =
   {
     {
@@ -117,9 +117,13 @@ static void check_kyber_kat(const char * fname)
   };
 
  size_t test_count = 0;
-  gcry_sexp_t public_key_sx = NULL, private_key_sx = NULL, ciphertext_sx = NULL, shared_secret_sx = NULL;
+  gcry_sexp_t public_key_sx = NULL, private_key_sx = NULL, ciphertext_sx = NULL, shared_secret_expected_sx = NULL, shared_secret_sx = NULL;
   while ((line = read_textline (fp, &lineno)) && !(nb_kat_tests && nb_kat_tests <= test_count ))
   {
+      gcry_sexp_t l;
+      gcry_mpi_t ss_expected, ss;
+      int have_flags;
+      int rc;
       for(unsigned i = 0; i < sizeof(test_vec)/sizeof(test_vec[0]); i++)
       {
           test_vec_desc_entry *e = &test_vec[i];
@@ -188,6 +192,22 @@ static void check_kyber_kat(const char * fname)
       }
 #endif
 
+
+      err = gcry_sexp_build (&shared_secret_expected_sx, NULL,
+              "(data (value %b))",
+              (int)test_vec[shared_secret_idx].result_buf_len, test_vec[shared_secret_idx].result_buf
+              );
+      if (err)
+      {
+          fail ("error building expected shared secret SEXP for test, %s: %s",
+                  "pk", gpg_strerror (err));
+          goto leave;
+      }
+
+      l = gcry_sexp_find_token (shared_secret_expected_sx, "value", 0);
+      ss_expected = gcry_sexp_nth_mpi (l, 1, GCRYMPI_FMT_USG);
+      gcry_sexp_release (l);
+
       err = gcry_sexp_build (&ciphertext_sx, NULL,
               "(ciphertext (kyber(c %b)))",
               (int)test_vec[ciphertext_idx].result_buf_len, test_vec[ciphertext_idx].result_buf
@@ -199,19 +219,63 @@ static void check_kyber_kat(const char * fname)
           goto leave;
       }
 
-      gcry_pk_decrypt(&shared_secret_sx, ciphertext_sx, private_key_sx);
+      l = gcry_sexp_find_token (ciphertext_sx, "flags", 0);
+      have_flags = !!l;
+      gcry_sexp_release (l);
+
+
+      l = gcry_sexp_find_token (ciphertext_sx, "flags", 0);
+      rc = gcry_pk_decrypt(&shared_secret_sx, ciphertext_sx, private_key_sx);
+      if(rc)
+      {
+        die ("decryption failed: %s\n", gcry_strerror (rc));
+      }
+
+      l = gcry_sexp_find_token (shared_secret_sx, "value", 0);
+      if (l)
+      {
+          if (!have_flags)
+          {
+              printf("compatibility mode of pk_decrypt broken: !have_flags\n");
+              //die ("compatibility mode of pk_decrypt broken: !have_flags\n");
+          }
+          ss = gcry_sexp_nth_mpi (l, 1, GCRYMPI_FMT_USG);
+          gcry_sexp_release (l);
+      }
+      else
+      {
+          if (have_flags)
+              die ("compatibility mode of pk_decrypt broken: have_flags is true\n");
+          ss = gcry_sexp_nth_mpi (shared_secret_sx, 0, GCRYMPI_FMT_USG);
+      }
+      if(!ss)
+      {
+        die("ss = NULL\n");
+      }
+      if(!ss_expected)
+      {
+        die("ss_expected = NULL\n");
+      }
+
+      /* Compare.  */
+      if (gcry_mpi_cmp (ss_expected, ss))
+      {
+          die ("error with decryption result\n");
+      }
+      printf("decryption correct\n");
+
 
       xfree (line);
       for(unsigned i = 0; i < sizeof(test_vec)/sizeof(test_vec[0]); i++)
       {
-          test_vec_desc_entry e = test_vec[i];
+          test_vec_desc_entry *e = &test_vec[i];
           //xfree(e.result_buf);
-          e.result_buf = NULL;
-          e.result_buf_len = 0;
+          e->result_buf = NULL;
+          e->result_buf_len = 0;
       }
 
       gcry_sexp_release(public_key_sx);
-      public_key_sx = 0;
+      public_key_sx = NULL;
       gcry_sexp_release(private_key_sx);
       private_key_sx = NULL;
       gcry_sexp_release(ciphertext_sx);
@@ -222,10 +286,11 @@ static void check_kyber_kat(const char * fname)
 
   }
 leave:
-  gcry_sexp_release(public_key_sx);
+  line = line;
+  /*gcry_sexp_release(public_key_sx);
   gcry_sexp_release(private_key_sx);
   gcry_sexp_release(ciphertext_sx);
-  gcry_sexp_release(shared_secret_sx);
+  gcry_sexp_release(shared_secret_sx);*/
 }
 
 int
