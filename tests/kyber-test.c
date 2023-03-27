@@ -73,6 +73,7 @@ typedef struct {
 
 static void check_kyber_kat(const char * fname)
 {
+  const size_t nb_kat_tests = 1;
   FILE *fp;
   int lineno = 0, ntests = 0;
   char *line;
@@ -115,9 +116,9 @@ static void check_kyber_kat(const char * fname)
     }
   };
 
-
+ size_t test_count = 0;
   gcry_sexp_t public_key_sx = NULL, private_key_sx = NULL, ciphertext_sx = NULL, shared_secret_sx = NULL;
-  while ((line = read_textline (fp, &lineno)))
+  while ((line = read_textline (fp, &lineno)) && !(nb_kat_tests && nb_kat_tests <= test_count ))
   {
       for(unsigned i = 0; i < sizeof(test_vec)/sizeof(test_vec[0]); i++)
       {
@@ -149,12 +150,15 @@ static void check_kyber_kat(const char * fname)
       }
       if(!is_complete)
       {
-          printf("line '%s' does not complete a test vector\n", line);
+          printf("line '%s' does NOT complete a test vector\n", line);
           xfree (line);
           continue;
       }
-
-      xfree (line);
+      else
+      {
+          printf("line '%s' COMPLETES a test vector\n", line);
+      }
+      test_count++;
       gcry_error_t err;
       err = gcry_sexp_build (&private_key_sx, NULL,
               "(private-key (kyber (s %b)))",
@@ -197,10 +201,11 @@ static void check_kyber_kat(const char * fname)
 
       gcry_pk_decrypt(&shared_secret_sx, ciphertext_sx, private_key_sx);
 
+      xfree (line);
       for(unsigned i = 0; i < sizeof(test_vec)/sizeof(test_vec[0]); i++)
       {
           test_vec_desc_entry e = test_vec[i];
-          xfree(e.result_buf);
+          //xfree(e.result_buf);
           e.result_buf = NULL;
           e.result_buf_len = 0;
       }
