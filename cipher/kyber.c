@@ -116,9 +116,10 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
    _gcry_mpi_print(GCRYMPI_FMT_USG, ciphertext, sizeof(ciphertext), &nwritten, ct);
   if(nwritten != KYBER_CIPHERTEXTBYTES)
   {
-    printf("%u = nwritten != KYBER_CIPHERTEXTBYTES = %u\n", nwritten, KYBER_CIPHERTEXTBYTES);
+    printf("%ul = nwritten != KYBER_CIPHERTEXTBYTES = %ul\n", nwritten, KYBER_CIPHERTEXTBYTES);
     goto leave;
   }
+  _gcry_mpi_release(ct);
 
    _gcry_mpi_print(GCRYMPI_FMT_HEX, ciphertext_str, sizeof(ciphertext_str), &nwritten, ct);
   /*if(nwritten != KYBER_CIPHERTEXTBYTES*2+1)
@@ -141,6 +142,7 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
     printf("nwritten != KYBER_SECRETKEYBYTES*2+1\n");
   }*/
   printf("kyber private_key used to decrypt: %s\n", private_key_str);
+  _gcry_mpi_release(sk);
 
 
   // ========== perform the decryption ===============
