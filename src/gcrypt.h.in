@@ -1056,6 +1056,7 @@ gcry_error_t gcry_cipher_encrypt (gcry_cipher_hd_t h,
                                   void *out, size_t outsize,
                                   const void *in, size_t inlen);
 
+
 /* The counterpart to gcry_cipher_encrypt.  */
 gcry_error_t gcry_cipher_decrypt (gcry_cipher_hd_t h,
                                   void *out, size_t outsize,
@@ -1170,6 +1171,11 @@ enum gcry_pk_algos
    a newly created S-expression at RESULT. */
 gcry_error_t gcry_pk_encrypt (gcry_sexp_t *result,
                               gcry_sexp_t data, gcry_sexp_t pkey);
+
+/* Encrypt a newly generated random SHARED_KEY to the ciphertext CIPH using the public key PKEY. */
+gcry_error_t gcry_pk_encap(gcry_sexp_t *r_ciph,
+                           gcry_sexp_t* r_shared_key, gcry_sexp_t pkey);
+
 
 /* Decrypt the DATA using the private key SKEY and store the result as
    a newly created S-expression at RESULT. */

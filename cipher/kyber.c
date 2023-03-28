@@ -60,10 +60,64 @@ kyber_check_secret_key (gcry_sexp_t keyparms)
 
 
 static gcry_err_code_t
-kyber_encap (gcry_sexp_t * r_ciph, gcry_sexp_t * shared_key,
+kyber_encap (gcry_sexp_t * r_ciph, gcry_sexp_t * r_shared_key,
              gcry_sexp_t keyparms)
 {
+
   gpg_err_code_t ec = 0;
+  unsigned char shared_secret[KYBER_SSBYTES];
+  //unsigned char shared_secret_str[KYBER_SSBYTES*2+5];
+  unsigned char ciphertext[KYBER_CIPHERTEXTBYTES];
+  //unsigned char ciphertext_str[KYBER_CIPHERTEXTBYTES*2+5];
+  unsigned char public_key[KYBER_SECRETKEYBYTES];
+  unsigned char public_key_str[KYBER_SECRETKEYBYTES*2+5];
+
+  gcry_mpi_t pk = NULL;
+  size_t nwritten = 0;
+
+  _gcry_sexp_dump(keyparms);
+  /* Extract the key MPI from the SEXP.  */
+  ec = sexp_extract_param (keyparms, NULL, "/p",
+      &pk,
+      NULL);
+  if (ec)
+  {
+    printf("error from sexp_extract_param (keyparms)\n");
+    goto leave;
+  }
+
+  if(mpi_get_nbits(pk) != KYBER_PUBLICKEYBYTES*8)
+  {
+    printf("error: mpi_get_nbits(sk) != KYBER_PUBLICKEYBYTES*8");
+  }
+
+   _gcry_mpi_print(GCRYMPI_FMT_USG, public_key, sizeof(public_key), &nwritten, pk);
+  if(nwritten != KYBER_SECRETKEYBYTES)
+  {
+    printf("nwritten != KYBER_SECRETKEYBYTES\n");
+  }
+
+   _gcry_mpi_print(GCRYMPI_FMT_HEX, public_key_str, sizeof(public_key_str), &nwritten, pk);
+  /*if(nwritten != KYBER_SECRETKEYBYTES*2+1)
+  {
+    printf("nwritten != KYBER_SECRETKEYBYTES*2+1\n");
+  }*/
+  printf("kyber public_key used to decrypt: %s\n", public_key_str);
+  _gcry_mpi_release(pk);
+
+  kyber_kem_enc(ciphertext, shared_secret, public_key);
+
+
+  ec = sexp_build (r_shared_key, NULL, "(value %b)", (int)KYBER_SSBYTES, shared_secret);
+  if(ec)
+  {
+    goto leave;
+  }
+
+  ec = sexp_build (r_ciph, NULL, "(value %b)", (int)KYBER_CIPHERTEXTBYTES, ciphertext);
+
+
+leave:
   return ec;
 }
 
@@ -74,7 +128,7 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
 {
   gpg_err_code_t ec = 0;
   unsigned char shared_secret[KYBER_SSBYTES];
-  unsigned char shared_secret_str[KYBER_SSBYTES*2+5];
+  //unsigned char shared_secret_str[KYBER_SSBYTES*2+5];
   unsigned char ciphertext[KYBER_CIPHERTEXTBYTES];
   unsigned char ciphertext_str[KYBER_CIPHERTEXTBYTES*2+5];
   unsigned char private_key[KYBER_SECRETKEYBYTES];
@@ -119,8 +173,7 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
     printf("%ul = nwritten != KYBER_CIPHERTEXTBYTES = %ul\n", nwritten, KYBER_CIPHERTEXTBYTES);
     goto leave;
   }
-
-   _gcry_mpi_print(GCRYMPI_FMT_HEX, ciphertext_str, sizeof(ciphertext_str), &nwritten, ct);
+  _gcry_mpi_print(GCRYMPI_FMT_HEX, ciphertext_str, sizeof(ciphertext_str), &nwritten, ct);
   _gcry_mpi_release(ct);
   /*if(nwritten != KYBER_CIPHERTEXTBYTES*2+1)
   {

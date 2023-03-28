@@ -259,7 +259,7 @@ check_rsa_keys (void)
 static void
 check_kyber_keys (void)
 {
-//#if USE_KYBER // TODOMTG: find out why this is not set. See ./configure.ac
+#if USE_KYBER
   gcry_sexp_t keyparm, key;
   int rc;
 
@@ -277,7 +277,7 @@ check_kyber_keys (void)
   if (rc)
     die ("error generating Kyber key: %s\n", gpg_strerror (rc));
 
-//#endif /* USE_KYBER */
+#endif /* USE_KYBER */
 }
 
 
