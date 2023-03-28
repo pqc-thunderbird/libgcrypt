@@ -70,8 +70,106 @@ typedef struct {
   size_t result_buf_len;
 } test_vec_desc_entry;
 
+static void
+show_sexp (const char *prefix, gcry_sexp_t a)
+{
+  char *buf;
+  size_t size;
+
+  fprintf (stderr, "%s: ", PGM);
+  if (prefix)
+    fputs (prefix, stderr);
+  size = gcry_sexp_sprint (a, GCRYSEXP_FMT_ADVANCED, NULL, 0);
+  buf = xmalloc (size);
+
+  gcry_sexp_sprint (a, GCRYSEXP_FMT_ADVANCED, buf, size);
+  fprintf (stderr, "%.*s", (int)size, buf);
+  gcry_free (buf);
+}
 //static void read_test_vector()
 
+static void check_kyber_gen_enc_dec(const char * fname)
+{
+
+  gcry_sexp_t skey, pkey;
+  gcry_sexp_t ct, shared_secret, shared_secret2;
+  gcry_sexp_t keyparm, key, l;
+
+  gcry_mpi_t ss, ss2;
+  int rc;
+
+  if (verbose)
+    info ("creating Kyber768 key\n");
+  rc = gcry_sexp_new (&keyparm,
+                      "(genkey\n"
+                      " (kyber\n"
+                      "  (nbits 3:768)\n"
+                      " ))", 0, 1);
+  if (rc)
+    die ("error creating S-expression: %s\n", gpg_strerror (rc));
+  rc = gcry_pk_genkey (&key, keyparm);
+  gcry_sexp_release (keyparm);
+  if (rc)
+    die ("error generating Kyber key: %s\n", gpg_strerror (rc));
+
+
+  pkey = gcry_sexp_find_token (key, "public-key", 0);
+  if (!pkey)
+  {
+    fail ("public part missing in return value\n");
+  }
+
+  skey = gcry_sexp_find_token (key, "private-key", 0);
+  if (!skey)
+    fail ("private part missing in return value\n");
+
+  rc = gcry_pk_encap(&ct, &shared_secret, pkey);
+  if(rc)
+  {
+      goto leave;
+  }
+  rc = gcry_pk_decrypt(&shared_secret2, ct, skey);
+  if(rc)
+  {
+      goto leave;
+  }
+
+   l = gcry_sexp_find_token (shared_secret, "value", 0);
+   if(!l)
+   {
+       fail("could not extract shared secret from encapsulation");
+   }
+   ss = gcry_sexp_nth_mpi (l, 1, GCRYMPI_FMT_USG);
+   gcry_sexp_release (l);
+
+   l = gcry_sexp_find_token (shared_secret2, "value", 0);
+   if(!l)
+   {
+       fail("could not extract shared secret from encapsulation");
+   }
+   ss2 = gcry_sexp_nth_mpi (l, 1, GCRYMPI_FMT_USG);
+
+   if(!ss)
+   {
+       die("ss = NULL\n");
+   }
+   if(!ss2)
+   {
+       die("ss2 = NULL\n");
+   }
+
+   /* Compare.  */
+   if (gcry_mpi_cmp (ss, ss2))
+   {
+       die ("check_kyber_gen_enc_dec test: error with decryption result\n");
+   }
+   printf("decryption correct\n");
+
+
+
+leave:
+  return;
+}
 static void check_kyber_kat(const char * fname)
 {
   const size_t nb_kat_tests = 0;
@@ -225,7 +323,7 @@ static void check_kyber_kat(const char * fname)
       gcry_sexp_release (l);
 
 
-      l = gcry_sexp_find_token (ciphertext_sx, "flags", 0);
+      //l = gcry_sexp_find_token (ciphertext_sx, "flags", 0); // why no leak when this was in?
       rc = gcry_pk_decrypt(&shared_secret_sx, ciphertext_sx, private_key_sx);
       if(rc)
       {

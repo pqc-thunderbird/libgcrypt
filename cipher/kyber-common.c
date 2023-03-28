@@ -27,6 +27,7 @@ int crypto_kem_dec(uint8_t *ss,
                    const uint8_t *ct,
                    const uint8_t *sk)
 {
+
   size_t i;
   int fail;
   uint8_t buf[2*KYBER_SYMBYTES];
@@ -53,6 +54,33 @@ int crypto_kem_dec(uint8_t *ss,
   /* Overwrite pre-k with z on re-encryption failure */
   cmov(kr, sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES, fail);
 
+  /* hash concatenation of pre-k and H(c) to k */
+  kdf(ss, kr, 2*KYBER_SYMBYTES);
+  return 0;
+}
+
+
+int kyber_kem_enc(uint8_t *ct,
+                   uint8_t *ss,
+                   const uint8_t *pk)
+{
+  uint8_t buf[2*KYBER_SYMBYTES];
+  /* Will contain key, coins */
+  uint8_t kr[2*KYBER_SYMBYTES];
+
+  randombytes(buf, KYBER_SYMBYTES);
+  /* Don't release system RNG output */
+  hash_h(buf, buf, KYBER_SYMBYTES);
+
+  /* Multitarget countermeasure for coins + contributory KEM */
+  hash_h(buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+  hash_g(kr, buf, 2*KYBER_SYMBYTES);
+
+  /* coins are in kr+KYBER_SYMBYTES */
+  indcpa_enc(ct, buf, pk, kr+KYBER_SYMBYTES);
+
+  /* overwrite coins in kr with H(c) */
+  hash_h(kr+KYBER_SYMBYTES, ct, KYBER_CIPHERTEXTBYTES);
   /* hash concatenation of pre-k and H(c) to k */
   kdf(ss, kr, 2*KYBER_SYMBYTES);
   return 0;

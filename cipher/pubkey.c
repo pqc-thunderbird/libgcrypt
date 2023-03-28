@@ -365,13 +365,14 @@ _gcry_pk_encrypt (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t s_pkey)
 
 */
 gcry_err_code_t
-_gcry_pk_encap(gcry_sexp_t *r_ciph, gcry_sexp_t* shared_key, gcry_sexp_t s_pkey)
+_gcry_pk_encap(gcry_sexp_t *r_ciph, gcry_sexp_t* r_shared_key, gcry_sexp_t s_pkey)
 {
   gcry_err_code_t rc;
   gcry_pk_spec_t *spec;
   gcry_sexp_t keyparms;
 
   *r_ciph = NULL;
+  *r_shared_key = NULL;
 
   rc = spec_from_sexp (s_pkey, 0, &spec, &keyparms);
   if (rc)
@@ -382,7 +383,7 @@ _gcry_pk_encap(gcry_sexp_t *r_ciph, gcry_sexp_t* shared_key, gcry_sexp_t s_pkey)
   else if (!spec->flags.fips && fips_mode ())
     rc = GPG_ERR_PUBKEY_ALGO;
   else if (spec->encap)
-    rc = spec->encap(r_ciph, shared_key, keyparms);
+    rc = spec->encap(r_ciph, r_shared_key, keyparms);
   else
     rc = GPG_ERR_NOT_IMPLEMENTED;
 
