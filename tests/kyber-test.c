@@ -17,10 +17,10 @@
  * License along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gcrypt.h"
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
+#include "gcrypt.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,6 +70,7 @@ typedef struct {
   size_t result_buf_len;
 } test_vec_desc_entry;
 
+#if 0
 static void
 show_sexp (const char *prefix, gcry_sexp_t a)
 {
@@ -86,9 +87,10 @@ show_sexp (const char *prefix, gcry_sexp_t a)
   fprintf (stderr, "%.*s", (int)size, buf);
   gcry_free (buf);
 }
+#endif
 //static void read_test_vector()
 
-static void check_kyber_gen_enc_dec(const char * fname)
+static int check_kyber_gen_enc_dec()
 {
 
   gcry_sexp_t skey, pkey;
@@ -108,7 +110,7 @@ static void check_kyber_gen_enc_dec(const char * fname)
   if (rc)
     die ("error creating S-expression: %s\n", gpg_strerror (rc));
   rc = gcry_pk_genkey (&key, keyparm);
-  gcry_sexp_release (keyparm);
+
   if (rc)
     die ("error generating Kyber key: %s\n", gpg_strerror (rc));
 
@@ -116,28 +118,30 @@ static void check_kyber_gen_enc_dec(const char * fname)
   pkey = gcry_sexp_find_token (key, "public-key", 0);
   if (!pkey)
   {
-    fail ("public part missing in return value\n");
+    die("public part missing in return value\n");
   }
 
   skey = gcry_sexp_find_token (key, "private-key", 0);
   if (!skey)
-    fail ("private part missing in return value\n");
+    die("private part missing in return value\n");
 
   rc = gcry_pk_encap(&ct, &shared_secret, pkey);
   if(rc)
   {
+      printf("error when calling gcry_pk_encap\n");
       goto leave;
   }
   rc = gcry_pk_decrypt(&shared_secret2, ct, skey);
   if(rc)
   {
+      printf("error when calling gcry_pk_decrypt\n");
       goto leave;
   }
 
    l = gcry_sexp_find_token (shared_secret, "value", 0);
    if(!l)
    {
-       fail("could not extract shared secret from encapsulation");
+       die("could not extract shared secret from encapsulation");
    }
    ss = gcry_sexp_nth_mpi (l, 1, GCRYMPI_FMT_USG);
    gcry_sexp_release (l);
@@ -145,10 +149,10 @@ static void check_kyber_gen_enc_dec(const char * fname)
    l = gcry_sexp_find_token (shared_secret2, "value", 0);
    if(!l)
    {
-       fail("could not extract shared secret from encapsulation");
+       die("could not extract shared secret from encapsulation");
    }
    ss2 = gcry_sexp_nth_mpi (l, 1, GCRYMPI_FMT_USG);
-
+    gcry_sexp_release(l);
    if(!ss)
    {
        die("ss = NULL\n");
@@ -161,18 +165,27 @@ static void check_kyber_gen_enc_dec(const char * fname)
    /* Compare.  */
    if (gcry_mpi_cmp (ss, ss2))
    {
+       printf("decryption result incorrect\n");
        die ("check_kyber_gen_enc_dec test: error with decryption result\n");
    }
-   printf("decryption correct\n");
-
+   gcry_mpi_release(ss);
+   gcry_mpi_release(ss2);
+   gcry_sexp_release(keyparm);
+   gcry_sexp_release(key);
+   gcry_sexp_release(ct);
+   gcry_sexp_release(shared_secret);
+   gcry_sexp_release(shared_secret2);
+   gcry_sexp_release(skey);
+   gcry_sexp_release(pkey);
+   printf("check_kyber_gen_enc_dec: decryption correct... \n");
 
 
 leave:
-  return;
+  return rc;
 }
 static void check_kyber_kat(const char * fname)
 {
-  const size_t nb_kat_tests = 0;
+  const size_t nb_kat_tests = 0; /* zero means all */
   FILE *fp;
   int lineno = 0;
   char *line;
@@ -253,13 +266,13 @@ static void check_kyber_kat(const char * fname)
       }
       if(!is_complete)
       {
-          printf("line '%s' does NOT complete a test vector\n", line);
+          //printf("line '%s' does NOT complete a test vector\n", line);
           xfree (line);
           continue;
       }
       else
       {
-          printf("line '%s' COMPLETES a test vector\n", line);
+          //printf("line '%s' COMPLETES a test vector\n", line);
       }
       test_count++;
       gcry_error_t err;
@@ -273,24 +286,13 @@ static void check_kyber_kat(const char * fname)
                   "sk", gpg_strerror (err));
           goto leave;
       }
+#if 0
       printf("private key sx directly after building:\n");
       gcry_sexp_dump(private_key_sx);
       char print_buf[100000];
       gcry_sexp_sprint(private_key_sx, GCRYSEXP_FMT_ADVANCED, print_buf, sizeof(print_buf)-1);
       printf("private_key_sx: %s", print_buf);
-#if 0
-      err = gcry_sexp_build (&public_key_sx, NULL,
-              "(public-key (kyber(p %b)))",
-              (int)test_vec[public_key_idx].result_buf_len, test_vec[public_key_idx].result_buf
-              );
-      if (err)
-      {
-          fail ("error building public key SEXP for test, %s: %s",
-                  "pk", gpg_strerror (err));
-          goto leave;
-      }
 #endif
-
 
       err = gcry_sexp_build (&shared_secret_expected_sx, NULL,
               "(data (value %b))",
@@ -335,7 +337,7 @@ static void check_kyber_kat(const char * fname)
       {
           if (!have_flags)
           {
-              printf("compatibility mode of pk_decrypt broken: !have_flags\n");
+              //printf("compatibility mode of pk_decrypt broken: !have_flags\n");
               //die ("compatibility mode of pk_decrypt broken: !have_flags\n");
           }
           ss = gcry_sexp_nth_mpi (l, 1, GCRYMPI_FMT_USG);
@@ -344,7 +346,7 @@ static void check_kyber_kat(const char * fname)
       else
       {
           if (have_flags)
-              die ("compatibility mode of pk_decrypt broken: have_flags is true\n");
+              //die ("compatibility mode of pk_decrypt broken: have_flags is true\n");
           ss = gcry_sexp_nth_mpi (shared_secret_sx, 0, GCRYMPI_FMT_USG);
       }
       if(!ss)
@@ -361,7 +363,7 @@ static void check_kyber_kat(const char * fname)
       {
           die ("error with decryption result\n");
       }
-      printf("decryption correct\n");
+      printf("decryption correct... ");
 
 
       xfree (line);
@@ -393,6 +395,8 @@ static void check_kyber_kat(const char * fname)
 
 
   }
+
+   printf("\n");
   xfree (line);
 leave:
   line = line;
@@ -460,6 +464,11 @@ main (int argc, char **argv)
         fname = prepend_srcdir("kyber768_ref.inp");
 
     test_hex_decoding();
+    if(check_kyber_gen_enc_dec())
+    {
+        // cannot happen:
+        fail("check_kyber_gen_enc_dec() yielded an error, aborting");
+    }
     check_kyber_kat(fname);
     xfree(fname);
 }

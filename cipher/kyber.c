@@ -28,10 +28,10 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   crypto_kem_keypair (pk, sk);
 
   gcry_mpi_t sk_mpi = NULL, pk_mpi = NULL;
-  sk_mpi = mpi_new (CRYPTO_SECRETKEYBYTES * 8);
-  pk_mpi = mpi_new (CRYPTO_PUBLICKEYBYTES * 8);
-  mpi_set_opaque (sk_mpi, sk, CRYPTO_SECRETKEYBYTES * 8);
-  mpi_set_opaque (pk_mpi, pk, CRYPTO_PUBLICKEYBYTES * 8);
+  //sk_mpi = mpi_new (0);
+  //pk_mpi = mpi_new (0);
+  sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, CRYPTO_SECRETKEYBYTES * 8);
+  pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, CRYPTO_PUBLICKEYBYTES * 8);
 
   if (!ec)
     {
@@ -45,7 +45,8 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
 
     }
 
-
+    _gcry_mpi_release(sk_mpi);
+    _gcry_mpi_release(pk_mpi);
 
   return ec;
 }
@@ -75,7 +76,6 @@ kyber_encap (gcry_sexp_t * r_ciph, gcry_sexp_t * r_shared_key,
   gcry_mpi_t pk = NULL;
   size_t nwritten = 0;
 
-  _gcry_sexp_dump(keyparms);
   /* Extract the key MPI from the SEXP.  */
   ec = sexp_extract_param (keyparms, NULL, "/p",
       &pk,
@@ -92,9 +92,9 @@ kyber_encap (gcry_sexp_t * r_ciph, gcry_sexp_t * r_shared_key,
   }
 
    _gcry_mpi_print(GCRYMPI_FMT_USG, public_key, sizeof(public_key), &nwritten, pk);
-  if(nwritten != KYBER_SECRETKEYBYTES)
+  if(nwritten != KYBER_PUBLICKEYBYTES)
   {
-    printf("nwritten != KYBER_SECRETKEYBYTES\n");
+    printf("nwritten != KYBER_PUBLICKEYBYTES\n");
   }
 
    _gcry_mpi_print(GCRYMPI_FMT_HEX, public_key_str, sizeof(public_key_str), &nwritten, pk);
@@ -102,7 +102,7 @@ kyber_encap (gcry_sexp_t * r_ciph, gcry_sexp_t * r_shared_key,
   {
     printf("nwritten != KYBER_SECRETKEYBYTES*2+1\n");
   }*/
-  printf("kyber public_key used to decrypt: %s\n", public_key_str);
+  //printf("kyber public_key used to decrypt: %s\n", public_key_str);
   _gcry_mpi_release(pk);
 
   kyber_kem_enc(ciphertext, shared_secret, public_key);
@@ -114,8 +114,7 @@ kyber_encap (gcry_sexp_t * r_ciph, gcry_sexp_t * r_shared_key,
     goto leave;
   }
 
-  ec = sexp_build (r_ciph, NULL, "(value %b)", (int)KYBER_CIPHERTEXTBYTES, ciphertext);
-
+  ec = sexp_build (r_ciph, NULL, "(ciphertext (kyber(c %b)))", (int)KYBER_CIPHERTEXTBYTES, ciphertext);
 
 leave:
   return ec;
@@ -138,7 +137,6 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
   gcry_mpi_t ct = NULL;
   size_t nwritten = 0;
 
-  _gcry_sexp_dump(keyparms);
   /* Extract the key MPI from the SEXP.  */
   ec = sexp_extract_param (keyparms, NULL, "/s",
       &sk,
@@ -180,7 +178,7 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
     printf("%u = nwritten != KYBER_CIPHERTEXTBYTES = %u\n", nwritten, KYBER_CIPHERTEXTBYTES);
     goto leave;
   }*/
-  printf("kyber ciphertext to decrypt: %s\n", ciphertext_str);
+  //printf("kyber ciphertext to decrypt: %s\n", ciphertext_str);
 
 
    _gcry_mpi_print(GCRYMPI_FMT_USG, private_key, sizeof(private_key), &nwritten, sk);
@@ -194,7 +192,7 @@ kyber_decrypt (gcry_sexp_t * r_plain, gcry_sexp_t s_data,
   {
     printf("nwritten != KYBER_SECRETKEYBYTES*2+1\n");
   }*/
-  printf("kyber private_key used to decrypt: %s\n", private_key_str);
+  //printf("kyber private_key used to decrypt: %s\n", private_key_str);
   _gcry_mpi_release(sk);
 
 
