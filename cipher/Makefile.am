@@ -150,7 +150,10 @@ EXTRA_libcipher_la_SOURCES = \
 	camellia-arm.S camellia-aarch64.S \
 	blake2.c \
 	blake2b-amd64-avx2.S blake2b-amd64-avx512.S \
-	blake2s-amd64-avx.S blake2s-amd64-avx512.S
+	blake2s-amd64-avx.S blake2s-amd64-avx512.S \
+	dilithium.c dilithium.h \
+	dilithium-aes256ctr.c dilithium-fips202.c dilithium-ntt.c dilithium-packing.c dilithium-poly.c dilithium-polyvec.c dilithium-randombytes.c dilithium-reduce.c dilithium-rounding.c dilithium-sign.c dilithium-symmetric-aes.c dilithium-symmetric-shake.c \
+	dilithium-aes256ctr.h dilithium-api.h dilithium-config.h dilithium-fips202.h dilithium-ntt.h dilithium-packing.h dilithium-params.h dilithium-poly.h dilithium-polyvec.h dilithium-randombytes.h dilithium-reduce.h dilithium-rounding.h dilithium-sign.h dilithium-symmetric.h
 
 gost28147.lo: gost-sb.h
 gost-sb.h: gost-s-box$(EXEEXT_FOR_BUILD)

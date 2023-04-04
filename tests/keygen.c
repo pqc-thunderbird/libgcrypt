@@ -255,6 +255,30 @@ check_rsa_keys (void)
 #endif /* USE_RSA */
 }
 
+static void
+check_dilithium_keys (void)
+{
+#if USE_DILITHIUM
+  gcry_sexp_t keyparm, key;
+  int rc;
+
+  if (verbose)
+    info ("creating Dilithium key\n");
+  rc = gcry_sexp_new (&keyparm,
+                      "(genkey\n"
+                      " (dilithium\n"
+                      "  (nbits 3:5)\n"
+                      " ))", 0, 1);
+  if (rc)
+    die ("error creating S-expression: %s\n", gpg_strerror (rc));
+  rc = gcry_pk_genkey (&key, keyparm);
+  gcry_sexp_release (keyparm);
+  if (rc)
+    die ("error generating Dilithium key: %s\n", gpg_strerror (rc));
+
+#endif /* USE_DILITHIUM */
+}
+
 
 static void
 check_elg_keys (void)
@@ -784,6 +808,7 @@ main (int argc, char **argv)
       check_elg_keys ();
       check_dsa_keys ();
       check_ecc_keys ();
+      check_dilithium_keys ();
       check_nonce ();
     }
   else
@@ -797,6 +822,8 @@ main (int argc, char **argv)
           check_dsa_keys ();
         else if (!strcmp (*argv, "ecc"))
           check_ecc_keys ();
+        else if (!strcmp (*argv, "dilithium"))
+          check_dilithium_keys ();
         else if (!strcmp (*argv, "nonce"))
           check_nonce ();
         else
