@@ -243,6 +243,7 @@ static int check_dilithium_roundtrip()
   if(!rc)
     die("verify succesful for wrong data\n");
   printf("... ok!\n");
+  rc = 0;
 
 
 
