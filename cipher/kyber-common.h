@@ -21,10 +21,23 @@
 #endif
 
 
+int crypto_kem_keypair_derand(uint8_t *pk,
+                       uint8_t *sk,
+                       gcry_kyber_param_t* param,
+                       uint8_t* coins
+                       );
 
 
 //#define crypto_kem_keypair KYBER_NAMESPACE(keypair)
 int crypto_kem_keypair(uint8_t *pk, uint8_t *sk, gcry_kyber_param_t* param);
+
+
+int kyber_kem_enc_derand(uint8_t *ct,
+                   uint8_t *ss,
+                   const uint8_t *pk,
+                   gcry_kyber_param_t* param,
+                   uint8_t * coins
+                   );
 
 //#define crypto_kem_enc KYBER_NAMESPACE(enc)
 int kyber_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk, gcry_kyber_param_t* param);

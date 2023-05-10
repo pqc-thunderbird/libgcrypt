@@ -205,7 +205,8 @@ void gen_matrix(gcry_kyber_polyvec *a, const uint8_t seed[KYBER_SYMBYTES], int t
 **************************************************/
 gcry_error_t indcpa_keypair(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
                     uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES],
-                    gcry_kyber_param_t* param
+                    gcry_kyber_param_t* param,
+                     uint8_t* coins
                     )
 {
   unsigned int i;
@@ -228,8 +229,7 @@ gcry_error_t indcpa_keypair(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
 
 
 
-  randombytes(buf, KYBER_SYMBYTES);
-  hash_g(buf, buf, KYBER_SYMBYTES);
+  hash_g(buf, coins, KYBER_SYMBYTES);
 
   gen_a(a, publicseed);
 

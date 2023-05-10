@@ -10,7 +10,8 @@ void gen_matrix(gcry_kyber_polyvec *a, const uint8_t seed[KYBER_SYMBYTES], int t
 //#define indcpa_keypair KYBER_NAMESPACE(indcpa_keypair)
 gcry_error_t indcpa_keypair(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
                     uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES],
-                    gcry_kyber_param_t* param
+                    gcry_kyber_param_t* param,
+                    uint8_t* coins
                     );
 
 //#define indcpa_enc KYBER_NAMESPACE(indcpa_enc)
