@@ -1,6 +1,28 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
+#include <stdint.h>
+
+typedef enum {
+    GCRY_KYBER_512, GCRY_KYBER_768, GCRY_KYBER_1024
+} gcry_kyber_param_id;
+
+typedef struct
+{
+    gcry_kyber_param_id id;
+    uint8_t k;
+    uint8_t eta1;
+    uint16_t polyvec_bytes;
+    uint8_t  poly_compressed_bytes;
+    uint16_t polyvec_compressed_bytes;
+    uint16_t public_key_bytes;
+    uint16_t indcpa_secret_key_bytes;
+    uint16_t indcpa_bytes;
+    uint16_t secret_key_bytes;
+    uint16_t ciphertext_bytes;
+
+} gcry_kyber_param_t;
+
 #ifndef KYBER_K
 #define KYBER_K 3	/* Change this for different security strengths */
 #endif
@@ -9,23 +31,11 @@
 
 /* Don't change parameters below this line */
 #if   (KYBER_K == 2)
-#ifdef KYBER_90S
-#define KYBER_NAMESPACE(s) pqcrystals_kyber512_90s_ref_##s
-#else
 #define KYBER_NAMESPACE(s) pqcrystals_kyber512_ref_##s
-#endif
 #elif (KYBER_K == 3)
-#ifdef KYBER_90S
-#define KYBER_NAMESPACE(s) pqcrystals_kyber768_90s_ref_##s
-#else
 #define KYBER_NAMESPACE(s) pqcrystals_kyber768_ref_##s
-#endif
 #elif (KYBER_K == 4)
-#ifdef KYBER_90S
-#define KYBER_NAMESPACE(s) pqcrystals_kyber1024_90s_ref_##s
-#else
 #define KYBER_NAMESPACE(s) pqcrystals_kyber1024_ref_##s
-#endif
 #else
 #error "KYBER_K must be in {2,3,4}"
 #endif
