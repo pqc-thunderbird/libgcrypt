@@ -26,6 +26,16 @@ int crypto_kem_keypair(uint8_t *pk,
   return 0;
 }
 
+static void kyber_shake256_rkprf(uint8_t out[KYBER_SSBYTES], const uint8_t key[KYBER_SYMBYTES], const uint8_t input[KYBER_CIPHERTEXTBYTES])
+{
+  keccak_state s;
+
+  shake256_init(&s);
+  shake256_absorb(&s, key, KYBER_SYMBYTES);
+  shake256_absorb(&s, input, KYBER_CIPHERTEXTBYTES);
+  shake256_finalize(&s);
+  shake256_squeeze(out, KYBER_SSBYTES, &s);
+}
 
 int crypto_kem_dec(uint8_t *ss,
                    const uint8_t *ct,
@@ -54,6 +64,7 @@ int crypto_kem_dec(uint8_t *ss,
 
   fail = verify(ct, cmp, KYBER_CIPHERTEXTBYTES);
 
+#if 0
   /* overwrite coins in kr with H(c) */
   hash_h(kr+KYBER_SYMBYTES, ct, KYBER_CIPHERTEXTBYTES);
 
@@ -62,6 +73,13 @@ int crypto_kem_dec(uint8_t *ss,
 
   /* hash concatenation of pre-k and H(c) to k */
   kdf(ss, kr, 2*KYBER_SYMBYTES);
+#endif
+
+  /* Compute rejection key */
+  kyber_shake256_rkprf(ss,sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES,ct);
+
+  /* Copy true key to return buffer if fail is false */
+  cmov(ss,kr,KYBER_SYMBYTES,!fail);
   return 0;
 }
 
@@ -89,9 +107,13 @@ int kyber_kem_enc(uint8_t *ct,
   /* coins are in kr+KYBER_SYMBYTES */
   indcpa_enc(ct, buf, pk, kr+KYBER_SYMBYTES, param);
 
+#if 0
   /* overwrite coins in kr with H(c) */
   hash_h(kr+KYBER_SYMBYTES, ct, KYBER_CIPHERTEXTBYTES);
   /* hash concatenation of pre-k and H(c) to k */
   kdf(ss, kr, 2*KYBER_SYMBYTES);
+#endif
+
+  memcpy(ss,kr,KYBER_SYMBYTES);
   return 0;
 }
