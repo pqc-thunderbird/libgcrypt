@@ -13,24 +13,16 @@
 #define CRYPTO_BYTES           KYBER_SSBYTES
 
 #if   (KYBER_K == 2)
-#ifdef KYBER_90S
-#define CRYPTO_ALGNAME "Kyber512-90s"
-#else
 #define CRYPTO_ALGNAME "Kyber512"
-#endif
 #elif (KYBER_K == 3)
-#ifdef KYBER_90S
-#define CRYPTO_ALGNAME "Kyber768-90s"
-#else
 #define CRYPTO_ALGNAME "Kyber768"
-#endif
 #elif (KYBER_K == 4)
-#ifdef KYBER_90S
-#define CRYPTO_ALGNAME "Kyber1024-90s"
-#else
 #define CRYPTO_ALGNAME "Kyber1024"
 #endif
-#endif
+
+typedef enum {
+    GCRY_KYBER_512, GCRY_KYBER_768, GCRY_KYBER_1024
+} gcry_kyber_param;
 
 //#define crypto_kem_keypair KYBER_NAMESPACE(keypair)
 int crypto_kem_keypair(uint8_t *pk, uint8_t *sk);
