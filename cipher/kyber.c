@@ -13,6 +13,27 @@
 #include "kyber_verify.h"
 
 //TODOMTG: key size for key gen: public key bit size
+//
+
+static gcry_err_code_t get_kyber_param_from_bit_size(size_t nbits, gcry_kyber_param* param )
+{
+  switch (nbits)
+  {
+    case 512:
+        *param = GCRY_KYBER_512;
+        break;
+    case 768:
+        *param = GCRY_KYBER_768;
+        break;
+    case 1024:
+        *param = GCRY_KYBER_1024;
+        break;
+    default:
+      return GPG_ERR_INV_ARG;
+  }
+  return 0;
+
+}
 
 static gcry_err_code_t
 kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
@@ -22,9 +43,14 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   uint8_t pk[CRYPTO_PUBLICKEYBYTES];
   uint8_t sk[CRYPTO_SECRETKEYBYTES];
   unsigned int nbits;
+  gcry_kyber_param param;
   ec = _gcry_pk_util_get_nbits (genparms, &nbits);
   if (ec)
     return ec;
+  if((ec = get_kyber_param_from_bit_size(nbits, &param)))
+  {
+    return ec;
+  }
   crypto_kem_keypair (pk, sk);
 
   gcry_mpi_t sk_mpi = NULL, pk_mpi = NULL;

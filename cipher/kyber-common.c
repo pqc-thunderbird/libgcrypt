@@ -5,8 +5,10 @@
 #include "kyber_polyvec.h"
 #include "kyber_poly.h"
 #include "kyber_ntt.h"
+#include "kyber_verify.h"
 #include "kyber_symmetric.h"
 #include "kyber_randombytes.h"
+#include "gcrypt.h"
 
 
 int crypto_kem_keypair(uint8_t *pk,
@@ -73,8 +75,10 @@ int kyber_kem_enc(uint8_t *ct,
   hash_h(buf, buf, KYBER_SYMBYTES);
 
   /* Multitarget countermeasure for coins + contributory KEM */
-  hash_h(buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
-  hash_g(kr, buf, 2*KYBER_SYMBYTES);
+  //hash_h(buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+  gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+  //hash_g(kr, buf, 2*KYBER_SYMBYTES);
+  gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2*KYBER_SYMBYTES);
 
   /* coins are in kr+KYBER_SYMBYTES */
   indcpa_enc(ct, buf, pk, kr+KYBER_SYMBYTES);

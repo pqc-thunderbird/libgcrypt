@@ -345,15 +345,12 @@ _gcry_pk_encrypt (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t s_pkey)
 /*
    Do a PK encapsulate operation
 
-   Caller has to provide a public key as the SEXP pkey and data as a
-   SEXP with just one MPI in it. Alternatively S_DATA might be a
-   complex S-Expression, similar to the one used for signature
-   verification.  This provides a flag which allows to handle PKCS#1
-   block type 2 padding.  The function returns a sexp which may be
+     The function returns a sexp which may be
    passed to to pk_decrypt.
 
    Returns: 0 or an errorcode.
 
+// TODOMTG:
    s_data = See comment for _gcry_pk_util_data_to_mpi
    s_pkey = <key-as-defined-in-sexp_to_key>
    r_ciph = (enc-val
