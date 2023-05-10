@@ -12,12 +12,14 @@
 
 
 int crypto_kem_keypair(uint8_t *pk,
-                       uint8_t *sk)
+                       uint8_t *sk,
+                       gcry_kyber_param_t* param
+                       )
 {
-  size_t i;
-  indcpa_keypair(pk, sk);
-  for(i=0;i<KYBER_INDCPA_PUBLICKEYBYTES;i++)
-    sk[i+KYBER_INDCPA_SECRETKEYBYTES] = pk[i];
+  indcpa_keypair(pk, sk, param);
+  /*for(i=0;i<KYBER_INDCPA_PUBLICKEYBYTES;i++)
+    sk[i+KYBER_INDCPA_SECRETKEYBYTES] = pk[i];*/
+  memcpy(&sk[param->indcpa_secret_key_bytes], pk, param->public_key_bytes);
   hash_h(sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
   /* Value z for pseudo-random output on reject */
   randombytes(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES);
@@ -27,7 +29,9 @@ int crypto_kem_keypair(uint8_t *pk,
 
 int crypto_kem_dec(uint8_t *ss,
                    const uint8_t *ct,
-                   const uint8_t *sk)
+                   const uint8_t *sk,
+                   gcry_kyber_param_t* param
+                   )
 {
 
   size_t i;
@@ -38,7 +42,7 @@ int crypto_kem_dec(uint8_t *ss,
   uint8_t cmp[KYBER_CIPHERTEXTBYTES];
   const uint8_t *pk = sk+KYBER_INDCPA_SECRETKEYBYTES;
 
-  indcpa_dec(buf, ct, sk);
+  indcpa_dec(buf, ct, sk, param);
 
   /* Multitarget countermeasure for coins + contributory KEM */
   for(i=0;i<KYBER_SYMBYTES;i++)
@@ -46,7 +50,7 @@ int crypto_kem_dec(uint8_t *ss,
   hash_g(kr, buf, 2*KYBER_SYMBYTES);
 
   /* coins are in kr+KYBER_SYMBYTES */
-  indcpa_enc(cmp, buf, pk, kr+KYBER_SYMBYTES);
+  indcpa_enc(cmp, buf, pk, kr+KYBER_SYMBYTES, param);
 
   fail = verify(ct, cmp, KYBER_CIPHERTEXTBYTES);
 
@@ -64,7 +68,9 @@ int crypto_kem_dec(uint8_t *ss,
 
 int kyber_kem_enc(uint8_t *ct,
                    uint8_t *ss,
-                   const uint8_t *pk)
+                   const uint8_t *pk,
+                   gcry_kyber_param_t* param
+                   )
 {
   uint8_t buf[2*KYBER_SYMBYTES];
   /* Will contain key, coins */
@@ -76,12 +82,12 @@ int kyber_kem_enc(uint8_t *ct,
 
   /* Multitarget countermeasure for coins + contributory KEM */
   //hash_h(buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
-  gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
   //hash_g(kr, buf, 2*KYBER_SYMBYTES);
-  gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2*KYBER_SYMBYTES);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2*KYBER_SYMBYTES);
 
   /* coins are in kr+KYBER_SYMBYTES */
-  indcpa_enc(ct, buf, pk, kr+KYBER_SYMBYTES);
+  indcpa_enc(ct, buf, pk, kr+KYBER_SYMBYTES, param);
 
   /* overwrite coins in kr with H(c) */
   hash_h(kr+KYBER_SYMBYTES, ct, KYBER_CIPHERTEXTBYTES);

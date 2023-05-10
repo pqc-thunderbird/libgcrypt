@@ -277,8 +277,8 @@ static void check_kyber_kat(const char * fname)
       test_count++;
       gcry_error_t err;
       err = gcry_sexp_build (&private_key_sx, NULL,
-              "(private-key (kyber (s %b)))",
-              (int)test_vec[privat_key_idx].result_buf_len, test_vec[privat_key_idx].result_buf
+              "(private-key (kyber (s %b) (nbits%u) ))",
+              (int)test_vec[privat_key_idx].result_buf_len, test_vec[privat_key_idx].result_buf, 768, NULL
               );
       if (err)
       {

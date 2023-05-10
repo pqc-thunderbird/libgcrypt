@@ -20,18 +20,17 @@
 #define CRYPTO_ALGNAME "Kyber1024"
 #endif
 
-typedef enum {
-    GCRY_KYBER_512, GCRY_KYBER_768, GCRY_KYBER_1024
-} gcry_kyber_param;
+
+
 
 //#define crypto_kem_keypair KYBER_NAMESPACE(keypair)
-int crypto_kem_keypair(uint8_t *pk, uint8_t *sk);
+int crypto_kem_keypair(uint8_t *pk, uint8_t *sk, gcry_kyber_param_t* param);
 
 //#define crypto_kem_enc KYBER_NAMESPACE(enc)
-int kyber_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk);
+int kyber_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk, gcry_kyber_param_t* param);
 
 //#define crypto_kem_dec KYBER_NAMESPACE(dec)
-int crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk);
+int crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk, gcry_kyber_param_t* param);
 
 
 #endif /* CIPHER_KYBER_COMMON_H */
