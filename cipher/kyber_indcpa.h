@@ -8,8 +8,8 @@
 //#define gen_matrix KYBER_NAMESPACE(gen_matrix)
 void gen_matrix(gcry_kyber_polyvec *a, const uint8_t seed[KYBER_SYMBYTES], int transposed);
 //#define indcpa_keypair KYBER_NAMESPACE(indcpa_keypair)
-gcry_error_t indcpa_keypair(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
-                    uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES],
+gcry_error_t indcpa_keypair(uint8_t * pk,
+                    uint8_t* sk,
                     gcry_kyber_param_t const* param,
                     uint8_t* coins
                     );
@@ -23,9 +23,9 @@ gcry_error_t indcpa_enc(uint8_t c[KYBER_INDCPA_BYTES],
                 );
 
 //#define indcpa_dec KYBER_NAMESPACE(indcpa_dec)
-gcry_error_t indcpa_dec(uint8_t m[KYBER_INDCPA_MSGBYTES],
-                const uint8_t c[KYBER_INDCPA_BYTES],
-                const uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES],
+gcry_error_t indcpa_dec(uint8_t *  m,
+                const uint8_t* c,
+                const uint8_t* sk,
                 gcry_kyber_param_t const* param
                 );
 
