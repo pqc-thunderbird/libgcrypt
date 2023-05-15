@@ -21,7 +21,7 @@
 **************************************************/
 static void pack_pk(uint8_t r[KYBER_INDCPA_PUBLICKEYBYTES],
                     gcry_kyber_polyvec *pk,
-                    const uint8_t seed[KYBER_SYMBYTES], gcry_kyber_param_t *const param)
+                    const uint8_t seed[KYBER_SYMBYTES], gcry_kyber_param_t const* param)
 {
   gcry_kyber_polyvec_tobytes(r, pk, param);
   memcpy(r + param->polyvec_bytes, seed, KYBER_SYMBYTES);
@@ -199,9 +199,9 @@ void gen_matrix(gcry_kyber_polyvec *a, const uint8_t seed[KYBER_SYMBYTES], int t
 *              - uint8_t *sk: pointer to output private key
                               (of length KYBER_INDCPA_SECRETKEYBYTES bytes)
 **************************************************/
-gcry_error_t indcpa_keypair(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
-                    uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES],
-                    gcry_kyber_param_t* param,
+gcry_error_t indcpa_keypair(uint8_t* pk,
+                    uint8_t* sk,
+                    gcry_kyber_param_t const* param,
                      uint8_t* coins
                     )
 {
@@ -350,10 +350,10 @@ end:
 *              - const uint8_t *sk: pointer to input secret key
 *                                   (of length KYBER_INDCPA_SECRETKEYBYTES)
 **************************************************/
-gcry_error_t indcpa_dec(uint8_t m[KYBER_INDCPA_MSGBYTES],
+gcry_error_t indcpa_dec(uint8_t* m,
                 const uint8_t* c,
-                const uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES],
-                gcry_kyber_param_t* param
+                const uint8_t* sk,
+                gcry_kyber_param_t const* param
                 )
 {
     gcry_kyber_polyvec b = {.vec = NULL}, skpv = {.vec = NULL};
