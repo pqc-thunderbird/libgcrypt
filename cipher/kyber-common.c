@@ -21,7 +21,7 @@ int crypto_kem_keypair_derand(uint8_t *pk,
   /*for(i=0;i<KYBER_INDCPA_PUBLICKEYBYTES;i++)
     sk[i+KYBER_INDCPA_SECRETKEYBYTES] = pk[i];*/
   memcpy(&sk[param->indcpa_secret_key_bytes], pk, param->public_key_bytes);
-  hash_h(sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
   /* Value z for pseudo-random output on reject */
   //randombytes(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES);
   memcpy(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, coins+KYBER_SYMBYTES, KYBER_SYMBYTES);
@@ -29,21 +29,35 @@ int crypto_kem_keypair_derand(uint8_t *pk,
 
 #if 0
   memcpy(sk+KYBER_INDCPA_SECRETKEYBYTES, pk, KYBER_PUBLICKEYBYTES);
-  hash_h(sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
   /* Value z for pseudo-random output on reject */
   memcpy(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, coins+KYBER_SYMBYTES, KYBER_SYMBYTES);
 #endif
 }
 
-static void kyber_shake256_rkprf(uint8_t out[KYBER_SSBYTES], const uint8_t key[KYBER_SYMBYTES], const uint8_t input[KYBER_CIPHERTEXTBYTES])
+static gcry_err_code_t kyber_shake256_rkprf(uint8_t out[KYBER_SSBYTES], const uint8_t key[KYBER_SYMBYTES], const uint8_t input[KYBER_CIPHERTEXTBYTES], size_t input_length)
 {
-  keccak_state s;
-
-  shake256_init(&s);
-  shake256_absorb(&s, key, KYBER_SYMBYTES);
-  shake256_absorb(&s, input, KYBER_CIPHERTEXTBYTES);
-  shake256_finalize(&s);
-  shake256_squeeze(out, KYBER_SSBYTES, &s);
+  //keccak_state s;
+  gcry_md_hd_t h;
+  gcry_err_code_t ec = 0;
+  if((ec = _gcry_md_open(&h, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE)))
+  {
+    return ec;
+  }
+  _gcry_md_write(h, key, KYBER_SYMBYTES);
+  _gcry_md_write(h, input, input_length);
+  if((ec = _gcry_md_extract(h, GCRY_MD_SHAKE256, out, KYBER_SSBYTES)))
+  {
+   goto cleanup;
+  }
+  //shake256_init(&s);
+  //shake256_absorb(&s, key, KYBER_SYMBYTES);
+  //shake256_absorb(&s, input, KYBER_CIPHERTEXTBYTES);
+  //shake256_finalize(&s);
+  //shake256_squeeze(out, KYBER_SSBYTES, &s);
+cleanup:
+  _gcry_md_close(h);
+  return ec;
 }
 
 
@@ -77,7 +91,7 @@ int crypto_kem_dec(uint8_t *ss,
   /* Multitarget countermeasure for coins + contributory KEM */
   for(i=0;i<KYBER_SYMBYTES;i++)
     buf[KYBER_SYMBYTES+i] = sk[KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES+i];
-  hash_g(kr, buf, 2*KYBER_SYMBYTES);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2*KYBER_SYMBYTES);
 
   /* coins are in kr+KYBER_SYMBYTES */
   indcpa_enc(cmp, buf, pk, kr+KYBER_SYMBYTES, param);
@@ -86,7 +100,7 @@ int crypto_kem_dec(uint8_t *ss,
 
 #if 0
   /* overwrite coins in kr with H(c) */
-  hash_h(kr+KYBER_SYMBYTES, ct, KYBER_CIPHERTEXTBYTES);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, kr+KYBER_SYMBYTES, ct, KYBER_CIPHERTEXTBYTES);
 
   /* Overwrite pre-k with z on re-encryption failure */
   cmov(kr, sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES, fail);
@@ -96,7 +110,8 @@ int crypto_kem_dec(uint8_t *ss,
 #endif
 
   /* Compute rejection key */
-  kyber_shake256_rkprf(ss,sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES,ct);
+  //kyber_shake256_rkprf(ss,sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES,ct, param->ciphertext_bytes);
+  kyber_shake256_rkprf(ss,sk+param->secret_key_bytes - KYBER_SYMBYTES, ct, param->ciphertext_bytes);
 
   /* Copy true key to return buffer if fail is false */
   cmov(ss,kr,KYBER_SYMBYTES,!fail);
@@ -128,12 +143,12 @@ int kyber_kem_enc_derand(uint8_t *ct,
 
     //randombytes(buf, KYBER_SYMBYTES);
     /* Don't release system RNG output */
-    hash_h(buf, coins, KYBER_SYMBYTES);
+    _gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf, coins, KYBER_SYMBYTES);
 
     /* Multitarget countermeasure for coins + contributory KEM */
-    //hash_h(buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+    //_gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
     _gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
-    //hash_g(kr, buf, 2*KYBER_SYMBYTES);
+    //_gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2*KYBER_SYMBYTES);
     _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2*KYBER_SYMBYTES);
 
     /* coins are in kr+KYBER_SYMBYTES */
@@ -141,7 +156,7 @@ int kyber_kem_enc_derand(uint8_t *ct,
 
 #if 0
     /* overwrite coins in kr with H(c) */
-    hash_h(kr+KYBER_SYMBYTES, ct, KYBER_CIPHERTEXTBYTES);
+    _gcry_md_hash_buffer(GCRY_MD_SHA3_256, kr+KYBER_SYMBYTES, ct, KYBER_CIPHERTEXTBYTES);
     /* hash concatenation of pre-k and H(c) to k */
     kdf(ss, kr, 2*KYBER_SYMBYTES);
 #endif
