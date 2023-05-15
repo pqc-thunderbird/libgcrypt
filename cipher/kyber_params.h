@@ -17,7 +17,7 @@ typedef struct
     uint16_t polyvec_compressed_bytes;
     uint16_t public_key_bytes;
     uint16_t indcpa_secret_key_bytes;
-    uint16_t indcpa_bytes;
+    //uint16_t indcpa_bytes;
     uint16_t secret_key_bytes;
     uint16_t ciphertext_bytes;
 

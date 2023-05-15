@@ -464,10 +464,13 @@ main (int argc, char **argv)
         fname = prepend_srcdir("kyber768_ref.inp");
 
     test_hex_decoding();
-    if(check_kyber_gen_enc_dec())
+    for(unsigned i = 0; i < 20; i++)
     {
-        // cannot happen:
-        fail("check_kyber_gen_enc_dec() yielded an error, aborting");
+        if(check_kyber_gen_enc_dec())
+        {
+            // cannot happen:
+            fail("check_kyber_gen_enc_dec() yielded an error, aborting");
+        }
     }
     check_kyber_kat(fname);
     xfree(fname);

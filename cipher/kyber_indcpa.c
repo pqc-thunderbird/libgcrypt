@@ -21,12 +21,10 @@
 **************************************************/
 static void pack_pk(uint8_t r[KYBER_INDCPA_PUBLICKEYBYTES],
                     gcry_kyber_polyvec *pk,
-                    const uint8_t seed[KYBER_SYMBYTES])
+                    const uint8_t seed[KYBER_SYMBYTES], gcry_kyber_param_t *const param)
 {
-  size_t i;
-  gcry_kyber_polyvec_tobytes(r, pk);
-  for(i=0;i<KYBER_SYMBYTES;i++)
-    r[i+KYBER_POLYVECBYTES] = seed[i];
+  gcry_kyber_polyvec_tobytes(r, pk, param);
+  memcpy(r + param->polyvec_bytes, seed, KYBER_SYMBYTES);
 }
 
 /*************************************************
@@ -41,13 +39,11 @@ static void pack_pk(uint8_t r[KYBER_INDCPA_PUBLICKEYBYTES],
 **************************************************/
 static void unpack_pk(gcry_kyber_polyvec *pk,
                       uint8_t seed[KYBER_SYMBYTES],
-                      const uint8_t packedpk[KYBER_INDCPA_PUBLICKEYBYTES])
+                      const uint8_t packedpk[KYBER_INDCPA_PUBLICKEYBYTES], gcry_kyber_param_t const* param)
 {
-  size_t i;
-  gcry_kyber_polyvec_frombytes(pk, packedpk);
-  for(i=0;i<KYBER_SYMBYTES;i++)
-    seed[i] = packedpk[i+KYBER_POLYVECBYTES];
-}
+  gcry_kyber_polyvec_frombytes(pk, packedpk, param);
+  memcpy(seed, packedpk + param->polyvec_bytes, KYBER_SYMBYTES);
+  }
 
 /*************************************************
 * Name:        pack_sk
@@ -57,9 +53,9 @@ static void unpack_pk(gcry_kyber_polyvec *pk,
 * Arguments:   - uint8_t *r: pointer to output serialized secret key
 *              - gcry_kyber_polyvec *sk: pointer to input vector of polynomials (secret key)
 **************************************************/
-static void pack_sk(uint8_t r[KYBER_INDCPA_SECRETKEYBYTES], gcry_kyber_polyvec *sk)
+static void pack_sk(uint8_t r[KYBER_INDCPA_SECRETKEYBYTES], gcry_kyber_polyvec *sk, gcry_kyber_param_t const* param)
 {
-  gcry_kyber_polyvec_tobytes(r, sk);
+  gcry_kyber_polyvec_tobytes(r, sk, param);
 }
 
 /*************************************************
@@ -70,9 +66,9 @@ static void pack_sk(uint8_t r[KYBER_INDCPA_SECRETKEYBYTES], gcry_kyber_polyvec *
 * Arguments:   - gcry_kyber_polyvec *sk: pointer to output vector of polynomials (secret key)
 *              - const uint8_t *packedsk: pointer to input serialized secret key
 **************************************************/
-static void unpack_sk(gcry_kyber_polyvec *sk, const uint8_t packedsk[KYBER_INDCPA_SECRETKEYBYTES])
+static void unpack_sk(gcry_kyber_polyvec *sk, const uint8_t packedsk[KYBER_INDCPA_SECRETKEYBYTES], gcry_kyber_param_t const* param)
 {
-  gcry_kyber_polyvec_frombytes(sk, packedsk);
+  gcry_kyber_polyvec_frombytes(sk, packedsk, param);
 }
 
 /*************************************************
@@ -86,9 +82,9 @@ static void unpack_sk(gcry_kyber_polyvec *sk, const uint8_t packedsk[KYBER_INDCP
 *              poly *pk: pointer to the input vector of polynomials b
 *              poly *v: pointer to the input polynomial v
 **************************************************/
-static void pack_ciphertext(uint8_t r[KYBER_INDCPA_BYTES], gcry_kyber_polyvec *b, poly *v)
+static void pack_ciphertext(uint8_t r[KYBER_INDCPA_BYTES], gcry_kyber_polyvec *b, poly *v, gcry_kyber_param_t const* param)
 {
-  gcry_kyber_polyvec_compress(r, b);
+  gcry_kyber_polyvec_compress(r, b, param);
   poly_compress(r+KYBER_POLYVECCOMPRESSEDBYTES, v);
 }
 
@@ -102,9 +98,9 @@ static void pack_ciphertext(uint8_t r[KYBER_INDCPA_BYTES], gcry_kyber_polyvec *b
 *              - poly *v: pointer to the output polynomial v
 *              - const uint8_t *c: pointer to the input serialized ciphertext
 **************************************************/
-static void unpack_ciphertext(gcry_kyber_polyvec *b, poly *v, const uint8_t c[KYBER_INDCPA_BYTES])
+static void unpack_ciphertext(gcry_kyber_polyvec *b, poly *v, const uint8_t c[KYBER_INDCPA_BYTES], gcry_kyber_param_t const* param)
 {
-  gcry_kyber_polyvec_decompress(b, c);
+  gcry_kyber_polyvec_decompress(b, c, param);
   poly_decompress(v, c+KYBER_POLYVECCOMPRESSEDBYTES);
 }
 
@@ -229,7 +225,7 @@ gcry_error_t indcpa_keypair(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
 
 
 
-  hash_g(buf, coins, KYBER_SYMBYTES);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_512, buf, coins, KYBER_SYMBYTES);
 
   gen_a(a, publicseed);
 
@@ -238,20 +234,20 @@ gcry_error_t indcpa_keypair(uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
   for(i=0;i<param->k;i++)
     poly_getnoise_eta1(&e.vec[i], noiseseed, nonce++);
 
-  gcry_kyber_polyvec_ntt(&skpv);
-  gcry_kyber_polyvec_ntt(&e);
+  gcry_kyber_polyvec_ntt(&skpv, param);
+  gcry_kyber_polyvec_ntt(&e, param);
 
   // matrix-vector multiplication
   for(i=0;i<param->k;i++) {
-    gcry_kyber_polyvec_basemul_acc_montgomery(&pkpv.vec[i], &a[i], &skpv);
+    gcry_kyber_polyvec_basemul_acc_montgomery(&pkpv.vec[i], &a[i], &skpv, param);
     poly_tomont(&pkpv.vec[i]);
   }
 
-  gcry_kyber_polyvec_add(&pkpv, &pkpv, &e);
-  gcry_kyber_polyvec_reduce(&pkpv);
+  gcry_kyber_polyvec_add(&pkpv, &pkpv, &e, param);
+  gcry_kyber_polyvec_reduce(&pkpv, param);
 
-  pack_sk(sk, &skpv);
-  pack_pk(pk, &pkpv, publicseed);
+  pack_sk(sk, &skpv, param);
+  pack_pk(pk, &pkpv, publicseed, param);
 end:
   gcry_kyber_polymatrix_destroy(&a, param);
   gcry_kyber_polyvec_destroy(&e);
@@ -281,7 +277,7 @@ gcry_error_t indcpa_enc(uint8_t c[KYBER_INDCPA_BYTES],
                 const uint8_t m[KYBER_INDCPA_MSGBYTES],
                 const uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
                 const uint8_t coins[KYBER_SYMBYTES],
-                gcry_kyber_param_t* param
+                gcry_kyber_param_t const* param
                 )
 {
   unsigned int i;
@@ -302,7 +298,7 @@ gcry_error_t indcpa_enc(uint8_t c[KYBER_INDCPA_BYTES],
 
   poly v, k, epp;
 
-  unpack_pk(&pkpv, seed, pk);
+  unpack_pk(&pkpv, seed, pk, param);
   poly_frommsg(&k, m);
   gen_at(at, seed);
 
@@ -312,24 +308,24 @@ gcry_error_t indcpa_enc(uint8_t c[KYBER_INDCPA_BYTES],
     poly_getnoise_eta2(ep.vec+i, coins, nonce++);
   poly_getnoise_eta2(&epp, coins, nonce++);
 
-  gcry_kyber_polyvec_ntt(&sp);
+  gcry_kyber_polyvec_ntt(&sp, param);
 
   // matrix-vector multiplication
   for(i=0;i<KYBER_K;i++)
-    gcry_kyber_polyvec_basemul_acc_montgomery(&b.vec[i], &at[i], &sp);
+    gcry_kyber_polyvec_basemul_acc_montgomery(&b.vec[i], &at[i], &sp, param);
 
-  gcry_kyber_polyvec_basemul_acc_montgomery(&v, &pkpv, &sp);
+  gcry_kyber_polyvec_basemul_acc_montgomery(&v, &pkpv, &sp, param);
 
-  gcry_kyber_polyvec_invntt_tomont(&b);
+  gcry_kyber_polyvec_invntt_tomont(&b, param);
   poly_invntt_tomont(&v);
 
-  gcry_kyber_polyvec_add(&b, &b, &ep);
+  gcry_kyber_polyvec_add(&b, &b, &ep, param);
   poly_add(&v, &v, &epp);
   poly_add(&v, &v, &k);
-  gcry_kyber_polyvec_reduce(&b);
+  gcry_kyber_polyvec_reduce(&b, param);
   poly_reduce(&v);
 
-  pack_ciphertext(c, &b, &v);
+  pack_ciphertext(c, &b, &v, param);
 end:
 
   gcry_kyber_polyvec_destroy(&sp);
@@ -355,7 +351,7 @@ end:
 *                                   (of length KYBER_INDCPA_SECRETKEYBYTES)
 **************************************************/
 gcry_error_t indcpa_dec(uint8_t m[KYBER_INDCPA_MSGBYTES],
-                const uint8_t c[KYBER_INDCPA_BYTES],
+                const uint8_t* c,
                 const uint8_t sk[KYBER_INDCPA_SECRETKEYBYTES],
                 gcry_kyber_param_t* param
                 )
@@ -371,11 +367,11 @@ gcry_error_t indcpa_dec(uint8_t m[KYBER_INDCPA_MSGBYTES],
         goto end;
     }
 
-    unpack_ciphertext(&b, &v, c);
-    unpack_sk(&skpv, sk);
+    unpack_ciphertext(&b, &v, c, param);
+    unpack_sk(&skpv, sk, param);
 
-    gcry_kyber_polyvec_ntt(&b);
-    gcry_kyber_polyvec_basemul_acc_montgomery(&mp, &skpv, &b);
+    gcry_kyber_polyvec_ntt(&b, param);
+    gcry_kyber_polyvec_basemul_acc_montgomery(&mp, &skpv, &b, param);
     poly_invntt_tomont(&mp);
 
     poly_sub(&mp, &v, &mp);
