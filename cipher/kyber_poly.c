@@ -118,12 +118,13 @@ void poly_decompress(poly *r, const uint8_t* a, gcry_kyber_param_t const* param)
 *                            (needs space for KYBER_POLYBYTES bytes)
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void poly_tobytes(uint8_t r[KYBER_POLYBYTES], const poly *a)
+void poly_tobytes(uint8_t* r, const poly *a)
 {
   unsigned int i;
   uint16_t t0, t1;
 
-  for(i=0;i<KYBER_N/2;i++) {
+  for(i=0;i<KYBER_N/2;i++)
+  {
     // map to positive standard representatives
     t0  = a->coeffs[2*i];
     t0 += ((int16_t)t0 >> 15) & KYBER_Q;
@@ -145,10 +146,11 @@ void poly_tobytes(uint8_t r[KYBER_POLYBYTES], const poly *a)
 *              - const uint8_t *a: pointer to input byte array
 *                                  (of KYBER_POLYBYTES bytes)
 **************************************************/
-void poly_frombytes(poly *r, const uint8_t a[KYBER_POLYBYTES])
+void poly_frombytes(poly *r, const uint8_t * a)
 {
   unsigned int i;
-  for(i=0;i<KYBER_N/2;i++) {
+  for(i=0;i<KYBER_N/2;i++)
+  {
     r->coeffs[2*i]   = ((a[3*i+0] >> 0) | ((uint16_t)a[3*i+1] << 8)) & 0xFFF;
     r->coeffs[2*i+1] = ((a[3*i+1] >> 4) | ((uint16_t)a[3*i+2] << 4)) & 0xFFF;
   }
@@ -162,7 +164,7 @@ void poly_frombytes(poly *r, const uint8_t a[KYBER_POLYBYTES])
 * Arguments:   - poly *r: pointer to output polynomial
 *              - const uint8_t *msg: pointer to input message
 **************************************************/
-void poly_frommsg(poly *r, const uint8_t msg[KYBER_INDCPA_MSGBYTES])
+void poly_frommsg(poly *r, const uint8_t* msg)
 {
   unsigned int i,j;
   int16_t mask;
@@ -171,8 +173,10 @@ void poly_frommsg(poly *r, const uint8_t msg[KYBER_INDCPA_MSGBYTES])
 #error "KYBER_INDCPA_MSGBYTES must be equal to KYBER_N/8 bytes!"
 #endif
 
-  for(i=0;i<KYBER_N/8;i++) {
-    for(j=0;j<8;j++) {
+  for(i=0;i<KYBER_N/8;i++)
+  {
+    for(j=0;j<8;j++)
+    {
       mask = -(int16_t)((msg[i] >> j)&1);
       r->coeffs[8*i+j] = mask & ((KYBER_Q+1)/2);
     }
@@ -187,14 +191,16 @@ void poly_frommsg(poly *r, const uint8_t msg[KYBER_INDCPA_MSGBYTES])
 * Arguments:   - uint8_t *msg: pointer to output message
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void poly_tomsg(uint8_t msg[KYBER_INDCPA_MSGBYTES], const poly *a)
+void poly_tomsg(uint8_t* msg, const poly *a)
 {
   unsigned int i,j;
   uint16_t t;
 
-  for(i=0;i<KYBER_N/8;i++) {
+  for(i=0;i<KYBER_N/8;i++)
+  {
     msg[i] = 0;
-    for(j=0;j<8;j++) {
+    for(j=0;j<8;j++)
+    {
       t  = a->coeffs[8*i+j];
       t += ((int16_t)t >> 15) & KYBER_Q;
       t  = (((t << 1) + KYBER_Q/2)/KYBER_Q) & 1;
@@ -215,11 +221,11 @@ void poly_tomsg(uint8_t msg[KYBER_INDCPA_MSGBYTES], const poly *a)
 *                                     (of length KYBER_SYMBYTES bytes)
 *              - uint8_t nonce: one-byte input nonce
 **************************************************/
-void poly_getnoise_eta1(poly *r, const uint8_t seed[KYBER_SYMBYTES], uint8_t nonce)
+void poly_getnoise_eta1(poly *r, const uint8_t* seed, uint8_t nonce, gcry_kyber_param_t const* param)
 {
-  uint8_t buf[KYBER_ETA1*KYBER_N/4];
+  uint8_t buf[KYBER_ETA1_MAX*KYBER_N/4];
   prf(buf, sizeof(buf), seed, nonce);
-  poly_cbd_eta1(r, buf);
+  poly_cbd_eta1(r, buf, param);
 }
 
 /*************************************************

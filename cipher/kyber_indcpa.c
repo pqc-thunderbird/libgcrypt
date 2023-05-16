@@ -231,11 +231,11 @@ gcry_error_t indcpa_keypair(uint8_t* pk,
 
   for(i=0;i<param->k;i++)
   {
-    poly_getnoise_eta1(&skpv.vec[i], noiseseed, nonce++);
+    poly_getnoise_eta1(&skpv.vec[i], noiseseed, nonce++, param);
   }
   for(i=0;i<param->k;i++)
   {
-    poly_getnoise_eta1(&e.vec[i], noiseseed, nonce++);
+    poly_getnoise_eta1(&e.vec[i], noiseseed, nonce++, param);
   }
 
   gcry_kyber_polyvec_ntt(&skpv, param);
@@ -309,7 +309,7 @@ gcry_error_t indcpa_enc(uint8_t* c,
 
   for(i=0;i<param->k;i++)
   {
-    poly_getnoise_eta1(sp.vec+i, coins, nonce++);
+    poly_getnoise_eta1(sp.vec+i, coins, nonce++, param);
   }
   for(i=0;i<param->k;i++)
   {
