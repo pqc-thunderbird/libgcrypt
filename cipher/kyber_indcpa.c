@@ -19,7 +19,7 @@
 *              gcry_kyber_polyvec *pk: pointer to the input public-key gcry_kyber_polyvec
 *              const uint8_t *seed: pointer to the input public seed
 **************************************************/
-static void pack_pk(uint8_t r[KYBER_INDCPA_PUBLICKEYBYTES],
+static void pack_pk(uint8_t* r,
                     gcry_kyber_polyvec *pk,
                     const uint8_t seed[KYBER_SYMBYTES], gcry_kyber_param_t const* param)
 {
@@ -39,7 +39,7 @@ static void pack_pk(uint8_t r[KYBER_INDCPA_PUBLICKEYBYTES],
 **************************************************/
 static void unpack_pk(gcry_kyber_polyvec *pk,
                       uint8_t seed[KYBER_SYMBYTES],
-                      const uint8_t packedpk[KYBER_INDCPA_PUBLICKEYBYTES], gcry_kyber_param_t const* param)
+                      const uint8_t* packedpk, gcry_kyber_param_t const* param)
 {
   gcry_kyber_polyvec_frombytes(pk, packedpk, param);
   memcpy(seed, packedpk + param->polyvec_bytes, KYBER_SYMBYTES);
@@ -53,7 +53,7 @@ static void unpack_pk(gcry_kyber_polyvec *pk,
 * Arguments:   - uint8_t *r: pointer to output serialized secret key
 *              - gcry_kyber_polyvec *sk: pointer to input vector of polynomials (secret key)
 **************************************************/
-static void pack_sk(uint8_t r[KYBER_INDCPA_SECRETKEYBYTES], gcry_kyber_polyvec *sk, gcry_kyber_param_t const* param)
+static void pack_sk(uint8_t* r, gcry_kyber_polyvec *sk, gcry_kyber_param_t const* param)
 {
   gcry_kyber_polyvec_tobytes(r, sk, param);
 }
@@ -66,7 +66,7 @@ static void pack_sk(uint8_t r[KYBER_INDCPA_SECRETKEYBYTES], gcry_kyber_polyvec *
 * Arguments:   - gcry_kyber_polyvec *sk: pointer to output vector of polynomials (secret key)
 *              - const uint8_t *packedsk: pointer to input serialized secret key
 **************************************************/
-static void unpack_sk(gcry_kyber_polyvec *sk, const uint8_t packedsk[KYBER_INDCPA_SECRETKEYBYTES], gcry_kyber_param_t const* param)
+static void unpack_sk(gcry_kyber_polyvec *sk, const uint8_t* packedsk, gcry_kyber_param_t const* param)
 {
   gcry_kyber_polyvec_frombytes(sk, packedsk, param);
 }
@@ -82,10 +82,10 @@ static void unpack_sk(gcry_kyber_polyvec *sk, const uint8_t packedsk[KYBER_INDCP
 *              poly *pk: pointer to the input vector of polynomials b
 *              poly *v: pointer to the input polynomial v
 **************************************************/
-static void pack_ciphertext(uint8_t r[KYBER_INDCPA_BYTES], gcry_kyber_polyvec *b, poly *v, gcry_kyber_param_t const* param)
+static void pack_ciphertext(uint8_t*  r, gcry_kyber_polyvec *b, poly *v, gcry_kyber_param_t const* param)
 {
   gcry_kyber_polyvec_compress(r, b, param);
-  poly_compress(r+KYBER_POLYVECCOMPRESSEDBYTES, v);
+  poly_compress(r+param->polyvec_compressed_bytes, v, param);
 }
 
 /*************************************************
@@ -98,10 +98,10 @@ static void pack_ciphertext(uint8_t r[KYBER_INDCPA_BYTES], gcry_kyber_polyvec *b
 *              - poly *v: pointer to the output polynomial v
 *              - const uint8_t *c: pointer to the input serialized ciphertext
 **************************************************/
-static void unpack_ciphertext(gcry_kyber_polyvec *b, poly *v, const uint8_t c[KYBER_INDCPA_BYTES], gcry_kyber_param_t const* param)
+static void unpack_ciphertext(gcry_kyber_polyvec *b, poly *v, const uint8_t* c, gcry_kyber_param_t const* param)
 {
   gcry_kyber_polyvec_decompress(b, c, param);
-  poly_decompress(v, c+KYBER_POLYVECCOMPRESSEDBYTES);
+  poly_decompress(v, c+param->polyvec_compressed_bytes, param);
 }
 
 /*************************************************
@@ -140,8 +140,8 @@ static unsigned int rej_uniform(int16_t *r,
   return ctr;
 }
 
-#define gen_a(A,B)  gen_matrix(A,B,0)
-#define gen_at(A,B) gen_matrix(A,B,1)
+#define gen_a(A,B,param)  gen_matrix(A,B,0, param)
+#define gen_at(A,B,param) gen_matrix(A,B,1, param)
 
 /*************************************************
 * Name:        gen_matrix
@@ -157,15 +157,15 @@ static unsigned int rej_uniform(int16_t *r,
 **************************************************/
 #define GEN_MATRIX_NBLOCKS ((12*KYBER_N/8*(1 << 12)/KYBER_Q + XOF_BLOCKBYTES)/XOF_BLOCKBYTES)
 // Not static for benchmarking
-void gen_matrix(gcry_kyber_polyvec *a, const uint8_t seed[KYBER_SYMBYTES], int transposed)
+void gen_matrix(gcry_kyber_polyvec *a, const uint8_t seed[KYBER_SYMBYTES], int transposed, gcry_kyber_param_t const* param)
 {
   unsigned int ctr, i, j, k;
   unsigned int buflen, off;
   uint8_t buf[GEN_MATRIX_NBLOCKS*XOF_BLOCKBYTES+2];
   xof_state state;
 
-  for(i=0;i<KYBER_K;i++) {
-    for(j=0;j<KYBER_K;j++) {
+  for(i=0;i<param->k;i++) {
+    for(j=0;j<param->k;j++) {
       if(transposed)
         xof_absorb(&state, seed, i, j);
       else
@@ -227,18 +227,23 @@ gcry_error_t indcpa_keypair(uint8_t* pk,
 
   _gcry_md_hash_buffer(GCRY_MD_SHA3_512, buf, coins, KYBER_SYMBYTES);
 
-  gen_a(a, publicseed);
+  gen_a(a, publicseed, param);
 
   for(i=0;i<param->k;i++)
+  {
     poly_getnoise_eta1(&skpv.vec[i], noiseseed, nonce++);
+  }
   for(i=0;i<param->k;i++)
+  {
     poly_getnoise_eta1(&e.vec[i], noiseseed, nonce++);
+  }
 
   gcry_kyber_polyvec_ntt(&skpv, param);
   gcry_kyber_polyvec_ntt(&e, param);
 
   // matrix-vector multiplication
-  for(i=0;i<param->k;i++) {
+  for(i=0;i<param->k;i++)
+  {
     gcry_kyber_polyvec_basemul_acc_montgomery(&pkpv.vec[i], &a[i], &skpv, param);
     poly_tomont(&pkpv.vec[i]);
   }
@@ -273,9 +278,9 @@ end:
 *                                      (of length KYBER_SYMBYTES) to deterministically
 *                                      generate all randomness
 **************************************************/
-gcry_error_t indcpa_enc(uint8_t c[KYBER_INDCPA_BYTES],
-                const uint8_t m[KYBER_INDCPA_MSGBYTES],
-                const uint8_t pk[KYBER_INDCPA_PUBLICKEYBYTES],
+gcry_error_t indcpa_enc(uint8_t* c,
+                const uint8_t* m,
+                const uint8_t* pk,
                 const uint8_t coins[KYBER_SYMBYTES],
                 gcry_kyber_param_t const* param
                 )
@@ -300,19 +305,25 @@ gcry_error_t indcpa_enc(uint8_t c[KYBER_INDCPA_BYTES],
 
   unpack_pk(&pkpv, seed, pk, param);
   poly_frommsg(&k, m);
-  gen_at(at, seed);
+  gen_at(at, seed, param);
 
-  for(i=0;i<KYBER_K;i++)
+  for(i=0;i<param->k;i++)
+  {
     poly_getnoise_eta1(sp.vec+i, coins, nonce++);
-  for(i=0;i<KYBER_K;i++)
+  }
+  for(i=0;i<param->k;i++)
+  {
     poly_getnoise_eta2(ep.vec+i, coins, nonce++);
+  }
   poly_getnoise_eta2(&epp, coins, nonce++);
 
   gcry_kyber_polyvec_ntt(&sp, param);
 
   // matrix-vector multiplication
-  for(i=0;i<KYBER_K;i++)
+  for(i=0;i<param->k;i++)
+  {
     gcry_kyber_polyvec_basemul_acc_montgomery(&b.vec[i], &at[i], &sp, param);
+  }
 
   gcry_kyber_polyvec_basemul_acc_montgomery(&v, &pkpv, &sp, param);
 
