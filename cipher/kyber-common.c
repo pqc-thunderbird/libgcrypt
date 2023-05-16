@@ -1,4 +1,5 @@
 
+//#include <config.h>
 #include "kyber-common.h"
 #include "kyber_params.h"
 #include "kyber_indcpa.h"
@@ -10,149 +11,135 @@
 #include "kyber_randombytes.h"
 #include "gcrypt.h"
 
+#include "g10lib.h"
 
-int crypto_kem_keypair_derand(uint8_t *pk,
-                       uint8_t *sk,
-                       gcry_kyber_param_t* param,
-                       uint8_t* coins
-                       )
+
+gcry_err_code_t crypto_kem_keypair_derand(uint8_t *pk, uint8_t *sk, gcry_kyber_param_t *param, uint8_t *coins)
 {
-  indcpa_keypair(pk, sk, param, coins);
-  /*for(i=0;i<KYBER_INDCPA_PUBLICKEYBYTES;i++)
-    sk[i+KYBER_INDCPA_SECRETKEYBYTES] = pk[i];*/
-  memcpy(&sk[param->indcpa_secret_key_bytes], pk, param->public_key_bytes);
-  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
-  /* Value z for pseudo-random output on reject */
-  //randombytes(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES);
-  memcpy(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, coins+KYBER_SYMBYTES, KYBER_SYMBYTES);
-  return 0;
-
-#if 0
-  memcpy(sk+KYBER_INDCPA_SECRETKEYBYTES, pk, KYBER_PUBLICKEYBYTES);
-  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
-  /* Value z for pseudo-random output on reject */
-  memcpy(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, coins+KYBER_SYMBYTES, KYBER_SYMBYTES);
-#endif
-}
-
-static gcry_err_code_t kyber_shake256_rkprf(uint8_t out[KYBER_SSBYTES], const uint8_t key[KYBER_SYMBYTES], const uint8_t input[KYBER_CIPHERTEXTBYTES], size_t input_length)
-{
-  //keccak_state s;
-  gcry_md_hd_t h;
-  gcry_err_code_t ec = 0;
-  if((ec = _gcry_md_open(&h, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE)))
-  {
+    gpg_err_code_t ec = 0;
+    if ((ec = indcpa_keypair(pk, sk, param, coins)))
+    {
+        return ec;
+    }
+    memcpy(&sk[param->indcpa_secret_key_bytes], pk, param->public_key_bytes);
+    _gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk + KYBER_SECRETKEYBYTES - 2 * KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+    /* Value z for pseudo-random output on reject */
+    // randombytes(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES);
+    // memcpy(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, coins+KYBER_SYMBYTES, KYBER_SYMBYTES);
+    memcpy(sk + param->secret_key_bytes - KYBER_SYMBYTES, coins + KYBER_SYMBYTES, KYBER_SYMBYTES);
     return ec;
-  }
-  _gcry_md_write(h, key, KYBER_SYMBYTES);
-  _gcry_md_write(h, input, input_length);
-  if((ec = _gcry_md_extract(h, GCRY_MD_SHAKE256, out, KYBER_SSBYTES)))
-  {
-   goto cleanup;
-  }
-  //shake256_init(&s);
-  //shake256_absorb(&s, key, KYBER_SYMBYTES);
-  //shake256_absorb(&s, input, KYBER_CIPHERTEXTBYTES);
-  //shake256_finalize(&s);
-  //shake256_squeeze(out, KYBER_SSBYTES, &s);
+}
+
+static gcry_err_code_t kyber_shake256_rkprf(uint8_t out[KYBER_SSBYTES],
+                                            const uint8_t key[KYBER_SYMBYTES],
+                                            const uint8_t input[KYBER_CIPHERTEXTBYTES],
+                                            size_t input_length)
+{
+    // keccak_state s;
+    gcry_md_hd_t h;
+    gcry_err_code_t ec = 0;
+    if ((ec = _gcry_md_open(&h, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE)))
+    {
+        return ec;
+    }
+    _gcry_md_write(h, key, KYBER_SYMBYTES);
+    _gcry_md_write(h, input, input_length);
+    if ((ec = _gcry_md_extract(h, GCRY_MD_SHAKE256, out, KYBER_SSBYTES)))
+    {
+        goto cleanup;
+    }
+    // shake256_init(&s);
+    // shake256_absorb(&s, key, KYBER_SYMBYTES);
+    // shake256_absorb(&s, input, KYBER_CIPHERTEXTBYTES);
+    // shake256_finalize(&s);
+    // shake256_squeeze(out, KYBER_SSBYTES, &s);
 cleanup:
-  _gcry_md_close(h);
-  return ec;
+    _gcry_md_close(h);
+    return ec;
 }
 
 
-int crypto_kem_keypair(uint8_t *pk,
-                       uint8_t *sk,
-                       gcry_kyber_param_t* param)
+gcry_err_code_t crypto_kem_keypair(uint8_t *pk, uint8_t *sk, gcry_kyber_param_t *param)
 {
-  uint8_t coins[2*KYBER_SYMBYTES];
-  randombytes(coins, 2*KYBER_SYMBYTES);
-  crypto_kem_keypair_derand(pk, sk, param, coins);
-  return 0;
+    uint8_t coins[2 * KYBER_SYMBYTES];
+    _gcry_randomize(coins, 2 * KYBER_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
+    return crypto_kem_keypair_derand(pk, sk, param, coins);
 }
 
-int crypto_kem_dec(uint8_t *ss,
-                   const uint8_t *ct,
-                   const uint8_t *sk,
-                   gcry_kyber_param_t* param
-                   )
+gcry_err_code_t crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk, gcry_kyber_param_t *param)
 {
-
-  size_t i;
-  int fail;
-  uint8_t buf[2*KYBER_SYMBYTES];
-  /* Will contain key, coins */
-  uint8_t kr[2*KYBER_SYMBYTES];
-  uint8_t cmp[KYBER_CIPHERTEXTBYTES];
-  const uint8_t *pk = sk+KYBER_INDCPA_SECRETKEYBYTES;
-
-  indcpa_dec(buf, ct, sk, param);
-
-  /* Multitarget countermeasure for coins + contributory KEM */
-  for(i=0;i<KYBER_SYMBYTES;i++)
-    buf[KYBER_SYMBYTES+i] = sk[KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES+i];
-  _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2*KYBER_SYMBYTES);
-
-  /* coins are in kr+KYBER_SYMBYTES */
-  indcpa_enc(cmp, buf, pk, kr+KYBER_SYMBYTES, param);
-
-  fail = verify(ct, cmp, KYBER_CIPHERTEXTBYTES);
-
-#if 0
-  /* overwrite coins in kr with H(c) */
-  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, kr+KYBER_SYMBYTES, ct, KYBER_CIPHERTEXTBYTES);
-
-  /* Overwrite pre-k with z on re-encryption failure */
-  cmov(kr, sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, KYBER_SYMBYTES, fail);
-
-  /* hash concatenation of pre-k and H(c) to k */
-  kdf(ss, kr, 2*KYBER_SYMBYTES);
-#endif
-
-  /* Compute rejection key */
-  //kyber_shake256_rkprf(ss,sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES,ct, param->ciphertext_bytes);
-  kyber_shake256_rkprf(ss,sk+param->secret_key_bytes - KYBER_SYMBYTES, ct, param->ciphertext_bytes);
-
-  /* Copy true key to return buffer if fail is false */
-  cmov(ss,kr,KYBER_SYMBYTES,!fail);
-  return 0;
-}
-
-int kyber_kem_enc(uint8_t *ct,
-                   uint8_t *ss,
-                   const uint8_t *pk,
-                   gcry_kyber_param_t* param
-                   )
-{
-  uint8_t coins[KYBER_SYMBYTES];
-  randombytes(coins, KYBER_SYMBYTES);
-  kyber_kem_enc_derand(ct, ss, pk, param, coins);
-  return 0;
-}
-
-int kyber_kem_enc_derand(uint8_t *ct,
-                   uint8_t *ss,
-                   const uint8_t *pk,
-                   gcry_kyber_param_t* param,
-                   uint8_t * coins
-                   )
-{
-    uint8_t buf[2*KYBER_SYMBYTES];
+    gcry_err_code_t ec = 0;
+    int fail;
+    uint8_t buf[2 * KYBER_SYMBYTES];
     /* Will contain key, coins */
-    uint8_t kr[2*KYBER_SYMBYTES];
+    uint8_t kr[2 * KYBER_SYMBYTES];
 
-    //randombytes(buf, KYBER_SYMBYTES);
+    uint8_t *cmp = NULL;
+    // const uint8_t *pk = sk+KYBER_INDCPA_SECRETKEYBYTES;
+    const uint8_t *pk = sk + param->indcpa_secret_key_bytes;
+
+    cmp = xtrymalloc(param->ciphertext_bytes);
+    if ((ec = indcpa_dec(buf, ct, sk, param)))
+    {
+        goto end;
+    }
+
+    /* Multitarget countermeasure for coins + contributory KEM */
+    memcpy(buf + KYBER_SYMBYTES, sk + param->secret_key_bytes - 2 * KYBER_SYMBYTES, KYBER_SYMBYTES);
+    _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2 * KYBER_SYMBYTES);
+
+    /* coins are in kr+KYBER_SYMBYTES */
+    if ((ec = indcpa_enc(cmp, buf, pk, kr + KYBER_SYMBYTES, param)))
+    {
+        goto end;
+    }
+
+    fail = verify(ct, cmp, KYBER_CIPHERTEXTBYTES);
+
+
+    /* Compute rejection key */
+    if ((ec = kyber_shake256_rkprf(ss, sk + param->secret_key_bytes - KYBER_SYMBYTES, ct, param->ciphertext_bytes)))
+    {
+        goto end;
+    }
+
+    /* Copy true key to return buffer if fail is false */
+    cmov(ss, kr, KYBER_SYMBYTES, !fail);
+
+end:
+    xfree(cmp);
+    return ec;
+}
+
+gcry_err_code_t kyber_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk, gcry_kyber_param_t *param)
+{
+    uint8_t coins[KYBER_SYMBYTES];
+    _gcry_randomize(coins, KYBER_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
+    return kyber_kem_enc_derand(ct, ss, pk, param, coins);
+}
+
+gcry_err_code_t kyber_kem_enc_derand(
+    uint8_t *ct, uint8_t *ss, const uint8_t *pk, gcry_kyber_param_t *param, uint8_t *coins)
+{
+    gpg_err_code_t ec = 0;
+    uint8_t buf[2 * KYBER_SYMBYTES];
+    /* Will contain key, coins */
+    uint8_t kr[2 * KYBER_SYMBYTES];
+
     /* Don't release system RNG output */
     _gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf, coins, KYBER_SYMBYTES);
 
     /* Multitarget countermeasure for coins + contributory KEM */
     //_gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
-    _gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+    _gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf + KYBER_SYMBYTES, pk, param->public_key_bytes);
     //_gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2*KYBER_SYMBYTES);
-    _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2*KYBER_SYMBYTES);
+    _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2 * KYBER_SYMBYTES);
 
     /* coins are in kr+KYBER_SYMBYTES */
-    indcpa_enc(ct, buf, pk, kr+KYBER_SYMBYTES, param);
+    if ((ec = indcpa_enc(ct, buf, pk, kr + KYBER_SYMBYTES, param)))
+    {
+        goto end;
+    }
 
 #if 0
     /* overwrite coins in kr with H(c) */
@@ -161,6 +148,7 @@ int kyber_kem_enc_derand(uint8_t *ct,
     kdf(ss, kr, 2*KYBER_SYMBYTES);
 #endif
 
-    memcpy(ss,kr,KYBER_SYMBYTES);
-    return 0;
+    memcpy(ss, kr, KYBER_SYMBYTES);
+end:
+    return ec;
 }

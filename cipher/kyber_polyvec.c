@@ -77,7 +77,7 @@ void gcry_kyber_polyvec_destroy(gcry_kyber_polyvec *polyvec)
 *                            (needs space for KYBER_POLYVECCOMPRESSEDBYTES)
 *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials
 **************************************************/
-void gcry_kyber_polyvec_compress(uint8_t r[KYBER_POLYVECCOMPRESSEDBYTES], const gcry_kyber_polyvec *a, gcry_kyber_param_t const* param)
+void gcry_kyber_polyvec_compress(uint8_t* r, const gcry_kyber_polyvec *a, gcry_kyber_param_t const* param)
 {
     unsigned int i,j,k;
 
@@ -140,7 +140,7 @@ void gcry_kyber_polyvec_compress(uint8_t r[KYBER_POLYVECCOMPRESSEDBYTES], const 
 *              - const uint8_t *a: pointer to input byte array
 *                                  (of length KYBER_POLYVECCOMPRESSEDBYTES)
 **************************************************/
-void gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r, const uint8_t a[KYBER_POLYVECCOMPRESSEDBYTES], gcry_kyber_param_t const* param)
+void gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r, const uint8_t* a, gcry_kyber_param_t const* param)
 {
     unsigned int i,j,k;
 
@@ -193,12 +193,12 @@ void gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r, const uint8_t a[KYBER_
 *                            (needs space for KYBER_POLYVECBYTES)
 *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials
 **************************************************/
-void gcry_kyber_polyvec_tobytes(uint8_t r[KYBER_POLYVECBYTES], const gcry_kyber_polyvec *a, gcry_kyber_param_t const* param)
+void gcry_kyber_polyvec_tobytes(uint8_t* r, const gcry_kyber_polyvec *a, gcry_kyber_param_t const* param)
 {
   unsigned int i;
   for(i=0;i<param->k;i++)
   {
-    poly_tobytes(r+i*KYBER_POLYBYTES, &a->vec[i]);
+    poly_tobytes(r+i*GCRY_KYBER_POLYBYTES, &a->vec[i]);
   }
 }
 
@@ -212,11 +212,11 @@ void gcry_kyber_polyvec_tobytes(uint8_t r[KYBER_POLYVECBYTES], const gcry_kyber_
 *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials
 *                                  (of length KYBER_POLYVECBYTES)
 **************************************************/
-void gcry_kyber_polyvec_frombytes(gcry_kyber_polyvec *r, const uint8_t a[KYBER_POLYVECBYTES], gcry_kyber_param_t const* param)
+void gcry_kyber_polyvec_frombytes(gcry_kyber_polyvec *r, const uint8_t* a, gcry_kyber_param_t const* param)
 {
   unsigned int i;
   for(i=0;i<param->k;i++)
-    poly_frombytes(&r->vec[i], a+i*KYBER_POLYBYTES);
+    poly_frombytes(&r->vec[i], a+i*GCRY_KYBER_POLYBYTES);
 }
 
 /*************************************************
@@ -264,7 +264,8 @@ void gcry_kyber_polyvec_basemul_acc_montgomery(poly *r, const gcry_kyber_polyvec
   poly t;
 
   poly_basemul_montgomery(r, &a->vec[0], &b->vec[0]);
-  for(i=1;i<param->k;i++) {
+  for(i=1;i<param->k;i++)
+  {
     poly_basemul_montgomery(&t, &a->vec[i], &b->vec[i]);
     poly_add(r, r, &t);
   }
@@ -285,7 +286,9 @@ void gcry_kyber_polyvec_reduce(gcry_kyber_polyvec *r, gcry_kyber_param_t const* 
 {
   unsigned int i;
   for(i=0;i<param->k;i++)
+  {
     poly_reduce(&r->vec[i]);
+  }
 }
 
 /*************************************************
@@ -301,5 +304,7 @@ void gcry_kyber_polyvec_add(gcry_kyber_polyvec *r, const gcry_kyber_polyvec *a, 
 {
   unsigned int i;
   for(i=0;i<param->k;i++)
+  {
     poly_add(&r->vec[i], &a->vec[i], &b->vec[i]);
+  }
 }

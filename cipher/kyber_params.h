@@ -46,8 +46,8 @@ typedef struct
 #define KYBER_SYMBYTES 32   /* size in bytes of hashes, and seeds */
 #define KYBER_SSBYTES  32   /* size in bytes of shared key */
 
-#define KYBER_POLYBYTES		384
-#define KYBER_POLYVECBYTES	(KYBER_K * KYBER_POLYBYTES)
+#define GCRY_KYBER_POLYBYTES		384
+#define KYBER_POLYVECBYTES	(KYBER_K * GCRY_KYBER_POLYBYTES)
 
 #if KYBER_K == 2
 #define KYBER_ETA1 3

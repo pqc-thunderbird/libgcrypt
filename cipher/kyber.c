@@ -60,7 +60,7 @@ static gcry_err_code_t get_kyber_param_from_bit_size(size_t nbits, gcry_kyber_pa
       return GPG_ERR_INV_ARG;
   }
 
-  param->polyvec_bytes = param->k * KYBER_POLYBYTES;
+  param->polyvec_bytes = param->k * GCRY_KYBER_POLYBYTES;
   param->public_key_bytes = param->polyvec_bytes + KYBER_SYMBYTES;
   param->indcpa_secret_key_bytes = param->polyvec_bytes;
   param->ciphertext_bytes = param->poly_compressed_bytes + param->polyvec_compressed_bytes;

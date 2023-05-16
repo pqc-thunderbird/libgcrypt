@@ -115,7 +115,7 @@ void poly_decompress(poly *r, const uint8_t* a, gcry_kyber_param_t const* param)
 * Description: Serialization of a polynomial
 *
 * Arguments:   - uint8_t *r: pointer to output byte array
-*                            (needs space for KYBER_POLYBYTES bytes)
+*                            (needs space for GCRY_KYBER_POLYBYTES bytes)
 *              - const poly *a: pointer to input polynomial
 **************************************************/
 void poly_tobytes(uint8_t* r, const poly *a)
@@ -144,7 +144,7 @@ void poly_tobytes(uint8_t* r, const poly *a)
 *
 * Arguments:   - poly *r: pointer to output polynomial
 *              - const uint8_t *a: pointer to input byte array
-*                                  (of KYBER_POLYBYTES bytes)
+*                                  (of GCRY_KYBER_POLYBYTES bytes)
 **************************************************/
 void poly_frombytes(poly *r, const uint8_t * a)
 {
