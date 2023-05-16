@@ -63,6 +63,7 @@ typedef struct
 #define KYBER_POLYVECCOMPRESSEDBYTES (KYBER_K * 352)
 #endif
 
+#define KYBER_ETA1_MAX 3
 #define KYBER_ETA2 2
 
 #define KYBER_INDCPA_MSGBYTES       (KYBER_SYMBYTES)

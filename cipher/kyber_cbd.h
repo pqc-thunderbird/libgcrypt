@@ -5,10 +5,8 @@
 #include "kyber_params.h"
 #include "kyber_poly.h"
 
-#define poly_cbd_eta1 KYBER_NAMESPACE(poly_cbd_eta1)
-void poly_cbd_eta1(poly *r, const uint8_t buf[KYBER_ETA1*KYBER_N/4]);
+void poly_cbd_eta1(poly *r, const uint8_t buf[KYBER_ETA1*KYBER_N/4], gcry_kyber_param_t const* param);
 
-#define poly_cbd_eta2 KYBER_NAMESPACE(poly_cbd_eta2)
 void poly_cbd_eta2(poly *r, const uint8_t buf[KYBER_ETA2*KYBER_N/4]);
 
 #endif
