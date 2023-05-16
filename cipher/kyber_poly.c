@@ -308,7 +308,9 @@ void poly_tomont(poly *r)
   unsigned int i;
   const int16_t f = (1ULL << 32) % KYBER_Q;
   for(i=0;i<KYBER_N;i++)
+  {
     r->coeffs[i] = montgomery_reduce((int32_t)r->coeffs[i]*f);
+  }
 }
 
 /*************************************************
@@ -323,7 +325,9 @@ void poly_reduce(poly *r)
 {
   unsigned int i;
   for(i=0;i<KYBER_N;i++)
+  {
     r->coeffs[i] = barrett_reduce(r->coeffs[i]);
+  }
 }
 
 /*************************************************
@@ -339,7 +343,9 @@ void poly_add(poly *r, const poly *a, const poly *b)
 {
   unsigned int i;
   for(i=0;i<KYBER_N;i++)
+  {
     r->coeffs[i] = a->coeffs[i] + b->coeffs[i];
+  }
 }
 
 /*************************************************
@@ -355,5 +361,7 @@ void poly_sub(poly *r, const poly *a, const poly *b)
 {
   unsigned int i;
   for(i=0;i<KYBER_N;i++)
+  {
     r->coeffs[i] = a->coeffs[i] - b->coeffs[i];
+  }
 }

@@ -103,7 +103,7 @@ static void cbd3(poly *r, const uint8_t buf[3*KYBER_N/4])
   }
 }
 
-void poly_cbd_eta1(poly *r, const uint8_t buf[KYBER_ETA1*KYBER_N/4], gcry_kyber_param_t const* param)
+void poly_cbd_eta1(poly *r, const uint8_t* buf, gcry_kyber_param_t const* param)
 {
     if(param->eta1 == 2)
     {
@@ -117,9 +117,5 @@ void poly_cbd_eta1(poly *r, const uint8_t buf[KYBER_ETA1*KYBER_N/4], gcry_kyber_
 
 void poly_cbd_eta2(poly *r, const uint8_t buf[KYBER_ETA2*KYBER_N/4])
 {
-#if KYBER_ETA2 == 2
   cbd2(r, buf);
-#else
-#error "This implementation requires eta2 = 2"
-#endif
 }
