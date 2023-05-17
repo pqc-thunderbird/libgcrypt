@@ -15,3 +15,4 @@ NamespaceIndentation: None
 SpaceBeforeCpp11BracedList: 'true'
 UseTab: Never
 PointerAlignment: Right
+ColumnLimit: 79
