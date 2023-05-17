@@ -21,11 +21,11 @@
  **************************************************/
 static void pack_pk(uint8_t *r,
                     gcry_kyber_polyvec *pk,
-                    const uint8_t seed[KYBER_SYMBYTES],
+                    const uint8_t seed[GCRY_KYBER_SYMBYTES],
                     gcry_kyber_param_t const *param)
 {
   gcry_kyber_polyvec_tobytes(r, pk, param);
-  memcpy(r + param->polyvec_bytes, seed, KYBER_SYMBYTES);
+  memcpy(r + param->polyvec_bytes, seed, GCRY_KYBER_SYMBYTES);
 }
 
 /*************************************************
@@ -39,12 +39,12 @@ static void pack_pk(uint8_t *r,
  *              - const uint8_t *packedpk: pointer to input serialized public key
  **************************************************/
 static void unpack_pk(gcry_kyber_polyvec *pk,
-                      uint8_t seed[KYBER_SYMBYTES],
+                      uint8_t seed[GCRY_KYBER_SYMBYTES],
                       const uint8_t *packedpk,
                       gcry_kyber_param_t const *param)
 {
   gcry_kyber_polyvec_frombytes(pk, packedpk, param);
-  memcpy(seed, packedpk + param->polyvec_bytes, KYBER_SYMBYTES);
+  memcpy(seed, packedpk + param->polyvec_bytes, GCRY_KYBER_SYMBYTES);
 }
 
 /*************************************************
@@ -158,7 +158,7 @@ static unsigned int rej_uniform(int16_t *r, unsigned int len, const uint8_t *buf
 #define GEN_MATRIX_NBLOCKS ((12 * KYBER_N / 8 * (1 << 12) / KYBER_Q + XOF_BLOCKBYTES) / XOF_BLOCKBYTES)
 // Not static for benchmarking
 void gen_matrix(gcry_kyber_polyvec *a,
-                const uint8_t seed[KYBER_SYMBYTES],
+                const uint8_t seed[GCRY_KYBER_SYMBYTES],
                 int transposed,
                 gcry_kyber_param_t const *param)
 {
@@ -208,9 +208,9 @@ void gen_matrix(gcry_kyber_polyvec *a,
 gcry_error_t indcpa_keypair(uint8_t *pk, uint8_t *sk, gcry_kyber_param_t const *param, uint8_t *coins)
 {
   unsigned int i;
-  uint8_t buf[2 * KYBER_SYMBYTES];
+  uint8_t buf[2 * GCRY_KYBER_SYMBYTES];
   const uint8_t *publicseed = buf;
-  const uint8_t *noiseseed  = buf + KYBER_SYMBYTES;
+  const uint8_t *noiseseed  = buf + GCRY_KYBER_SYMBYTES;
   uint8_t nonce             = 0;
   gcry_kyber_polyvec *a = NULL, e = {.vec = NULL}, pkpv = {.vec = NULL}, skpv = {.vec = NULL};
   gcry_error_t ec = 0;
@@ -223,7 +223,7 @@ gcry_error_t indcpa_keypair(uint8_t *pk, uint8_t *sk, gcry_kyber_param_t const *
     }
 
 
-  _gcry_md_hash_buffer(GCRY_MD_SHA3_512, buf, coins, KYBER_SYMBYTES);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_512, buf, coins, GCRY_KYBER_SYMBYTES);
 
   gen_a(a, publicseed, param);
 
@@ -269,24 +269,25 @@ end:
  * Arguments:   - uint8_t *c: pointer to output ciphertext
  *                            (of length KYBER_INDCPA_BYTES bytes)
  *              - const uint8_t *m: pointer to input message
- *                                  (of length KYBER_INDCPA_MSGBYTES bytes)
+ *                                  (of length GCRY_KYBER_INDCPA_MSGBYTES bytes)
  *              - const uint8_t *pk: pointer to input public key
  *                                   (of length KYBER_INDCPA_PUBLICKEYBYTES)
  *              - const uint8_t *coins: pointer to input random coins used as seed
- *                                      (of length KYBER_SYMBYTES) to deterministically
+ *                                      (of length GCRY_KYBER_SYMBYTES) to deterministically
  *                                      generate all randomness
  **************************************************/
 gcry_error_t indcpa_enc(uint8_t *c,
                         const uint8_t *m,
                         const uint8_t *pk,
-                        const uint8_t coins[KYBER_SYMBYTES],
+                        const uint8_t coins[GCRY_KYBER_SYMBYTES],
                         gcry_kyber_param_t const *param)
 {
   unsigned int i;
-  uint8_t seed[KYBER_SYMBYTES];
+  uint8_t seed[GCRY_KYBER_SYMBYTES];
   uint8_t nonce         = 0;
   gcry_kyber_polyvec sp = {.vec = NULL}, pkpv = {.vec = NULL}, ep = {.vec = NULL}, *at = NULL, b = {.vec = NULL};
   gcry_error_t ec = 0;
+  poly v, k, epp;
 
   if ((ec = gcry_kyber_polyvec_create(&sp, param)) || (ec = gcry_kyber_polyvec_create(&pkpv, param)) ||
       (ec = gcry_kyber_polyvec_create(&ep, param)) || (ec = gcry_kyber_polyvec_create(&b, param)) ||
@@ -296,7 +297,6 @@ gcry_error_t indcpa_enc(uint8_t *c,
       goto end;
     }
 
-  poly v, k, epp;
 
   unpack_pk(&pkpv, seed, pk, param);
   poly_frommsg(&k, m);
@@ -350,7 +350,7 @@ end:
  *              public-key encryption scheme underlying Kyber.
  *
  * Arguments:   - uint8_t *m: pointer to output decrypted message
- *                            (of length KYBER_INDCPA_MSGBYTES)
+ *                            (of length GCRY_KYBER_INDCPA_MSGBYTES)
  *              - const uint8_t *c: pointer to input ciphertext
  *                                  (of length KYBER_INDCPA_BYTES)
  *              - const uint8_t *sk: pointer to input secret key

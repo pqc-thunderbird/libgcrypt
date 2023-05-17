@@ -9,13 +9,13 @@
 gcry_error_t gcry_kyber_polymatrix_create(gcry_kyber_polyvec **polymat, gcry_kyber_param_t const* param)
 {
     gcry_error_t ec = 0;
+   unsigned i;
 
    if(!(*polymat = xtrymalloc(sizeof(**polymat) * param->k)))
    {
        return gpg_error_from_syserror();
    }
    //memset((polymat)[0], 0, sizeof(**polymat) * param->k);
-   unsigned i;
    for(i = 0; i < param->k; i++)
    {
        (*polymat)[i].vec =  NULL;

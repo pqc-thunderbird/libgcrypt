@@ -43,7 +43,7 @@
 // test-utils.h must be included after t-common.h
 #include "test-utils.h"
 
-static void test_hex_decoding()
+static void test_hex_decoding(void)
 {
   const char* hex1 = "value = FF00a0";
   const char* hex2 = "value=FF00a0";
@@ -90,7 +90,7 @@ show_sexp (const char *prefix, gcry_sexp_t a)
 #endif
 //static void read_test_vector()
 
-static int check_kyber_gen_enc_dec()
+static int check_kyber_gen_enc_dec(void)
 {
 
   gcry_sexp_t skey, pkey;
@@ -189,21 +189,14 @@ static void check_kyber_kat(const char * fname)
     FILE *fp;
     int lineno = 0;
     char *line;
-    //unsigned char* public_key = NULL, *private_key = , *ciphertext, *shared_secret;
-    //size_t public_key_len, private_key_len, ciphertext_len, shared_secret_len;
-
-    info ("Checking Kyber KAT.\n");
-
-    fp = fopen (fname, "r");
-    if (!fp)
-        die ("error opening '%s': %s\n", fname, strerror (errno));
 
     enum {
         public_key_idx = 0,
         privat_key_idx = 1,
         ciphertext_idx = 2,
         shared_secret_idx = 3
-    } ;
+    };
+
     test_vec_desc_entry test_vec[] =
     {
         {
@@ -227,15 +220,27 @@ static void check_kyber_kat(const char * fname)
             0,
         }
     };
-
     size_t test_count = 0;
     gcry_sexp_t public_key_sx = NULL, private_key_sx = NULL, ciphertext_sx = NULL, shared_secret_expected_sx = NULL, shared_secret_sx = NULL;
+
+    //unsigned char* public_key = NULL, *private_key = , *ciphertext, *shared_secret;
+    //size_t public_key_len, private_key_len, ciphertext_len, shared_secret_len;
+
+    info ("Checking Kyber KAT.\n");
+
+    fp = fopen (fname, "r");
+    if (!fp)
+        die ("error opening '%s': %s\n", fname, strerror (errno));
+
+
     while ((line = read_textline (fp, &lineno)) && !(nb_kat_tests && nb_kat_tests <= test_count ))
     {
         gcry_sexp_t l;
         gcry_mpi_t ss_expected, ss;
         int have_flags;
         int rc;
+        int is_complete = 1;
+        gcry_error_t err;
         for(unsigned i = 0; i < sizeof(test_vec)/sizeof(test_vec[0]); i++)
         {
             test_vec_desc_entry *e = &test_vec[i];
@@ -259,7 +264,6 @@ static void check_kyber_kat(const char * fname)
         }
 
         // check if we completed one test vector:
-        int is_complete = 1;
         for(unsigned i = 0; i < sizeof(test_vec)/sizeof(test_vec[0]); i++)
         {
             is_complete &= (test_vec[i].result_buf != NULL);
@@ -275,7 +279,6 @@ static void check_kyber_kat(const char * fname)
             //printf("line '%s' COMPLETES a test vector\n", line);
         }
         test_count++;
-        gcry_error_t err;
         err = gcry_sexp_build (&private_key_sx, NULL,
                 "(private-key (kyber (s %b) (nbits%u) ))",
                 (int)test_vec[privat_key_idx].result_buf_len, test_vec[privat_key_idx].result_buf, 768, NULL
