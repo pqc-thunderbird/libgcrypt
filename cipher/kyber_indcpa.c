@@ -6,7 +6,6 @@
 #include "kyber_poly.h"
 #include "kyber_ntt.h"
 #include "kyber_symmetric.h"
-#include "kyber_randombytes.h"
 
 /*************************************************
  * Name:        pack_pk
@@ -157,7 +156,7 @@ static unsigned int rej_uniform(int16_t *r, unsigned int len, const uint8_t *buf
  **************************************************/
 #define GEN_MATRIX_NBLOCKS ((12 * KYBER_N / 8 * (1 << 12) / KYBER_Q + XOF_BLOCKBYTES) / XOF_BLOCKBYTES)
 // Not static for benchmarking
-void gen_matrix(gcry_kyber_polyvec *a,
+gcry_err_code_t gen_matrix(gcry_kyber_polyvec *a,
                 const uint8_t seed[GCRY_KYBER_SYMBYTES],
                 int transposed,
                 gcry_kyber_param_t const *param)
@@ -166,17 +165,41 @@ void gen_matrix(gcry_kyber_polyvec *a,
   unsigned int buflen, off;
   uint8_t buf[GEN_MATRIX_NBLOCKS * XOF_BLOCKBYTES + 2];
   xof_state state;
+  gcry_md_hd_t h;
+  gcry_err_code_t ec = 0;
+  if ((ec = _gcry_md_open(&h, GCRY_MD_SHAKE128, GCRY_MD_FLAG_SECURE)))
+    {
+      return ec;
+    }
 
   for (i = 0; i < param->k; i++)
     {
       for (j = 0; j < param->k; j++)
         {
           if (transposed)
+          {
+#define USE_OLD
+#ifdef USE_OLD
             xof_absorb(&state, seed, i, j);
+#else
+          _gcry_kyber_shake128_absorb(h, seed, i, j);
+#endif
+          }
           else
+          {
+#ifdef USE_OLD
             xof_absorb(&state, seed, j, i);
+#else
+          _gcry_kyber_shake128_absorb(h, seed, j, i);
 
+#endif
+          }
+
+#ifdef USE_OLD
           xof_squeezeblocks(buf, GEN_MATRIX_NBLOCKS, &state);
+#else
+          _gcry_kyber_shake128_squeezeblocks(h, buf, GEN_MATRIX_NBLOCKS);
+#endif
           buflen = GEN_MATRIX_NBLOCKS * XOF_BLOCKBYTES;
 
           ctr = rej_uniform(a[i].vec[j].coeffs, KYBER_N, buf, buflen);
@@ -185,13 +208,22 @@ void gen_matrix(gcry_kyber_polyvec *a,
             {
               off = buflen % 3;
               for (k = 0; k < off; k++)
+              {
                 buf[k] = buf[buflen - off + k];
+              }
+#ifdef USE_OLD
               xof_squeezeblocks(buf + off, 1, &state);
+#else
+
+              _gcry_kyber_shake128_squeezeblocks(h, buf + off, 1);
+#endif
               buflen = off + XOF_BLOCKBYTES;
               ctr += rej_uniform(a[i].vec[j].coeffs + ctr, KYBER_N - ctr, buf, buflen);
             }
         }
     }
+  _gcry_md_close(h);
+  return 0;
 }
 
 /*************************************************
@@ -219,13 +251,16 @@ gcry_error_t indcpa_keypair(uint8_t *pk, uint8_t *sk, gcry_kyber_param_t const *
       (ec = gcry_kyber_polyvec_create(&pkpv, param)) || (ec = gcry_kyber_polyvec_create(&skpv, param)))
     {
       ec = gpg_err_code_from_syserror();
-      goto end;
+      goto leave;
     }
 
 
   _gcry_md_hash_buffer(GCRY_MD_SHA3_512, buf, coins, GCRY_KYBER_SYMBYTES);
 
-  gen_a(a, publicseed, param);
+  if((ec = gen_a(a, publicseed, param)))
+  {
+      goto leave;
+  }
 
   for (i = 0; i < param->k; i++)
     {
@@ -251,7 +286,7 @@ gcry_error_t indcpa_keypair(uint8_t *pk, uint8_t *sk, gcry_kyber_param_t const *
 
   pack_sk(sk, &skpv, param);
   pack_pk(pk, &pkpv, publicseed, param);
-end:
+leave:
   gcry_kyber_polymatrix_destroy(&a, param);
   gcry_kyber_polyvec_destroy(&e);
   gcry_kyber_polyvec_destroy(&pkpv);
@@ -300,7 +335,10 @@ gcry_error_t indcpa_enc(uint8_t *c,
 
   unpack_pk(&pkpv, seed, pk, param);
   poly_frommsg(&k, m);
-  gen_at(at, seed, param);
+  if((ec = gen_at(at, seed, param)))
+  {
+      goto end;
+  }
 
   for (i = 0; i < param->k; i++)
     {
