@@ -22,7 +22,8 @@ gcry_err_code_t crypto_kem_keypair_derand(uint8_t *pk, uint8_t *sk, gcry_kyber_p
       return ec;
     }
   memcpy(&sk[param->indcpa_secret_key_bytes], pk, param->public_key_bytes);
-  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk + KYBER_SECRETKEYBYTES - 2 * KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+  //_gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk + KYBER_SECRETKEYBYTES - 2 * KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk + param->secret_key_bytes - 2 * KYBER_SYMBYTES, pk, param->public_key_bytes);
   /* Value z for pseudo-random output on reject */
   memcpy(sk + param->secret_key_bytes - KYBER_SYMBYTES, coins + KYBER_SYMBYTES, KYBER_SYMBYTES);
   return ec;
