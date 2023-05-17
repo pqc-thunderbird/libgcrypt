@@ -43,12 +43,12 @@ static gcry_err_code_t get_kyber_param_from_bit_size(size_t nbits,
     }
 
   param->polyvec_bytes           = param->k * GCRY_KYBER_POLYBYTES;
-  param->public_key_bytes        = param->polyvec_bytes + KYBER_SYMBYTES;
+  param->public_key_bytes        = param->polyvec_bytes + GCRY_KYBER_SYMBYTES;
   param->indcpa_secret_key_bytes = param->polyvec_bytes;
   param->ciphertext_bytes
       = param->poly_compressed_bytes + param->polyvec_compressed_bytes;
   param->secret_key_bytes = param->indcpa_secret_key_bytes
-                            + param->public_key_bytes + 2 * KYBER_SYMBYTES;
+                            + param->public_key_bytes + 2 * GCRY_KYBER_SYMBYTES;
 
   return 0;
 }
@@ -64,6 +64,7 @@ static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
   uint8_t *pk = 0, *sk = 0;
   unsigned int nbits;
   gcry_kyber_param_t param;
+  gcry_mpi_t sk_mpi = NULL, pk_mpi = NULL;
   ec = _gcry_pk_util_get_nbits(genparms, &nbits);
   if (ec)
     {
@@ -81,7 +82,6 @@ static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
     }
   crypto_kem_keypair(pk, sk, &param);
 
-  gcry_mpi_t sk_mpi = NULL, pk_mpi = NULL;
   // sk_mpi = mpi_new (0);
   // pk_mpi = mpi_new (0);
   sk_mpi = _gcry_mpi_set_opaque_copy(sk_mpi, sk, param.secret_key_bytes * 8);
@@ -114,8 +114,9 @@ leave:
 
 static gcry_err_code_t kyber_check_secret_key(gcry_sexp_t keyparms)
 {
-  keyparms          = keyparms;
+    /* TODOMTG: IMPLEMENT KEY CHECK */
   gpg_err_code_t ec = 0;
+  keyparms          = keyparms;
   return ec;
 }
 
@@ -137,6 +138,7 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
   gcry_mpi_t pk   = NULL;
   size_t nwritten = 0;
   unsigned int nbits;
+  gcry_kyber_param_t param;
 
   /* Extract the key MPI from the SEXP.  */
   ec = sexp_extract_param(keyparms, NULL, "/p", &pk, NULL);
@@ -146,7 +148,6 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
       goto leave;
     }
 
-  gcry_kyber_param_t param;
   ec = _gcry_pk_util_get_nbits(keyparms, &nbits);
   if (ec)
     {
@@ -220,6 +221,7 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
   size_t nwritten = 0;
 
   unsigned int nbits;
+  gcry_kyber_param_t param;
   /* Extract the key MPI from the SEXP.  */
   ec = sexp_extract_param(keyparms, NULL, "/s", &sk, NULL);
   if (ec)
@@ -234,7 +236,6 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
   if (ec)
     goto leave;
 
-  gcry_kyber_param_t param;
   ec = _gcry_pk_util_get_nbits(keyparms, &nbits);
   if (ec)
     {
@@ -334,6 +335,9 @@ static unsigned int kyber_get_nbits(gcry_sexp_t parms)
 static gpg_err_code_t selftests_kyber(selftest_report_func_t report,
                                       int extended)
 {
+    report = report;
+    extended = extended;
+/* TODOMTG: implement self test */
   return 0; /* Succeeded. */
 }
 
@@ -359,7 +363,10 @@ static gpg_err_code_t run_selftests(int algo,
 
 static gpg_err_code_t compute_keygrip(gcry_md_hd_t md, gcry_sexp_t keyparam)
 {
+    /* TODOMTG: IMPLEMENT */
   gpg_err_code_t ec = 0;
+    md = md;
+    keyparam = keyparam;
   return ec;
 }
 

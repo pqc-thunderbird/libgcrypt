@@ -11,15 +11,15 @@
 *
 * Description: Compression and subsequent serialization of a polynomial
 *
-* Arguments:   - uint8_t *r: pointer to output byte array
+* Arguments:   - unsigned char *r: pointer to output byte array
 *                            (of length KYBER_POLYCOMPRESSEDBYTES)
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void poly_compress(uint8_t* r, const poly *a, gcry_kyber_param_t const* param)
+void poly_compress(unsigned char* r, const poly *a, gcry_kyber_param_t const* param)
 {
     unsigned int i,j;
     int16_t u;
-    uint8_t t[8];
+    unsigned char t[8];
 
     if(param->id != GCRY_KYBER_1024)
     {
@@ -69,10 +69,10 @@ void poly_compress(uint8_t* r, const poly *a, gcry_kyber_param_t const* param)
 *              approximate inverse of poly_compress
 *
 * Arguments:   - poly *r: pointer to output polynomial
-*              - const uint8_t *a: pointer to input byte array
+*              - const unsigned char *a: pointer to input byte array
 *                                  (of length KYBER_POLYCOMPRESSEDBYTES bytes)
 **************************************************/
-void poly_decompress(poly *r, const uint8_t* a, gcry_kyber_param_t const* param)
+void poly_decompress(poly *r, const unsigned char* a, gcry_kyber_param_t const* param)
 {
     unsigned int i;
 
@@ -88,7 +88,7 @@ void poly_decompress(poly *r, const uint8_t* a, gcry_kyber_param_t const* param)
     else
     {
         unsigned int j;
-        uint8_t t[8];
+        unsigned char t[8];
         for(i=0;i<KYBER_N/8;i++)
         {
             t[0] = (a[0] >> 0);
@@ -114,11 +114,11 @@ void poly_decompress(poly *r, const uint8_t* a, gcry_kyber_param_t const* param)
 *
 * Description: Serialization of a polynomial
 *
-* Arguments:   - uint8_t *r: pointer to output byte array
+* Arguments:   - unsigned char *r: pointer to output byte array
 *                            (needs space for GCRY_KYBER_POLYBYTES bytes)
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void poly_tobytes(uint8_t* r, const poly *a)
+void poly_tobytes(unsigned char r[GCRY_KYBER_POLYBYTES], const poly *a)
 {
   unsigned int i;
   uint16_t t0, t1;
@@ -143,10 +143,10 @@ void poly_tobytes(uint8_t* r, const poly *a)
 *              inverse of poly_tobytes
 *
 * Arguments:   - poly *r: pointer to output polynomial
-*              - const uint8_t *a: pointer to input byte array
+*              - const unsigned char *a: pointer to input byte array
 *                                  (of GCRY_KYBER_POLYBYTES bytes)
 **************************************************/
-void poly_frombytes(poly *r, const uint8_t * a)
+void poly_frombytes(poly *r, const unsigned char  a[GCRY_KYBER_POLYBYTES])
 {
   unsigned int i;
   for(i=0;i<KYBER_N/2;i++)
@@ -162,9 +162,9 @@ void poly_frombytes(poly *r, const uint8_t * a)
 * Description: Convert 32-byte message to polynomial
 *
 * Arguments:   - poly *r: pointer to output polynomial
-*              - const uint8_t *msg: pointer to input message
+*              - const unsigned char *msg: pointer to input message
 **************************************************/
-void poly_frommsg(poly *r, const uint8_t* msg)
+void poly_frommsg(poly *r, const unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES])
 {
   unsigned int i,j;
   int16_t mask;
@@ -185,10 +185,10 @@ void poly_frommsg(poly *r, const uint8_t* msg)
 *
 * Description: Convert polynomial to 32-byte message
 *
-* Arguments:   - uint8_t *msg: pointer to output message
+* Arguments:   - unsigned char *msg: pointer to output message
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void poly_tomsg(uint8_t* msg, const poly *a)
+void poly_tomsg(unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES], const poly *a)
 {
   unsigned int i,j;
   uint16_t t;
@@ -214,13 +214,13 @@ void poly_tomsg(uint8_t* msg, const poly *a)
 *              with parameter KYBER_ETA1
 *
 * Arguments:   - poly *r: pointer to output polynomial
-*              - const uint8_t *seed: pointer to input seed
-*                                     (of length KYBER_SYMBYTES bytes)
-*              - uint8_t nonce: one-byte input nonce
+*              - const unsigned char *seed: pointer to input seed
+*                                     (of length GCRY_KYBER_SYMBYTES bytes)
+*              - unsigned char nonce: one-byte input nonce
 **************************************************/
-void poly_getnoise_eta1(poly *r, const uint8_t* seed, uint8_t nonce, gcry_kyber_param_t const* param)
+void poly_getnoise_eta1(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char nonce, gcry_kyber_param_t const* param)
 {
-  uint8_t buf[KYBER_ETA1_MAX*KYBER_N/4];
+  unsigned char buf[KYBER_ETA1_MAX*KYBER_N/4];
   prf(buf, sizeof(buf), seed, nonce);
   poly_cbd_eta1(r, buf, param);
 }
@@ -233,13 +233,13 @@ void poly_getnoise_eta1(poly *r, const uint8_t* seed, uint8_t nonce, gcry_kyber_
 *              with parameter KYBER_ETA2
 *
 * Arguments:   - poly *r: pointer to output polynomial
-*              - const uint8_t *seed: pointer to input seed
-*                                     (of length KYBER_SYMBYTES bytes)
-*              - uint8_t nonce: one-byte input nonce
+*              - const unsigned char *seed: pointer to input seed
+*                                     (of length GCRY_KYBER_SYMBYTES bytes)
+*              - unsigned char nonce: one-byte input nonce
 **************************************************/
-void poly_getnoise_eta2(poly *r, const uint8_t seed[KYBER_SYMBYTES], uint8_t nonce)
+void poly_getnoise_eta2(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char nonce)
 {
-  uint8_t buf[KYBER_ETA2*KYBER_N/4];
+  unsigned char buf[KYBER_ETA2*KYBER_N/4];
   prf(buf, sizeof(buf), seed, nonce);
   poly_cbd_eta2(r, buf);
 }

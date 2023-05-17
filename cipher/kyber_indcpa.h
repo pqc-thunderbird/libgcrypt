@@ -6,7 +6,7 @@
 #include "kyber_polyvec.h"
 
 //#define gen_matrix KYBER_NAMESPACE(gen_matrix)
-void gen_matrix(gcry_kyber_polyvec *a, const uint8_t seed[KYBER_SYMBYTES], int transposed, gcry_kyber_param_t const* param);
+void gen_matrix(gcry_kyber_polyvec *a, const uint8_t seed[GCRY_KYBER_SYMBYTES], int transposed, gcry_kyber_param_t const* param);
 //#define indcpa_keypair KYBER_NAMESPACE(indcpa_keypair)
 gcry_error_t indcpa_keypair(uint8_t * pk,
                     uint8_t* sk,
@@ -18,7 +18,7 @@ gcry_error_t indcpa_keypair(uint8_t * pk,
 gcry_error_t indcpa_enc(uint8_t* c,
                 const uint8_t* m,
                 const uint8_t* pk,
-                const uint8_t coins[KYBER_SYMBYTES],
+                const uint8_t coins[GCRY_KYBER_SYMBYTES],
                 gcry_kyber_param_t const* param
                 );
 
