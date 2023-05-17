@@ -169,9 +169,6 @@ void poly_frommsg(poly *r, const uint8_t* msg)
   unsigned int i,j;
   int16_t mask;
 
-#if (KYBER_INDCPA_MSGBYTES != KYBER_N/8)
-#error "KYBER_INDCPA_MSGBYTES must be equal to KYBER_N/8 bytes!"
-#endif
 
   for(i=0;i<KYBER_N/8;i++)
   {

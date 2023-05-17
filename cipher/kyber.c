@@ -93,7 +93,7 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
     if(!(sk = xtrymalloc_secure(param.secret_key_bytes)) || !(pk = xtrymalloc(param.public_key_bytes)))
     {
         ec = gpg_err_code_from_syserror ();
-        goto end;
+        goto leave;
     }
     crypto_kem_keypair (pk, sk, &param);
 
@@ -114,7 +114,7 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
         //"  (kyber(s%m)))" " %S)", pk_mpi, sk_mpi);
 
     }
-end:
+leave:
     _gcry_mpi_release(sk_mpi);
     _gcry_mpi_release(pk_mpi);
     xfree(sk);
