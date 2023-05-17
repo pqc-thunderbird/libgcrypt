@@ -100,8 +100,8 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
     gcry_mpi_t sk_mpi = NULL, pk_mpi = NULL;
     //sk_mpi = mpi_new (0);
     //pk_mpi = mpi_new (0);
-    sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, CRYPTO_SECRETKEYBYTES * 8);
-    pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, CRYPTO_PUBLICKEYBYTES * 8);
+    sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
+    pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
 
     if (!ec)
     {
@@ -172,13 +172,14 @@ kyber_encap (gcry_sexp_t * r_ciph, gcry_sexp_t * r_shared_key,
         return ec;
     }
 
-    if(mpi_get_nbits(pk) != KYBER_PUBLICKEYBYTES*8)
+    //if(mpi_get_nbits(pk) != KYBER_PUBLICKEYBYTES*8)
+    if(mpi_get_nbits(pk) != param.public_key_bytes * 8)
     {
         printf("error: mpi_get_nbits(sk) != KYBER_PUBLICKEYBYTES*8");
     }
 
     _gcry_mpi_print(GCRYMPI_FMT_USG, public_key, sizeof(public_key), &nwritten, pk);
-    if(nwritten != KYBER_PUBLICKEYBYTES)
+    if(nwritten != param.public_key_bytes)
     {
         printf("nwritten != KYBER_PUBLICKEYBYTES\n");
     }
@@ -306,12 +307,21 @@ leave:
     return ec;
 }
 
-
+/* TODOMTG: not sure how to realize this function for Kyber. For RSA "n" is sought, which will (presumably) be contained in both private and public keys. For now the function expects an explicit "nbits" parameter
+ */
 static unsigned int
 kyber_get_nbits (gcry_sexp_t parms)
 {
     // TODO: SEE RSA FOR HOW TO PARSE A PARAMS SEXPR
-    return 1184;
+    //return 1184;
+    gpg_err_code_t ec;
+    unsigned int nbits;
+    ec = _gcry_pk_util_get_nbits(parms, &nbits);
+    if(ec)
+    {
+        return 0;
+    }
+    return nbits;
 }
 
 static gpg_err_code_t
