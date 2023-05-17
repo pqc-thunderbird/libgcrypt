@@ -221,7 +221,7 @@ void poly_tomsg(unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES], const poly *a)
 void poly_getnoise_eta1(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char nonce, gcry_kyber_param_t const* param)
 {
   unsigned char buf[KYBER_ETA1_MAX*KYBER_N/4];
-  prf(buf, sizeof(buf), seed, nonce);
+  _gcry_kyber_prf(buf, sizeof(buf), seed, nonce);
   poly_cbd_eta1(r, buf, param);
 }
 
@@ -240,7 +240,7 @@ void poly_getnoise_eta1(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], 
 void poly_getnoise_eta2(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char nonce)
 {
   unsigned char buf[KYBER_ETA2*KYBER_N/4];
-  prf(buf, sizeof(buf), seed, nonce);
+  _gcry_kyber_prf(buf, sizeof(buf), seed, nonce);
   poly_cbd_eta2(r, buf);
 }
 

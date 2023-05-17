@@ -8,7 +8,6 @@
 #include "kyber_ntt.h"
 #include "kyber_verify.h"
 #include "kyber_symmetric.h"
-#include "kyber_randombytes.h"
 #include "gcrypt.h"
 
 #include "g10lib.h"
