@@ -5,10 +5,8 @@
 #include <stdint.h>
 #include "kyber_params.h"
 
-//#define verify KYBER_NAMESPACE(verify)
-int verify(const uint8_t *a, const uint8_t *b, size_t len);
+int16_t _gcry_kyber_montgomery_reduce(int32_t a);
 
-//#define cmov KYBER_NAMESPACE(cmov)
-void cmov(uint8_t *r, const uint8_t *x, size_t len, uint8_t b);
+int16_t _gcry_kyber_barrett_reduce(int16_t a);
 
 #endif

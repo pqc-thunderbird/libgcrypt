@@ -62,7 +62,7 @@ const int16_t zetas[128] = {
  **************************************************/
 static int16_t fqmul(int16_t a, int16_t b)
 {
-  return montgomery_reduce((int32_t)a * b);
+  return _gcry_kyber_montgomery_reduce((int32_t)a * b);
 }
 
 /*************************************************
@@ -120,7 +120,7 @@ void invntt(int16_t r[256])
           for (j = start; j < start + len; j++)
             {
               t          = r[j];
-              r[j]       = barrett_reduce(t + r[j + len]);
+              r[j]       = _gcry_kyber_barrett_reduce(t + r[j + len]);
               r[j + len] = r[j + len] - t;
               r[j + len] = fqmul(zeta, r[j + len]);
             }
