@@ -6,7 +6,7 @@
 #include "kyber_polyvec.h"
 #include "kyber_poly.h"
 #include "kyber_ntt.h"
-#include "kyber_verify.h"
+#include "kyber_aux.h"
 #include "kyber_symmetric.h"
 #include "gcrypt.h"
 

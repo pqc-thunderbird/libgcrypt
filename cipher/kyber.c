@@ -9,7 +9,7 @@
 //#include "mpi.h"
 #include "cipher.h"
 #include "pubkey-internal.h"
-#include "kyber_verify.h"
+#include "kyber_aux.h"
 
 
 static gcry_err_code_t get_kyber_param_from_bit_size(size_t nbits,
