@@ -7,6 +7,7 @@
 #include "kyber_poly.h"
 #include "kyber_ntt.h"
 #include "kyber_aux.h"
+#include "consttime.h"
 #include "kyber_symmetric.h"
 #include "gcrypt.h"
 
@@ -82,7 +83,7 @@ gcry_err_code_t crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk
       goto end;
     }
 
-  fail = verify(ct, cmp, param->ciphertext_bytes);
+  fail = _gcry_constime_bytes_differ(ct, cmp, param->ciphertext_bytes);
 
 
   /* Compute rejection key */
@@ -92,7 +93,7 @@ gcry_err_code_t crypto_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk
     }
 
   /* Copy true key to return buffer if fail is false */
-  cmov(ss, kr, GCRY_KYBER_SYMBYTES, !fail);
+  _gcry_consttime_cmov(ss, kr, GCRY_KYBER_SYMBYTES, !fail);
 
 end:
   xfree(cmp);

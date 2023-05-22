@@ -2,7 +2,7 @@
 #include "kyber_params.h"
 #include "kyber_poly.h"
 #include "kyber_ntt.h"
-#include "kyber_reduce.h"
+#include "kyber_aux.h"
 #include "kyber_cbd.h"
 #include "kyber_symmetric.h"
 
@@ -306,7 +306,7 @@ void poly_tomont(poly *r)
   const int16_t f = (1ULL << 32) % KYBER_Q;
   for(i=0;i<KYBER_N;i++)
   {
-    r->coeffs[i] = montgomery_reduce((int32_t)r->coeffs[i]*f);
+    r->coeffs[i] = _gcry_kyber_montgomery_reduce((int32_t)r->coeffs[i]*f);
   }
 }
 
@@ -323,7 +323,7 @@ void poly_reduce(poly *r)
   unsigned int i;
   for(i=0;i<KYBER_N;i++)
   {
-    r->coeffs[i] = barrett_reduce(r->coeffs[i]);
+    r->coeffs[i] = _gcry_kyber_barrett_reduce(r->coeffs[i]);
   }
 }
 
