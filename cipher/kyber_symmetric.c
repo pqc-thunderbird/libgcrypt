@@ -48,7 +48,6 @@ void _gcry_kyber_shake128_absorb(gcry_md_hd_t h, const unsigned char seed[GCRY_K
 gcry_err_code_t _gcry_kyber_shake128_squeezeblocks(gcry_md_hd_t h, uint8_t *out, size_t nblocks )
 {
   return _gcry_md_extract(h, GCRY_MD_SHAKE128, out, SHAKE128_RATE * nblocks);
-  //keccak_squeezeblocks(out, nblocks, state->s, SHAKE128_RATE);
 }
 
 /*************************************************
@@ -71,10 +70,6 @@ gcry_err_code_t kyber_shake256_prf(unsigned char *out, size_t outlen, const unsi
   memcpy(extkey, key, GCRY_KYBER_SYMBYTES);
   extkey[GCRY_KYBER_SYMBYTES] = nonce;
 
-#if 0
-  shake256(out, outlen, extkey, sizeof(extkey));
-#else
-
   if ((ec = _gcry_md_open(&h, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE)))
     {
       return ec;
@@ -83,10 +78,9 @@ gcry_err_code_t kyber_shake256_prf(unsigned char *out, size_t outlen, const unsi
   ec = _gcry_md_extract(h, GCRY_MD_SHAKE256, out, outlen);
   _gcry_md_close(h);
   return ec;
-#endif
 }
 
-gcry_err_code_t _gcry_kyber_prf(unsigned char *out, size_t outlen, const unsigned char key[GCRY_KYBER_SYMBYTES], unsigned char nonce) //OUT, OUTBYTES, KEY, NONCE)
+gcry_err_code_t _gcry_kyber_prf(unsigned char *out, size_t outlen, const unsigned char key[GCRY_KYBER_SYMBYTES], unsigned char nonce)
 {
     return kyber_shake256_prf(out, outlen, key, nonce);
 }
