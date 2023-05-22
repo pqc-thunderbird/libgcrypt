@@ -80,7 +80,7 @@ static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  crypto_kem_keypair(pk, sk, &param);
+   _gcry_kyber_kem_keypair(pk, sk, &param);
 
   // sk_mpi = mpi_new (0);
   // pk_mpi = mpi_new (0);
@@ -185,7 +185,10 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
   // printf("kyber public_key used to decrypt: %s\n", public_key_str);
   _gcry_mpi_release(pk);
 
-  kyber_kem_enc(ciphertext, shared_secret, public_key, &param);
+  if((ec = _gcry_kyber_kem_enc(ciphertext, shared_secret, public_key, &param)))
+  {
+      goto leave;
+  }
 
 
   ec = sexp_build(
@@ -301,7 +304,7 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
 
 
   // ========== perform the decryption ===============
-  if ((ec = crypto_kem_dec(shared_secret, ciphertext, private_key, &param)))
+  if ((ec = _gcry_kyber_kem_dec(shared_secret, ciphertext, private_key, &param)))
     {
       goto leave;
     }
