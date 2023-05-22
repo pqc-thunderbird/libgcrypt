@@ -113,8 +113,6 @@ tests/tsexp
 tests/version
 tests/*.exe
 
-
-
 src/libgcrypt.la.done
 tags
 tests/t-dsa
