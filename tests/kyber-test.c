@@ -188,7 +188,6 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits)
   gcry_sexp_release(shared_secret2);
   gcry_sexp_release(skey);
   gcry_sexp_release(pkey);
-  printf("check_kyber_gen_enc_dec: decryption correct... \n");
 
 
 leave:
@@ -394,7 +393,7 @@ static void check_kyber_kat(const char *fname, unsigned kyber_bits)
         {
           die("error with decryption result\n");
         }
-      printf("decryption correct... ");
+      printf(".");
 
 
       xfree(line);
@@ -500,6 +499,7 @@ int main(int argc, char **argv)
 
   test_hex_decoding();
 
+  printf("starting generate/encrypt/decrypt test\n");
   for (i = 0; i < 20; i++)
     {
       if (check_kyber_gen_enc_dec(kyber_bits[i % 3]))
@@ -507,14 +507,18 @@ int main(int argc, char **argv)
           // cannot happen:
           fail("check_kyber_gen_enc_dec() yielded an error, aborting");
         }
+      printf(".");
     }
+  printf("\n\n");
   if (!fname)
   {
     const char* kyber_kat_files[] = {"kyber512_ref.inp", "kyber768_ref.inp", "kyber1024_ref.inp"};
 
     for( i = 0; i < sizeof(kyber_kat_files)/sizeof(kyber_kat_files[0]); i++)
     {
+      printf("starting KAT tests for Kyber%u ", kyber_bits[i]);
       check_kyber_kat(kyber_kat_files[i], kyber_bits[i]);
+      printf("\n");
     }
 
   }

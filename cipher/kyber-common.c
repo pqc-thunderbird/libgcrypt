@@ -4,7 +4,6 @@
 //#include <config.h>
 #include "kyber-common.h"
 #include "kyber_params.h"
-#include "kyber_indcpa.h"
 #include "kyber_polyvec.h"
 #include "kyber_poly.h"
 #include "kyber_ntt.h"
