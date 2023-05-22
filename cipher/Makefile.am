@@ -159,8 +159,8 @@ EXTRA_libcipher_la_SOURCES = \
 	kyber.c kyber-common.c \
 	kyber.h kyber-common.h \
 	kyber_verify.h kyber_verify.c \
-	kyber_indcpa.c kyber_ntt.c kyber_poly.c kyber_polyvec.c kyber_randombytes.c kyber_symmetric.c \
-	kyber_indcpa.h kyber_ntt.h kyber_poly.h kyber_polyvec.h kyber_randombytes.h kyber_symmetric.h
+	kyber_ntt.c kyber_poly.c kyber_polyvec.c kyber_randombytes.c kyber_symmetric.c \
+	kyber_ntt.h kyber_poly.h kyber_polyvec.h kyber_randombytes.h kyber_symmetric.h
 
 gost28147.lo: gost-sb.h
 gost-sb.h: gost-s-box$(EXEEXT_FOR_BUILD)
