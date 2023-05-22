@@ -50,8 +50,8 @@ static void test_hex_decoding(void)
   const char *hex_arr[]            = {hex1, hex2};
   const unsigned char exp_result[] = {255, 0, 160};
   size_t bin_len;
-
-  for (unsigned i = 0; i < 2; i++)
+  unsigned i;
+  for (i = 0; i < 2; i++)
     {
       unsigned char *buffer
           = fill_bin_buf_from_hex_line(&bin_len, '=', hex_arr[i], 0);
@@ -102,7 +102,7 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits)
   int rc;
 
   if (verbose)
-    info("creating Kyber768 key\n");
+    info("creating Kyber %u key\n", kyber_bits);
   /*rc = gcry_sexp_new (&keyparm,
                       "(genkey\n"
                       " (kyber\n"
@@ -194,7 +194,7 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits)
 leave:
   return rc;
 }
-static void check_kyber_kat(const char *fname)
+static void check_kyber_kat(const char *fname, unsigned kyber_bits)
 {
   const size_t nb_kat_tests = 0; /* zero means all */
   FILE *fp;
@@ -301,7 +301,7 @@ static void check_kyber_kat(const char *fname)
                             "(private-key (kyber (s %b) (nbits%u) ))",
                             (int)test_vec[privat_key_idx].result_buf_len,
                             test_vec[privat_key_idx].result_buf,
-                            768,
+                            kyber_bits,
                             NULL);
       if (err)
         {
@@ -441,6 +441,7 @@ int main(int argc, char **argv)
   int last_argc = -1;
   char *fname   = NULL;
   unsigned i;
+  unsigned kyber_bits[3] = {512, 768, 1024};
   if (argc)
     {
       argc--;
@@ -496,19 +497,30 @@ int main(int argc, char **argv)
     }
 
   if (!fname)
-    fname = prepend_srcdir("kyber768_ref.inp");
 
   test_hex_decoding();
 
   for (i = 0; i < 20; i++)
     {
-      unsigned kyber_bits[3] = {512, 768, 1024};
       if (check_kyber_gen_enc_dec(kyber_bits[i % 3]))
         {
           // cannot happen:
           fail("check_kyber_gen_enc_dec() yielded an error, aborting");
         }
     }
-  check_kyber_kat(fname);
+  if (!fname)
+  {
+    const char* kyber_kat_files[] = {"kyber512_ref.inp", "kyber768_ref.inp", "kyber1024_ref.inp"};
+
+    for( i = 0; i < sizeof(kyber_kat_files)/sizeof(kyber_kat_files[0]); i++)
+    {
+      check_kyber_kat(kyber_kat_files[i], kyber_bits[i]);
+    }
+
+  }
+  else
+  {
+    check_kyber_kat(fname, kyber_bits[i]);
+  }
   xfree(fname);
 }
