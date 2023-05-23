@@ -1,4 +1,4 @@
-/* kyber-test.c - Test the Crystals-Kyber KEM algorithm
+/* t-dilithium.c - Test the Crystals-Dilithium Signature algorithm
  * Copyright (C) 2011 Free Software Foundation, Inc.
  *
  * This file is part of Libgcrypt.
