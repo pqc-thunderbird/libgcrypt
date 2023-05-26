@@ -5,6 +5,7 @@
 //#include "gcrypt.h"
 #include "dilithium.h"
 #include "dilithium-api.h"
+#include "dilithium-params.h"
 
 #include "g10lib.h"
 #include "mpi.h"
@@ -48,7 +49,7 @@ dilithium_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   ec = _gcry_pk_util_get_nbits (genparms, &nbits);
   if (ec)
     return ec;
-  crypto_sign_keypair (pk, sk);
+  DILITHIUM_NAMESPACE(keypair)(pk, sk);
 
   gcry_mpi_t sk_mpi = NULL, pk_mpi = NULL;
   sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, CRYPTO_SECRETKEYBYTES * 8);
@@ -141,7 +142,7 @@ dilithium_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   }
 
   size_t sig_buf_len = 0;
-  if(0 != DILITHIUM_NAMESPACE(_signature)(sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf, sizeof(sk_buf)))
+  if(0 != DILITHIUM_NAMESPACE(signature)(sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
   {
     printf("sign operation failed\n");
     ec = GPG_ERR_GENERAL;
@@ -256,7 +257,7 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
     printf("nwritten != data_buf_len\n");
   }
 
-  if(0 != DILITHIUM_NAMESPACE(_verify)(sig_buf, sizeof(sig_buf), data_buf, data_buf_len, pk_buf, sizeof(pk_buf)))
+  if(0 != DILITHIUM_NAMESPACE(verify)(sig_buf, sizeof(sig_buf), data_buf, data_buf_len, pk_buf))
   {
     printf("verify operation failed\n");
     ec = GPG_ERR_GENERAL;
