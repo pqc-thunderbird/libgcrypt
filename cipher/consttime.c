@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <consttime.h>
 
-int _gcry_constime_bytes_differ(const uint8_t *a, const uint8_t *b, size_t len)
+int _gcry_consttime_bytes_differ(const uint8_t *a, const uint8_t *b, size_t len)
 {
   size_t i;
   uint8_t r = 0;
