@@ -50,10 +50,10 @@ static uint32_t load24_littleendian(const uint8_t x[3])
 *              polynomial with coefficients distributed according to
 *              a centered binomial distribution with parameter eta=2
 *
-* Arguments:   - poly *r: pointer to output polynomial
+* Arguments:   - gcry_kyber_poly *r: pointer to output polynomial
 *              - const uint8_t *buf: pointer to input byte array
 **************************************************/
-static void cbd2(poly *r, const uint8_t buf[2*GCRY_KYBER_N/4])
+static void cbd2(gcry_kyber_poly *r, const uint8_t buf[2*GCRY_KYBER_N/4])
 {
   unsigned int i,j;
   uint32_t t,d;
@@ -80,10 +80,10 @@ static void cbd2(poly *r, const uint8_t buf[2*GCRY_KYBER_N/4])
 *              a centered binomial distribution with parameter eta=3.
 *              This function is only needed for Kyber-512
 *
-* Arguments:   - poly *r: pointer to output polynomial
+* Arguments:   - gcry_kyber_poly *r: pointer to output polynomial
 *              - const uint8_t *buf: pointer to input byte array
 **************************************************/
-static void cbd3(poly *r, const uint8_t buf[3*GCRY_KYBER_N/4])
+static void cbd3(gcry_kyber_poly *r, const uint8_t buf[3*GCRY_KYBER_N/4])
 {
   unsigned int i,j;
   uint32_t t,d;
@@ -103,7 +103,7 @@ static void cbd3(poly *r, const uint8_t buf[3*GCRY_KYBER_N/4])
   }
 }
 
-void poly_cbd_eta1(poly *r, const uint8_t* buf, gcry_kyber_param_t const* param)
+void _gcry_kyber_poly_cbd_eta1(gcry_kyber_poly *r, const uint8_t* buf, gcry_kyber_param_t const* param)
 {
     if(param->eta1 == 2)
     {
@@ -115,7 +115,7 @@ void poly_cbd_eta1(poly *r, const uint8_t* buf, gcry_kyber_param_t const* param)
     }
 }
 
-void poly_cbd_eta2(poly *r, const uint8_t buf[KYBER_ETA2*GCRY_KYBER_N/4])
+void _gcry_kyber_poly_cbd_eta2(gcry_kyber_poly *r, const uint8_t buf[GCRY_KYBER_ETA2*GCRY_KYBER_N/4])
 {
   cbd2(r, buf);
 }

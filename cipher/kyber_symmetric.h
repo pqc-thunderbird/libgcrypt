@@ -36,7 +36,7 @@ gcry_err_code_t _gcry_kyber_prf(uint8_t *out, size_t outlen, const uint8_t key[G
 #define xof_absorb(STATE, SEED, X, Y) kyber_shake128_absorb(STATE, SEED, X, Y)
 #define xof_squeezeblocks(OUT, OUTBLOCKS, STATE) shake128_squeezeblocks(OUT, OUTBLOCKS, STATE)
 //#define prf(OUT, OUTBYTES, KEY, NONCE) kyber_shake256_prf(OUT, OUTBYTES, KEY, NONCE)
-//#define kdf(OUT, IN, INBYTES) shake256(OUT, KYBER_SSBYTES, IN, INBYTES)
+//#define kdf(OUT, IN, INBYTES) shake256(OUT, GCRY_KYBER_SSBYTES, IN, INBYTES)
 
 
 #endif /* SYMMETRIC_H */

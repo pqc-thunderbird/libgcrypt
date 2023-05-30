@@ -10,44 +10,44 @@
  */
 typedef struct{
   int16_t coeffs[GCRY_KYBER_N];
-} poly;
+} gcry_kyber_poly;
 
-//#define poly_compress GCRY_KYBER_NAMESPACE(poly_compress)
-void poly_compress(unsigned char* r, const poly *a, gcry_kyber_param_t const* param);
-//#define poly_decompress GCRY_KYBER_NAMESPACE(poly_decompress)
-void poly_decompress(poly *r, const unsigned char* a, gcry_kyber_param_t const* param);
 
-//#define poly_tobytes GCRY_KYBER_NAMESPACE(poly_tobytes)
-void poly_tobytes(unsigned char r[GCRY_KYBER_POLYBYTES], const poly *a);
+void _gcry_kyber_poly_compress(unsigned char* r, const gcry_kyber_poly *a, gcry_kyber_param_t const* param);
 
-void poly_frombytes(poly *r, const unsigned char a[GCRY_KYBER_POLYBYTES]);
+void _gcry_kyber_poly_decompress(gcry_kyber_poly *r, const unsigned char* a, gcry_kyber_param_t const* param);
 
-//#define poly_frommsg GCRY_KYBER_NAMESPACE(poly_frommsg)
-void poly_frommsg(poly *r, const unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES]);
-//#define poly_tomsg GCRY_KYBER_NAMESPACE(poly_tomsg)
-void poly_tomsg(unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES], const poly *r);
 
-//#define poly_getnoise_eta1 GCRY_KYBER_NAMESPACE(poly_getnoise_eta1)
-void poly_getnoise_eta1(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char nonce, gcry_kyber_param_t const* param);
+void _gcry_kyber_poly_tobytes(unsigned char r[GCRY_KYBER_POLYBYTES], const gcry_kyber_poly *a);
 
-//#define poly_getnoise_eta2 GCRY_KYBER_NAMESPACE(poly_getnoise_eta2)
-void poly_getnoise_eta2(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char nonce);
+void _gcry_kyber_poly_frombytes(gcry_kyber_poly *r, const unsigned char a[GCRY_KYBER_POLYBYTES]);
 
-//#define poly_ntt GCRY_KYBER_NAMESPACE(poly_ntt)
-void poly_ntt(poly *r);
-//#define poly_invntt_tomont GCRY_KYBER_NAMESPACE(poly_invntt_tomont)
-void poly_invntt_tomont(poly *r);
-//#define poly_basemul_montgomery GCRY_KYBER_NAMESPACE(poly_basemul_montgomery)
-void poly_basemul_montgomery(poly *r, const poly *a, const poly *b);
-//#define poly_tomont GCRY_KYBER_NAMESPACE(poly_tomont)
-void poly_tomont(poly *r);
 
-//#define poly_reduce GCRY_KYBER_NAMESPACE(poly_reduce)
-void poly_reduce(poly *r);
+void _gcry_kyber_poly_frommsg(gcry_kyber_poly *r, const unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES]);
 
-//#define poly_add GCRY_KYBER_NAMESPACE(poly_add)
-void poly_add(poly *r, const poly *a, const poly *b);
-//#define poly_sub GCRY_KYBER_NAMESPACE(poly_sub)
-void poly_sub(poly *r, const poly *a, const poly *b);
+void _gcry_kyber_poly_tomsg(unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES], const gcry_kyber_poly *r);
+
+
+void _gcry_kyber_poly_getnoise_eta1(gcry_kyber_poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char nonce, gcry_kyber_param_t const* param);
+
+
+void _gcry_kyber_poly_getnoise_eta2(gcry_kyber_poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char nonce);
+
+
+void _gcry_kyber_poly_ntt(gcry_kyber_poly *r);
+
+void _gcry_kyber_poly_invntt_tomont(gcry_kyber_poly *r);
+
+void _gcry_kyber_poly_basemul_montgomery(gcry_kyber_poly *r, const gcry_kyber_poly *a, const gcry_kyber_poly *b);
+
+void _gcry_kyber_poly_tomont(gcry_kyber_poly *r);
+
+
+void _gcry_kyber_poly_reduce(gcry_kyber_poly *r);
+
+
+void _gcry_kyber_poly_add(gcry_kyber_poly *r, const gcry_kyber_poly *a, const gcry_kyber_poly *b);
+
+void _gcry_kyber_poly_sub(gcry_kyber_poly *r, const gcry_kyber_poly *a, const gcry_kyber_poly *b);
 
 #endif
