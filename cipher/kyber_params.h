@@ -30,18 +30,18 @@ typedef struct
 
 /* Don't change parameters below this line */
 #if   (KYBER_K == 2)
-#define KYBER_NAMESPACE(s) pqcrystals_kyber512_ref_##s
+#define GCRY_KYBER_NAMESPACE(s) pqcrystals_kyber512_ref_##s
 #elif (KYBER_K == 3)
-#define KYBER_NAMESPACE(s) pqcrystals_kyber768_ref_##s
+#define GCRY_KYBER_NAMESPACE(s) pqcrystals_kyber768_ref_##s
 #elif (KYBER_K == 4)
-#define KYBER_NAMESPACE(s) pqcrystals_kyber1024_ref_##s
+#define GCRY_KYBER_NAMESPACE(s) pqcrystals_kyber1024_ref_##s
 #else
 #error "KYBER_K must be in {2,3,4}"
 #endif
 #endif
 
-#define KYBER_N 256
-#define KYBER_Q 3329
+#define GCRY_KYBER_N 256
+#define GCRY_KYBER_Q 3329
 
 #define GCRY_KYBER_SYMBYTES 32   /* size in bytes of hashes, and seeds */
 #define KYBER_SSBYTES  32   /* size in bytes of shared key */
@@ -71,8 +71,8 @@ typedef struct
 
 // keep this:
 #define GCRY_KYBER_INDCPA_MSGBYTES       (GCRY_KYBER_SYMBYTES)
-#if (GCRY_KYBER_INDCPA_MSGBYTES != KYBER_N/8)
-#error "GCRY_KYBER_INDCPA_MSGBYTES must be equal to KYBER_N/8 bytes!"
+#if (GCRY_KYBER_INDCPA_MSGBYTES != GCRY_KYBER_N/8)
+#error "GCRY_KYBER_INDCPA_MSGBYTES must be equal to GCRY_KYBER_N/8 bytes!"
 #endif
 #if 0
 #define KYBER_INDCPA_PUBLICKEYBYTES (KYBER_POLYVECBYTES + GCRY_KYBER_SYMBYTES)

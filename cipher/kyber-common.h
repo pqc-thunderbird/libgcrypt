@@ -10,12 +10,6 @@
 #include <config.h>
 #include "g10lib.h"
 
-//#define CRYPTO_SECRETKEYBYTES  KYBER_SECRETKEYBYTES
-//#define CRYPTO_PUBLICKEYBYTES  KYBER_PUBLICKEYBYTES
-//#define CRYPTO_CIPHERTEXTBYTES KYBER_CIPHERTEXTBYTES
-//#define CRYPTO_BYTES           KYBER_SSBYTES
-
-
 
 gcry_err_code_t _gcry_kyber_kem_keypair_derand(uint8_t *pk,
                        uint8_t *sk,

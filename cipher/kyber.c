@@ -12,8 +12,8 @@
 #include "kyber_aux.h"
 
 
-static gcry_err_code_t get_kyber_param_from_bit_size(size_t nbits,
-                                                     gcry_kyber_param_t *param)
+static gcry_err_code_t _gcry_kyber_get_param_from_bit_size(
+    size_t nbits, gcry_kyber_param_t *param)
 {
   switch (nbits)
     {
@@ -48,14 +48,15 @@ static gcry_err_code_t get_kyber_param_from_bit_size(size_t nbits,
   param->ciphertext_bytes
       = param->poly_compressed_bytes + param->polyvec_compressed_bytes;
   param->secret_key_bytes = param->indcpa_secret_key_bytes
-                            + param->public_key_bytes + 2 * GCRY_KYBER_SYMBYTES;
+                            + param->public_key_bytes
+                            + 2 * GCRY_KYBER_SYMBYTES;
 
   return 0;
 }
 
 
-static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
-                                      gcry_sexp_t *r_skey)
+static gcry_err_code_t _gcry_kyber_generate(const gcry_sexp_t genparms,
+                                            gcry_sexp_t *r_skey)
 {
   gpg_err_code_t ec = 0;
 
@@ -70,7 +71,7 @@ static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
     {
       return ec;
     }
-  if ((ec = get_kyber_param_from_bit_size(nbits, &param)))
+  if ((ec = _gcry_kyber_get_param_from_bit_size(nbits, &param)))
     {
       return ec;
     }
@@ -80,7 +81,7 @@ static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-   _gcry_kyber_kem_keypair(pk, sk, &param);
+  _gcry_kyber_kem_keypair(pk, sk, &param);
 
   // sk_mpi = mpi_new (0);
   // pk_mpi = mpi_new (0);
@@ -112,18 +113,18 @@ leave:
 }
 
 
-static gcry_err_code_t kyber_check_secret_key(gcry_sexp_t keyparms)
+static gcry_err_code_t _gcry_kyber_check_secret_key(gcry_sexp_t keyparms)
 {
-    /* TODOMTG: IMPLEMENT KEY CHECK */
+  /* TODOMTG: IMPLEMENT KEY CHECK */
   gpg_err_code_t ec = 0;
   keyparms          = keyparms;
   return ec;
 }
 
 
-static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
-                                   gcry_sexp_t *r_shared_key,
-                                   gcry_sexp_t keyparms)
+static gcry_err_code_t _gcry_kyber_encap(gcry_sexp_t *r_ciph,
+                                         gcry_sexp_t *r_shared_key,
+                                         gcry_sexp_t keyparms)
 {
 
   gpg_err_code_t ec = 0;
@@ -153,7 +154,7 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
     {
       goto leave;
     }
-  if ((ec = get_kyber_param_from_bit_size(nbits, &param)))
+  if ((ec = _gcry_kyber_get_param_from_bit_size(nbits, &param)))
     {
       goto leave;
       return ec;
@@ -185,10 +186,11 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
   // printf("kyber public_key used to decrypt: %s\n", public_key_str);
   _gcry_mpi_release(pk);
 
-  if((ec = _gcry_kyber_kem_enc(ciphertext, shared_secret, public_key, &param)))
-  {
+  if ((ec
+       = _gcry_kyber_kem_enc(ciphertext, shared_secret, public_key, &param)))
+    {
       goto leave;
-  }
+    }
 
 
   ec = sexp_build(
@@ -211,9 +213,9 @@ leave:
 }
 
 
-static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
-                                     gcry_sexp_t s_data,
-                                     gcry_sexp_t keyparms)
+static gcry_err_code_t _gcry_kyber_decrypt(gcry_sexp_t *r_plain,
+                                           gcry_sexp_t s_data,
+                                           gcry_sexp_t keyparms)
 {
   gpg_err_code_t ec = 0;
   unsigned char shared_secret[KYBER_SSBYTES];
@@ -244,7 +246,7 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
     {
       goto leave;
     }
-  if ((ec = get_kyber_param_from_bit_size(nbits, &param)))
+  if ((ec = _gcry_kyber_get_param_from_bit_size(nbits, &param)))
     {
       goto leave;
     }
@@ -304,7 +306,8 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
 
 
   // ========== perform the decryption ===============
-  if ((ec = _gcry_kyber_kem_dec(shared_secret, ciphertext, private_key, &param)))
+  if ((ec
+       = _gcry_kyber_kem_dec(shared_secret, ciphertext, private_key, &param)))
     {
       goto leave;
     }
@@ -321,7 +324,7 @@ leave:
  * sought, which will (presumably) be contained in both private and public
  * keys. For now the function expects an explicit "nbits" parameter
  */
-static unsigned int kyber_get_nbits(gcry_sexp_t parms)
+static unsigned int _gcry_kyber_get_nbits(gcry_sexp_t parms)
 {
   // TODO: SEE RSA FOR HOW TO PARSE A PARAMS SEXPR
   // return 1184;
@@ -338,9 +341,9 @@ static unsigned int kyber_get_nbits(gcry_sexp_t parms)
 static gpg_err_code_t selftests_kyber(selftest_report_func_t report,
                                       int extended)
 {
-    report = report;
-    extended = extended;
-/* TODOMTG: implement self test */
+  report   = report;
+  extended = extended;
+  /* TODOMTG: implement self test */
   return 0; /* Succeeded. */
 }
 
@@ -364,12 +367,13 @@ static gpg_err_code_t run_selftests(int algo,
 }
 
 
-static gpg_err_code_t compute_keygrip(gcry_md_hd_t md, gcry_sexp_t keyparam)
+static gpg_err_code_t _gcry_kyber_compute_keygrip(gcry_md_hd_t md,
+                                                  gcry_sexp_t keyparam)
 {
-    /* TODOMTG: IMPLEMENT */
+  /* TODOMTG: IMPLEMENT */
   gpg_err_code_t ec = 0;
-    md = md;
-    keyparam = keyparam;
+  md                = md;
+  keyparam          = keyparam;
   return ec;
 }
 
@@ -379,28 +383,28 @@ static const char *kyber_names[] = {
     NULL,
 };
 
-gcry_pk_spec_t _gcry_pubkey_spec_kyber
-    = {GCRY_PK_KYBER,
-       {0, 1},
-       (GCRY_PK_USAGE_ENCAP), // TODOMTG: can the key usage "encryption" remain
-                              // or do we need new KU "encap"?
-       "Kyber",
-       kyber_names,
-       "p",
-       "s",
-       "a",
-       "",
-       "p", // elements of pub-key, sec-key, ciphertext, signature, key-grip
-       kyber_generate,
-       kyber_check_secret_key,
-       NULL, // encrypt
-       kyber_encap,
-       kyber_decrypt,
-       NULL, // sign,
-       NULL, // verify,
-       kyber_get_nbits,
-       run_selftests,
-       compute_keygrip,
-       NULL, // get_curve
-       NULL  // get_curve_param
-    };
+gcry_pk_spec_t _gcry_pubkey_spec_kyber = {
+    GCRY_PK_KYBER,
+    {0, 1},
+    (GCRY_PK_USAGE_ENCAP), // TODOMTG: can the key usage "encryption" remain
+                           // or do we need new KU "encap"?
+    "Kyber",
+    kyber_names,
+    "p",
+    "s",
+    "a",
+    "",
+    "p", // elements of pub-key, sec-key, ciphertext, signature, key-grip
+    _gcry_kyber_generate,
+    _gcry_kyber_check_secret_key,
+    NULL, // encrypt
+    _gcry_kyber_encap,
+    _gcry_kyber_decrypt,
+    NULL, // sign,
+    NULL, // verify,
+    _gcry_kyber_get_nbits,
+    run_selftests,
+    _gcry_kyber_compute_keygrip,
+    NULL, // get_curve
+    NULL  // get_curve_param
+};

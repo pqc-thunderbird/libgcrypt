@@ -27,9 +27,9 @@
  *gcry_kyber_polyvec const uint8_t *seed: pointer to the input public seed
  **************************************************/
 static void _gcry_kyber_pack_pk(uint8_t *r,
-                    gcry_kyber_polyvec *pk,
-                    const uint8_t seed[GCRY_KYBER_SYMBYTES],
-                    gcry_kyber_param_t const *param)
+                                gcry_kyber_polyvec *pk,
+                                const uint8_t seed[GCRY_KYBER_SYMBYTES],
+                                gcry_kyber_param_t const *param)
 {
   gcry_kyber_polyvec_tobytes(r, pk, param);
   memcpy(r + param->polyvec_bytes, seed, GCRY_KYBER_SYMBYTES);
@@ -48,9 +48,9 @@ static void _gcry_kyber_pack_pk(uint8_t *r,
  *key
  **************************************************/
 static void _gcry_kyber_unpack_pk(gcry_kyber_polyvec *pk,
-                      uint8_t seed[GCRY_KYBER_SYMBYTES],
-                      const uint8_t *packedpk,
-                      gcry_kyber_param_t const *param)
+                                  uint8_t seed[GCRY_KYBER_SYMBYTES],
+                                  const uint8_t *packedpk,
+                                  gcry_kyber_param_t const *param)
 {
   gcry_kyber_polyvec_frombytes(pk, packedpk, param);
   memcpy(seed, packedpk + param->polyvec_bytes, GCRY_KYBER_SYMBYTES);
@@ -66,14 +66,14 @@ static void _gcry_kyber_unpack_pk(gcry_kyber_polyvec *pk,
  *polynomials (secret key)
  **************************************************/
 static void _gcry_kyber_pack_sk(uint8_t *r,
-                    gcry_kyber_polyvec *sk,
-                    gcry_kyber_param_t const *param)
+                                gcry_kyber_polyvec *sk,
+                                gcry_kyber_param_t const *param)
 {
   gcry_kyber_polyvec_tobytes(r, sk, param);
 }
 
 /*************************************************
- * Name:        unpack_sk
+ * Name:        _gcry_kyber_unpack_sk
  *
  * Description: De-serialize the secret key; inverse of _gcry_kyber_pack_sk
  *
@@ -82,9 +82,9 @@ static void _gcry_kyber_pack_sk(uint8_t *r,
  *              - const uint8_t *packedsk: pointer to input serialized secret
  *key
  **************************************************/
-static void unpack_sk(gcry_kyber_polyvec *sk,
-                      const uint8_t *packedsk,
-                      gcry_kyber_param_t const *param)
+static void _gcry_kyber_unpack_sk(gcry_kyber_polyvec *sk,
+                                  const uint8_t *packedsk,
+                                  gcry_kyber_param_t const *param)
 {
   gcry_kyber_polyvec_frombytes(sk, packedsk, param);
 }
@@ -101,9 +101,9 @@ static void unpack_sk(gcry_kyber_polyvec *sk,
  *              poly *v: pointer to the input polynomial v
  **************************************************/
 static void _gcry_kyber_pack_ciphertext(uint8_t *r,
-                            gcry_kyber_polyvec *b,
-                            poly *v,
-                            gcry_kyber_param_t const *param)
+                                        gcry_kyber_polyvec *b,
+                                        poly *v,
+                                        gcry_kyber_param_t const *param)
 {
   gcry_kyber_polyvec_compress(r, b, param);
   poly_compress(r + param->polyvec_compressed_bytes, v, param);
@@ -121,9 +121,9 @@ static void _gcry_kyber_pack_ciphertext(uint8_t *r,
  *              - const uint8_t *c: pointer to the input serialized ciphertext
  **************************************************/
 static void _gcry_kyber_unpack_ciphertext(gcry_kyber_polyvec *b,
-                              poly *v,
-                              const uint8_t *c,
-                              gcry_kyber_param_t const *param)
+                                          poly *v,
+                                          const uint8_t *c,
+                                          gcry_kyber_param_t const *param)
 {
   gcry_kyber_polyvec_decompress(b, c, param);
   poly_decompress(v, c + param->polyvec_compressed_bytes, param);
@@ -145,9 +145,9 @@ static void _gcry_kyber_unpack_ciphertext(gcry_kyber_polyvec *b,
  * Returns number of sampled 16-bit integers (at most len)
  **************************************************/
 static unsigned int _gcry_kyber_rej_uniform(int16_t *r,
-                                unsigned int len,
-                                const uint8_t *buf,
-                                unsigned int buflen)
+                                            unsigned int len,
+                                            const uint8_t *buf,
+                                            unsigned int buflen)
 {
   unsigned int ctr, pos;
   uint16_t val0, val1;
@@ -159,9 +159,9 @@ static unsigned int _gcry_kyber_rej_uniform(int16_t *r,
       val1 = ((buf[pos + 1] >> 4) | ((uint16_t)buf[pos + 2] << 4)) & 0xFFF;
       pos += 3;
 
-      if (val0 < KYBER_Q)
+      if (val0 < GCRY_KYBER_Q)
         r[ctr++] = val0;
-      if (ctr < len && val1 < KYBER_Q)
+      if (ctr < len && val1 < GCRY_KYBER_Q)
         r[ctr++] = val1;
     }
 
@@ -184,17 +184,17 @@ static unsigned int _gcry_kyber_rej_uniform(int16_t *r,
  *              - int transposed: boolean deciding whether A or A^T is
  *generated
  **************************************************/
-#define GEN_MATRIX_NBLOCKS                                                    \
-  ((12 * KYBER_N / 8 * (1 << 12) / KYBER_Q + XOF_BLOCKBYTES) / XOF_BLOCKBYTES)
-// Not static for benchmarking
-static gcry_err_code_t _gcry_kyber_gen_matrix(gcry_kyber_polyvec *a,
-                           const uint8_t seed[GCRY_KYBER_SYMBYTES],
-                           int transposed,
-                           gcry_kyber_param_t const *param)
+#define GEN_MATRIX_NBLOCKS ((12 * GCRY_KYBER_N / 8 * (1 << 12) / GCRY_KYBER_Q + GCRY_KYBER_XOF_BLOCKBYTES) / GCRY_KYBER_XOF_BLOCKBYTES)
+
+static gcry_err_code_t _gcry_kyber_gen_matrix(
+    gcry_kyber_polyvec *a,
+    const uint8_t seed[GCRY_KYBER_SYMBYTES],
+    int transposed,
+    gcry_kyber_param_t const *param)
 {
   unsigned int ctr, i, j, k;
   unsigned int buflen, off;
-  uint8_t buf[GEN_MATRIX_NBLOCKS * XOF_BLOCKBYTES + 2];
+  uint8_t buf[GEN_MATRIX_NBLOCKS * GCRY_KYBER_XOF_BLOCKBYTES + 2];
   gcry_err_code_t ec = 0;
 
   for (i = 0; i < param->k; i++)
@@ -214,15 +214,15 @@ static gcry_err_code_t _gcry_kyber_gen_matrix(gcry_kyber_polyvec *a,
           else
             {
               _gcry_kyber_shake128_absorb(h, seed, j, i);
-
             }
 
           _gcry_kyber_shake128_squeezeblocks(h, buf, GEN_MATRIX_NBLOCKS);
-          buflen = GEN_MATRIX_NBLOCKS * XOF_BLOCKBYTES;
+          buflen = GEN_MATRIX_NBLOCKS * GCRY_KYBER_XOF_BLOCKBYTES;
 
-          ctr = _gcry_kyber_rej_uniform(a[i].vec[j].coeffs, KYBER_N, buf, buflen);
+          ctr = _gcry_kyber_rej_uniform(
+              a[i].vec[j].coeffs, GCRY_KYBER_N, buf, buflen);
 
-          while (ctr < KYBER_N)
+          while (ctr < GCRY_KYBER_N)
             {
               off = buflen % 3;
               for (k = 0; k < off; k++)
@@ -231,16 +231,17 @@ static gcry_err_code_t _gcry_kyber_gen_matrix(gcry_kyber_polyvec *a,
                 }
 
               _gcry_kyber_shake128_squeezeblocks(h, buf + off, 1);
-              buflen = off + XOF_BLOCKBYTES;
+              buflen = off + GCRY_KYBER_XOF_BLOCKBYTES;
               ctr += _gcry_kyber_rej_uniform(
-                  a[i].vec[j].coeffs + ctr, KYBER_N - ctr, buf, buflen);
+                  a[i].vec[j].coeffs + ctr, GCRY_KYBER_N - ctr, buf, buflen);
             }
 
-        _gcry_md_close(h);
+          _gcry_md_close(h);
         }
     }
   return 0;
 }
+#undef GEN_MATRIX_NBLOCKS
 
 /*************************************************
 * Name:        indcpa_keypair
@@ -254,9 +255,9 @@ static gcry_err_code_t _gcry_kyber_gen_matrix(gcry_kyber_polyvec *a,
                               (of length KYBER_INDCPA_SECRETKEYBYTES bytes)
 **************************************************/
 static gcry_error_t _gcry_kyber_indcpa_keypair(uint8_t *pk,
-                            uint8_t *sk,
-                            gcry_kyber_param_t const *param,
-                            uint8_t *coins)
+                                               uint8_t *sk,
+                                               gcry_kyber_param_t const *param,
+                                               uint8_t *coins)
 {
   unsigned int i;
   uint8_t buf[2 * GCRY_KYBER_SYMBYTES];
@@ -335,11 +336,12 @@ leave:
  *seed (of length GCRY_KYBER_SYMBYTES) to deterministically generate all
  *randomness
  **************************************************/
-static gcry_error_t _gcry_kyber_indcpa_enc(uint8_t *c,
-                        const uint8_t *m,
-                        const uint8_t *pk,
-                        const uint8_t coins[GCRY_KYBER_SYMBYTES],
-                        gcry_kyber_param_t const *param)
+static gcry_error_t _gcry_kyber_indcpa_enc(
+    uint8_t *c,
+    const uint8_t *m,
+    const uint8_t *pk,
+    const uint8_t coins[GCRY_KYBER_SYMBYTES],
+    gcry_kyber_param_t const *param)
 {
   unsigned int i;
   uint8_t seed[GCRY_KYBER_SYMBYTES];
@@ -422,9 +424,9 @@ end:
  *                                   (of length KYBER_INDCPA_SECRETKEYBYTES)
  **************************************************/
 static gcry_error_t _gcry_kyber_indcpa_dec(uint8_t *m,
-                        const uint8_t *c,
-                        const uint8_t *sk,
-                        gcry_kyber_param_t const *param)
+                                           const uint8_t *c,
+                                           const uint8_t *sk,
+                                           gcry_kyber_param_t const *param)
 {
   gcry_kyber_polyvec b = {.vec = NULL}, skpv = {.vec = NULL};
   poly v, mp;
@@ -438,7 +440,7 @@ static gcry_error_t _gcry_kyber_indcpa_dec(uint8_t *m,
     }
 
   _gcry_kyber_unpack_ciphertext(&b, &v, c, param);
-  unpack_sk(&skpv, sk, param);
+  _gcry_kyber_unpack_sk(&skpv, sk, param);
 
   gcry_kyber_polyvec_ntt(&b, param);
   gcry_kyber_polyvec_basemul_acc_montgomery(&mp, &skpv, &b, param);
@@ -455,7 +457,10 @@ end:
 }
 
 
-gcry_err_code_t _gcry_kyber_kem_keypair_derand(uint8_t *pk, uint8_t *sk, gcry_kyber_param_t *param, uint8_t *coins)
+gcry_err_code_t _gcry_kyber_kem_keypair_derand(uint8_t *pk,
+                                               uint8_t *sk,
+                                               gcry_kyber_param_t *param,
+                                               uint8_t *coins)
 {
   gpg_err_code_t ec = 0;
   if ((ec = _gcry_kyber_indcpa_keypair(pk, sk, param, coins)))
@@ -463,17 +468,24 @@ gcry_err_code_t _gcry_kyber_kem_keypair_derand(uint8_t *pk, uint8_t *sk, gcry_ky
       return ec;
     }
   memcpy(&sk[param->indcpa_secret_key_bytes], pk, param->public_key_bytes);
-  //_gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk + KYBER_SECRETKEYBYTES - 2 * GCRY_KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
-  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk + param->secret_key_bytes - 2 * GCRY_KYBER_SYMBYTES, pk, param->public_key_bytes);
+  //_gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk + KYBER_SECRETKEYBYTES - 2 *
+  //GCRY_KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_256,
+                       sk + param->secret_key_bytes - 2 * GCRY_KYBER_SYMBYTES,
+                       pk,
+                       param->public_key_bytes);
   /* Value z for pseudo-random output on reject */
-  memcpy(sk + param->secret_key_bytes - GCRY_KYBER_SYMBYTES, coins + GCRY_KYBER_SYMBYTES, GCRY_KYBER_SYMBYTES);
+  memcpy(sk + param->secret_key_bytes - GCRY_KYBER_SYMBYTES,
+         coins + GCRY_KYBER_SYMBYTES,
+         GCRY_KYBER_SYMBYTES);
   return ec;
 }
 
-static gcry_err_code_t _gcry_kyber_kyber_shake256_rkprf(uint8_t out[KYBER_SSBYTES],
-                                            const uint8_t key[GCRY_KYBER_SYMBYTES],
-                                            const uint8_t* input,
-                                            size_t input_length)
+static gcry_err_code_t _gcry_kyber_kyber_shake256_rkprf(
+    uint8_t out[KYBER_SSBYTES],
+    const uint8_t key[GCRY_KYBER_SYMBYTES],
+    const uint8_t *input,
+    size_t input_length)
 {
   gcry_md_hd_t h;
   gcry_err_code_t ec = 0;
@@ -489,14 +501,19 @@ static gcry_err_code_t _gcry_kyber_kyber_shake256_rkprf(uint8_t out[KYBER_SSBYTE
 }
 
 
-gcry_err_code_t _gcry_kyber_kem_keypair(uint8_t *pk, uint8_t *sk, gcry_kyber_param_t *param)
+gcry_err_code_t _gcry_kyber_kem_keypair(uint8_t *pk,
+                                        uint8_t *sk,
+                                        gcry_kyber_param_t *param)
 {
   uint8_t coins[2 * GCRY_KYBER_SYMBYTES];
   _gcry_randomize(coins, 2 * GCRY_KYBER_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
   return _gcry_kyber_kem_keypair_derand(pk, sk, param, coins);
 }
 
-gcry_err_code_t _gcry_kyber_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_t *sk, gcry_kyber_param_t *param)
+gcry_err_code_t _gcry_kyber_kem_dec(uint8_t *ss,
+                                    const uint8_t *ct,
+                                    const uint8_t *sk,
+                                    gcry_kyber_param_t *param)
 {
   gcry_err_code_t ec = 0;
   int fail;
@@ -515,20 +532,27 @@ gcry_err_code_t _gcry_kyber_kem_dec(uint8_t *ss, const uint8_t *ct, const uint8_
     }
 
   /* Multitarget countermeasure for coins + contributory KEM */
-  memcpy(buf + GCRY_KYBER_SYMBYTES, sk + param->secret_key_bytes - 2 * GCRY_KYBER_SYMBYTES, GCRY_KYBER_SYMBYTES);
+  memcpy(buf + GCRY_KYBER_SYMBYTES,
+         sk + param->secret_key_bytes - 2 * GCRY_KYBER_SYMBYTES,
+         GCRY_KYBER_SYMBYTES);
   _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2 * GCRY_KYBER_SYMBYTES);
 
   /* coins are in kr+GCRY_KYBER_SYMBYTES */
-  if ((ec = _gcry_kyber_indcpa_enc(cmp, buf, pk, kr + GCRY_KYBER_SYMBYTES, param)))
+  if ((ec = _gcry_kyber_indcpa_enc(
+           cmp, buf, pk, kr + GCRY_KYBER_SYMBYTES, param)))
     {
       goto end;
     }
 
-  fail = _gcry_constime_bytes_differ(ct, cmp, param->ciphertext_bytes);
+  fail = _gcry_consttime_bytes_differ(ct, cmp, param->ciphertext_bytes);
 
 
   /* Compute rejection key */
-  if ((ec = _gcry_kyber_kyber_shake256_rkprf(ss, sk + param->secret_key_bytes - GCRY_KYBER_SYMBYTES, ct, param->ciphertext_bytes)))
+  if ((ec = _gcry_kyber_kyber_shake256_rkprf(ss,
+                                             sk + param->secret_key_bytes
+                                                 - GCRY_KYBER_SYMBYTES,
+                                             ct,
+                                             param->ciphertext_bytes)))
     {
       goto end;
     }
@@ -541,15 +565,21 @@ end:
   return ec;
 }
 
-gcry_err_code_t _gcry_kyber_kem_enc(uint8_t *ct, uint8_t *ss, const uint8_t *pk, gcry_kyber_param_t *param)
+gcry_err_code_t _gcry_kyber_kem_enc(uint8_t *ct,
+                                    uint8_t *ss,
+                                    const uint8_t *pk,
+                                    gcry_kyber_param_t *param)
 {
   uint8_t coins[GCRY_KYBER_SYMBYTES];
   _gcry_randomize(coins, GCRY_KYBER_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
   return _gcry_kyber_kem_enc_derand(ct, ss, pk, param, coins);
 }
 
-gcry_err_code_t _gcry_kyber_kem_enc_derand(
-    uint8_t *ct, uint8_t *ss, const uint8_t *pk, gcry_kyber_param_t *param, uint8_t *coins)
+gcry_err_code_t _gcry_kyber_kem_enc_derand(uint8_t *ct,
+                                           uint8_t *ss,
+                                           const uint8_t *pk,
+                                           gcry_kyber_param_t *param,
+                                           uint8_t *coins)
 {
   gpg_err_code_t ec = 0;
   uint8_t buf[2 * GCRY_KYBER_SYMBYTES];
@@ -561,12 +591,16 @@ gcry_err_code_t _gcry_kyber_kem_enc_derand(
 
   /* Multitarget countermeasure for coins + contributory KEM */
 
-  _gcry_md_hash_buffer(GCRY_MD_SHA3_256, buf + GCRY_KYBER_SYMBYTES, pk, param->public_key_bytes);
+  _gcry_md_hash_buffer(GCRY_MD_SHA3_256,
+                       buf + GCRY_KYBER_SYMBYTES,
+                       pk,
+                       param->public_key_bytes);
 
   _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2 * GCRY_KYBER_SYMBYTES);
 
   /* coins are in kr+GCRY_KYBER_SYMBYTES */
-  if ((ec = _gcry_kyber_indcpa_enc(ct, buf, pk, kr + GCRY_KYBER_SYMBYTES, param)))
+  if ((ec
+       = _gcry_kyber_indcpa_enc(ct, buf, pk, kr + GCRY_KYBER_SYMBYTES, param)))
     {
       goto end;
     }

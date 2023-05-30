@@ -18,6 +18,7 @@
 *              - unsigned char j: additional byte of input
 **************************************************/
 // TODOMTG: REMOVE WHEN NEW IS WORKING
+#if 0
 void kyber_shake128_absorb(keccak_state *state,
                            const unsigned char seed[GCRY_KYBER_SYMBYTES],
                            unsigned char x,
@@ -31,6 +32,7 @@ void kyber_shake128_absorb(keccak_state *state,
 
   shake128_absorb_once(state, extseed, sizeof(extseed));
 }
+#endif
 
 void _gcry_kyber_shake128_absorb(gcry_md_hd_t h, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char x, unsigned char y)
 {
@@ -47,7 +49,7 @@ void _gcry_kyber_shake128_absorb(gcry_md_hd_t h, const unsigned char seed[GCRY_K
 
 gcry_err_code_t _gcry_kyber_shake128_squeezeblocks(gcry_md_hd_t h, uint8_t *out, size_t nblocks )
 {
-  return _gcry_md_extract(h, GCRY_MD_SHAKE128, out, SHAKE128_RATE * nblocks);
+  return _gcry_md_extract(h, GCRY_MD_SHAKE128, out, GCRY_SHAKE128_RATE * nblocks);
 }
 
 /*************************************************
