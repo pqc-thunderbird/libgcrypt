@@ -2,11 +2,11 @@
 #include <config.h>
 #include <stdio.h>
 
-//#include "gcrypt.h"
+
 #include "kyber-common.h"
 
 #include "g10lib.h"
-//#include "mpi.h"
+
 #include "cipher.h"
 #include "pubkey-internal.h"
 #include "kyber_aux.h"
@@ -54,48 +54,80 @@ static gcry_err_code_t _gcry_kyber_get_param_from_bit_size(
   return 0;
 }
 
-static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
-                                             const gcry_kyber_param_t param,
-                                             unsigned char **sk_p,
-                                             size_t exp_len)
+static gcry_err_code_t kyber_params_from_key_param(const gcry_sexp_t keyparms,
+                                                   gcry_kyber_param_t *param, unsigned int *nbits_p)
 {
-  // unsigned char *private_key = NULL;
+  gpg_err_code_t ec = 0;
+
+  unsigned int nbits;
+  ec = _gcry_pk_util_get_nbits(keyparms, &nbits);
+  if (ec)
+    {
+      return ec;
+    }
+  if ((ec = _gcry_kyber_get_param_from_bit_size(nbits, param)))
+    {
+      return ec;
+    }
+  if(nbits_p != NULL)
+  {
+      if(param->id == GCRY_KYBER_512)
+      {
+          *nbits_p = 512;
+      }
+      else if(param->id == GCRY_KYBER_768)
+      {
+          *nbits_p = 768;
+      }
+      else if(param->id == GCRY_KYBER_1024)
+      {
+          *nbits_p = 1024;
+      }
+      else
+      {
+          ec = GPG_ERR_INV_ARG;
+      }
+  }
+
+  return ec;
+}
+
+static gcry_err_code_t extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
+                                                    const char *label,
+                                                    unsigned char **sk_p,
+                                                    size_t exp_len)
+{
   gcry_mpi_t sk     = NULL;
   gpg_err_code_t ec = 0;
-  size_t nwritten = 0;
+  size_t nwritten   = 0;
 
-  *sk_p             = 0;
+  *sk_p = 0;
 
 
-  ec = sexp_extract_param(keyparms, NULL, "/s", &sk, NULL);
+  ec = sexp_extract_param(keyparms, NULL, label, &sk, NULL);
   if (ec)
     {
       printf("error from sexp_extract_param (keyparms)\n");
       goto leave;
     }
-  if (mpi_get_nbits(sk) != param.secret_key_bytes * 8)
+  if (mpi_get_nbits(sk) != exp_len * 8)
     {
       ec = GPG_ERR_INV_ARG;
       goto leave;
     }
 
-  if (!(*sk_p = xtrymalloc(param.secret_key_bytes)))
+  if (!(*sk_p = xtrymalloc(exp_len)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  _gcry_mpi_print(
-      GCRYMPI_FMT_USG, *sk_p, param.secret_key_bytes, &nwritten, sk);
-  if (nwritten != param.secret_key_bytes)
+  _gcry_mpi_print(GCRYMPI_FMT_USG, *sk_p, exp_len, &nwritten, sk);
+
+  if (exp_len != nwritten)
     {
       ec = GPG_ERR_INV_ARG;
       goto leave;
     }
-  if(exp_len != nwritten)
-  {
-    ec = GPG_ERR_INV_ARG;
-    goto leave;
-  }
 
 leave:
   if (sk != NULL)
@@ -111,26 +143,57 @@ leave:
 }
 
 
+static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
+                                             const gcry_kyber_param_t param,
+                                             unsigned char **sk_p)
+{
+  return extract_opaque_mpi_from_sexp(
+      keyparms, "/s", sk_p, param.secret_key_bytes);
+}
+
+
+static gcry_err_code_t ciphertext_from_sexp(const gcry_sexp_t keyparms,
+                                            const gcry_kyber_param_t param,
+                                            unsigned char **ct_p)
+{
+  return extract_opaque_mpi_from_sexp(
+      keyparms, "/c", ct_p, param.ciphertext_bytes);
+}
+
+
+static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms,
+                                            const gcry_kyber_param_t param,
+                                            unsigned char **pk_p)
+{
+  return extract_opaque_mpi_from_sexp(
+      keyparms, "/p", pk_p, param.public_key_bytes);
+}
+
+
 static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
                                       gcry_sexp_t *r_skey)
 {
   gpg_err_code_t ec = 0;
 
-  /*uint8_t pk[CRYPTO_PUBLICKEYBYTES];
-    uint8_t sk[CRYPTO_SECRETKEYBYTES];*/
   uint8_t *pk = 0, *sk = 0;
   unsigned int nbits;
   gcry_kyber_param_t param;
   gcry_mpi_t sk_mpi = NULL, pk_mpi = NULL;
+
+
+ if((ec = kyber_params_from_key_param(genparms, &param, &nbits)))
+ {
+     goto leave;
+ }
   ec = _gcry_pk_util_get_nbits(genparms, &nbits);
-  if (ec)
+ /* if (ec)
     {
       return ec;
     }
   if ((ec = _gcry_kyber_get_param_from_bit_size(nbits, &param)))
     {
       return ec;
-    }
+    }*/
   if (!(sk = xtrymalloc_secure(param.secret_key_bytes))
       || !(pk = xtrymalloc(param.public_key_bytes)))
     {
@@ -139,8 +202,6 @@ static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
     }
   _gcry_kyber_kem_keypair(pk, sk, &param);
 
-  // sk_mpi = mpi_new (0);
-  // pk_mpi = mpi_new (0);
   sk_mpi = _gcry_mpi_set_opaque_copy(sk_mpi, sk, param.secret_key_bytes * 8);
   pk_mpi = _gcry_mpi_set_opaque_copy(pk_mpi, pk, param.public_key_bytes * 8);
 
@@ -169,15 +230,6 @@ leave:
 }
 
 
-static gcry_err_code_t kyber_check_secret_key(gcry_sexp_t keyparms)
-{
-  /* TODOMTG: IMPLEMENT KEY CHECK */
-  gpg_err_code_t ec = 0;
-  keyparms          = keyparms;
-  return ec;
-}
-
-
 static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
                                    gcry_sexp_t *r_shared_key,
                                    gcry_sexp_t keyparms)
@@ -186,26 +238,20 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
   gpg_err_code_t ec = 0;
   unsigned char shared_secret[GCRY_KYBER_SSBYTES];
   // unsigned char shared_secret_str[GCRY_KYBER_SSBYTES*2+5];
-  // nsigned char ciphertext[KYBER_CIPHERTEXTBYTES];
   unsigned char *ciphertext = NULL, *public_key = NULL;
-  // unsigned char ciphertext_str[KYBER_CIPHERTEXTBYTES*2+5];
-  // unsigned char public_key[KYBER_SECRETKEYBYTES];
   // unsigned char public_key_str[KYBER_SECRETKEYBYTES*2+5];
 
-  gcry_mpi_t pk   = NULL;
-  size_t nwritten = 0;
-  unsigned int nbits;
+  // gcry_mpi_t pk   = NULL;
+  // size_t nwritten = 0;
+  //unsigned int nbits;
   gcry_kyber_param_t param;
 
-  /* Extract the key MPI from the SEXP.  */
-  ec = sexp_extract_param(keyparms, NULL, "/p", &pk, NULL);
-  if (ec)
-    {
-      printf("error from sexp_extract_param (keyparms)\n");
-      goto leave;
-    }
+ if((ec = kyber_params_from_key_param(keyparms, &param, NULL)))
+ {
+     goto leave;
+ }
 
-  ec = _gcry_pk_util_get_nbits(keyparms, &nbits);
+ /* ec = _gcry_pk_util_get_nbits(keyparms, &nbits);
   if (ec)
     {
       goto leave;
@@ -214,22 +260,12 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
     {
       goto leave;
       return ec;
-    }
+    }*/
   ciphertext = xtrymalloc(param.ciphertext_bytes);
-  public_key = xtrymalloc(param.public_key_bytes);
 
-  // if(mpi_get_nbits(pk) != KYBER_PUBLICKEYBYTES*8)
-  if (mpi_get_nbits(pk) != param.public_key_bytes * 8)
+  /* Extract the public key MPI from the SEXP.  */
+  if ((ec = public_key_from_sexp(keyparms, param, &public_key)))
     {
-      ec = GPG_ERR_INV_ARG;
-      goto leave;
-    }
-
-  _gcry_mpi_print(
-      GCRYMPI_FMT_USG, public_key, param.public_key_bytes, &nwritten, pk);
-  if (nwritten != param.public_key_bytes)
-    {
-      ec = GPG_ERR_INV_ARG;
       goto leave;
     }
 
@@ -240,7 +276,7 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
     printf("nwritten != KYBER_SECRETKEYBYTES*2+1\n");
     }*/
   // printf("kyber public_key used to decrypt: %s\n", public_key_str);
-  _gcry_mpi_release(pk);
+  //_gcry_mpi_release(pk);
 
   if ((ec
        = _gcry_kyber_kem_enc(ciphertext, shared_secret, public_key, &param)))
@@ -280,96 +316,31 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
   unsigned char shared_secret[GCRY_KYBER_SSBYTES];
   unsigned char *private_key = NULL, *ciphertext = NULL;
 
-//  gcry_mpi_t sk   = NULL;
-  gcry_mpi_t ct   = NULL;
-  size_t nwritten = 0;
-
-  unsigned int nbits;
   gcry_kyber_param_t param;
-  /* Extract the key MPI from the SEXP.  */
-  /*ec = sexp_extract_param(keyparms, NULL, "/s", &sk, NULL);
-  if (ec)
-    {
-      printf("error from sexp_extract_param (keyparms)\n");
-      goto leave;
-    }*/
 
+ if((ec = kyber_params_from_key_param(keyparms, &param, NULL)))
+ {
+     goto leave;
+ }
+
+  /* Extract the key MPI from the SEXP.  */
+  if ((ec = private_key_from_sexp(keyparms, param, &private_key)))
+    {
+      goto leave;
+    }
 
   /* Extract the key Ciphertext from the SEXP.  */
-  ec = sexp_extract_param(s_data, NULL, "/c", &ct, NULL);
-  if (ec)
+  if ((ec = ciphertext_from_sexp(s_data, param, &ciphertext)))
     {
       goto leave;
     }
 
-  ec = _gcry_pk_util_get_nbits(keyparms, &nbits);
-  if (ec)
-    {
-      goto leave;
-    }
-  if ((ec = _gcry_kyber_get_param_from_bit_size(nbits, &param)))
-    {
-      goto leave;
-    }
-
-  if((ec = private_key_from_sexp(keyparms, param, &private_key, param.secret_key_bytes)))
-  {
-    goto leave;
-  }
-
-  if (/*mpi_get_nbits(sk) != param.secret_key_bytes * 8
-      ||*/ mpi_get_nbits(ct) != param.ciphertext_bytes * 8)
-    {
-      ec = GPG_ERR_INV_ARG;
-      goto leave;
-    }
-
-
-  if (!(ciphertext = xtrymalloc(param.ciphertext_bytes))
-      /*|| !(private_key = xtrymalloc(param.secret_key_bytes))*/)
-    {
-      ec = gpg_err_code_from_syserror();
-      goto leave;
-    }
-
-  // extract the byte arrays from the MPIs:
-
-
-  _gcry_mpi_print(
-      GCRYMPI_FMT_USG, ciphertext, param.ciphertext_bytes, &nwritten, ct);
-  if (nwritten != param.ciphertext_bytes)
-    {
-      ec = GPG_ERR_INV_ARG;
-      goto leave;
-    }
-  //_gcry_mpi_print(GCRYMPI_FMT_HEX, ciphertext_str, sizeof(ciphertext_str),
-  //&nwritten, ct);
-  _gcry_mpi_release(ct);
   /*if(nwritten != KYBER_CIPHERTEXTBYTES*2+1)
     {
     printf("%u = nwritten != KYBER_CIPHERTEXTBYTES = %u\n", nwritten,
     KYBER_CIPHERTEXTBYTES); goto leave;
     }*/
   // printf("kyber ciphertext to decrypt: %s\n", ciphertext_str);
-
-#if 0
-  _gcry_mpi_print(
-      GCRYMPI_FMT_USG, private_key, param.secret_key_bytes, &nwritten, sk);
-  if (nwritten != param.secret_key_bytes)
-    {
-      ec = GPG_ERR_INV_ARG;
-      goto leave;
-    }
-  //_gcry_mpi_print(GCRYMPI_FMT_HEX, private_key_str, sizeof(private_key_str),
-  //&nwritten, sk);
-  /*if(nwritten != KYBER_SECRETKEYBYTES*2+1)
-    {
-    printf("nwritten != KYBER_SECRETKEYBYTES*2+1\n");
-    }*/
-  // printf("kyber private_key used to decrypt: %s\n", private_key_str);
-  _gcry_mpi_release(sk);
-#endif
-
 
   // ========== perform the decryption ===============
   if ((ec
@@ -383,6 +354,16 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
 leave:
   xfree(ciphertext);
   xfree(private_key);
+  return ec;
+}
+
+
+static gcry_err_code_t kyber_check_secret_key(gcry_sexp_t keyparms)
+{
+  /* TODOMTG: IMPLEMENT KEY CHECK */
+  gpg_err_code_t ec = 0;
+  keyparms          = keyparms;
+  // if((ec = private_key_from_sexp
   return ec;
 }
 
