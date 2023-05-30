@@ -128,8 +128,8 @@ static gcry_err_code_t _gcry_kyber_encap(gcry_sexp_t *r_ciph,
 {
 
   gpg_err_code_t ec = 0;
-  unsigned char shared_secret[KYBER_SSBYTES];
-  // unsigned char shared_secret_str[KYBER_SSBYTES*2+5];
+  unsigned char shared_secret[GCRY_KYBER_SSBYTES];
+  // unsigned char shared_secret_str[GCRY_KYBER_SSBYTES*2+5];
   // nsigned char ciphertext[KYBER_CIPHERTEXTBYTES];
   unsigned char *ciphertext = NULL, *public_key = NULL;
   // unsigned char ciphertext_str[KYBER_CIPHERTEXTBYTES*2+5];
@@ -194,7 +194,7 @@ static gcry_err_code_t _gcry_kyber_encap(gcry_sexp_t *r_ciph,
 
 
   ec = sexp_build(
-      r_shared_key, NULL, "(value %b)", (int)KYBER_SSBYTES, shared_secret);
+      r_shared_key, NULL, "(value %b)", (int)GCRY_KYBER_SSBYTES, shared_secret);
   if (ec)
     {
       goto leave;
@@ -218,7 +218,7 @@ static gcry_err_code_t _gcry_kyber_decrypt(gcry_sexp_t *r_plain,
                                            gcry_sexp_t keyparms)
 {
   gpg_err_code_t ec = 0;
-  unsigned char shared_secret[KYBER_SSBYTES];
+  unsigned char shared_secret[GCRY_KYBER_SSBYTES];
   unsigned char *private_key = NULL, *ciphertext = NULL;
 
   gcry_mpi_t sk   = NULL;
@@ -313,7 +313,7 @@ static gcry_err_code_t _gcry_kyber_decrypt(gcry_sexp_t *r_plain,
     }
 
   ec = sexp_build(
-      r_plain, NULL, "(value %b)", (int)KYBER_SSBYTES, shared_secret);
+      r_plain, NULL, "(value %b)", (int)GCRY_KYBER_SSBYTES, shared_secret);
 leave:
   xfree(ciphertext);
   xfree(private_key);

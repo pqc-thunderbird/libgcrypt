@@ -31,7 +31,7 @@ static void _gcry_kyber_pack_pk(uint8_t *r,
                                 const uint8_t seed[GCRY_KYBER_SYMBYTES],
                                 gcry_kyber_param_t const *param)
 {
-  gcry_kyber_polyvec_tobytes(r, pk, param);
+  _gcry_kyber_polyvec_tobytes(r, pk, param);
   memcpy(r + param->polyvec_bytes, seed, GCRY_KYBER_SYMBYTES);
 }
 
@@ -52,7 +52,7 @@ static void _gcry_kyber_unpack_pk(gcry_kyber_polyvec *pk,
                                   const uint8_t *packedpk,
                                   gcry_kyber_param_t const *param)
 {
-  gcry_kyber_polyvec_frombytes(pk, packedpk, param);
+  _gcry_kyber_polyvec_frombytes(pk, packedpk, param);
   memcpy(seed, packedpk + param->polyvec_bytes, GCRY_KYBER_SYMBYTES);
 }
 
@@ -69,7 +69,7 @@ static void _gcry_kyber_pack_sk(uint8_t *r,
                                 gcry_kyber_polyvec *sk,
                                 gcry_kyber_param_t const *param)
 {
-  gcry_kyber_polyvec_tobytes(r, sk, param);
+  _gcry_kyber_polyvec_tobytes(r, sk, param);
 }
 
 /*************************************************
@@ -86,7 +86,7 @@ static void _gcry_kyber_unpack_sk(gcry_kyber_polyvec *sk,
                                   const uint8_t *packedsk,
                                   gcry_kyber_param_t const *param)
 {
-  gcry_kyber_polyvec_frombytes(sk, packedsk, param);
+  _gcry_kyber_polyvec_frombytes(sk, packedsk, param);
 }
 
 /*************************************************
@@ -102,11 +102,11 @@ static void _gcry_kyber_unpack_sk(gcry_kyber_polyvec *sk,
  **************************************************/
 static void _gcry_kyber_pack_ciphertext(uint8_t *r,
                                         gcry_kyber_polyvec *b,
-                                        poly *v,
+                                        gcry_kyber_poly *v,
                                         gcry_kyber_param_t const *param)
 {
-  gcry_kyber_polyvec_compress(r, b, param);
-  poly_compress(r + param->polyvec_compressed_bytes, v, param);
+  _gcry_kyber_polyvec_compress(r, b, param);
+  _gcry_kyber_poly_compress(r + param->polyvec_compressed_bytes, v, param);
 }
 
 /*************************************************
@@ -121,12 +121,12 @@ static void _gcry_kyber_pack_ciphertext(uint8_t *r,
  *              - const uint8_t *c: pointer to the input serialized ciphertext
  **************************************************/
 static void _gcry_kyber_unpack_ciphertext(gcry_kyber_polyvec *b,
-                                          poly *v,
+                                          gcry_kyber_poly *v,
                                           const uint8_t *c,
                                           gcry_kyber_param_t const *param)
 {
-  gcry_kyber_polyvec_decompress(b, c, param);
-  poly_decompress(v, c + param->polyvec_compressed_bytes, param);
+  _gcry_kyber_polyvec_decompress(b, c, param);
+  _gcry_kyber_poly_decompress(v, c + param->polyvec_compressed_bytes, param);
 }
 
 /*************************************************
@@ -268,10 +268,10 @@ static gcry_error_t _gcry_kyber_indcpa_keypair(uint8_t *pk,
                      skpv = {.vec = NULL};
   gcry_error_t ec         = 0;
 
-  if ((ec = gcry_kyber_polymatrix_create(&a, param))
-      || (ec = gcry_kyber_polyvec_create(&e, param))
-      || (ec = gcry_kyber_polyvec_create(&pkpv, param))
-      || (ec = gcry_kyber_polyvec_create(&skpv, param)))
+  if ((ec = _gcry_kyber_polymatrix_create(&a, param))
+      || (ec = _gcry_kyber_polyvec_create(&e, param))
+      || (ec = _gcry_kyber_polyvec_create(&pkpv, param))
+      || (ec = _gcry_kyber_polyvec_create(&skpv, param)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
@@ -287,34 +287,34 @@ static gcry_error_t _gcry_kyber_indcpa_keypair(uint8_t *pk,
 
   for (i = 0; i < param->k; i++)
     {
-      poly_getnoise_eta1(&skpv.vec[i], noiseseed, nonce++, param);
+      _gcry_kyber_poly_getnoise_eta1(&skpv.vec[i], noiseseed, nonce++, param);
     }
   for (i = 0; i < param->k; i++)
     {
-      poly_getnoise_eta1(&e.vec[i], noiseseed, nonce++, param);
+      _gcry_kyber_poly_getnoise_eta1(&e.vec[i], noiseseed, nonce++, param);
     }
 
-  gcry_kyber_polyvec_ntt(&skpv, param);
-  gcry_kyber_polyvec_ntt(&e, param);
+  _gcry_kyber_polyvec_ntt(&skpv, param);
+  _gcry_kyber_polyvec_ntt(&e, param);
 
   // matrix-vector multiplication
   for (i = 0; i < param->k; i++)
     {
-      gcry_kyber_polyvec_basemul_acc_montgomery(
+      _gcry_kyber_polyvec_basemul_acc_montgomery(
           &pkpv.vec[i], &a[i], &skpv, param);
-      poly_tomont(&pkpv.vec[i]);
+      _gcry_kyber_poly_tomont(&pkpv.vec[i]);
     }
 
-  gcry_kyber_polyvec_add(&pkpv, &pkpv, &e, param);
-  gcry_kyber_polyvec_reduce(&pkpv, param);
+  _gcry_kyber_polyvec_add(&pkpv, &pkpv, &e, param);
+  _gcry_kyber_polyvec_reduce(&pkpv, param);
 
   _gcry_kyber_pack_sk(sk, &skpv, param);
   _gcry_kyber_pack_pk(pk, &pkpv, publicseed, param);
 leave:
-  gcry_kyber_polymatrix_destroy(&a, param);
-  gcry_kyber_polyvec_destroy(&e);
-  gcry_kyber_polyvec_destroy(&pkpv);
-  gcry_kyber_polyvec_destroy(&skpv);
+  _gcry_kyber_polymatrix_destroy(&a, param);
+  _gcry_kyber_polyvec_destroy(&e);
+  _gcry_kyber_polyvec_destroy(&pkpv);
+  _gcry_kyber_polyvec_destroy(&skpv);
 
   return ec;
 }
@@ -349,13 +349,13 @@ static gcry_error_t _gcry_kyber_indcpa_enc(
   gcry_kyber_polyvec sp = {.vec = NULL}, pkpv = {.vec = NULL},
                      ep = {.vec = NULL}, *at = NULL, b = {.vec = NULL};
   gcry_error_t ec = 0;
-  poly v, k, epp;
+  gcry_kyber_poly v, k, epp;
 
-  if ((ec = gcry_kyber_polyvec_create(&sp, param))
-      || (ec = gcry_kyber_polyvec_create(&pkpv, param))
-      || (ec = gcry_kyber_polyvec_create(&ep, param))
-      || (ec = gcry_kyber_polyvec_create(&b, param))
-      || (ec = gcry_kyber_polymatrix_create(&at, param)))
+  if ((ec = _gcry_kyber_polyvec_create(&sp, param))
+      || (ec = _gcry_kyber_polyvec_create(&pkpv, param))
+      || (ec = _gcry_kyber_polyvec_create(&ep, param))
+      || (ec = _gcry_kyber_polyvec_create(&b, param))
+      || (ec = _gcry_kyber_polymatrix_create(&at, param)))
     {
       ec = gpg_err_code_from_syserror();
       goto end;
@@ -363,7 +363,7 @@ static gcry_error_t _gcry_kyber_indcpa_enc(
 
 
   _gcry_kyber_unpack_pk(&pkpv, seed, pk, param);
-  poly_frommsg(&k, m);
+  _gcry_kyber_poly_frommsg(&k, m);
   if ((ec = gen_at(at, seed, param)))
     {
       goto end;
@@ -371,41 +371,41 @@ static gcry_error_t _gcry_kyber_indcpa_enc(
 
   for (i = 0; i < param->k; i++)
     {
-      poly_getnoise_eta1(sp.vec + i, coins, nonce++, param);
+      _gcry_kyber_poly_getnoise_eta1(sp.vec + i, coins, nonce++, param);
     }
   for (i = 0; i < param->k; i++)
     {
-      poly_getnoise_eta2(ep.vec + i, coins, nonce++);
+      _gcry_kyber_poly_getnoise_eta2(ep.vec + i, coins, nonce++);
     }
-  poly_getnoise_eta2(&epp, coins, nonce++);
+  _gcry_kyber_poly_getnoise_eta2(&epp, coins, nonce++);
 
-  gcry_kyber_polyvec_ntt(&sp, param);
+  _gcry_kyber_polyvec_ntt(&sp, param);
 
   // matrix-vector multiplication
   for (i = 0; i < param->k; i++)
     {
-      gcry_kyber_polyvec_basemul_acc_montgomery(&b.vec[i], &at[i], &sp, param);
+      _gcry_kyber_polyvec_basemul_acc_montgomery(&b.vec[i], &at[i], &sp, param);
     }
 
-  gcry_kyber_polyvec_basemul_acc_montgomery(&v, &pkpv, &sp, param);
+  _gcry_kyber_polyvec_basemul_acc_montgomery(&v, &pkpv, &sp, param);
 
-  gcry_kyber_polyvec_invntt_tomont(&b, param);
-  poly_invntt_tomont(&v);
+  _gcry_kyber_polyvec_invntt_tomont(&b, param);
+  _gcry_kyber_poly_invntt_tomont(&v);
 
-  gcry_kyber_polyvec_add(&b, &b, &ep, param);
-  poly_add(&v, &v, &epp);
-  poly_add(&v, &v, &k);
-  gcry_kyber_polyvec_reduce(&b, param);
-  poly_reduce(&v);
+  _gcry_kyber_polyvec_add(&b, &b, &ep, param);
+  _gcry_kyber_poly_add(&v, &v, &epp);
+  _gcry_kyber_poly_add(&v, &v, &k);
+  _gcry_kyber_polyvec_reduce(&b, param);
+  _gcry_kyber_poly_reduce(&v);
 
   _gcry_kyber_pack_ciphertext(c, &b, &v, param);
 end:
 
-  gcry_kyber_polyvec_destroy(&sp);
-  gcry_kyber_polyvec_destroy(&pkpv);
-  gcry_kyber_polyvec_destroy(&ep);
-  gcry_kyber_polyvec_destroy(&b);
-  gcry_kyber_polymatrix_destroy(&at, param);
+  _gcry_kyber_polyvec_destroy(&sp);
+  _gcry_kyber_polyvec_destroy(&pkpv);
+  _gcry_kyber_polyvec_destroy(&ep);
+  _gcry_kyber_polyvec_destroy(&b);
+  _gcry_kyber_polymatrix_destroy(&at, param);
 
   return ec;
 }
@@ -429,11 +429,11 @@ static gcry_error_t _gcry_kyber_indcpa_dec(uint8_t *m,
                                            gcry_kyber_param_t const *param)
 {
   gcry_kyber_polyvec b = {.vec = NULL}, skpv = {.vec = NULL};
-  poly v, mp;
+  gcry_kyber_poly v, mp;
   gcry_error_t ec = 0;
 
-  if ((ec = gcry_kyber_polyvec_create(&b, param))
-      || (ec = gcry_kyber_polyvec_create(&skpv, param)))
+  if ((ec = _gcry_kyber_polyvec_create(&b, param))
+      || (ec = _gcry_kyber_polyvec_create(&skpv, param)))
     {
       ec = gpg_error_from_syserror();
       goto end;
@@ -442,17 +442,17 @@ static gcry_error_t _gcry_kyber_indcpa_dec(uint8_t *m,
   _gcry_kyber_unpack_ciphertext(&b, &v, c, param);
   _gcry_kyber_unpack_sk(&skpv, sk, param);
 
-  gcry_kyber_polyvec_ntt(&b, param);
-  gcry_kyber_polyvec_basemul_acc_montgomery(&mp, &skpv, &b, param);
-  poly_invntt_tomont(&mp);
+  _gcry_kyber_polyvec_ntt(&b, param);
+  _gcry_kyber_polyvec_basemul_acc_montgomery(&mp, &skpv, &b, param);
+  _gcry_kyber_poly_invntt_tomont(&mp);
 
-  poly_sub(&mp, &v, &mp);
-  poly_reduce(&mp);
+  _gcry_kyber_poly_sub(&mp, &v, &mp);
+  _gcry_kyber_poly_reduce(&mp);
 
-  poly_tomsg(m, &mp);
+  _gcry_kyber_poly_tomsg(m, &mp);
 end:
-  gcry_kyber_polyvec_destroy(&skpv);
-  gcry_kyber_polyvec_destroy(&b);
+  _gcry_kyber_polyvec_destroy(&skpv);
+  _gcry_kyber_polyvec_destroy(&b);
   return ec;
 }
 
@@ -482,7 +482,7 @@ gcry_err_code_t _gcry_kyber_kem_keypair_derand(uint8_t *pk,
 }
 
 static gcry_err_code_t _gcry_kyber_kyber_shake256_rkprf(
-    uint8_t out[KYBER_SSBYTES],
+    uint8_t out[GCRY_KYBER_SSBYTES],
     const uint8_t key[GCRY_KYBER_SYMBYTES],
     const uint8_t *input,
     size_t input_length)
@@ -495,7 +495,7 @@ static gcry_err_code_t _gcry_kyber_kyber_shake256_rkprf(
     }
   _gcry_md_write(h, key, GCRY_KYBER_SYMBYTES);
   _gcry_md_write(h, input, input_length);
-  ec = _gcry_md_extract(h, GCRY_MD_SHAKE256, out, KYBER_SSBYTES);
+  ec = _gcry_md_extract(h, GCRY_MD_SHAKE256, out, GCRY_KYBER_SSBYTES);
   _gcry_md_close(h);
   return ec;
 }
