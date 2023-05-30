@@ -50,4 +50,6 @@ typedef struct
 #define GCRY_SHA3_256_RATE 136
 #define GCRY_SHA3_512_RATE 72
 
+#define GCRY_KYBER_XOF_BLOCKBYTES GCRY_SHAKE128_RATE
+
 #endif
