@@ -24,19 +24,19 @@ void init_ntt() {
 
   tmp[0] = MONT;
   for(i=1;i<128;i++)
-    tmp[i] = fqmul(tmp[i-1],MONT*KYBER_ROOT_OF_UNITY % KYBER_Q);
+    tmp[i] = fqmul(tmp[i-1],MONT*KYBER_ROOT_OF_UNITY % GCRY_KYBER_Q);
 
   for(i=0;i<128;i++) {
     zetas[i] = tmp[tree[i]];
-    if(zetas[i] > KYBER_Q/2)
-      zetas[i] -= KYBER_Q;
-    if(zetas[i] < -KYBER_Q/2)
-      zetas[i] += KYBER_Q;
+    if(zetas[i] > GCRY_KYBER_Q/2)
+      zetas[i] -= GCRY_KYBER_Q;
+    if(zetas[i] < -GCRY_KYBER_Q/2)
+      zetas[i] += GCRY_KYBER_Q;
   }
 }
 */
 
-const int16_t zetas[128] = {
+static const int16_t zetas[128] = {
     -1044, -758,  -359,  -1517, 1493,  1422,  287,   202,  -171,  622,   1577,
     182,   962,   -1202, -1474, 1468,  573,   -1325, 264,  383,   -829,  1458,
     -1602, -130,  -681,  1017,  732,   608,   -1542, 411,  -205,  -1571, 1223,
@@ -74,7 +74,7 @@ static int16_t fqmul(int16_t a, int16_t b)
  * Arguments:   - int16_t r[256]: pointer to input/output vector of elements of
  *Zq
  **************************************************/
-void ntt(int16_t r[256])
+void _gcry_kyber_ntt(int16_t r[256])
 {
   unsigned int len, start, j, k;
   int16_t t, zeta;
@@ -105,7 +105,7 @@ void ntt(int16_t r[256])
  * Arguments:   - int16_t r[256]: pointer to input/output vector of elements of
  *Zq
  **************************************************/
-void invntt(int16_t r[256])
+void _gcry_kyber_invntt(int16_t r[256])
 {
   unsigned int start, len, j, k;
   int16_t t, zeta;
@@ -140,13 +140,16 @@ void invntt(int16_t r[256])
  * Arguments:   - int16_t r[2]: pointer to the output polynomial
  *              - const int16_t a[2]: pointer to the first factor
  *              - const int16_t b[2]: pointer to the second factor
- *              - int16_t zeta: integer defining the reduction polynomial
+ *              - int zeta: integer defining the reduction polynomial as an offset into the zeta table
+ *              - int sign: sign to apply to the zeta value
  **************************************************/
-void basemul(int16_t r[2],
+void _gcry_kyber_basemul(int16_t r[2],
              const int16_t a[2],
              const int16_t b[2],
-             int16_t zeta)
+             int zeta_offs,
+             int sign)
 {
+  uint16_t zeta = zetas[zeta_offs] * sign;
   r[0] = fqmul(a[1], b[1]);
   r[0] = fqmul(r[0], zeta);
   r[0] += fqmul(a[0], b[0]);

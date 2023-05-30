@@ -85,11 +85,11 @@ void gcry_kyber_polyvec_compress(uint8_t* r, const gcry_kyber_polyvec *a, gcry_k
     {
         uint16_t t[8];
         for(i=0;i<param->k;i++) {
-            for(j=0;j<KYBER_N/8;j++) {
+            for(j=0;j<GCRY_KYBER_N/8;j++) {
                 for(k=0;k<8;k++) {
                     t[k]  = a->vec[i].coeffs[8*j+k];
-                    t[k] += ((int16_t)t[k] >> 15) & KYBER_Q;
-                    t[k]  = ((((uint32_t)t[k] << 11) + KYBER_Q/2)/KYBER_Q) & 0x7ff;
+                    t[k] += ((int16_t)t[k] >> 15) & GCRY_KYBER_Q;
+                    t[k]  = ((((uint32_t)t[k] << 11) + GCRY_KYBER_Q/2)/GCRY_KYBER_Q) & 0x7ff;
                 }
 
                 r[ 0] = (t[0] >>  0);
@@ -112,11 +112,11 @@ void gcry_kyber_polyvec_compress(uint8_t* r, const gcry_kyber_polyvec *a, gcry_k
 
         uint16_t t[4];
         for(i=0;i<param->k;i++) {
-            for(j=0;j<KYBER_N/4;j++) {
+            for(j=0;j<GCRY_KYBER_N/4;j++) {
                 for(k=0;k<4;k++) {
                     t[k]  = a->vec[i].coeffs[4*j+k];
-                    t[k] += ((int16_t)t[k] >> 15) & KYBER_Q;
-                    t[k]  = ((((uint32_t)t[k] << 10) + KYBER_Q/2)/ KYBER_Q) & 0x3ff;
+                    t[k] += ((int16_t)t[k] >> 15) & GCRY_KYBER_Q;
+                    t[k]  = ((((uint32_t)t[k] << 10) + GCRY_KYBER_Q/2)/ GCRY_KYBER_Q) & 0x3ff;
                 }
 
                 r[0] = (t[0] >> 0);
@@ -149,7 +149,7 @@ void gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r, const uint8_t* a, gcry
         //#if (KYBER_POLYVECCOMPRESSEDBYTES == (param->k * 352))
         uint16_t t[8];
         for(i=0;i<param->k;i++) {
-            for(j=0;j<KYBER_N/8;j++) {
+            for(j=0;j<GCRY_KYBER_N/8;j++) {
                 t[0] = (a[0] >> 0) | ((uint16_t)a[ 1] << 8);
                 t[1] = (a[1] >> 3) | ((uint16_t)a[ 2] << 5);
                 t[2] = (a[2] >> 6) | ((uint16_t)a[ 3] << 2) | ((uint16_t)a[4] << 10);
@@ -161,7 +161,7 @@ void gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r, const uint8_t* a, gcry
                 a += 11;
 
                 for(k=0;k<8;k++)
-                    r->vec[i].coeffs[8*j+k] = ((uint32_t)(t[k] & 0x7FF)*KYBER_Q + 1024) >> 11;
+                    r->vec[i].coeffs[8*j+k] = ((uint32_t)(t[k] & 0x7FF)*GCRY_KYBER_Q + 1024) >> 11;
             }
         }
     }
@@ -170,7 +170,7 @@ void gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r, const uint8_t* a, gcry
         //#elif (KYBER_POLYVECCOMPRESSEDBYTES == (param->k * 320))
         uint16_t t[4];
         for(i=0;i<param->k;i++) {
-            for(j=0;j<KYBER_N/4;j++) {
+            for(j=0;j<GCRY_KYBER_N/4;j++) {
                 t[0] = (a[0] >> 0) | ((uint16_t)a[1] << 8);
                 t[1] = (a[1] >> 2) | ((uint16_t)a[2] << 6);
                 t[2] = (a[2] >> 4) | ((uint16_t)a[3] << 4);
@@ -178,7 +178,7 @@ void gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r, const uint8_t* a, gcry
                 a += 5;
 
                 for(k=0;k<4;k++)
-                    r->vec[i].coeffs[4*j+k] = ((uint32_t)(t[k] & 0x3FF)*KYBER_Q + 512) >> 10;
+                    r->vec[i].coeffs[4*j+k] = ((uint32_t)(t[k] & 0x3FF)*GCRY_KYBER_Q + 512) >> 10;
             }
         }
     }

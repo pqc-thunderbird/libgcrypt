@@ -23,14 +23,14 @@ void poly_compress(unsigned char* r, const poly *a, gcry_kyber_param_t const* pa
 
     if(param->id != GCRY_KYBER_1024)
     {
-        for(i=0;i<KYBER_N/8;i++)
+        for(i=0;i<GCRY_KYBER_N/8;i++)
         {
             for(j=0;j<8;j++)
             {
                 // map to positive standard representatives
                 u  = a->coeffs[8*i+j];
-                u += (u >> 15) & KYBER_Q;
-                t[j] = ((((uint16_t)u << 4) + KYBER_Q/2)/KYBER_Q) & 15;
+                u += (u >> 15) & GCRY_KYBER_Q;
+                t[j] = ((((uint16_t)u << 4) + GCRY_KYBER_Q/2)/GCRY_KYBER_Q) & 15;
             }
 
             r[0] = t[0] | (t[1] << 4);
@@ -42,14 +42,14 @@ void poly_compress(unsigned char* r, const poly *a, gcry_kyber_param_t const* pa
     }
     else
     {
-        for(i=0;i<KYBER_N/8;i++)
+        for(i=0;i<GCRY_KYBER_N/8;i++)
         {
             for(j=0;j<8;j++)
             {
                 // map to positive standard representatives
                 u  = a->coeffs[8*i+j];
-                u += (u >> 15) & KYBER_Q;
-                t[j] = ((((uint32_t)u << 5) + KYBER_Q/2)/KYBER_Q) & 31;
+                u += (u >> 15) & GCRY_KYBER_Q;
+                t[j] = ((((uint32_t)u << 5) + GCRY_KYBER_Q/2)/GCRY_KYBER_Q) & 31;
             }
 
             r[0] = (t[0] >> 0) | (t[1] << 5);
@@ -78,10 +78,10 @@ void poly_decompress(poly *r, const unsigned char* a, gcry_kyber_param_t const* 
 
     if(param->id != GCRY_KYBER_1024)
     {
-        for(i=0;i<KYBER_N/2;i++)
+        for(i=0;i<GCRY_KYBER_N/2;i++)
         {
-            r->coeffs[2*i+0] = (((uint16_t)(a[0] & 15)*KYBER_Q) + 8) >> 4;
-            r->coeffs[2*i+1] = (((uint16_t)(a[0] >> 4)*KYBER_Q) + 8) >> 4;
+            r->coeffs[2*i+0] = (((uint16_t)(a[0] & 15)*GCRY_KYBER_Q) + 8) >> 4;
+            r->coeffs[2*i+1] = (((uint16_t)(a[0] >> 4)*GCRY_KYBER_Q) + 8) >> 4;
             a += 1;
         }
     }
@@ -89,7 +89,7 @@ void poly_decompress(poly *r, const unsigned char* a, gcry_kyber_param_t const* 
     {
         unsigned int j;
         unsigned char t[8];
-        for(i=0;i<KYBER_N/8;i++)
+        for(i=0;i<GCRY_KYBER_N/8;i++)
         {
             t[0] = (a[0] >> 0);
             t[1] = (a[0] >> 5) | (a[1] << 3);
@@ -103,7 +103,7 @@ void poly_decompress(poly *r, const unsigned char* a, gcry_kyber_param_t const* 
 
             for(j=0;j<8;j++)
             {
-                r->coeffs[8*i+j] = ((uint32_t)(t[j] & 31)*KYBER_Q + 16) >> 5;
+                r->coeffs[8*i+j] = ((uint32_t)(t[j] & 31)*GCRY_KYBER_Q + 16) >> 5;
             }
         }
     }
@@ -123,13 +123,13 @@ void poly_tobytes(unsigned char r[GCRY_KYBER_POLYBYTES], const poly *a)
   unsigned int i;
   uint16_t t0, t1;
 
-  for(i=0;i<KYBER_N/2;i++)
+  for(i=0;i<GCRY_KYBER_N/2;i++)
   {
     // map to positive standard representatives
     t0  = a->coeffs[2*i];
-    t0 += ((int16_t)t0 >> 15) & KYBER_Q;
+    t0 += ((int16_t)t0 >> 15) & GCRY_KYBER_Q;
     t1 = a->coeffs[2*i+1];
-    t1 += ((int16_t)t1 >> 15) & KYBER_Q;
+    t1 += ((int16_t)t1 >> 15) & GCRY_KYBER_Q;
     r[3*i+0] = (t0 >> 0);
     r[3*i+1] = (t0 >> 8) | (t1 << 4);
     r[3*i+2] = (t1 >> 4);
@@ -149,7 +149,7 @@ void poly_tobytes(unsigned char r[GCRY_KYBER_POLYBYTES], const poly *a)
 void poly_frombytes(poly *r, const unsigned char  a[GCRY_KYBER_POLYBYTES])
 {
   unsigned int i;
-  for(i=0;i<KYBER_N/2;i++)
+  for(i=0;i<GCRY_KYBER_N/2;i++)
   {
     r->coeffs[2*i]   = ((a[3*i+0] >> 0) | ((uint16_t)a[3*i+1] << 8)) & 0xFFF;
     r->coeffs[2*i+1] = ((a[3*i+1] >> 4) | ((uint16_t)a[3*i+2] << 4)) & 0xFFF;
@@ -170,12 +170,12 @@ void poly_frommsg(poly *r, const unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES])
   int16_t mask;
 
 
-  for(i=0;i<KYBER_N/8;i++)
+  for(i=0;i<GCRY_KYBER_N/8;i++)
   {
     for(j=0;j<8;j++)
     {
       mask = -(int16_t)((msg[i] >> j)&1);
-      r->coeffs[8*i+j] = mask & ((KYBER_Q+1)/2);
+      r->coeffs[8*i+j] = mask & ((GCRY_KYBER_Q+1)/2);
     }
   }
 }
@@ -193,14 +193,14 @@ void poly_tomsg(unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES], const poly *a)
   unsigned int i,j;
   uint16_t t;
 
-  for(i=0;i<KYBER_N/8;i++)
+  for(i=0;i<GCRY_KYBER_N/8;i++)
   {
     msg[i] = 0;
     for(j=0;j<8;j++)
     {
       t  = a->coeffs[8*i+j];
-      t += ((int16_t)t >> 15) & KYBER_Q;
-      t  = (((t << 1) + KYBER_Q/2)/KYBER_Q) & 1;
+      t += ((int16_t)t >> 15) & GCRY_KYBER_Q;
+      t  = (((t << 1) + GCRY_KYBER_Q/2)/GCRY_KYBER_Q) & 1;
       msg[i] |= t << j;
     }
   }
@@ -220,7 +220,7 @@ void poly_tomsg(unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES], const poly *a)
 **************************************************/
 void poly_getnoise_eta1(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char nonce, gcry_kyber_param_t const* param)
 {
-  unsigned char buf[KYBER_ETA1_MAX*KYBER_N/4];
+  unsigned char buf[KYBER_ETA1_MAX*GCRY_KYBER_N/4];
   _gcry_kyber_prf(buf, sizeof(buf), seed, nonce);
   poly_cbd_eta1(r, buf, param);
 }
@@ -239,7 +239,7 @@ void poly_getnoise_eta1(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], 
 **************************************************/
 void poly_getnoise_eta2(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char nonce)
 {
-  unsigned char buf[KYBER_ETA2*KYBER_N/4];
+  unsigned char buf[KYBER_ETA2*GCRY_KYBER_N/4];
   _gcry_kyber_prf(buf, sizeof(buf), seed, nonce);
   poly_cbd_eta2(r, buf);
 }
@@ -256,7 +256,7 @@ void poly_getnoise_eta2(poly *r, const unsigned char seed[GCRY_KYBER_SYMBYTES], 
 **************************************************/
 void poly_ntt(poly *r)
 {
-  ntt(r->coeffs);
+  _gcry_kyber_ntt(r->coeffs);
   poly_reduce(r);
 }
 
@@ -271,7 +271,7 @@ void poly_ntt(poly *r)
 **************************************************/
 void poly_invntt_tomont(poly *r)
 {
-  invntt(r->coeffs);
+  _gcry_kyber_invntt(r->coeffs);
 }
 
 /*************************************************
@@ -286,9 +286,9 @@ void poly_invntt_tomont(poly *r)
 void poly_basemul_montgomery(poly *r, const poly *a, const poly *b)
 {
   unsigned int i;
-  for(i=0;i<KYBER_N/4;i++) {
-    basemul(&r->coeffs[4*i], &a->coeffs[4*i], &b->coeffs[4*i], zetas[64+i]);
-    basemul(&r->coeffs[4*i+2], &a->coeffs[4*i+2], &b->coeffs[4*i+2], -zetas[64+i]);
+  for(i=0;i<GCRY_KYBER_N/4;i++) {
+    _gcry_kyber_basemul(&r->coeffs[4*i], &a->coeffs[4*i], &b->coeffs[4*i], 64+i, 1);
+    _gcry_kyber_basemul(&r->coeffs[4*i+2], &a->coeffs[4*i+2], &b->coeffs[4*i+2], 64+i, -1);
   }
 }
 
@@ -303,8 +303,8 @@ void poly_basemul_montgomery(poly *r, const poly *a, const poly *b)
 void poly_tomont(poly *r)
 {
   unsigned int i;
-  const int16_t f = (1ULL << 32) % KYBER_Q;
-  for(i=0;i<KYBER_N;i++)
+  const int16_t f = (1ULL << 32) % GCRY_KYBER_Q;
+  for(i=0;i<GCRY_KYBER_N;i++)
   {
     r->coeffs[i] = _gcry_kyber_montgomery_reduce((int32_t)r->coeffs[i]*f);
   }
@@ -321,7 +321,7 @@ void poly_tomont(poly *r)
 void poly_reduce(poly *r)
 {
   unsigned int i;
-  for(i=0;i<KYBER_N;i++)
+  for(i=0;i<GCRY_KYBER_N;i++)
   {
     r->coeffs[i] = _gcry_kyber_barrett_reduce(r->coeffs[i]);
   }
@@ -339,7 +339,7 @@ void poly_reduce(poly *r)
 void poly_add(poly *r, const poly *a, const poly *b)
 {
   unsigned int i;
-  for(i=0;i<KYBER_N;i++)
+  for(i=0;i<GCRY_KYBER_N;i++)
   {
     r->coeffs[i] = a->coeffs[i] + b->coeffs[i];
   }
@@ -357,7 +357,7 @@ void poly_add(poly *r, const poly *a, const poly *b)
 void poly_sub(poly *r, const poly *a, const poly *b)
 {
   unsigned int i;
-  for(i=0;i<KYBER_N;i++)
+  for(i=0;i<GCRY_KYBER_N;i++)
   {
     r->coeffs[i] = a->coeffs[i] - b->coeffs[i];
   }
