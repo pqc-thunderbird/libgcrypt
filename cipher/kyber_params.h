@@ -44,4 +44,10 @@ typedef struct
 #error "GCRY_KYBER_INDCPA_MSGBYTES must be equal to GCRY_KYBER_N/8 bytes!"
 #endif
 
+
+#define GCRY_SHAKE128_RATE 168
+#define GCRY_SHAKE256_RATE 136
+#define GCRY_SHA3_256_RATE 136
+#define GCRY_SHA3_512_RATE 72
+
 #endif
