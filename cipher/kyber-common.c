@@ -160,9 +160,13 @@ static unsigned int _gcry_kyber_rej_uniform(int16_t *r,
       pos += 3;
 
       if (val0 < GCRY_KYBER_Q)
-        r[ctr++] = val0;
+        {
+          r[ctr++] = val0;
+        }
       if (ctr < len && val1 < GCRY_KYBER_Q)
-        r[ctr++] = val1;
+        {
+          r[ctr++] = val1;
+        }
     }
 
   return ctr;
@@ -184,7 +188,10 @@ static unsigned int _gcry_kyber_rej_uniform(int16_t *r,
  *              - int transposed: boolean deciding whether A or A^T is
  *generated
  **************************************************/
-#define GEN_MATRIX_NBLOCKS ((12 * GCRY_KYBER_N / 8 * (1 << 12) / GCRY_KYBER_Q + GCRY_KYBER_XOF_BLOCKBYTES) / GCRY_KYBER_XOF_BLOCKBYTES)
+#define GEN_MATRIX_NBLOCKS                                                    \
+  ((12 * GCRY_KYBER_N / 8 * (1 << 12) / GCRY_KYBER_Q                          \
+    + GCRY_KYBER_XOF_BLOCKBYTES)                                              \
+   / GCRY_KYBER_XOF_BLOCKBYTES)
 
 static gcry_err_code_t _gcry_kyber_gen_matrix(
     gcry_kyber_polyvec *a,
@@ -384,7 +391,8 @@ static gcry_error_t _gcry_kyber_indcpa_enc(
   // matrix-vector multiplication
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_polyvec_basemul_acc_montgomery(&b.vec[i], &at[i], &sp, param);
+      _gcry_kyber_polyvec_basemul_acc_montgomery(
+          &b.vec[i], &at[i], &sp, param);
     }
 
   _gcry_kyber_polyvec_basemul_acc_montgomery(&v, &pkpv, &sp, param);
@@ -468,8 +476,6 @@ gcry_err_code_t _gcry_kyber_kem_keypair_derand(uint8_t *pk,
       return ec;
     }
   memcpy(&sk[param->indcpa_secret_key_bytes], pk, param->public_key_bytes);
-  //_gcry_md_hash_buffer(GCRY_MD_SHA3_256, sk + KYBER_SECRETKEYBYTES - 2 *
-  //GCRY_KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
   _gcry_md_hash_buffer(GCRY_MD_SHA3_256,
                        sk + param->secret_key_bytes - 2 * GCRY_KYBER_SYMBYTES,
                        pk,
@@ -522,7 +528,7 @@ gcry_err_code_t _gcry_kyber_kem_dec(uint8_t *ss,
   uint8_t kr[2 * GCRY_KYBER_SYMBYTES];
 
   uint8_t *cmp = NULL;
-  // const uint8_t *pk = sk+KYBER_INDCPA_SECRETKEYBYTES;
+
   const uint8_t *pk = sk + param->indcpa_secret_key_bytes;
 
   cmp = xtrymalloc(param->ciphertext_bytes);

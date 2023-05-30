@@ -18,7 +18,6 @@ gcry_err_code_t _gcry_kyber_shake128_squeezeblocks(gcry_md_hd_t h, uint8_t *out,
 
 gcry_err_code_t _gcry_kyber_prf(uint8_t *out, size_t outlen, const uint8_t key[GCRY_KYBER_SYMBYTES], uint8_t nonce);
 
-#define GCRY_KYBER_XOF_BLOCKBYTES GCRY_SHAKE128_RATE
 
 
 #endif /* SYMMETRIC_H */
