@@ -3,36 +3,9 @@
 #include <string.h>
 #include "kyber_params.h"
 #include "kyber_symmetric.h"
-#include "kyber_fips202.h"
 
 #include "gcrypt.h"
 
-/*************************************************
-* Name:        kyber_shake128_absorb
-*
-* Description: Absorb step of the SHAKE128 specialized for the Kyber context.
-*
-* Arguments:   - keccak_state *state: pointer to (uninitialized) output Keccak state
-*              - const unsigned char *seed: pointer to GCRY_KYBER_SYMBYTES input to be absorbed into state
-*              - unsigned char i: additional byte of input
-*              - unsigned char j: additional byte of input
-**************************************************/
-// TODOMTG: REMOVE WHEN NEW IS WORKING
-#if 0
-void kyber_shake128_absorb(keccak_state *state,
-                           const unsigned char seed[GCRY_KYBER_SYMBYTES],
-                           unsigned char x,
-                           unsigned char y)
-{
-  unsigned char extseed[GCRY_KYBER_SYMBYTES+2];
-
-  memcpy(extseed, seed, GCRY_KYBER_SYMBYTES);
-  extseed[GCRY_KYBER_SYMBYTES+0] = x;
-  extseed[GCRY_KYBER_SYMBYTES+1] = y;
-
-  shake128_absorb_once(state, extseed, sizeof(extseed));
-}
-#endif
 
 void _gcry_kyber_shake128_absorb(gcry_md_hd_t h, const unsigned char seed[GCRY_KYBER_SYMBYTES], unsigned char x, unsigned char y)
 {
@@ -63,7 +36,7 @@ gcry_err_code_t _gcry_kyber_shake128_squeezeblocks(gcry_md_hd_t h, uint8_t *out,
 *              - const unsigned char *key: pointer to the key (of length GCRY_KYBER_SYMBYTES)
 *              - unsigned char nonce: single-byte nonce (public PRF input)
 **************************************************/
-gcry_err_code_t kyber_shake256_prf(unsigned char *out, size_t outlen, const unsigned char key[GCRY_KYBER_SYMBYTES], unsigned char nonce)
+gcry_err_code_t _gcry_kyber_shake256_prf(unsigned char *out, size_t outlen, const unsigned char key[GCRY_KYBER_SYMBYTES], unsigned char nonce)
 {
   unsigned char extkey[GCRY_KYBER_SYMBYTES+1];
   gcry_err_code_t ec = 0;
@@ -84,5 +57,5 @@ gcry_err_code_t kyber_shake256_prf(unsigned char *out, size_t outlen, const unsi
 
 gcry_err_code_t _gcry_kyber_prf(unsigned char *out, size_t outlen, const unsigned char key[GCRY_KYBER_SYMBYTES], unsigned char nonce)
 {
-    return kyber_shake256_prf(out, outlen, key, nonce);
+    return _gcry_kyber_shake256_prf(out, outlen, key, nonce);
 }
