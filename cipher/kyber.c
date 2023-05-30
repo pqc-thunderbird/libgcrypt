@@ -55,7 +55,7 @@ static gcry_err_code_t _gcry_kyber_get_param_from_bit_size(
 }
 
 
-static gcry_err_code_t _gcry_kyber_generate(const gcry_sexp_t genparms,
+static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
                                             gcry_sexp_t *r_skey)
 {
   gpg_err_code_t ec = 0;
@@ -113,7 +113,7 @@ leave:
 }
 
 
-static gcry_err_code_t _gcry_kyber_check_secret_key(gcry_sexp_t keyparms)
+static gcry_err_code_t kyber_check_secret_key(gcry_sexp_t keyparms)
 {
   /* TODOMTG: IMPLEMENT KEY CHECK */
   gpg_err_code_t ec = 0;
@@ -122,7 +122,7 @@ static gcry_err_code_t _gcry_kyber_check_secret_key(gcry_sexp_t keyparms)
 }
 
 
-static gcry_err_code_t _gcry_kyber_encap(gcry_sexp_t *r_ciph,
+static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
                                          gcry_sexp_t *r_shared_key,
                                          gcry_sexp_t keyparms)
 {
@@ -213,7 +213,7 @@ leave:
 }
 
 
-static gcry_err_code_t _gcry_kyber_decrypt(gcry_sexp_t *r_plain,
+static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
                                            gcry_sexp_t s_data,
                                            gcry_sexp_t keyparms)
 {
@@ -324,7 +324,7 @@ leave:
  * sought, which will (presumably) be contained in both private and public
  * keys. For now the function expects an explicit "nbits" parameter
  */
-static unsigned int _gcry_kyber_get_nbits(gcry_sexp_t parms)
+static unsigned int kyber_get_nbits(gcry_sexp_t parms)
 {
   // TODO: SEE RSA FOR HOW TO PARSE A PARAMS SEXPR
   // return 1184;
@@ -338,6 +338,7 @@ static unsigned int _gcry_kyber_get_nbits(gcry_sexp_t parms)
   return nbits;
 }
 
+#if 0
 static gpg_err_code_t selftests_kyber(selftest_report_func_t report,
                                       int extended)
 {
@@ -365,17 +366,8 @@ static gpg_err_code_t run_selftests(int algo,
     }
   return ec;
 }
+#endif
 
-
-static gpg_err_code_t _gcry_kyber_compute_keygrip(gcry_md_hd_t md,
-                                                  gcry_sexp_t keyparam)
-{
-  /* TODOMTG: IMPLEMENT */
-  gpg_err_code_t ec = 0;
-  md                = md;
-  keyparam          = keyparam;
-  return ec;
-}
 
 static const char *kyber_names[] = {
     "kyber",
@@ -394,17 +386,17 @@ gcry_pk_spec_t _gcry_pubkey_spec_kyber = {
     "s",
     "a",
     "",
-    "p", // elements of pub-key, sec-key, ciphertext, signature, key-grip
-    _gcry_kyber_generate,
-    _gcry_kyber_check_secret_key,
+    "", // elements of pub-key, sec-key, ciphertext, signature, key-grip
+    kyber_generate,
+    kyber_check_secret_key,
     NULL, // encrypt
-    _gcry_kyber_encap,
-    _gcry_kyber_decrypt,
-    NULL, // sign,
-    NULL, // verify,
-    _gcry_kyber_get_nbits,
-    run_selftests,
-    _gcry_kyber_compute_keygrip,
+    kyber_encap,
+    kyber_decrypt,
+    NULL, // sign
+    NULL, // verify
+    kyber_get_nbits,
+    NULL, // run_selftests
+    NULL, // compute_keygrip
     NULL, // get_curve
     NULL  // get_curve_param
 };
