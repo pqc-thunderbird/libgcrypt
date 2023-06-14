@@ -5,9 +5,9 @@
 #include "dilithium-params.h"
 #include "dilithium-polyvec.h"
 
-void pack_pk(gcry_dilithium_param_t *params, uint8_t *pk, const uint8_t rho[GCRY_DILITHIUM_SEEDBYTES], const gcry_dilithium_polyvec *t1);
+void _gcry_dilithium_pack_pk(gcry_dilithium_param_t *params, uint8_t *pk, const uint8_t rho[GCRY_DILITHIUM_SEEDBYTES], const gcry_dilithium_polyvec *t1);
 
-void pack_sk(gcry_dilithium_param_t *params,
+void _gcry_dilithium_pack_sk(gcry_dilithium_param_t *params,
              uint8_t *sk,
              const uint8_t rho[GCRY_DILITHIUM_SEEDBYTES],
              const uint8_t tr[GCRY_DILITHIUM_SEEDBYTES],
@@ -16,11 +16,11 @@ void pack_sk(gcry_dilithium_param_t *params,
              const gcry_dilithium_polyvec *s1,
              const gcry_dilithium_polyvec *s2);
 
-void pack_sig(gcry_dilithium_param_t *params, uint8_t *sig, const uint8_t c[GCRY_DILITHIUM_SEEDBYTES], const gcry_dilithium_polyvec *z, const gcry_dilithium_polyvec *h);
+void _gcry_dilithium_pack_sig(gcry_dilithium_param_t *params, uint8_t *sig, const uint8_t c[GCRY_DILITHIUM_SEEDBYTES], const gcry_dilithium_polyvec *z, const gcry_dilithium_polyvec *h);
 
-void unpack_pk(gcry_dilithium_param_t *params, uint8_t rho[GCRY_DILITHIUM_SEEDBYTES], gcry_dilithium_polyvec *t1, const uint8_t *pk);
+void _gcry_dilithium_unpack_pk(gcry_dilithium_param_t *params, uint8_t rho[GCRY_DILITHIUM_SEEDBYTES], gcry_dilithium_polyvec *t1, const uint8_t *pk);
 
-void unpack_sk(gcry_dilithium_param_t *params,
+void _gcry_dilithium_unpack_sk(gcry_dilithium_param_t *params,
                uint8_t rho[GCRY_DILITHIUM_SEEDBYTES],
                uint8_t tr[GCRY_DILITHIUM_SEEDBYTES],
                uint8_t key[GCRY_DILITHIUM_SEEDBYTES],
@@ -29,6 +29,6 @@ void unpack_sk(gcry_dilithium_param_t *params,
                gcry_dilithium_polyvec *s2,
                const uint8_t *sk);
 
-int unpack_sig(gcry_dilithium_param_t *params, uint8_t c[GCRY_DILITHIUM_SEEDBYTES], gcry_dilithium_polyvec *z, gcry_dilithium_polyvec *h, const uint8_t *sig);
+int _gcry_dilithium_unpack_sig(gcry_dilithium_param_t *params, uint8_t c[GCRY_DILITHIUM_SEEDBYTES], gcry_dilithium_polyvec *z, gcry_dilithium_polyvec *h, const uint8_t *sig);
 
 #endif

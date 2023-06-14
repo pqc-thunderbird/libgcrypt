@@ -1,3 +1,4 @@
+#include <config.h>
 #include <stdint.h>
 #include "dilithium-params.h"
 #include "dilithium-ntt.h"
@@ -46,7 +47,7 @@ static const int32_t gcry_dilithium_zetas[GCRY_DILITHIUM_N] = {
 *
 * Arguments:   - uint32_t p[GCRY_DILITHIUM_N]: input/output coefficient array
 **************************************************/
-void ntt(int32_t a[GCRY_DILITHIUM_N]) {
+void _gcry_dilithium_ntt(int32_t a[GCRY_DILITHIUM_N]) {
   unsigned int len, start, j, k;
   int32_t zeta, t;
 
@@ -55,7 +56,7 @@ void ntt(int32_t a[GCRY_DILITHIUM_N]) {
     for(start = 0; start < GCRY_DILITHIUM_N; start = j + len) {
       zeta = gcry_dilithium_zetas[++k];
       for(j = start; j < start + len; ++j) {
-        t = montgomery_reduce((int64_t)zeta * a[j + len]);
+        t = _gcry_dilithium_montgomery_reduce((int64_t)zeta * a[j + len]);
         a[j + len] = a[j] - t;
         a[j] = a[j] + t;
       }
@@ -74,7 +75,7 @@ void ntt(int32_t a[GCRY_DILITHIUM_N]) {
 *
 * Arguments:   - uint32_t p[GCRY_DILITHIUM_N]: input/output coefficient array
 **************************************************/
-void invntt_tomont(int32_t a[GCRY_DILITHIUM_N]) {
+void _gcry_dilithium_invntt_tomont(int32_t a[GCRY_DILITHIUM_N]) {
   unsigned int start, len, j, k;
   int32_t t, zeta;
   const int32_t f = 41978; // mont^2/256
@@ -87,12 +88,12 @@ void invntt_tomont(int32_t a[GCRY_DILITHIUM_N]) {
         t = a[j];
         a[j] = t + a[j + len];
         a[j + len] = t - a[j + len];
-        a[j + len] = montgomery_reduce((int64_t)zeta * a[j + len]);
+        a[j + len] = _gcry_dilithium_montgomery_reduce((int64_t)zeta * a[j + len]);
       }
     }
   }
 
   for(j = 0; j < GCRY_DILITHIUM_N; ++j) {
-    a[j] = montgomery_reduce((int64_t)f * a[j]);
+    a[j] = _gcry_dilithium_montgomery_reduce((int64_t)f * a[j]);
   }
 }

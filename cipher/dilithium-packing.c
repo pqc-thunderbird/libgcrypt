@@ -1,10 +1,11 @@
+#include <config.h>
 #include "dilithium-params.h"
 #include "dilithium-packing.h"
 #include "dilithium-polyvec.h"
 #include "dilithium-poly.h"
 
 /*************************************************
-* Name:        pack_pk
+* Name:        _gcry_dilithium_pack_pk
 *
 * Description: Bit-pack public key pk = (rho, t1).
 *
@@ -12,7 +13,7 @@
 *              - const uint8_t rho[]: byte array containing rho
 *              - const gcry_dilithium_polyvec *t1: pointer to vector t1
 **************************************************/
-void pack_pk(gcry_dilithium_param_t *params,
+void _gcry_dilithium_pack_pk(gcry_dilithium_param_t *params,
              uint8_t *pk,
              const uint8_t rho[GCRY_DILITHIUM_SEEDBYTES],
              const gcry_dilithium_polyvec *t1)
@@ -24,11 +25,11 @@ void pack_pk(gcry_dilithium_param_t *params,
   pk += GCRY_DILITHIUM_SEEDBYTES;
 
   for(i = 0; i < params->k; ++i)
-    polyt1_pack(pk + i*GCRY_DILITHIUM_POLYT1_PACKEDBYTES, &t1->vec[i]);
+    _gcry_dilithium_polyt1_pack(pk + i*GCRY_DILITHIUM_POLYT1_PACKEDBYTES, &t1->vec[i]);
 }
 
 /*************************************************
-* Name:        unpack_pk
+* Name:        _gcry_dilithium_unpack_pk
 *
 * Description: Unpack public key pk = (rho, t1).
 *
@@ -36,7 +37,7 @@ void pack_pk(gcry_dilithium_param_t *params,
 *              - const gcry_dilithium_polyvec *t1: pointer to output vector t1
 *              - uint8_t pk[]: byte array containing bit-packed pk
 **************************************************/
-void unpack_pk(gcry_dilithium_param_t *params,
+void _gcry_dilithium_unpack_pk(gcry_dilithium_param_t *params,
                uint8_t rho[GCRY_DILITHIUM_SEEDBYTES],
                gcry_dilithium_polyvec *t1,
                const uint8_t *pk)
@@ -48,11 +49,11 @@ void unpack_pk(gcry_dilithium_param_t *params,
   pk += GCRY_DILITHIUM_SEEDBYTES;
 
   for(i = 0; i < params->k; ++i)
-    polyt1_unpack(&t1->vec[i], pk + i*GCRY_DILITHIUM_POLYT1_PACKEDBYTES);
+    _gcry_dilithium_polyt1_unpack(&t1->vec[i], pk + i*GCRY_DILITHIUM_POLYT1_PACKEDBYTES);
 }
 
 /*************************************************
-* Name:        pack_sk
+* Name:        _gcry_dilithium_pack_sk
 *
 * Description: Bit-pack secret key sk = (rho, tr, key, t0, s1, s2).
 *
@@ -64,7 +65,7 @@ void unpack_pk(gcry_dilithium_param_t *params,
 *              - const gcry_dilithium_polyvec *s1: pointer to vector s1
 *              - const gcry_dilithium_polyvec *s2: pointer to vector s2
 **************************************************/
-void pack_sk(gcry_dilithium_param_t *params,
+void _gcry_dilithium_pack_sk(gcry_dilithium_param_t *params,
              uint8_t *sk,
              const uint8_t rho[GCRY_DILITHIUM_SEEDBYTES],
              const uint8_t tr[GCRY_DILITHIUM_SEEDBYTES],
@@ -88,19 +89,19 @@ void pack_sk(gcry_dilithium_param_t *params,
   sk += GCRY_DILITHIUM_SEEDBYTES;
 
   for(i = 0; i < params->l; ++i)
-    polyeta_pack(params, sk + i*params->polyeta_packedbytes, &s1->vec[i]);
+    _gcry_dilithium_polyeta_pack(params, sk + i*params->polyeta_packedbytes, &s1->vec[i]);
   sk += params->l*params->polyeta_packedbytes;
 
   for(i = 0; i < params->k; ++i)
-    polyeta_pack(params, sk + i*params->polyeta_packedbytes, &s2->vec[i]);
+    _gcry_dilithium_polyeta_pack(params, sk + i*params->polyeta_packedbytes, &s2->vec[i]);
   sk += params->k * params->polyeta_packedbytes;
 
   for(i = 0; i < params->k; ++i)
-    polyt0_pack(sk + i*GCRY_DILITHIUM_POLYT0_PACKEDBYTES, &t0->vec[i]);
+    _gcry_dilithium_polyt0_pack(sk + i*GCRY_DILITHIUM_POLYT0_PACKEDBYTES, &t0->vec[i]);
 }
 
 /*************************************************
-* Name:        unpack_sk
+* Name:        _gcry_dilithium_unpack_sk
 *
 * Description: Unpack secret key sk = (rho, tr, key, t0, s1, s2).
 *
@@ -112,7 +113,7 @@ void pack_sk(gcry_dilithium_param_t *params,
 *              - const gcry_dilithium_polyvec *s2: pointer to output vector s2
 *              - uint8_t sk[]: byte array containing bit-packed sk
 **************************************************/
-void unpack_sk(gcry_dilithium_param_t *params,
+void _gcry_dilithium_unpack_sk(gcry_dilithium_param_t *params,
                uint8_t rho[GCRY_DILITHIUM_SEEDBYTES],
                uint8_t tr[GCRY_DILITHIUM_SEEDBYTES],
                uint8_t key[GCRY_DILITHIUM_SEEDBYTES],
@@ -136,19 +137,19 @@ void unpack_sk(gcry_dilithium_param_t *params,
   sk += GCRY_DILITHIUM_SEEDBYTES;
 
   for(i=0; i < params->l; ++i)
-    polyeta_unpack(params, &s1->vec[i], sk + i*params->polyeta_packedbytes);
+    _gcry_dilithium_polyeta_unpack(params, &s1->vec[i], sk + i*params->polyeta_packedbytes);
   sk += params->l*params->polyeta_packedbytes;
 
   for(i=0; i < params->k; ++i)
-    polyeta_unpack(params, &s2->vec[i], sk + i*params->polyeta_packedbytes);
+    _gcry_dilithium_polyeta_unpack(params, &s2->vec[i], sk + i*params->polyeta_packedbytes);
   sk += params->k * params->polyeta_packedbytes;
 
   for(i=0; i < params->k; ++i)
-    polyt0_unpack(&t0->vec[i], sk + i*GCRY_DILITHIUM_POLYT0_PACKEDBYTES);
+    _gcry_dilithium_polyt0_unpack(&t0->vec[i], sk + i*GCRY_DILITHIUM_POLYT0_PACKEDBYTES);
 }
 
 /*************************************************
-* Name:        pack_sig
+* Name:        _gcry_dilithium_pack_sig
 *
 * Description: Bit-pack signature sig = (c, z, h).
 *
@@ -157,7 +158,7 @@ void unpack_sk(gcry_dilithium_param_t *params,
 *              - const gcry_dilithium_polyvec *z: pointer to vector z
 *              - const gcry_dilithium_polyvec *h: pointer to hint vector h
 **************************************************/
-void pack_sig(gcry_dilithium_param_t *params,
+void _gcry_dilithium_pack_sig(gcry_dilithium_param_t *params,
               uint8_t *sig,
               const uint8_t c[GCRY_DILITHIUM_SEEDBYTES],
               const gcry_dilithium_polyvec *z,
@@ -170,7 +171,7 @@ void pack_sig(gcry_dilithium_param_t *params,
   sig += GCRY_DILITHIUM_SEEDBYTES;
 
   for(i = 0; i < params->l; ++i)
-    polyz_pack(params, sig + i*params->polyz_packedbytes, &z->vec[i]);
+    _gcry_dilithium_polyz_pack(params, sig + i*params->polyz_packedbytes, &z->vec[i]);
   sig += params->l*params->polyz_packedbytes;
 
   /* Encode h */
@@ -188,7 +189,7 @@ void pack_sig(gcry_dilithium_param_t *params,
 }
 
 /*************************************************
-* Name:        unpack_sig
+* Name:        _gcry_dilithium_unpack_sig
 *
 * Description: Unpack signature sig = (c, z, h).
 *
@@ -200,7 +201,7 @@ void pack_sig(gcry_dilithium_param_t *params,
 *
 * Returns 1 in case of malformed signature; otherwise 0.
 **************************************************/
-int unpack_sig(gcry_dilithium_param_t *params,
+int _gcry_dilithium_unpack_sig(gcry_dilithium_param_t *params,
                uint8_t c[GCRY_DILITHIUM_SEEDBYTES],
                gcry_dilithium_polyvec *z,
                gcry_dilithium_polyvec *h,
@@ -213,7 +214,7 @@ int unpack_sig(gcry_dilithium_param_t *params,
   sig += GCRY_DILITHIUM_SEEDBYTES;
 
   for(i = 0; i < params->l; ++i)
-    polyz_unpack(params, &z->vec[i], sig + i*params->polyz_packedbytes);
+    _gcry_dilithium_polyz_unpack(params, &z->vec[i], sig + i*params->polyz_packedbytes);
   sig += params->l*params->polyz_packedbytes;
 
   /* Decode h */

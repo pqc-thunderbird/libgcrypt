@@ -190,16 +190,6 @@ static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
       keyparms, "/s", sk_p, param.secret_key_bytes);
 }
 
-
-static gcry_err_code_t signature_from_sexp(const gcry_sexp_t keyparms,
-                                            const gcry_dilithium_param_t param,
-                                            unsigned char **ct_p)
-{
-  return extract_opaque_mpi_from_sexp(
-      keyparms, "/c", ct_p, param.signature_bytes);
-}
-
-
 static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms,
                                             const gcry_dilithium_param_t param,
                                             unsigned char **pk_p)
@@ -417,7 +407,6 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
     printf("failed to parse public key\n");
     goto leave;
   }
-
 
   /* Extract the signature value.  */
   ec = _gcry_pk_util_preparse_sigval (s_sig, dilithium_names, &l1, NULL);

@@ -7,7 +7,7 @@
 #include "dilithium-polyvec.h"
 #include "dilithium-poly.h"
 
-void challenge(poly *c, const uint8_t seed[GCRY_DILITHIUM_SEEDBYTES]);
+void _gcry_dilithium_challenge(poly *c, const uint8_t seed[GCRY_DILITHIUM_SEEDBYTES]);
 
 gcry_error_t _gcry_dilithium_keypair(gcry_dilithium_param_t *params, uint8_t *pk, uint8_t *sk);
 

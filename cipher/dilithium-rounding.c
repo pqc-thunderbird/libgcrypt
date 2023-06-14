@@ -1,9 +1,10 @@
+#include <config.h>
 #include <stdint.h>
 #include "dilithium-params.h"
 #include "dilithium-rounding.h"
 
 /*************************************************
-* Name:        power2round
+* Name:        _gcry_dilithium_power2round
 *
 * Description: For finite field element a, compute a0, a1 such that
 *              a mod^+ GCRY_DILITHIUM_Q = a1*2^GCRY_DILITHIUM_D + a0 with -2^{GCRY_DILITHIUM_D-1} < a0 <= 2^{GCRY_DILITHIUM_D-1}.
@@ -14,7 +15,7 @@
 *
 * Returns a1.
 **************************************************/
-int32_t power2round(int32_t *a0, int32_t a)  {
+int32_t _gcry_dilithium_power2round(int32_t *a0, int32_t a)  {
   int32_t a1;
 
   a1 = (a + (1 << (GCRY_DILITHIUM_D-1)) - 1) >> GCRY_DILITHIUM_D;
@@ -23,7 +24,7 @@ int32_t power2round(int32_t *a0, int32_t a)  {
 }
 
 /*************************************************
-* Name:        decompose
+* Name:        _gcry_dilithium_decompose
 *
 * Description: For finite field element a, compute high and low bits a0, a1 such
 *              that a mod^+ GCRY_DILITHIUM_Q = a1*ALPHA + a0 with -ALPHA/2 < a0 <= ALPHA/2 except
@@ -36,7 +37,7 @@ int32_t power2round(int32_t *a0, int32_t a)  {
 *
 * Returns a1.
 **************************************************/
-int32_t decompose(gcry_dilithium_param_t *params, int32_t *a0, int32_t a) {
+int32_t _gcry_dilithium_decompose(gcry_dilithium_param_t *params, int32_t *a0, int32_t a) {
   int32_t a1;
 
   a1  = (a + 127) >> 7;
@@ -55,7 +56,7 @@ int32_t decompose(gcry_dilithium_param_t *params, int32_t *a0, int32_t a) {
 }
 
 /*************************************************
-* Name:        make_hint
+* Name:        _gcry_dilithium_make_hint
 *
 * Description: Compute hint bit indicating whether the low bits of the
 *              input element overflow into the high bits.
@@ -65,7 +66,7 @@ int32_t decompose(gcry_dilithium_param_t *params, int32_t *a0, int32_t a) {
 *
 * Returns 1 if overflow.
 **************************************************/
-unsigned int make_hint(gcry_dilithium_param_t *params, int32_t a0, int32_t a1) {
+unsigned int _gcry_dilithium_make_hint(gcry_dilithium_param_t *params, int32_t a0, int32_t a1) {
   if(a0 > params->gamma2 || a0 < -params->gamma2 || (a0 == -params->gamma2 && a1 != 0))
     return 1;
 
@@ -73,7 +74,7 @@ unsigned int make_hint(gcry_dilithium_param_t *params, int32_t a0, int32_t a1) {
 }
 
 /*************************************************
-* Name:        use_hint
+* Name:        _gcry_dilithium_use_hint
 *
 * Description: Correct high bits according to hint.
 *
@@ -82,10 +83,10 @@ unsigned int make_hint(gcry_dilithium_param_t *params, int32_t a0, int32_t a1) {
 *
 * Returns corrected high bits.
 **************************************************/
-int32_t use_hint(gcry_dilithium_param_t *params, int32_t a, unsigned int hint) {
+int32_t _gcry_dilithium_use_hint(gcry_dilithium_param_t *params, int32_t a, unsigned int hint) {
   int32_t a0, a1;
 
-  a1 = decompose(params, &a0, a);
+  a1 = _gcry_dilithium_decompose(params, &a0, a);
   if(hint == 0)
     return a1;
 

@@ -1,3 +1,5 @@
+
+#include <config.h>
 #include <stdint.h>
 #include "dilithium-params.h"
 #include "dilithium-sign.h"
@@ -7,6 +9,7 @@
 #include "dilithium-randombytes.h"
 #include "dilithium-symmetric.h"
 #include "dilithium-fips202.h"
+#include "g10lib.h"
 
 /*************************************************
 * Name:        _gcry_dilithium_keypair
@@ -56,31 +59,31 @@ gcry_error_t _gcry_dilithium_keypair(gcry_dilithium_param_t *params, uint8_t *pk
   key = rhoprime + GCRY_DILITHIUM_CRHBYTES;
 
   /* Expand matrix */
-  polyvec_matrix_expand(params, mat, rho);
+  _gcry_dilithium_polyvec_matrix_expand(params, mat, rho);
 
   /* Sample short vectors s1 and s2 */
-  polyvecl_uniform_eta(params, &s1, rhoprime, 0);
-  polyveck_uniform_eta(params, &s2, rhoprime, params->l);
+  _gcry_dilithium_polyvecl_uniform_eta(params, &s1, rhoprime, 0);
+  _gcry_dilithium_polyveck_uniform_eta(params, &s2, rhoprime, params->l);
 
   /* Matrix-vector multiplication */
   //s1hat = s1;
   _gcry_dilithium_polyvec_copy(&s1hat, &s1, params->l);
-  polyvecl_ntt(params, &s1hat);
-  polyvec_matrix_pointwise_montgomery(params, &t1, mat, &s1hat);
-  polyveck_reduce(params, &t1);
-  polyveck_invntt_tomont(params, &t1);
+  _gcry_dilithium_polyvecl_ntt(params, &s1hat);
+  _gcry_dilithium_polyvec_matrix_pointwise_montgomery(params, &t1, mat, &s1hat);
+  _gcry_dilithium_polyveck_reduce(params, &t1);
+  _gcry_dilithium_polyveck_invntt_tomont(params, &t1);
 
   /* Add error vector s2 */
-  polyveck_add(params, &t1, &t1, &s2);
+  _gcry_dilithium_polyveck_add(params, &t1, &t1, &s2);
 
   /* Extract t1 and write public key */
-  polyveck_caddq(params, &t1);
-  polyveck_power2round(params, &t1, &t0, &t1);
-  pack_pk(params, pk, rho, &t1);
+  _gcry_dilithium_polyveck_caddq(params, &t1);
+  _gcry_dilithium_polyveck_power2round(params, &t1, &t0, &t1);
+  _gcry_dilithium_pack_pk(params, pk, rho, &t1);
 
   /* Compute H(rho, t1) and write secret key */
   shake256(tr, GCRY_DILITHIUM_SEEDBYTES, pk, params->public_key_bytes);
-  pack_sk(params, sk, rho, tr, key, &t0, &s1, &s2);
+  _gcry_dilithium_pack_sk(params, sk, rho, tr, key, &t0, &s1, &s2);
 
 leave:
   _gcry_dilithium_polymatrix_destroy(&mat, params->k);
@@ -119,7 +122,7 @@ gcry_error_t _gcry_dilithium_sign(gcry_dilithium_param_t *params,
   uint8_t *rho, *tr, *key, *mu, *rhoprime;
   uint16_t nonce = 0;
   poly cp;
-  keccak_state state;
+  gcry_md_hd_t hd;
 
   //polyvecl mat[params->k], s1, y, z;
   gcry_dilithium_polyvec *mat = NULL;
@@ -153,14 +156,14 @@ gcry_error_t _gcry_dilithium_sign(gcry_dilithium_param_t *params,
   key = tr + GCRY_DILITHIUM_SEEDBYTES;
   mu = key + GCRY_DILITHIUM_SEEDBYTES;
   rhoprime = mu + GCRY_DILITHIUM_CRHBYTES;
-  unpack_sk(params, rho, tr, key, &t0, &s1, &s2, sk);
+  _gcry_dilithium_unpack_sk(params, rho, tr, key, &t0, &s1, &s2, sk);
 
   /* Compute CRH(tr, msg) */
-  shake256_init(&state);
-  shake256_absorb(&state, tr, GCRY_DILITHIUM_SEEDBYTES);
-  shake256_absorb(&state, m, mlen);
-  shake256_finalize(&state);
-  shake256_squeeze(mu, GCRY_DILITHIUM_CRHBYTES, &state);
+  _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  _gcry_md_write(hd, tr, GCRY_DILITHIUM_SEEDBYTES);
+  _gcry_md_write(hd, m, mlen);
+  _gcry_md_extract(hd, GCRY_MD_SHAKE256, mu, GCRY_DILITHIUM_CRHBYTES);
+  _gcry_md_close(hd);
 
 #ifdef DILITHIUM_RANDOMIZED_SIGNING
   randombytes(rhoprime, GCRY_DILITHIUM_CRHBYTES);
@@ -169,67 +172,67 @@ gcry_error_t _gcry_dilithium_sign(gcry_dilithium_param_t *params,
 #endif
 
   /* Expand matrix and transform vectors */
-  polyvec_matrix_expand(params, mat, rho);
-  polyvecl_ntt(params, &s1);
-  polyveck_ntt(params, &s2);
-  polyveck_ntt(params, &t0);
+  _gcry_dilithium_polyvec_matrix_expand(params, mat, rho);
+  _gcry_dilithium_polyvecl_ntt(params, &s1);
+  _gcry_dilithium_polyveck_ntt(params, &s2);
+  _gcry_dilithium_polyveck_ntt(params, &t0);
 
 rej:
   /* Sample intermediate vector y */
-  polyvecl_uniform_gamma1(params, &y, rhoprime, nonce++);
+  _gcry_dilithium_polyvecl_uniform_gamma1(params, &y, rhoprime, nonce++);
 
   /* Matrix-vector multiplication */
   //z = y;
   _gcry_dilithium_polyvec_copy(&z, &y, params->l);
-  polyvecl_ntt(params, &z);
-  polyvec_matrix_pointwise_montgomery(params, &w1, mat, &z);
-  polyveck_reduce(params, &w1);
-  polyveck_invntt_tomont(params, &w1);
+  _gcry_dilithium_polyvecl_ntt(params, &z);
+  _gcry_dilithium_polyvec_matrix_pointwise_montgomery(params, &w1, mat, &z);
+  _gcry_dilithium_polyveck_reduce(params, &w1);
+  _gcry_dilithium_polyveck_invntt_tomont(params, &w1);
 
   /* Decompose w and call the random oracle */
-  polyveck_caddq(params, &w1);
-  polyveck_decompose(params, &w1, &w0, &w1);
-  polyveck_pack_w1(params, sig, &w1);
+  _gcry_dilithium_polyveck_caddq(params, &w1);
+  _gcry_dilithium_polyveck_decompose(params, &w1, &w0, &w1);
+  _gcry_dilithium_polyveck_pack_w1(params, sig, &w1);
 
-  shake256_init(&state);
-  shake256_absorb(&state, mu, GCRY_DILITHIUM_CRHBYTES);
-  shake256_absorb(&state, sig, params->k*params->polyw1_packedbytes);
-  shake256_finalize(&state);
-  shake256_squeeze(sig, GCRY_DILITHIUM_SEEDBYTES, &state);
-  poly_challenge(params, &cp, sig);
-  poly_ntt(&cp);
+  _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  _gcry_md_write(hd, mu, GCRY_DILITHIUM_CRHBYTES);
+  _gcry_md_write(hd, sig, params->k*params->polyw1_packedbytes);
+  _gcry_md_extract(hd, GCRY_MD_SHAKE256, sig, GCRY_DILITHIUM_SEEDBYTES);
+  _gcry_md_close(hd);
+  _gcry_dilithium_poly_challenge(params, &cp, sig);
+  _gcry_dilithium_poly_ntt(&cp);
 
   /* Compute z, reject if it reveals secret */
-  polyvecl_pointwise_poly_montgomery(params, &z, &cp, &s1);
-  polyvecl_invntt_tomont(params, &z);
-  polyvecl_add(params, &z, &z, &y);
-  polyvecl_reduce(params, &z);
-  if(polyvecl_chknorm(params, &z, params->gamma1 - params->beta))
+  _gcry_dilithium_polyvecl_pointwise_poly_montgomery(params, &z, &cp, &s1);
+  _gcry_dilithium_polyvecl_invntt_tomont(params, &z);
+  _gcry_dilithium_polyvecl_add(params, &z, &z, &y);
+  _gcry_dilithium_polyvecl_reduce(params, &z);
+  if(_gcry_dilithium_polyvecl_chknorm(params, &z, params->gamma1 - params->beta))
     goto rej;
 
   /* Check that subtracting cs2 does not change high bits of w and low bits
    * do not reveal secret information */
-  polyveck_pointwise_poly_montgomery(params, &h, &cp, &s2);
-  polyveck_invntt_tomont(params, &h);
-  polyveck_sub(params, &w0, &w0, &h);
-  polyveck_reduce(params, &w0);
-  if(polyveck_chknorm(params, &w0, params->gamma2 - params->beta))
+  _gcry_dilithium_polyveck_pointwise_poly_montgomery(params, &h, &cp, &s2);
+  _gcry_dilithium_polyveck_invntt_tomont(params, &h);
+  _gcry_dilithium_polyveck_sub(params, &w0, &w0, &h);
+  _gcry_dilithium_polyveck_reduce(params, &w0);
+  if(_gcry_dilithium_polyveck_chknorm(params, &w0, params->gamma2 - params->beta))
     goto rej;
 
   /* Compute hints for w1 */
-  polyveck_pointwise_poly_montgomery(params, &h, &cp, &t0);
-  polyveck_invntt_tomont(params, &h);
-  polyveck_reduce(params, &h);
-  if(polyveck_chknorm(params, &h, params->gamma2))
+  _gcry_dilithium_polyveck_pointwise_poly_montgomery(params, &h, &cp, &t0);
+  _gcry_dilithium_polyveck_invntt_tomont(params, &h);
+  _gcry_dilithium_polyveck_reduce(params, &h);
+  if(_gcry_dilithium_polyveck_chknorm(params, &h, params->gamma2))
     goto rej;
 
-  polyveck_add(params, &w0, &w0, &h);
-  n = polyveck_make_hint(params, &h, &w0, &w1);
+  _gcry_dilithium_polyveck_add(params, &w0, &w0, &h);
+  n = _gcry_dilithium_polyveck_make_hint(params, &h, &w0, &w1);
   if(n > params->omega)
     goto rej;
 
   /* Write signature */
-  pack_sig(params, sig, sig, &z, &h);
+  _gcry_dilithium_pack_sig(params, sig, sig, &z, &h);
   *siglen = params->signature_bytes;
 
 leave:
@@ -273,7 +276,6 @@ gcry_error_t _gcry_dilithium_verify(gcry_dilithium_param_t *params,
   uint8_t c[GCRY_DILITHIUM_SEEDBYTES];
   uint8_t c2[GCRY_DILITHIUM_SEEDBYTES];
   poly cp;
-  keccak_state state;
 
   //polyvecl mat[params->k], z;
   gcry_dilithium_polyvec *mat = NULL;
@@ -302,53 +304,59 @@ gcry_error_t _gcry_dilithium_verify(gcry_dilithium_param_t *params,
     goto leave;
   }
 
-  unpack_pk(params, rho, &t1, pk);
-  if(unpack_sig(params, c, &z, &h, sig))
+  _gcry_dilithium_unpack_pk(params, rho, &t1, pk);
+  if(_gcry_dilithium_unpack_sig(params, c, &z, &h, sig))
   {
     ec = GPG_ERR_BAD_SIGNATURE;
     goto leave;
   }
-  if(polyvecl_chknorm(params, &z, params->gamma1 - params->beta))
+  if(_gcry_dilithium_polyvecl_chknorm(params, &z, params->gamma1 - params->beta))
   {
     ec = GPG_ERR_BAD_SIGNATURE;
     goto leave;
   }
 
   /* Compute CRH(H(rho, t1), msg) */
-  shake256(mu, GCRY_DILITHIUM_SEEDBYTES, pk, params->public_key_bytes);
-  shake256_init(&state);
-  shake256_absorb(&state, mu, GCRY_DILITHIUM_SEEDBYTES);
-  shake256_absorb(&state, m, mlen);
-  shake256_finalize(&state);
-  shake256_squeeze(mu, GCRY_DILITHIUM_CRHBYTES, &state);
+
+  //shake256(mu, GCRY_DILITHIUM_SEEDBYTES, pk, params->public_key_bytes);
+  //shake256_init(&state);
+  //shake256_absorb(&state, mu, GCRY_DILITHIUM_SEEDBYTES);
+  //shake256_absorb(&state, m, mlen);
+  //shake256_finalize(&state);
+  //shake256_squeeze(mu, GCRY_DILITHIUM_CRHBYTES, &state);
+  _gcry_dilithium_shake256(pk, params->public_key_bytes, NULL, 0, mu, GCRY_DILITHIUM_SEEDBYTES);
+  _gcry_dilithium_shake256(mu, GCRY_DILITHIUM_SEEDBYTES, m, mlen, mu, GCRY_DILITHIUM_CRHBYTES);
+
 
   /* Matrix-vector multiplication; compute Az - c2^dt1 */
-  poly_challenge(params, &cp, c);
-  polyvec_matrix_expand(params, mat, rho);
+  _gcry_dilithium_poly_challenge(params, &cp, c);
+  _gcry_dilithium_polyvec_matrix_expand(params, mat, rho);
 
-  polyvecl_ntt(params, &z);
-  polyvec_matrix_pointwise_montgomery(params, &w1, mat, &z);
+  _gcry_dilithium_polyvecl_ntt(params, &z);
+  _gcry_dilithium_polyvec_matrix_pointwise_montgomery(params, &w1, mat, &z);
 
-  poly_ntt(&cp);
-  polyveck_shiftl(params, &t1);
-  polyveck_ntt(params, &t1);
-  polyveck_pointwise_poly_montgomery(params, &t1, &cp, &t1);
+  _gcry_dilithium_poly_ntt(&cp);
+  _gcry_dilithium_polyveck_shiftl(params, &t1);
+  _gcry_dilithium_polyveck_ntt(params, &t1);
+  _gcry_dilithium_polyveck_pointwise_poly_montgomery(params, &t1, &cp, &t1);
 
-  polyveck_sub(params, &w1, &w1, &t1);
-  polyveck_reduce(params, &w1);
-  polyveck_invntt_tomont(params, &w1);
+  _gcry_dilithium_polyveck_sub(params, &w1, &w1, &t1);
+  _gcry_dilithium_polyveck_reduce(params, &w1);
+  _gcry_dilithium_polyveck_invntt_tomont(params, &w1);
 
   /* Reconstruct w1 */
-  polyveck_caddq(params, &w1);
-  polyveck_use_hint(params, &w1, &w1, &h);
-  polyveck_pack_w1(params, buf, &w1);
+  _gcry_dilithium_polyveck_caddq(params, &w1);
+  _gcry_dilithium_polyveck_use_hint(params, &w1, &w1, &h);
+  _gcry_dilithium_polyveck_pack_w1(params, buf, &w1);
 
   /* Call random oracle and verify challenge */
-  shake256_init(&state);
-  shake256_absorb(&state, mu, GCRY_DILITHIUM_CRHBYTES);
-  shake256_absorb(&state, buf, params->k*params->polyw1_packedbytes);
-  shake256_finalize(&state);
-  shake256_squeeze(c2, GCRY_DILITHIUM_SEEDBYTES, &state);
+  //shake256_init(&state);
+  //shake256_absorb(&state, mu, GCRY_DILITHIUM_CRHBYTES);
+  //shake256_absorb(&state, buf, params->k*params->polyw1_packedbytes);
+  //shake256_finalize(&state);
+  //shake256_squeeze(c2, GCRY_DILITHIUM_SEEDBYTES, &state);
+  _gcry_dilithium_shake256(mu, GCRY_DILITHIUM_CRHBYTES, buf, params->k*params->polyw1_packedbytes, c2, GCRY_DILITHIUM_SEEDBYTES);
+
   for(i = 0; i < GCRY_DILITHIUM_SEEDBYTES; ++i)
     if(c[i] != c2[i])
     {

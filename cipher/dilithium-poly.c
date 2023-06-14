@@ -1,3 +1,4 @@
+#include <config.h>
 #include <stdint.h>
 #include "dilithium-params.h"
 #include "dilithium-poly.h"
@@ -7,37 +8,37 @@
 #include "dilithium-symmetric.h"
 
 /*************************************************
-* Name:        poly_reduce
+* Name:        _gcry_dilithium_poly_reduce
 *
 * Description: Inplace reduction of all coefficients of polynomial to
 *              representative in [-6283009,6283007].
 *
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
-void poly_reduce(poly *a) {
+void _gcry_dilithium_poly_reduce(poly *a) {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N; ++i)
-    a->coeffs[i] = reduce32(a->coeffs[i]);
+    a->coeffs[i] = _gcry_dilithium_reduce32(a->coeffs[i]);
 }
 
 /*************************************************
-* Name:        poly_caddq
+* Name:        _gcry_dilithium_poly_caddq
 *
 * Description: For all coefficients of in/out polynomial add GCRY_DILITHIUM_Q if
 *              coefficient is negative.
 *
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
-void poly_caddq(poly *a) {
+void _gcry_dilithium_poly_caddq(poly *a) {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N; ++i)
-    a->coeffs[i] = caddq(a->coeffs[i]);
+    a->coeffs[i] = _gcry_dilithium_caddq(a->coeffs[i]);
 }
 
 /*************************************************
-* Name:        poly_add
+* Name:        _gcry_dilithium_poly_add
 *
 * Description: Add polynomials. No modular reduction is performed.
 *
@@ -45,7 +46,7 @@ void poly_caddq(poly *a) {
 *              - const poly *a: pointer to first summand
 *              - const poly *b: pointer to second summand
 **************************************************/
-void poly_add(poly *c, const poly *a, const poly *b)  {
+void _gcry_dilithium_poly_add(poly *c, const poly *a, const poly *b)  {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N; ++i)
@@ -53,7 +54,7 @@ void poly_add(poly *c, const poly *a, const poly *b)  {
 }
 
 /*************************************************
-* Name:        poly_sub
+* Name:        _gcry_dilithium_poly_sub
 *
 * Description: Subtract polynomials. No modular reduction is
 *              performed.
@@ -63,7 +64,7 @@ void poly_add(poly *c, const poly *a, const poly *b)  {
 *              - const poly *b: pointer to second input polynomial to be
 *                               subtraced from first input polynomial
 **************************************************/
-void poly_sub(poly *c, const poly *a, const poly *b) {
+void _gcry_dilithium_poly_sub(poly *c, const poly *a, const poly *b) {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N; ++i)
@@ -71,14 +72,14 @@ void poly_sub(poly *c, const poly *a, const poly *b) {
 }
 
 /*************************************************
-* Name:        poly_shiftl
+* Name:        _gcry_dilithium_poly_shiftl
 *
 * Description: Multiply polynomial by 2^GCRY_DILITHIUM_D without modular reduction. Assumes
 *              input coefficients to be less than 2^{31-GCRY_DILITHIUM_D} in absolute value.
 *
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
-void poly_shiftl(poly *a) {
+void _gcry_dilithium_poly_shiftl(poly *a) {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N; ++i)
@@ -86,19 +87,19 @@ void poly_shiftl(poly *a) {
 }
 
 /*************************************************
-* Name:        poly_ntt
+* Name:        _gcry_dilithium_poly_ntt
 *
 * Description: Inplace forward NTT. Coefficients can grow by
 *              8*GCRY_DILITHIUM_Q in absolute value.
 *
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
-void poly_ntt(poly *a) {
-  ntt(a->coeffs);
+void _gcry_dilithium_poly_ntt(poly *a) {
+  _gcry_dilithium_ntt(a->coeffs);
 }
 
 /*************************************************
-* Name:        poly_invntt_tomont
+* Name:        _gcry_dilithium_poly_invntt_tomont
 *
 * Description: Inplace inverse NTT and multiplication by 2^{32}.
 *              Input coefficients need to be less than GCRY_DILITHIUM_Q in absolute
@@ -106,12 +107,12 @@ void poly_ntt(poly *a) {
 *
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
-void poly_invntt_tomont(poly *a) {
-  invntt_tomont(a->coeffs);
+void _gcry_dilithium_poly_invntt_tomont(poly *a) {
+  _gcry_dilithium_invntt_tomont(a->coeffs);
 }
 
 /*************************************************
-* Name:        poly_pointwise_montgomery
+* Name:        _gcry_dilithium_poly_pointwise_montgomery
 *
 * Description: Pointwise multiplication of polynomials in NTT domain
 *              representation and multiplication of resulting polynomial
@@ -121,15 +122,15 @@ void poly_invntt_tomont(poly *a) {
 *              - const poly *a: pointer to first input polynomial
 *              - const poly *b: pointer to second input polynomial
 **************************************************/
-void poly_pointwise_montgomery(poly *c, const poly *a, const poly *b) {
+void _gcry_dilithium_poly_pointwise_montgomery(poly *c, const poly *a, const poly *b) {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N; ++i)
-    c->coeffs[i] = montgomery_reduce((int64_t)a->coeffs[i] * b->coeffs[i]);
+    c->coeffs[i] = _gcry_dilithium_montgomery_reduce((int64_t)a->coeffs[i] * b->coeffs[i]);
 }
 
 /*************************************************
-* Name:        poly_power2round
+* Name:        _gcry_dilithium_poly_power2round
 *
 * Description: For all coefficients c of the input polynomial,
 *              compute c0, c1 such that c mod GCRY_DILITHIUM_Q = c1*2^GCRY_DILITHIUM_D + c0
@@ -140,14 +141,14 @@ void poly_pointwise_montgomery(poly *c, const poly *a, const poly *b) {
 *              - poly *a0: pointer to output polynomial with coefficients c0
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void poly_power2round(poly *a1, poly *a0, const poly *a) {
+void _gcry_dilithium_poly_power2round(poly *a1, poly *a0, const poly *a) {
   unsigned int i;
   for(i = 0; i < GCRY_DILITHIUM_N; ++i)
-    a1->coeffs[i] = power2round(&a0->coeffs[i], a->coeffs[i]);
+    a1->coeffs[i] = _gcry_dilithium_power2round(&a0->coeffs[i], a->coeffs[i]);
 }
 
 /*************************************************
-* Name:        poly_decompose
+* Name:        _gcry_dilithium_poly_decompose
 *
 * Description: For all coefficients c of the input polynomial,
 *              compute high and low bits c0, c1 such c mod GCRY_DILITHIUM_Q = c1*ALPHA + c0
@@ -159,15 +160,15 @@ void poly_power2round(poly *a1, poly *a0, const poly *a) {
 *              - poly *a0: pointer to output polynomial with coefficients c0
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void poly_decompose(gcry_dilithium_param_t *params, poly *a1, poly *a0, const poly *a) {
+void _gcry_dilithium_poly_decompose(gcry_dilithium_param_t *params, poly *a1, poly *a0, const poly *a) {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N; ++i)
-    a1->coeffs[i] = decompose(params, &a0->coeffs[i], a->coeffs[i]);
+    a1->coeffs[i] = _gcry_dilithium_decompose(params, &a0->coeffs[i], a->coeffs[i]);
 }
 
 /*************************************************
-* Name:        poly_make_hint
+* Name:        _gcry_dilithium_poly_make_hint
 *
 * Description: Compute hint polynomial. The coefficients of which indicate
 *              whether the low bits of the corresponding coefficient of
@@ -179,11 +180,11 @@ void poly_decompose(gcry_dilithium_param_t *params, poly *a1, poly *a0, const po
 *
 * Returns number of 1 bits.
 **************************************************/
-unsigned int poly_make_hint(gcry_dilithium_param_t *params, poly *h, const poly *a0, const poly *a1) {
+unsigned int _gcry_dilithium_poly_make_hint(gcry_dilithium_param_t *params, poly *h, const poly *a0, const poly *a1) {
   unsigned int i, s = 0;
 
   for(i = 0; i < GCRY_DILITHIUM_N; ++i) {
-    h->coeffs[i] = make_hint(params, a0->coeffs[i], a1->coeffs[i]);
+    h->coeffs[i] = _gcry_dilithium_make_hint(params, a0->coeffs[i], a1->coeffs[i]);
     s += h->coeffs[i];
   }
 
@@ -191,7 +192,7 @@ unsigned int poly_make_hint(gcry_dilithium_param_t *params, poly *h, const poly 
 }
 
 /*************************************************
-* Name:        poly_use_hint
+* Name:        _gcry_dilithium_poly_use_hint
 *
 * Description: Use hint polynomial to correct the high bits of a polynomial.
 *
@@ -199,25 +200,25 @@ unsigned int poly_make_hint(gcry_dilithium_param_t *params, poly *h, const poly 
 *              - const poly *a: pointer to input polynomial
 *              - const poly *h: pointer to input hint polynomial
 **************************************************/
-void poly_use_hint(gcry_dilithium_param_t *params, poly *b, const poly *a, const poly *h) {
+void _gcry_dilithium_poly_use_hint(gcry_dilithium_param_t *params, poly *b, const poly *a, const poly *h) {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N; ++i)
-    b->coeffs[i] = use_hint(params, a->coeffs[i], h->coeffs[i]);
+    b->coeffs[i] = _gcry_dilithium_use_hint(params, a->coeffs[i], h->coeffs[i]);
 }
 
 /*************************************************
-* Name:        poly_chknorm
+* Name:        _gcry_dilithium_poly_chknorm
 *
 * Description: Check infinity norm of polynomial against given bound.
-*              Assumes input coefficients were reduced by reduce32().
+*              Assumes input coefficients were reduced by _gcry_dilithium_reduce32().
 *
 * Arguments:   - const poly *a: pointer to polynomial
 *              - int32_t B: norm bound
 *
 * Returns 0 if norm is strictly smaller than B <= (GCRY_DILITHIUM_Q-1)/8 and 1 otherwise.
 **************************************************/
-int poly_chknorm(const poly *a, int32_t B) {
+int _gcry_dilithium_poly_chknorm(const poly *a, int32_t B) {
   unsigned int i;
   int32_t t;
 
@@ -277,7 +278,7 @@ static unsigned int rej_uniform(int32_t *a,
 }
 
 /*************************************************
-* Name:        poly_uniform
+* Name:        _gcry_dilithium_poly_uniform
 *
 * Description: Sample polynomial with uniformly random coefficients
 *              in [0,GCRY_DILITHIUM_Q-1] by performing rejection sampling on the
@@ -288,17 +289,18 @@ static unsigned int rej_uniform(int32_t *a,
 *              - uint16_t nonce: 2-byte nonce
 **************************************************/
 #define POLY_UNIFORM_NBLOCKS ((768 + STREAM128_BLOCKBYTES - 1)/STREAM128_BLOCKBYTES)
-void poly_uniform(poly *a,
+void _gcry_dilithium_poly_uniform(poly *a,
                   const uint8_t seed[GCRY_DILITHIUM_SEEDBYTES],
                   uint16_t nonce)
 {
   unsigned int i, ctr, off;
   unsigned int buflen = POLY_UNIFORM_NBLOCKS*STREAM128_BLOCKBYTES;
   uint8_t buf[POLY_UNIFORM_NBLOCKS*STREAM128_BLOCKBYTES + 2];
-  stream128_state state;
 
-  stream128_init(&state, seed, nonce);
-  stream128_squeezeblocks(buf, POLY_UNIFORM_NBLOCKS, &state);
+  gcry_md_hd_t md;
+
+  _gcry_dilithium_shake128_stream_init(&md, seed, nonce);
+  _gcry_dilithium_shake128_squeeze_nblocks(md, POLY_UNIFORM_NBLOCKS, buf);
 
   ctr = rej_uniform(a->coeffs, GCRY_DILITHIUM_N, buf, buflen);
 
@@ -307,10 +309,13 @@ void poly_uniform(poly *a,
     for(i = 0; i < off; ++i)
       buf[i] = buf[buflen - off + i];
 
-    stream128_squeezeblocks(buf + off, 1, &state);
+    //stream128_squeezeblocks(buf + off, 1, &state);
+    _gcry_dilithium_shake128_squeeze_nblocks(md, 1, buf+off);
     buflen = STREAM128_BLOCKBYTES + off;
     ctr += rej_uniform(a->coeffs + ctr, GCRY_DILITHIUM_N - ctr, buf, buflen);
   }
+
+  _gcry_md_close(md);
 }
 
 /*************************************************
@@ -363,7 +368,7 @@ static unsigned int rej_eta(gcry_dilithium_param_t *params,
 }
 
 /*************************************************
-* Name:        poly_uniform_eta
+* Name:        _gcry_dilithium_poly_uniform_eta
 *
 * Description: Sample polynomial with uniformly random coefficients
 *              in [-params->eta,params->eta] by performing rejection sampling on the
@@ -373,7 +378,7 @@ static unsigned int rej_eta(gcry_dilithium_param_t *params,
 *              - const uint8_t seed[]: byte array with seed of length GCRY_DILITHIUM_CRHBYTES
 *              - uint16_t nonce: 2-byte nonce
 **************************************************/
-void poly_uniform_eta(gcry_dilithium_param_t *params,
+void _gcry_dilithium_poly_uniform_eta(gcry_dilithium_param_t *params,
                       poly *a,
                       const uint8_t seed[GCRY_DILITHIUM_CRHBYTES],
                       uint16_t nonce)
@@ -389,17 +394,20 @@ void poly_uniform_eta(gcry_dilithium_param_t *params,
   unsigned int ctr;
   unsigned int buflen = POLY_UNIFORM_ETA_NBLOCKS*STREAM256_BLOCKBYTES;
   uint8_t buf[POLY_UNIFORM_ETA_NBLOCKS*STREAM256_BLOCKBYTES];
-  stream256_state state;
 
-  stream256_init(&state, seed, nonce);
-  stream256_squeezeblocks(buf, POLY_UNIFORM_ETA_NBLOCKS, &state);
+  gcry_md_hd_t md;
+
+  _gcry_dilithium_shake256_stream_init(&md, seed, nonce);
+  _gcry_dilithium_shake256_squeeze_nblocks(md, POLY_UNIFORM_ETA_NBLOCKS, buf);
 
   ctr = rej_eta(params, a->coeffs, GCRY_DILITHIUM_N, buf, buflen);
 
   while(ctr < GCRY_DILITHIUM_N) {
-    stream256_squeezeblocks(buf, 1, &state);
+    _gcry_dilithium_shake256_squeeze_nblocks(md, 1, buf);
     ctr += rej_eta(params, a->coeffs + ctr, GCRY_DILITHIUM_N - ctr, buf, STREAM256_BLOCKBYTES);
   }
+
+  _gcry_md_close(md);
 }
 
 /*************************************************
@@ -413,22 +421,24 @@ void poly_uniform_eta(gcry_dilithium_param_t *params,
 *              - const uint8_t seed[]: byte array with seed of length GCRY_DILITHIUM_CRHBYTES
 *              - uint16_t nonce: 16-bit nonce
 **************************************************/
-void poly_uniform_gamma1(gcry_dilithium_param_t *params, poly *a,
+void _gcry_dilithium_poly_uniform_gamma1(gcry_dilithium_param_t *params, poly *a,
                          const uint8_t seed[GCRY_DILITHIUM_CRHBYTES],
                          uint16_t nonce)
 {
   unsigned int POLY_UNIFORM_GAMMA1_NBLOCKS = ((params->polyz_packedbytes + STREAM256_BLOCKBYTES - 1)/STREAM256_BLOCKBYTES);
 
   uint8_t buf[POLY_UNIFORM_GAMMA1_NBLOCKS*STREAM256_BLOCKBYTES];
-  stream256_state state;
+  gcry_md_hd_t md;
 
-  stream256_init(&state, seed, nonce);
-  stream256_squeezeblocks(buf, POLY_UNIFORM_GAMMA1_NBLOCKS, &state);
-  polyz_unpack(params, a, buf);
+  _gcry_dilithium_shake256_stream_init(&md, seed, nonce);
+  _gcry_dilithium_shake256_squeeze_nblocks(md, POLY_UNIFORM_GAMMA1_NBLOCKS, buf);
+  _gcry_md_close(md);
+
+  _gcry_dilithium_polyz_unpack(params, a, buf);
 }
 
 /*************************************************
-* Name:        challenge
+* Name:        _gcry_dilithium_challenge
 *
 * Description: Implementation of H. Samples polynomial with params->tau nonzero
 *              coefficients in {-1,1} using the output stream of
@@ -437,16 +447,15 @@ void poly_uniform_gamma1(gcry_dilithium_param_t *params, poly *a,
 * Arguments:   - poly *c: pointer to output polynomial
 *              - const uint8_t mu[]: byte array containing seed of length GCRY_DILITHIUM_SEEDBYTES
 **************************************************/
-void poly_challenge(gcry_dilithium_param_t *params, poly *c, const uint8_t seed[GCRY_DILITHIUM_SEEDBYTES]) {
+void _gcry_dilithium_poly_challenge(gcry_dilithium_param_t *params, poly *c, const uint8_t seed[GCRY_DILITHIUM_SEEDBYTES]) {
   unsigned int i, b, pos;
   uint64_t signs;
   uint8_t buf[SHAKE256_RATE];
-  keccak_state state;
+  gcry_md_hd_t hd;
 
-  shake256_init(&state);
-  shake256_absorb(&state, seed, GCRY_DILITHIUM_SEEDBYTES);
-  shake256_finalize(&state);
-  shake256_squeezeblocks(buf, 1, &state);
+  _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  _gcry_md_write(hd, seed, GCRY_DILITHIUM_SEEDBYTES);
+  _gcry_dilithium_shake256_squeeze_nblocks(hd, 1, buf);
 
   signs = 0;
   for(i = 0; i < 8; ++i)
@@ -458,7 +467,7 @@ void poly_challenge(gcry_dilithium_param_t *params, poly *c, const uint8_t seed[
   for(i = GCRY_DILITHIUM_N-params->tau; i < GCRY_DILITHIUM_N; ++i) {
     do {
       if(pos >= SHAKE256_RATE) {
-        shake256_squeezeblocks(buf, 1, &state);
+        _gcry_dilithium_shake256_squeeze_nblocks(hd, 1, buf);
         pos = 0;
       }
 
@@ -469,10 +478,12 @@ void poly_challenge(gcry_dilithium_param_t *params, poly *c, const uint8_t seed[
     c->coeffs[b] = 1 - 2*(signs & 1);
     signs >>= 1;
   }
+
+  _gcry_md_close(hd);
 }
 
 /*************************************************
-* Name:        polyeta_pack
+* Name:        _gcry_dilithium_polyeta_pack
 *
 * Description: Bit-pack polynomial with coefficients in [-params->eta,params->eta].
 *
@@ -480,7 +491,7 @@ void poly_challenge(gcry_dilithium_param_t *params, poly *c, const uint8_t seed[
 *                            params->polyeta_packedbytes bytes
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void polyeta_pack(gcry_dilithium_param_t *params, uint8_t *r, const poly *a) {
+void _gcry_dilithium_polyeta_pack(gcry_dilithium_param_t *params, uint8_t *r, const poly *a) {
   unsigned int i;
   uint8_t t[8];
 
@@ -510,14 +521,14 @@ void polyeta_pack(gcry_dilithium_param_t *params, uint8_t *r, const poly *a) {
 }
 
 /*************************************************
-* Name:        polyeta_unpack
+* Name:        _gcry_dilithium_polyeta_unpack
 *
 * Description: Unpack polynomial with coefficients in [-params->eta,params->eta].
 *
 * Arguments:   - poly *r: pointer to output polynomial
 *              - const uint8_t *a: byte array with bit-packed polynomial
 **************************************************/
-void polyeta_unpack(gcry_dilithium_param_t *params, poly *r, const uint8_t *a) {
+void _gcry_dilithium_polyeta_unpack(gcry_dilithium_param_t *params, poly *r, const uint8_t *a) {
   unsigned int i;
 
   if(params->eta == 2) {
@@ -552,7 +563,7 @@ void polyeta_unpack(gcry_dilithium_param_t *params, poly *r, const uint8_t *a) {
 }
 
 /*************************************************
-* Name:        polyt1_pack
+* Name:        _gcry_dilithium_polyt1_pack
 *
 * Description: Bit-pack polynomial t1 with coefficients fitting in 10 bits.
 *              Input coefficients are assumed to be standard representatives.
@@ -561,7 +572,7 @@ void polyeta_unpack(gcry_dilithium_param_t *params, poly *r, const uint8_t *a) {
 *                            GCRY_DILITHIUM_POLYT1_PACKEDBYTES bytes
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void polyt1_pack(uint8_t *r, const poly *a) {
+void _gcry_dilithium_polyt1_pack(uint8_t *r, const poly *a) {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N/4; ++i) {
@@ -574,7 +585,7 @@ void polyt1_pack(uint8_t *r, const poly *a) {
 }
 
 /*************************************************
-* Name:        polyt1_unpack
+* Name:        _gcry_dilithium_polyt1_unpack
 *
 * Description: Unpack polynomial t1 with 10-bit coefficients.
 *              Output coefficients are standard representatives.
@@ -582,7 +593,7 @@ void polyt1_pack(uint8_t *r, const poly *a) {
 * Arguments:   - poly *r: pointer to output polynomial
 *              - const uint8_t *a: byte array with bit-packed polynomial
 **************************************************/
-void polyt1_unpack(poly *r, const uint8_t *a) {
+void _gcry_dilithium_polyt1_unpack(poly *r, const uint8_t *a) {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N/4; ++i) {
@@ -594,7 +605,7 @@ void polyt1_unpack(poly *r, const uint8_t *a) {
 }
 
 /*************************************************
-* Name:        polyt0_pack
+* Name:        _gcry_dilithium_polyt0_pack
 *
 * Description: Bit-pack polynomial t0 with coefficients in ]-2^{GCRY_DILITHIUM_D-1}, 2^{GCRY_DILITHIUM_D-1}].
 *
@@ -602,7 +613,7 @@ void polyt1_unpack(poly *r, const uint8_t *a) {
 *                            GCRY_DILITHIUM_POLYT0_PACKEDBYTES bytes
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void polyt0_pack(uint8_t *r, const poly *a) {
+void _gcry_dilithium_polyt0_pack(uint8_t *r, const poly *a) {
   unsigned int i;
   uint32_t t[8];
 
@@ -640,14 +651,14 @@ void polyt0_pack(uint8_t *r, const poly *a) {
 }
 
 /*************************************************
-* Name:        polyt0_unpack
+* Name:        _gcry_dilithium_polyt0_unpack
 *
 * Description: Unpack polynomial t0 with coefficients in ]-2^{GCRY_DILITHIUM_D-1}, 2^{GCRY_DILITHIUM_D-1}].
 *
 * Arguments:   - poly *r: pointer to output polynomial
 *              - const uint8_t *a: byte array with bit-packed polynomial
 **************************************************/
-void polyt0_unpack(poly *r, const uint8_t *a) {
+void _gcry_dilithium_polyt0_unpack(poly *r, const uint8_t *a) {
   unsigned int i;
 
   for(i = 0; i < GCRY_DILITHIUM_N/8; ++i) {
@@ -699,7 +710,7 @@ void polyt0_unpack(poly *r, const uint8_t *a) {
 }
 
 /*************************************************
-* Name:        polyz_pack
+* Name:        _gcry_dilithium_polyz_pack
 *
 * Description: Bit-pack polynomial with coefficients
 *              in [-(params->gamma1 - 1), params->gamma1].
@@ -708,7 +719,7 @@ void polyt0_unpack(poly *r, const uint8_t *a) {
 *                            params->polyz_packedbytes bytes
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void polyz_pack(gcry_dilithium_param_t *params, uint8_t *r, const poly *a) {
+void _gcry_dilithium_polyz_pack(gcry_dilithium_param_t *params, uint8_t *r, const poly *a) {
   unsigned int i;
   uint32_t t[4];
 
@@ -749,7 +760,7 @@ void polyz_pack(gcry_dilithium_param_t *params, uint8_t *r, const poly *a) {
 }
 
 /*************************************************
-* Name:        polyz_unpack
+* Name:        _gcry_dilithium_polyz_unpack
 *
 * Description: Unpack polynomial z with coefficients
 *              in [-(params->gamma1 - 1), params->gamma1].
@@ -757,7 +768,7 @@ void polyz_pack(gcry_dilithium_param_t *params, uint8_t *r, const poly *a) {
 * Arguments:   - poly *r: pointer to output polynomial
 *              - const uint8_t *a: byte array with bit-packed polynomial
 **************************************************/
-void polyz_unpack(gcry_dilithium_param_t *params, poly *r, const uint8_t *a) {
+void _gcry_dilithium_polyz_unpack(gcry_dilithium_param_t *params, poly *r, const uint8_t *a) {
   unsigned int i;
 
   if(params->gamma1 == (1 << 17)) {
@@ -807,7 +818,7 @@ void polyz_unpack(gcry_dilithium_param_t *params, poly *r, const uint8_t *a) {
 }
 
 /*************************************************
-* Name:        polyw1_pack
+* Name:        _gcry_dilithium_polyw1_pack
 *
 * Description: Bit-pack polynomial w1 with coefficients in [0,15] or [0,43].
 *              Input coefficients are assumed to be standard representatives.
@@ -816,7 +827,7 @@ void polyz_unpack(gcry_dilithium_param_t *params, poly *r, const uint8_t *a) {
 *                            params->polyw1_packedbytes bytes
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void polyw1_pack(gcry_dilithium_param_t *params, uint8_t *r, const poly *a) {
+void _gcry_dilithium_polyw1_pack(gcry_dilithium_param_t *params, uint8_t *r, const poly *a) {
   unsigned int i;
 
   if (params->gamma2 == (GCRY_DILITHIUM_Q-1)/88) {
