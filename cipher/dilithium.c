@@ -3,7 +3,6 @@
 #include <stdio.h>
 
 //#include "gcrypt.h"
-#include "dilithium.h"
 #include "dilithium-sign.h"
 #include "dilithium-params.h"
 

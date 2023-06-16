@@ -1,5 +1,5 @@
-#ifndef NTT_H
-#define NTT_H
+#ifndef _GCRY_DILITHIUM_NTT_H
+#define _GCRY_DILITHIUM_NTT_H
 
 #include <stdint.h>
 #include "dilithium-params.h"

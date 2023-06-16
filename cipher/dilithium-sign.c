@@ -1,4 +1,3 @@
-
 #include <config.h>
 #include <stdint.h>
 #include "dilithium-params.h"
@@ -123,7 +122,7 @@ gcry_error_t _gcry_dilithium_sign(gcry_dilithium_param_t *params,
   uint8_t seedbuf[3*GCRY_DILITHIUM_SEEDBYTES + 2*GCRY_DILITHIUM_CRHBYTES];
   uint8_t *rho, *tr, *key, *mu, *rhoprime;
   uint16_t nonce = 0;
-  poly cp;
+  gcry_dilithium_poly cp;
   gcry_md_hd_t hd;
 
   //polyvecl mat[params->k], s1, y, z;
@@ -279,7 +278,7 @@ gcry_error_t _gcry_dilithium_verify(gcry_dilithium_param_t *params,
   uint8_t mu[GCRY_DILITHIUM_CRHBYTES];
   uint8_t c[GCRY_DILITHIUM_SEEDBYTES];
   uint8_t c2[GCRY_DILITHIUM_SEEDBYTES];
-  poly cp;
+  gcry_dilithium_poly cp;
 
   //polyvecl mat[params->k], z;
   gcry_dilithium_polyvec *mat = NULL;

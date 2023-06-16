@@ -1,5 +1,5 @@
-#ifndef PARAMS_H
-#define PARAMS_H
+#ifndef _GCRY_DILITHIUM_PARAMS_H
+#define _GCRY_DILITHIUM_PARAMS_H
 
 #include <stdint.h>
 

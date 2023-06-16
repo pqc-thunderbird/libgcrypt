@@ -1,5 +1,5 @@
-#ifndef POLYVEC_H
-#define POLYVEC_H
+#ifndef _GCRY_DILITHIUM_POLYVEC_H
+#define _GCRY_DILITHIUM_POLYVEC_H
 #include <config.h>
 
 #include <stdint.h>
@@ -8,7 +8,7 @@
 #include "g10lib.h"
 
 typedef struct{
-  poly *vec;
+  gcry_dilithium_poly *vec;
   //unsigned char vec_len;
 } gcry_dilithium_polyvec;
 
@@ -28,10 +28,10 @@ void _gcry_dilithium_polyvecl_add(gcry_dilithium_param_t *params, gcry_dilithium
 
 void _gcry_dilithium_polyvecl_ntt(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *v);
 void _gcry_dilithium_polyvecl_invntt_tomont(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *v);
-void _gcry_dilithium_polyvecl_pointwise_poly_montgomery(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *r, const poly *a, const gcry_dilithium_polyvec *v);
+void _gcry_dilithium_polyvecl_pointwise_poly_montgomery(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *r, const gcry_dilithium_poly *a, const gcry_dilithium_polyvec *v);
 
 void _gcry_dilithium_polyvecl_pointwise_acc_montgomery(gcry_dilithium_param_t *params,
-                                       poly *w,
+                                       gcry_dilithium_poly *w,
                                        const gcry_dilithium_polyvec *u,
                                        const gcry_dilithium_polyvec *v);
 
@@ -49,7 +49,7 @@ void _gcry_dilithium_polyveck_shiftl(gcry_dilithium_param_t *params, gcry_dilith
 
 void _gcry_dilithium_polyveck_ntt(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *v);
 void _gcry_dilithium_polyveck_invntt_tomont(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *v);
-void _gcry_dilithium_polyveck_pointwise_poly_montgomery(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *r, const poly *a, const gcry_dilithium_polyvec *v);
+void _gcry_dilithium_polyveck_pointwise_poly_montgomery(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *r, const gcry_dilithium_poly *a, const gcry_dilithium_polyvec *v);
 
 int _gcry_dilithium_polyveck_chknorm(gcry_dilithium_param_t *params, const gcry_dilithium_polyvec *v, int32_t B);
 

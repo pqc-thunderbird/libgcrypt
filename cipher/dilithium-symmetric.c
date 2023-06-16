@@ -29,7 +29,7 @@ void _gcry_dilithium_shake128_squeeze_nblocks(gcry_md_hd_t md, unsigned n, unsig
 {
   for(unsigned i = 0; i < n; i++)
   {
-    _gcry_md_extract(md, GCRY_MD_SHAKE128, out + i * SHAKE128_RATE, SHAKE128_RATE);
+    _gcry_md_extract(md, GCRY_MD_SHAKE128, out + i * GCRY_SHAKE128_RATE, GCRY_SHAKE128_RATE);
   }
 }
 
@@ -37,7 +37,7 @@ void _gcry_dilithium_shake256_squeeze_nblocks(gcry_md_hd_t md, unsigned n, unsig
 {
   for(unsigned i = 0; i < n; i++)
   {
-    _gcry_md_extract(md, GCRY_MD_SHAKE256, out + i * SHAKE256_RATE, SHAKE256_RATE);
+    _gcry_md_extract(md, GCRY_MD_SHAKE256, out + i * GCRY_SHAKE256_RATE, GCRY_SHAKE256_RATE);
   }
 }
 

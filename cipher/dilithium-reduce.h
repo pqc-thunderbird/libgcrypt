@@ -1,5 +1,5 @@
-#ifndef REDUCE_H
-#define REDUCE_H
+#ifndef _GCRY_DILITHIUM_REDUCE_H
+#define _GCRY_DILITHIUM_REDUCE_H
 
 #include <stdint.h>
 #include "dilithium-params.h"

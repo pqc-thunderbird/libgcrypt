@@ -1,5 +1,5 @@
-#ifndef PACKING_H
-#define PACKING_H
+#ifndef _GCRY_DILITHIUM_PACKING_H
+#define _GCRY_DILITHIUM_PACKING_H
 
 #include <stdint.h>
 #include "dilithium-params.h"

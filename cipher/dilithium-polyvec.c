@@ -169,7 +169,7 @@ void _gcry_dilithium_polyvecl_invntt_tomont(gcry_dilithium_param_t *params, gcry
     _gcry_dilithium_poly_invntt_tomont(&v->vec[i]);
 }
 
-void _gcry_dilithium_polyvecl_pointwise_poly_montgomery(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *r, const poly *a, const gcry_dilithium_polyvec *v) {
+void _gcry_dilithium_polyvecl_pointwise_poly_montgomery(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *r, const gcry_dilithium_poly *a, const gcry_dilithium_polyvec *v) {
   unsigned int i;
 
   for(i = 0; i < params->l; ++i)
@@ -183,17 +183,17 @@ void _gcry_dilithium_polyvecl_pointwise_poly_montgomery(gcry_dilithium_param_t *
 *              resulting vector by 2^{-32} and add (accumulate) polynomials
 *              in it. Input/output vectors are in NTT domain representation.
 *
-* Arguments:   - poly *w: output polynomial
+* Arguments:   - gcry_dilithium_poly *w: output polynomial
 *              - const gcry_dilithium_polyvec *u: pointer to first input vector
 *              - const gcry_dilithium_polyvec *v: pointer to second input vector
 **************************************************/
 void _gcry_dilithium_polyvecl_pointwise_acc_montgomery(gcry_dilithium_param_t *params,
-                                       poly *w,
+                                       gcry_dilithium_poly *w,
                                        const gcry_dilithium_polyvec *u,
                                        const gcry_dilithium_polyvec *v)
 {
   unsigned int i;
-  poly t;
+  gcry_dilithium_poly t;
 
   _gcry_dilithium_poly_pointwise_montgomery(w, &u->vec[0], &v->vec[0]);
   for(i = 1; i < params->l; ++i) {
@@ -346,7 +346,7 @@ void _gcry_dilithium_polyveck_invntt_tomont(gcry_dilithium_param_t *params, gcry
     _gcry_dilithium_poly_invntt_tomont(&v->vec[i]);
 }
 
-void _gcry_dilithium_polyveck_pointwise_poly_montgomery(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *r, const poly *a, const gcry_dilithium_polyvec *v) {
+void _gcry_dilithium_polyveck_pointwise_poly_montgomery(gcry_dilithium_param_t *params, gcry_dilithium_polyvec *r, const gcry_dilithium_poly *a, const gcry_dilithium_polyvec *v) {
   unsigned int i;
 
   for(i = 0; i < params->k; ++i)
