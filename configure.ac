@@ -3046,7 +3046,7 @@ fi
 LIST_MEMBER(dilithium, $enabled_pubkey_ciphers)
 AM_CONDITIONAL(USE_DILITHIUM, [test "$found" = "1"])
 if test "$found" = "1" ; then
-  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS dilithium.lo dilithium-fips202.lo dilithium-ntt.lo dilithium-packing.lo dilithium-poly.lo dilithium-polyvec.lo dilithium-randombytes.lo dilithium-reduce.lo dilithium-rounding.lo dilithium-sign.lo dilithium-symmetric.lo"
+  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS dilithium.lo dilithium-ntt.lo dilithium-packing.lo dilithium-poly.lo dilithium-polyvec.lo dilithium-randombytes.lo dilithium-reduce.lo dilithium-rounding.lo dilithium-sign.lo dilithium-symmetric.lo"
    AC_DEFINE(USE_DILITHIUM, 1, [Defined if this module should be included])
 fi
 

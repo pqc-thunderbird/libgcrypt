@@ -2,8 +2,6 @@
 #include <stdint.h>
 #include "dilithium-params.h"
 #include "dilithium-symmetric.h"
-#include "dilithium-fips202.h"
-
 
 void _gcry_dilithium_shake128_stream_init(gcry_md_hd_t *md, const uint8_t seed[GCRY_DILITHIUM_SEEDBYTES], uint16_t nonce)
 {

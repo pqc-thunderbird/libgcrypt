@@ -8,7 +8,6 @@
 #include "dilithium-poly.h"
 #include "dilithium-randombytes.h"
 #include "dilithium-symmetric.h"
-#include "dilithium-fips202.h"
 #include "g10lib.h"
 
 /*************************************************
@@ -53,7 +52,9 @@ gcry_error_t _gcry_dilithium_keypair(gcry_dilithium_param_t *params, uint8_t *pk
 
   /* Get randomness for rho, rhoprime and key */
   randombytes(seedbuf, GCRY_DILITHIUM_SEEDBYTES);
-  shake256(seedbuf, 2*GCRY_DILITHIUM_SEEDBYTES + GCRY_DILITHIUM_CRHBYTES, seedbuf, GCRY_DILITHIUM_SEEDBYTES);
+  //shake256(seedbuf, 2*GCRY_DILITHIUM_SEEDBYTES + GCRY_DILITHIUM_CRHBYTES, seedbuf, GCRY_DILITHIUM_SEEDBYTES);
+  _gcry_dilithium_shake256(seedbuf, GCRY_DILITHIUM_SEEDBYTES, NULL, 0, seedbuf, 2*GCRY_DILITHIUM_SEEDBYTES + GCRY_DILITHIUM_CRHBYTES);
+
   rho = seedbuf;
   rhoprime = rho + GCRY_DILITHIUM_SEEDBYTES;
   key = rhoprime + GCRY_DILITHIUM_CRHBYTES;
@@ -82,7 +83,8 @@ gcry_error_t _gcry_dilithium_keypair(gcry_dilithium_param_t *params, uint8_t *pk
   _gcry_dilithium_pack_pk(params, pk, rho, &t1);
 
   /* Compute H(rho, t1) and write secret key */
-  shake256(tr, GCRY_DILITHIUM_SEEDBYTES, pk, params->public_key_bytes);
+  //shake256(tr, GCRY_DILITHIUM_SEEDBYTES, pk, params->public_key_bytes);
+  _gcry_dilithium_shake256(pk, params->public_key_bytes, NULL, 0, tr, GCRY_DILITHIUM_SEEDBYTES);
   _gcry_dilithium_pack_sk(params, sk, rho, tr, key, &t0, &s1, &s2);
 
 leave:
@@ -168,7 +170,8 @@ gcry_error_t _gcry_dilithium_sign(gcry_dilithium_param_t *params,
 #ifdef DILITHIUM_RANDOMIZED_SIGNING
   randombytes(rhoprime, GCRY_DILITHIUM_CRHBYTES);
 #else
-  shake256(rhoprime, GCRY_DILITHIUM_CRHBYTES, key, GCRY_DILITHIUM_SEEDBYTES + GCRY_DILITHIUM_CRHBYTES);
+  //shake256(rhoprime, GCRY_DILITHIUM_CRHBYTES, key, GCRY_DILITHIUM_SEEDBYTES + GCRY_DILITHIUM_CRHBYTES);
+  _gcry_dilithium_shake256(key, GCRY_DILITHIUM_SEEDBYTES + GCRY_DILITHIUM_CRHBYTES, NULL, 0, rhoprime, GCRY_DILITHIUM_CRHBYTES);
 #endif
 
   /* Expand matrix and transform vectors */
