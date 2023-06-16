@@ -6,7 +6,6 @@
 #include "dilithium-packing.h"
 #include "dilithium-polyvec.h"
 #include "dilithium-poly.h"
-#include "dilithium-randombytes.h"
 #include "dilithium-symmetric.h"
 #include "g10lib.h"
 
@@ -51,7 +50,8 @@ gcry_error_t _gcry_dilithium_keypair(gcry_dilithium_param_t *params, uint8_t *pk
   }
 
   /* Get randomness for rho, rhoprime and key */
-  randombytes(seedbuf, GCRY_DILITHIUM_SEEDBYTES);
+  //randombytes(seedbuf, GCRY_DILITHIUM_SEEDBYTES);
+  _gcry_randomize(seedbuf, GCRY_DILITHIUM_SEEDBYTES, GCRY_VERY_STRONG_RANDOM);
   //shake256(seedbuf, 2*GCRY_DILITHIUM_SEEDBYTES + GCRY_DILITHIUM_CRHBYTES, seedbuf, GCRY_DILITHIUM_SEEDBYTES);
   _gcry_dilithium_shake256(seedbuf, GCRY_DILITHIUM_SEEDBYTES, NULL, 0, seedbuf, 2*GCRY_DILITHIUM_SEEDBYTES + GCRY_DILITHIUM_CRHBYTES);
 
@@ -168,7 +168,8 @@ gcry_error_t _gcry_dilithium_sign(gcry_dilithium_param_t *params,
   _gcry_md_close(hd);
 
 #ifdef DILITHIUM_RANDOMIZED_SIGNING
-  randombytes(rhoprime, GCRY_DILITHIUM_CRHBYTES);
+  //randombytes(rhoprime, GCRY_DILITHIUM_CRHBYTES);
+  _gcry_randomize(rhoprime, GCRY_DILITHIUM_CRHBYTES, GCRY_VERY_STRONG_RANDOM);
 #else
   //shake256(rhoprime, GCRY_DILITHIUM_CRHBYTES, key, GCRY_DILITHIUM_SEEDBYTES + GCRY_DILITHIUM_CRHBYTES);
   _gcry_dilithium_shake256(key, GCRY_DILITHIUM_SEEDBYTES + GCRY_DILITHIUM_CRHBYTES, NULL, 0, rhoprime, GCRY_DILITHIUM_CRHBYTES);
