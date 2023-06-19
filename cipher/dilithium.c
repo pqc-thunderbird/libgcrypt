@@ -406,9 +406,8 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
    This should probably be working with `_gcry_pk_util_data_to_mpi` when done correctly ...
 */
 
-  gcry_sexp_t ldata, lvalue;
+  gcry_sexp_t ldata, lvalue = NULL;
   ldata = sexp_find_token (s_data, "data", 0);
-  sexp_find_token (ldata, "value", 0);
   lvalue = sexp_find_token (ldata, "value", 0);
 
     gcry_err_code_t rc = 0;
@@ -500,6 +499,8 @@ leave:
   _gcry_mpi_release(data);
   _gcry_mpi_release(sig);
   sexp_release (l1);
+  sexp_release (ldata);
+  sexp_release (lvalue);
   if (DBG_CIPHER)
     log_debug ("dilithium_verify    => %s\n", gpg_strerror (ec));
   return ec;
