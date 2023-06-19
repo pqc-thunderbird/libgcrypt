@@ -289,6 +289,11 @@ gcry_error_t _gcry_dilithium_verify(gcry_dilithium_param_t *params,
   gcry_dilithium_polyvec w1 = {.vec = NULL};
   gcry_dilithium_polyvec h = {.vec = NULL};
 
+  if(siglen != params->signature_bytes)
+  {
+    ec = GPG_ERR_BAD_SIGNATURE;
+    goto leave;
+  }
 
   if ((ec = _gcry_dilithium_polymatrix_create(&mat, params->k, params->l))
     || (ec = _gcry_dilithium_polyvec_create(&z, params->l))
@@ -297,13 +302,6 @@ gcry_error_t _gcry_dilithium_verify(gcry_dilithium_param_t *params,
     || (ec = _gcry_dilithium_polyvec_create(&h, params->k)))
   {
     ec = gpg_err_code_from_syserror();
-    goto leave;
-  }
-
-
-  if(siglen != params->signature_bytes)
-  {
-    ec = GPG_ERR_BAD_SIGNATURE;
     goto leave;
   }
 

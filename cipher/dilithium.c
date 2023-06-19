@@ -467,7 +467,9 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
   _gcry_mpi_print(GCRYMPI_FMT_USG, sig_buf, param.signature_bytes, &nwritten, sig);
   if(nwritten != param.signature_bytes)
   {
-    printf("nwritten (%d) != param.signature_bytes (%d)\n", nwritten, param.signature_bytes);
+    // signature length invalid
+    ec = GPG_ERR_BAD_SIGNATURE;
+    goto leave;
   }
 
   /* extract msg from mpi */
@@ -486,7 +488,6 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
 
   if(0 != _gcry_dilithium_verify(&param, sig_buf, param.signature_bytes, data_buf, data_buf_len, pk_buf))
   {
-    printf("verify operation failed\n");
     ec = GPG_ERR_GENERAL;
     goto leave;
   }

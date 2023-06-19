@@ -396,12 +396,54 @@ static void check_dilithium_kat(const char *fname, unsigned dilithium_bits)
         }
       test_count++;
 
-      // NOTE: sm = (sig | m)
+      // NOTE: sm = (sig | m) since the reference implementation uses the "signed-message" interface -> we extract only the signature
       unsigned char *sig = test_vec[4].result_buf;
       unsigned sig_len = test_vec[4].result_buf_len - test_vec[1].result_buf_len;
-      rc = check_test_vec_verify(test_vec[2].result_buf, test_vec[2].result_buf_len, test_vec[1].result_buf, test_vec[1].result_buf_len, sig, sig_len);
+      test_vec_desc_entry *pk = &test_vec[2];
+      test_vec_desc_entry *msg = &test_vec[1];
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
       if(rc)
         die("Failed to verify KAT test vector");
+
+      /* check that changing m, sig, or pk results in failure*/
+      unsigned random;
+      gcry_randomize(&random, sizeof(unsigned), GCRY_WEAK_RANDOM);
+
+      pk->result_buf[random % pk->result_buf_len]--;
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      if(!rc)
+        die("modified KAT test vector should not be verifiable");
+      pk->result_buf[random % pk->result_buf_len]++;
+
+      sig[random % sig_len]--;
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      if(!rc)
+        die("modified KAT test vector should not be verifiable");
+      sig[random % sig_len]++;
+
+      msg->result_buf[random % msg->result_buf_len]--;
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      if(!rc)
+        die("modified KAT test vector should not be verifiable");
+      msg->result_buf[random % msg->result_buf_len]++;
+
+      sig_len--;
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      if(!rc)
+        die("modified KAT test vector should not be verifiable");
+      sig_len++;
+
+      pk->result_buf_len--;
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      if(!rc)
+        die("modified KAT test vector should not be verifiable");
+      pk->result_buf_len++;
+
+      msg->result_buf_len--;
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      if(!rc)
+        die("modified KAT test vector should not be verifiable");
+      msg->result_buf_len++;
 
 
       // free test vec
@@ -416,135 +458,8 @@ static void check_dilithium_kat(const char *fname, unsigned dilithium_bits)
           e->result_buf     = NULL;
           e->result_buf_len = 0;
         }
-#if 0
-      err = gcry_sexp_build(&private_key_sx,
-                            NULL,
-                            "(private-key (kyber (s %b) (nbits%u) ))",
-                            (int)test_vec[privat_key_idx].result_buf_len,
-                            test_vec[privat_key_idx].result_buf,
-                            kyber_bits,
-                            NULL);
-      if (err)
-        {
-          fail("error building private key SEXP for test, %s: %s",
-               "sk",
-               gpg_strerror(err));
-          goto leave;
-        }
-#if 0
-        printf("private key sx directly after building:\n");
-        gcry_sexp_dump(private_key_sx);
-        char print_buf[100000];
-        gcry_sexp_sprint(private_key_sx, GCRYSEXP_FMT_ADVANCED, print_buf, sizeof(print_buf)-1);
-        printf("private_key_sx: %s", print_buf);
-#endif
 
-      err = gcry_sexp_build(&shared_secret_expected_sx,
-                            NULL,
-                            "(data (value %b))",
-                            (int)test_vec[msg_idx].result_buf_len,
-                            test_vec[msg_idx].result_buf);
-      if (err)
-        {
-          fail("error building expected shared secret SEXP for test, %s: %s",
-               "pk",
-               gpg_strerror(err));
-          goto leave;
-        }
-
-      l = gcry_sexp_find_token(shared_secret_expected_sx, "value", 0);
-      ss_expected = gcry_sexp_nth_mpi(l, 1, GCRYMPI_FMT_USG);
-      gcry_sexp_release(l);
-
-      err = gcry_sexp_build(&signature_sx,
-                            NULL,
-                            "(ciphertext (kyber(c %b)))",
-                            (int)test_vec[signature_idx].result_buf_len,
-                            test_vec[signature_idx].result_buf);
-      if (err)
-        {
-          fail("error building ciphertext SEXP for test, %s: %s",
-               "pk",
-               gpg_strerror(err));
-          goto leave;
-        }
-
-      l          = gcry_sexp_find_token(signature_sx, "flags", 0);
-      have_flags = !!l;
-      gcry_sexp_release(l);
-
-
-      // l = gcry_sexp_find_token (signature_sx, "flags", 0); // why no leak
-      // when this was in?
-      rc = gcry_pk_decrypt(&shared_secret_sx, signature_sx, private_key_sx);
-      if (rc)
-        {
-          die("decryption failed: %s\n", gcry_strerror(rc));
-        }
-
-      l = gcry_sexp_find_token(shared_secret_sx, "value", 0);
-      if (l)
-        {
-          if (!have_flags)
-            {
-              // printf("compatibility mode of pk_decrypt broken:
-              // !have_flags\n"); die ("compatibility mode of pk_decrypt
-              // broken: !have_flags\n");
-            }
-          ss = gcry_sexp_nth_mpi(l, 1, GCRYMPI_FMT_USG);
-          gcry_sexp_release(l);
-        }
-      else
-        {
-          if (have_flags)
-            // die ("compatibility mode of pk_decrypt broken: have_flags is
-            // true\n");
-            ss = gcry_sexp_nth_mpi(shared_secret_sx, 0, GCRYMPI_FMT_USG);
-        }
-      if (!ss)
-        {
-          die("ss = NULL\n");
-        }
-      if (!ss_expected)
-        {
-          die("ss_expected = NULL\n");
-        }
-
-      /* Compare.  */
-      if (gcry_mpi_cmp(ss_expected, ss))
-        {
-          die("error with decryption result\n");
-        }
-      printf(".");
-
-
-      xfree(line);
-      for (i = 0; i < sizeof(test_vec) / sizeof(test_vec[0]); i++)
-        {
-          test_vec_desc_entry *e = &test_vec[i];
-          if (e->result_buf)
-            {
-              xfree(e->result_buf);
-            }
-          e->result_buf     = NULL;
-          e->result_buf_len = 0;
-        }
-
-      gcry_sexp_release(public_key_sx);
-      public_key_sx = NULL;
-      gcry_sexp_release(private_key_sx);
-      private_key_sx = NULL;
-      gcry_sexp_release(signature_sx);
-      signature_sx = NULL;
-      gcry_sexp_release(shared_secret_sx);
-      shared_secret_sx = NULL;
-      gcry_sexp_release(shared_secret_expected_sx);
-      shared_secret_expected_sx = NULL;
-      gcry_mpi_release(ss_expected);
-      ss_expected = NULL;
-      gcry_mpi_release(ss);
-      ss = NULL;
-  #endif
+        printf("Test vector %d successfully verified\n", test_count);
     }
 
   printf("\n");
