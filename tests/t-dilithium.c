@@ -825,7 +825,6 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   }
 
   // data
-  printf("building data with length %d\n", m_len);
   err = gcry_sexp_build (&data_sx,
         NULL,
         "(data (flags raw) (value %b))", m_len, m, NULL);
@@ -847,8 +846,6 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
     goto leave;
   }
 
-
-  printf("verifying test data\n");
   err = gcry_pk_verify (signature_sx, data_sx, public_key_sx);
 
 leave:

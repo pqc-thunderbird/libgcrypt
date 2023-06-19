@@ -393,12 +393,54 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
 
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_VERIFY, nbits);
 
+#if 0
   /* Extract the data.  */
   ec = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
   if (ec)
     goto leave;
   if (DBG_CIPHER)
     log_printmpi ("dilithium_sign   data", data);
+#else
+/* TODO: with the above, this discards leading 0-bytes, the following is copied from `_gcry_pk_util_data_to_mpi`
+   and directly parses the mpi as opaque.
+   This should probably be working with `_gcry_pk_util_data_to_mpi` when done correctly ...
+*/
+
+  gcry_sexp_t ldata, lvalue;
+  ldata = sexp_find_token (s_data, "data", 0);
+  sexp_find_token (ldata, "value", 0);
+  lvalue = sexp_find_token (ldata, "value", 0);
+
+    gcry_err_code_t rc = 0;
+
+      void *value;
+      size_t valuelen;
+
+      /* Get VALUE.  */
+      value = sexp_nth_buffer (lvalue, 1, &valuelen);
+      if (!value)
+        {
+          /* We assume that a zero length message is meant by
+             "(value)".  This is commonly used by test vectors.  Note
+             that S-expression do not allow zero length items. */
+          valuelen = 0;
+          value = xtrymalloc (1);
+          if (!value)
+            rc = gpg_err_code_from_syserror ();
+        }
+      else if ((valuelen * 8) < valuelen)
+        {
+          xfree (value);
+          rc = GPG_ERR_TOO_LARGE;
+        }
+      if (rc)
+        goto leave;
+
+      /* Note that mpi_set_opaque takes ownership of VALUE.  */
+      data = mpi_set_opaque (NULL, value, valuelen*8);
+#endif
+
+
 
   /* extract pk */
   if (ec = public_key_from_sexp(s_keyparms, param, &pk_buf))
