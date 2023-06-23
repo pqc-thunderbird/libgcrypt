@@ -177,6 +177,9 @@ fill_bin_buf_from_hex_line(size_t* r_length, const char tag_char, const char *li
 * TODO: include test-utils.h when merging with kyber branch
 */
 
+/* TODO: flags eddsa is unnatural, we should define our own flag or use another better matching flag that ensures opaque MPIs */
+const char DILITHIUM_MESSAGE_TMPL[] = "(data (flags eddsa) (value %b))";
+
 
 #define GCRY_DILITHIUM2_NBITS (1312 * 8) 10496
 #define GCRY_DILITHIUM3_NBITS (1952 * 8) 15616
@@ -232,10 +235,10 @@ static int check_dilithium_roundtrip(size_t n_tests)
       die("private part missing in return value\n");
 
 
-    /* sign random message of length 0..2^16-1 */
+    /* sign random message of length 1..16384 */
     unsigned msg_len;
     gcry_randomize(&msg_len, sizeof(unsigned), GCRY_WEAK_RANDOM);
-    msg_len = msg_len % 65536;
+    msg_len = 1 + (msg_len % 16384);
     msg = xmalloc(msg_len);
     if(!msg)
     {
@@ -245,7 +248,7 @@ static int check_dilithium_roundtrip(size_t n_tests)
 
     rc = gcry_sexp_build (&s_data,
           NULL,
-          "(data (flags raw) (value %b))", msg_len, msg, NULL);
+          DILITHIUM_MESSAGE_TMPL, msg_len, msg, NULL);
     if (rc)
     {
       die("error generating data sexp");
@@ -255,7 +258,7 @@ static int check_dilithium_roundtrip(size_t n_tests)
     if(rc)
       die("sign failed\n");
 
-    printf("verifying correct signature, iteration %d/%d\n", iteration+1, n_tests);
+    printf("verifying correct %s-signature, iteration %d/%d\n", dilithium_name[i], iteration+1, n_tests);
     rc = gcry_pk_verify (r_sig, s_data, pkey);
     if(rc)
       die("verify failed\n");
@@ -266,7 +269,7 @@ static int check_dilithium_roundtrip(size_t n_tests)
     printf("verifying wrong signature\n");
     rc = gcry_sexp_build (&s_data_wrong,
           NULL,
-          "(data (flags raw) (value %b))", msg_len, msg, NULL);
+          DILITHIUM_MESSAGE_TMPL, msg_len, msg, NULL);
     if (rc)
     {
       die("error generating data sexp");
@@ -516,7 +519,7 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   // data
   err = gcry_sexp_build (&data_sx,
         NULL,
-        "(data (flags raw) (value %b))", m_len, m, NULL);
+        DILITHIUM_MESSAGE_TMPL, m_len, m, NULL);
 
   if (err)
   {

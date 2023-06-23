@@ -266,71 +266,6 @@ dilithium_check_secret_key (gcry_sexp_t keyparms)
   return ec;
 }
 
-static gcry_err_code_t data_buf_from_sexp(gcry_sexp_t s_data, unsigned char **data_buf, size_t *data_buf_len)
-{
-/*
-  TODO: with `_gcry_pk_util_data_to_mpi`, this discards leading 0-bytes, the following is copied from `_gcry_pk_util_data_to_mpi`
-   and directly parses the mpi as opaque.
-   This should probably be working with `_gcry_pk_util_data_to_mpi` instead, when done correctly ...
-*/
-
-  gcry_mpi_t data = NULL;
-  size_t nwritten = 0;
-  gpg_err_code_t ec = 0;
-
-  gcry_sexp_t ldata, lvalue = NULL;
-  ldata = sexp_find_token (s_data, "data", 0);
-  lvalue = sexp_find_token (ldata, "value", 0);
-
-  gcry_err_code_t rc = 0;
-
-  void *value;
-  size_t valuelen;
-
-  /* Get VALUE.  */
-  value = sexp_nth_buffer (lvalue, 1, &valuelen);
-  if (!value)
-    {
-      /* We assume that a zero length message is meant by
-          "(value)".  This is commonly used by test vectors.  Note
-          that S-expression do not allow zero length items. */
-      valuelen = 0;
-      value = xtrymalloc (1);
-      if (!value)
-        rc = gpg_err_code_from_syserror ();
-    }
-  else if ((valuelen * 8) < valuelen)
-    {
-      xfree (value);
-      rc = GPG_ERR_TOO_LARGE;
-    }
-  if (rc)
-    goto leave;
-
-  /* Note that mpi_set_opaque takes ownership of VALUE.  */
-  data = mpi_set_opaque (NULL, value, valuelen*8);
-
-  /* extract msg from mpi */
-  _gcry_mpi_print(GCRYMPI_FMT_USG, NULL, 0, &nwritten, data);
-  *data_buf_len = nwritten;
-  if (!(*data_buf = xtrymalloc(*data_buf_len)))
-  {
-    ec = gpg_err_code_from_syserror();
-    goto leave;
-  }
-  _gcry_mpi_print(GCRYMPI_FMT_USG, *data_buf, *data_buf_len, &nwritten, data);
-  if(nwritten != *data_buf_len)
-  {
-    printf("nwritten != data_buf_len\n");
-  }
-
-leave:
-  sexp_release (ldata);
-  sexp_release (lvalue);
-  return ec;
-}
-
-
 static gcry_err_code_t
 dilithium_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 {
@@ -353,7 +288,30 @@ dilithium_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
     return ec;
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_SIGN, nbits);
 
-  data_buf_from_sexp(s_data, &data_buf, &data_buf_len);
+
+  ec = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  if (ec)
+    goto leave;
+  if (!mpi_is_opaque(data))
+  {
+    printf("dilithium only works with opaque mpis!\n");
+    ec = GPG_ERR_INV_ARG;
+    goto leave;
+  }
+
+  /* extract msg from mpi */
+  _gcry_mpi_print(GCRYMPI_FMT_USG, NULL, 0, &nwritten, data);
+  data_buf_len = nwritten;
+  if (!(data_buf = xtrymalloc(data_buf_len)))
+  {
+    ec = gpg_err_code_from_syserror();
+    goto leave;
+  }
+  _gcry_mpi_print(GCRYMPI_FMT_USG, data_buf, data_buf_len, &nwritten, data);
+  if(nwritten != data_buf_len)
+  {
+    printf("nwritten != data_buf_len\n");
+  }
 
   /* extract sk */
   if ((ec = private_key_from_sexp(keyparms, param, &sk_buf)))
@@ -420,7 +378,29 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
 
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_VERIFY, nbits);
 
-  data_buf_from_sexp(s_data, &data_buf, &data_buf_len);
+  ec = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
+  if (ec)
+    goto leave;
+  if (!mpi_is_opaque(data))
+  {
+    printf("dilithium only works with opaque mpis!\n");
+    ec = GPG_ERR_INV_ARG;
+    goto leave;
+  }
+
+  /* extract msg from mpi */
+  _gcry_mpi_print(GCRYMPI_FMT_USG, NULL, 0, &nwritten, data);
+  data_buf_len = nwritten;
+  if (!(data_buf = xtrymalloc(data_buf_len)))
+  {
+    ec = gpg_err_code_from_syserror();
+    goto leave;
+  }
+  _gcry_mpi_print(GCRYMPI_FMT_USG, data_buf, data_buf_len, &nwritten, data);
+  if(nwritten != data_buf_len)
+  {
+    printf("nwritten != data_buf_len\n");
+  }
 
   /* extract pk */
   if (ec = public_key_from_sexp(s_keyparms, param, &pk_buf))
