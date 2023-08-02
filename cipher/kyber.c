@@ -272,10 +272,10 @@ static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
                       NULL);
     }
   /* call the key check function for now so that we know that it is working: */
-  /*if ((ec = kyber_check_secret_key(*r_skey)))
+  if ((ec = kyber_check_secret_key(*r_skey)))
     {
       goto leave;
-    }*/
+    }
 leave:
   _gcry_mpi_release(sk_mpi);
   _gcry_mpi_release(pk_mpi);
