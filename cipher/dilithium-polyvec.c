@@ -47,8 +47,7 @@ void _gcry_dilithium_polymatrix_destroy(gcry_dilithium_polyvec **polymat,
 gcry_error_t _gcry_dilithium_polyvec_create(gcry_dilithium_polyvec *polyvec,
                                          unsigned char elems)
 {
-  // TODO: xtrymalloc_secure ? (seems to be limited; receive no memory error)
-  if (!(polyvec->vec = xtrymalloc(sizeof(*polyvec->vec) * elems)))
+  if (!(polyvec->vec = xtrymalloc_secure(sizeof(*polyvec->vec) * elems)))
     {
       return gpg_err_code_from_syserror();
     }
