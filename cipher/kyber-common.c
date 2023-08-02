@@ -364,7 +364,6 @@ static gcry_error_t _gcry_kyber_indcpa_enc(
       || (ec = _gcry_kyber_polyvec_create(&b, param))
       || (ec = _gcry_kyber_polymatrix_create(&at, param)))
     {
-      ec = gpg_err_code_from_syserror();
       goto end;
     }
 
