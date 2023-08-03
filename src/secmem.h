@@ -39,4 +39,6 @@ int _gcry_private_is_secure (const void *p);
 #define GCRY_SECMEM_FLAG_NO_MLOCK        (1 << 3)
 #define GCRY_SECMEM_FLAG_NO_PRIV_DROP    (1 << 4)
 
+void _gcry_secmem_reset_peak();
+
 #endif /* G10_SECMEM_H */

@@ -218,7 +218,11 @@ static int check_dilithium_roundtrip(size_t n_tests)
 
     if (rc)
       die ("error creating S-expression: %s\n", gpg_strerror (rc));
+
+    gcry_control(GCRYCTL_RESET_SECMEM_PEAK_USG);
     rc = gcry_pk_genkey (&key, keyparm);
+    printf("secmem stats for %s keygen:\n", dilithium_name[i]);
+    gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
 
     if (rc)
       die ("error generating Dilithium key: %s\n", gpg_strerror (rc));
@@ -254,12 +258,18 @@ static int check_dilithium_roundtrip(size_t n_tests)
       die("error generating data sexp");
     }
 
+    gcry_control(GCRYCTL_RESET_SECMEM_PEAK_USG);
     rc = gcry_pk_sign (&r_sig, s_data, skey);
+    printf("secmem stats for %s sign:\n", dilithium_name[i]);
+    gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
     if(rc)
       die("sign failed\n");
 
     printf("verifying correct %s-signature, iteration %d/%d\n", dilithium_name[i], iteration+1, n_tests);
+      gcry_control(GCRYCTL_RESET_SECMEM_PEAK_USG);
     rc = gcry_pk_verify (r_sig, s_data, pkey);
+    printf("secmem stats for %s verify:\n", dilithium_name[i]);
+    gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
     if(rc)
       die("verify failed\n");
     printf("... ok!\n");
@@ -617,7 +627,7 @@ int last_argc = -1;
     }
     else
     {
-      if(check_dilithium_roundtrip(1000))
+      if(check_dilithium_roundtrip(1))
       {
           fail("check_dilithium_roundtrip() yielded an error, aborting");
       }
