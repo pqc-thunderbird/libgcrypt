@@ -448,10 +448,11 @@ int main(int argc, char **argv)
         {
           fputs("usage: " PGM " [options]\n"
                 "Options:\n"
-                "  --verbose       print timings etc.\n"
-                "  --debug         flyswatter\n"
-                "  --data FNAME    take test data from file FNAME\n"
-                "  --no-kat-tests  do not run the KAT tests\n",
+                "  --verbose            print timings etc.\n"
+                "  --debug              flyswatter\n"
+                "  --data FNAME         take test data from file FNAME\n"
+                "  --no-kat-tests       do not run the KAT tests\n"
+                ,//"  --profile-key-gen    only run key generation and print profiling information\n",
                 stdout);
           exit(0);
         }
