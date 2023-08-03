@@ -123,7 +123,7 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
   rc = gcry_pk_genkey(&key, keyparm);
   if(do_print_secmem_peak_usages)
   {
-      printf("secmem stats for kyber %u key generation:\n", kyber_bits);
+      printf("\nsecmem stats for kyber %u key generation:\n", kyber_bits);
       gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
   }
 
