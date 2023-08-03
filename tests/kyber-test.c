@@ -20,12 +20,12 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+//#include "g10lib.h"
 #include "gcrypt.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-
 
 #if 0
 #ifdef _GCRYPT_IN_LIBGCRYPT
@@ -38,8 +38,9 @@
 
 #define PGM "kyber-test"
 #include "t-common.h"
- #define N_GEN_ENC_DEC_TESTS 250
-//#define N_GEN_ENC_DEC_TESTS 3 // two tests running, starting from 3 with newly added call to kyber_check_secret_key it fails.
+#define N_GEN_ENC_DEC_TESTS 250
+// #define N_GEN_ENC_DEC_TESTS 3 // two tests running, starting from 3 with
+// newly added call to kyber_check_secret_key it fails.
 
 // test-utils.h must be included after t-common.h
 #include "test-utils.h"
@@ -91,7 +92,8 @@ show_sexp (const char *prefix, gcry_sexp_t a)
 }
 #endif
 
-static int check_kyber_gen_enc_dec(unsigned kyber_bits)
+static int check_kyber_gen_enc_dec(unsigned kyber_bits,
+                                   int do_print_secmem_peak_usages)
 {
 
   gcry_sexp_t skey, pkey;
@@ -114,7 +116,16 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits)
                        NULL);
   if (rc)
     die("error creating S-expression: %s\n", gpg_strerror(rc));
+  if(do_print_secmem_peak_usages)
+  {
+      gcry_control(GCRYCTL_RESET_SECMEM_PEAK_USG);
+  }
   rc = gcry_pk_genkey(&key, keyparm);
+  if(do_print_secmem_peak_usages)
+  {
+      printf("secmem stats for kyber %u key generation:\n", kyber_bits);
+      gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
+  }
 
   if (rc)
     die("error generating Kyber key: %s\n", gpg_strerror(rc));
@@ -130,13 +141,32 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits)
   if (!skey)
     die("private part missing in return value\n");
 
+  if(do_print_secmem_peak_usages)
+  {
+      gcry_control(GCRYCTL_RESET_SECMEM_PEAK_USG);
+  }
   rc = gcry_pk_encap(&ct, &shared_secret, pkey);
   if (rc)
     {
       printf("error when calling gcry_pk_encap\n");
       goto leave;
     }
+
+  if(do_print_secmem_peak_usages)
+  {
+      printf("secmem stats for kyber %u encapsulation:\n", kyber_bits);
+      gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
+  }
+  if(do_print_secmem_peak_usages)
+  {
+      gcry_control(GCRYCTL_RESET_SECMEM_PEAK_USG);
+  }
   rc = gcry_pk_decrypt(&shared_secret2, ct, skey);
+  if(do_print_secmem_peak_usages)
+  {
+      printf("secmem stats for kyber %u decapsulation:\n", kyber_bits);
+      gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
+  }
   if (rc)
     {
       printf("error when calling gcry_pk_decrypt\n");
@@ -451,8 +481,7 @@ int main(int argc, char **argv)
                 "  --verbose            print timings etc.\n"
                 "  --debug              flyswatter\n"
                 "  --data FNAME         take test data from file FNAME\n"
-                "  --no-kat-tests       do not run the KAT tests\n"
-                ,//"  --profile-key-gen    only run key generation and print profiling information\n",
+                "  --no-kat-tests       do not run the KAT tests\n",
                 stdout);
           exit(0);
         }
@@ -498,7 +527,7 @@ int main(int argc, char **argv)
   printf("starting generate/encrypt/decrypt test\n");
   for (i = 0; i < N_GEN_ENC_DEC_TESTS; i++)
     {
-      if (check_kyber_gen_enc_dec(kyber_bits[i % 3]))
+      if (check_kyber_gen_enc_dec(kyber_bits[i % 3], (i < 3)))
         {
           // cannot happen:
           fail("check_kyber_gen_enc_dec() yielded an error, aborting");
@@ -508,7 +537,7 @@ int main(int argc, char **argv)
   printf("\n\n");
   if (!run_kat_tests)
     {
-        printf("skipping KAT tests as requested\n");
+      printf("skipping KAT tests as requested\n");
       goto leave;
     }
   if (!fname)
