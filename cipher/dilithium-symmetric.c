@@ -48,11 +48,11 @@ void _gcry_dilithium_shake256_squeeze_nblocks(gcry_md_hd_t md, unsigned n, unsig
  */
 void _gcry_dilithium_shake256(const unsigned char *in_buf1, unsigned in_buf1_len, const unsigned char *in_buf2, unsigned in_buf2_len, unsigned char *out, unsigned out_len)
 {
+  gcry_md_hd_t md;
   if(!in_buf1)
   {
     // TODO error
   }
-  gcry_md_hd_t md;
 
   _gcry_md_open (&md, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
   _gcry_md_write(md, in_buf1, in_buf1_len);

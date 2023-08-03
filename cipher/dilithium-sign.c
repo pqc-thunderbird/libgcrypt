@@ -275,10 +275,6 @@ gcry_error_t _gcry_dilithium_verify(gcry_dilithium_param_t *params,
   unsigned int i;
   //uint8_t buf[params->k*params->polyw1_packedbytes];
   uint8_t *buf;
-  if (!(buf = xtrymalloc(sizeof(*buf) * (params->k*params->polyw1_packedbytes))))
-  {
-    return gpg_error_from_syserror();
-  }
   uint8_t rho[GCRY_DILITHIUM_SEEDBYTES];
   uint8_t mu[GCRY_DILITHIUM_CRHBYTES];
   uint8_t c[GCRY_DILITHIUM_SEEDBYTES];
@@ -293,6 +289,11 @@ gcry_error_t _gcry_dilithium_verify(gcry_dilithium_param_t *params,
   gcry_dilithium_polyvec t1 = {.vec = NULL};
   gcry_dilithium_polyvec w1 = {.vec = NULL};
   gcry_dilithium_polyvec h = {.vec = NULL};
+
+    if (!(buf = xtrymalloc(sizeof(*buf) * (params->k*params->polyw1_packedbytes))))
+  {
+    return gpg_error_from_syserror();
+  }
 
   if(siglen != params->signature_bytes)
   {

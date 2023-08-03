@@ -207,6 +207,9 @@ dilithium_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   unsigned char * sk = NULL;
   unsigned int nbits;
   gcry_dilithium_param_t param;
+  gcry_mpi_t sk_mpi = NULL;
+  gcry_mpi_t pk_mpi = NULL;
+
   ec = _gcry_pk_util_get_nbits (genparms, &nbits);
   if (ec)
     return ec;
@@ -221,8 +224,6 @@ dilithium_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   }
   _gcry_dilithium_keypair(&param, pk, sk);
 
-  gcry_mpi_t sk_mpi = NULL;
-  gcry_mpi_t pk_mpi = NULL;
   sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
   pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
 
@@ -278,12 +279,13 @@ dilithium_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   struct pk_encoding_ctx ctx;
 
   //gcry_mpi_t sk = NULL;
-  gcry_mpi_t sig = NULL;
   gcry_mpi_t data = NULL;
   size_t nwritten = 0;
 
   unsigned int nbits = dilithium_get_nbits (keyparms);
   gcry_dilithium_param_t param;
+  size_t sig_buf_len = 0;
+
   if ((ec = gcry_dilithium_get_param_from_bit_size(nbits, &param)))
     return ec;
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_SIGN, nbits);
@@ -325,7 +327,6 @@ dilithium_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
     goto leave;
   }
 
-  size_t sig_buf_len = 0;
   if(0 != _gcry_dilithium_sign(&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
   {
     printf("sign operation failed\n");
@@ -403,7 +404,7 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
   }
 
   /* extract pk */
-  if (ec = public_key_from_sexp(s_keyparms, param, &pk_buf))
+  if ((ec = public_key_from_sexp(s_keyparms, param, &pk_buf)))
   {
     printf("failed to parse public key\n");
     goto leave;
