@@ -128,3 +128,4 @@ cscope.out
 tests/kyber-test
 full_rebuild.sh
 thorough_clean.sh
+config.h.in~
