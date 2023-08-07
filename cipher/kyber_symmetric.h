@@ -1,5 +1,5 @@
-#ifndef SYMMETRIC_H
-#define SYMMETRIC_H
+#ifndef GCRYPT_KYBER_SYMMETRIC_H
+#define GCRYPT_KYBER_SYMMETRIC_H
 
 #include <config.h>
 #include <stddef.h>
@@ -20,4 +20,4 @@ gcry_err_code_t _gcry_kyber_prf(uint8_t *out, size_t outlen, const uint8_t key[G
 
 
 
-#endif /* SYMMETRIC_H */
+#endif /* GCRYPT_KYBER_SYMMETRIC_H */

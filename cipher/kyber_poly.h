@@ -1,5 +1,5 @@
-#ifndef POLY_H
-#define POLY_H
+#ifndef GCRYPT_KYBER_POLY_H
+#define GCRYPT_KYBER_POLY_H
 
 #include <stdint.h>
 #include "kyber_params.h"
@@ -50,4 +50,4 @@ void _gcry_kyber_poly_add(gcry_kyber_poly *r, const gcry_kyber_poly *a, const gc
 
 void _gcry_kyber_poly_sub(gcry_kyber_poly *r, const gcry_kyber_poly *a, const gcry_kyber_poly *b);
 
-#endif
+#endif /* GCRYPT_KYBER_POLY_H */
