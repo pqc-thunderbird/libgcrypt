@@ -95,14 +95,15 @@ static gcry_err_code_t kyber_params_from_key_param(const gcry_sexp_t keyparms,
 
 static gcry_err_code_t extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
                                                     const char *label,
-                                                    unsigned char **sk_p,
-                                                    size_t exp_len)
+                                                    unsigned char **data_p,
+                                                    size_t exp_len,
+                                                    try_alloc_func_t alloc_func)
 {
   gcry_mpi_t sk     = NULL;
   gpg_err_code_t ec = 0;
   size_t nwritten   = 0;
 
-  *sk_p = 0;
+  *data_p = 0;
 
 
   ec = sexp_extract_param(keyparms, NULL, label, &sk, NULL);
@@ -117,12 +118,12 @@ static gcry_err_code_t extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
       goto leave;
     }
 
-  if (!(*sk_p = xtrymalloc(exp_len)))
+  if (!(*data_p = alloc_func(exp_len)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  _gcry_mpi_print(GCRYMPI_FMT_USG, *sk_p, exp_len, &nwritten, sk);
+  _gcry_mpi_print(GCRYMPI_FMT_USG, *data_p, exp_len, &nwritten, sk);
 
   if (exp_len != nwritten)
     {
@@ -137,8 +138,8 @@ leave:
     }
   if (ec)
     {
-      xfree(*sk_p);
-      *sk_p = 0;
+      xfree(*data_p);
+      *data_p = 0;
     }
   return ec;
 }
@@ -149,7 +150,7 @@ static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
                                              unsigned char **sk_p)
 {
   return extract_opaque_mpi_from_sexp(
-      keyparms, "/s", sk_p, param.secret_key_bytes);
+      keyparms, "/s", sk_p, param.secret_key_bytes, _gcry_malloc_secure);
 }
 
 
@@ -158,7 +159,7 @@ static gcry_err_code_t ciphertext_from_sexp(const gcry_sexp_t keyparms,
                                             unsigned char **ct_p)
 {
   return extract_opaque_mpi_from_sexp(
-      keyparms, "/c", ct_p, param.ciphertext_bytes);
+      keyparms, "/c", ct_p, param.ciphertext_bytes, _gcry_malloc);
 }
 
 
@@ -167,7 +168,7 @@ static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms,
                                             unsigned char **pk_p)
 {
   return extract_opaque_mpi_from_sexp(
-      keyparms, "/p", pk_p, param.public_key_bytes);
+      keyparms, "/p", pk_p, param.public_key_bytes, _gcry_malloc);
 }
 
 
@@ -308,15 +309,6 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
     {
       goto leave;
     }
-
-  //_gcry_mpi_print(GCRYMPI_FMT_HEX, public_key_str, sizeof(public_key_str),
-  //&nwritten, pk);
-  /*if(nwritten != KYBER_SECRETKEYBYTES*2+1)
-    {
-    printf("nwritten != KYBER_SECRETKEYBYTES*2+1\n");
-    }*/
-  // printf("kyber public_key used to decrypt: %s\n", public_key_str);
-  //_gcry_mpi_release(pk);
 
   if ((ec
        = _gcry_kyber_kem_enc(ciphertext, shared_secret, public_key, &param)))

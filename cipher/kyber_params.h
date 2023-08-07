@@ -1,5 +1,5 @@
-#ifndef PARAMS_H
-#define PARAMS_H
+#ifndef GCRYPT_KYBER_PARAMS_H
+#define GCRYPT_KYBER_PARAMS_H
 
 #include <stdint.h>
 
@@ -52,4 +52,4 @@ typedef struct
 
 #define GCRY_KYBER_XOF_BLOCKBYTES GCRY_SHAKE128_RATE
 
-#endif
+#endif /* GCRYPT_KYBER_PARAMS_H */

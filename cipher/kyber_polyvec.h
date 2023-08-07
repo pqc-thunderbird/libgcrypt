@@ -1,5 +1,5 @@
-#ifndef POLYVEC_H
-#define POLYVEC_H
+#ifndef GCRYPT_KYBER_POLYVEC_H
+#define GCRYPT_KYBER_POLYVEC_H
 
 #include <config.h>
 #include <stdint.h>
@@ -34,4 +34,4 @@ void _gcry_kyber_polyvec_reduce(gcry_kyber_polyvec *r, gcry_kyber_param_t const*
 
 void _gcry_kyber_polyvec_add(gcry_kyber_polyvec *r, const gcry_kyber_polyvec *a, const gcry_kyber_polyvec *b, gcry_kyber_param_t const* param);
 
-#endif
+#endif /* GCRYPT_KYBER_POLYVEC_H */

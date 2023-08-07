@@ -1,5 +1,5 @@
-#ifndef CBD_H
-#define CBD_H
+#ifndef GCRYPT_KYBER_CBD_H
+#define GCRYPT_KYBER_CBD_H
 
 #include <stdint.h>
 #include "kyber_params.h"
@@ -12,4 +12,4 @@ void _gcry_kyber_poly_cbd_eta1(gcry_kyber_poly *r, const uint8_t* buf, gcry_kybe
 
 void _gcry_kyber_poly_cbd_eta2(gcry_kyber_poly *r, const uint8_t buf[GCRY_KYBER_ETA2*GCRY_KYBER_N/4]);
 
-#endif
+#endif /* GCRYPT_KYBER_CBD_H */

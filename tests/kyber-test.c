@@ -118,7 +118,7 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
     die("error creating S-expression: %s\n", gpg_strerror(rc));
   if(do_print_secmem_peak_usages)
   {
-      gcry_control(GCRYCTL_RESET_SECMEM_PEAK_USG);
+      gcry_control(GCRYCTL_RST_SECMEM_PEAK_USG);
   }
   rc = gcry_pk_genkey(&key, keyparm);
   if(do_print_secmem_peak_usages)
@@ -143,7 +143,7 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
 
   if(do_print_secmem_peak_usages)
   {
-      gcry_control(GCRYCTL_RESET_SECMEM_PEAK_USG);
+      gcry_control(GCRYCTL_RST_SECMEM_PEAK_USG);
   }
   rc = gcry_pk_encap(&ct, &shared_secret, pkey);
   if (rc)
@@ -159,7 +159,7 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
   }
   if(do_print_secmem_peak_usages)
   {
-      gcry_control(GCRYCTL_RESET_SECMEM_PEAK_USG);
+      gcry_control(GCRYCTL_RST_SECMEM_PEAK_USG);
   }
   rc = gcry_pk_decrypt(&shared_secret2, ct, skey);
   if(do_print_secmem_peak_usages)
