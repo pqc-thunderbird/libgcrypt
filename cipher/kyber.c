@@ -383,13 +383,6 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
       goto leave;
     }
 
-  /*if(nwritten != KYBER_CIPHERTEXTBYTES*2+1)
-    {
-    printf("%u = nwritten != KYBER_CIPHERTEXTBYTES = %u\n", nwritten,
-    KYBER_CIPHERTEXTBYTES); goto leave;
-    }*/
-  // printf("kyber ciphertext to decrypt: %s\n", ciphertext_str);
-
   // ========== perform the decryption ===============
   if ((ec
        = _gcry_kyber_kem_dec(shared_secret, ciphertext, private_key, &param)))
@@ -423,36 +416,6 @@ static unsigned int kyber_get_nbits(gcry_sexp_t parms)
     }
   return nbits;
 }
-
-#if 0
-static gpg_err_code_t selftests_kyber(selftest_report_func_t report,
-                                      int extended)
-{
-  report   = report;
-  extended = extended;
-  /* TODOMTG: implement self test */
-  return 0; /* Succeeded. */
-}
-
-/* Run a full self-test for ALGO and return 0 on success.  */
-static gpg_err_code_t run_selftests(int algo,
-                                    int extended,
-                                    selftest_report_func_t report)
-{
-  gpg_err_code_t ec;
-
-  switch (algo)
-    {
-    case GCRY_PK_KYBER:
-      ec = selftests_kyber(report, extended);
-      break;
-    default:
-      ec = GPG_ERR_PUBKEY_ALGO;
-      break;
-    }
-  return ec;
-}
-#endif
 
 
 static const char *kyber_names[] = {
