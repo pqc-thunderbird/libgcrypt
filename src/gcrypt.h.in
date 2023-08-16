@@ -1161,7 +1161,7 @@ enum gcry_pk_algos
 #define GCRY_PK_USAGE_ENCR 2   /* Good for encryption. */
 #define GCRY_PK_USAGE_CERT 4   /* Good to certify other keys. */
 #define GCRY_PK_USAGE_AUTH 8   /* Good for authentication. */
-#define GCRY_PK_USAGE_ENCAP 16   /* Good for encapsulation. */
+#define GCRY_PK_USAGE_ENCAP 16   /* Good for KEM encapsulation. */
 #define GCRY_PK_USAGE_UNKN 128 /* Unknown usage flag. */
 
 /* Modes used with gcry_pubkey_get_sexp.  */

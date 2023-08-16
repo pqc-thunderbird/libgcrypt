@@ -400,13 +400,8 @@ leave:
 }
 
 
-/* TODOMTG: not sure how to realize this function for Kyber. For RSA "n" is
- * sought, which will (presumably) be contained in both private and public
- * keys. For now the function expects an explicit "nbits" parameter
- */
 static unsigned int kyber_get_nbits(gcry_sexp_t parms)
 {
-  // TODO: SEE RSA FOR HOW TO PARSE A PARAMS SEXPR
   gpg_err_code_t ec;
   unsigned int nbits;
   ec = _gcry_pk_util_get_nbits(parms, &nbits);
@@ -427,8 +422,7 @@ static const char *kyber_names[] = {
 gcry_pk_spec_t _gcry_pubkey_spec_kyber = {
     GCRY_PK_KYBER,
     {0, 1},
-    (GCRY_PK_USAGE_ENCAP), // TODOMTG: can the key usage "encryption" remain
-                           // or do we need new KU "encap"?
+    (GCRY_PK_USAGE_ENCAP),
     "Kyber",
     kyber_names,
     "p",
