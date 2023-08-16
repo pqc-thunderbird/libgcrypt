@@ -93,11 +93,12 @@ static gcry_err_code_t kyber_params_from_key_param(const gcry_sexp_t keyparms,
   return ec;
 }
 
-static gcry_err_code_t extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
-                                                    const char *label,
-                                                    unsigned char **data_p,
-                                                    size_t exp_len,
-                                                    try_alloc_func_t alloc_func)
+static gcry_err_code_t extract_opaque_mpi_from_sexp(
+    const gcry_sexp_t keyparms,
+    const char *label,
+    unsigned char **data_p,
+    size_t exp_len,
+    try_alloc_func_t alloc_func)
 {
   gcry_mpi_t sk     = NULL;
   gpg_err_code_t ec = 0;
@@ -292,10 +293,17 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
 {
 
   gpg_err_code_t ec = 0;
-  unsigned char shared_secret[GCRY_KYBER_SSBYTES]; // TODO: SECURE MEM?
-  unsigned char *ciphertext = NULL, *public_key = NULL;
+  unsigned char *ciphertext = NULL, *public_key = NULL, *shared_secret = NULL;
 
   gcry_kyber_param_t param;
+
+  shared_secret = xtrymalloc_secure(GCRY_KYBER_SSBYTES);
+
+  if (!shared_secret)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
   if ((ec = kyber_params_from_key_param(keyparms, &param, NULL)))
     {
@@ -334,6 +342,7 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
                   ciphertext);
 
 leave:
+  xfree(shared_secret);
   xfree(public_key);
   xfree(ciphertext);
   return ec;
@@ -345,8 +354,15 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
                                      gcry_sexp_t keyparms)
 {
   gpg_err_code_t ec = 0;
-  unsigned char shared_secret[GCRY_KYBER_SSBYTES]; // TODO: SECURE MEM?
-  unsigned char *private_key = NULL, *ciphertext = NULL;
+  unsigned char *private_key = NULL, *ciphertext = NULL, *shared_secret = NULL;
+
+  shared_secret = xtrymalloc_secure(GCRY_KYBER_SSBYTES);
+
+  if (!shared_secret)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
   gcry_kyber_param_t param;
 
@@ -384,6 +400,7 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
   ec = sexp_build(
       r_plain, NULL, "(value %b)", (int)GCRY_KYBER_SSBYTES, shared_secret);
 leave:
+  xfree(shared_secret);
   xfree(ciphertext);
   xfree(private_key);
   return ec;
@@ -397,7 +414,6 @@ leave:
 static unsigned int kyber_get_nbits(gcry_sexp_t parms)
 {
   // TODO: SEE RSA FOR HOW TO PARSE A PARAMS SEXPR
-  // return 1184;
   gpg_err_code_t ec;
   unsigned int nbits;
   ec = _gcry_pk_util_get_nbits(parms, &nbits);
