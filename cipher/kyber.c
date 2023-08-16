@@ -66,7 +66,8 @@ static gcry_err_code_t kyber_params_from_key_param(const gcry_sexp_t keyparms,
     {
       return ec;
     }
-  if ((ec = _gcry_kyber_get_param_from_bit_size(nbits, param)))
+  ec = _gcry_kyber_get_param_from_bit_size(nbits, param);
+  if (ec)
     {
       return ec;
     }
@@ -183,8 +184,8 @@ static gcry_err_code_t kyber_check_secret_key(gcry_sexp_t keyparms)
   unsigned char *public_key = NULL;
 
   gcry_kyber_param_t param;
-
-  if ((ec = kyber_params_from_key_param(keyparms, &param, NULL)))
+  ec = kyber_params_from_key_param(keyparms, &param, NULL);
+  if (ec)
     {
       goto leave;
     }
@@ -197,22 +198,21 @@ static gcry_err_code_t kyber_check_secret_key(gcry_sexp_t keyparms)
     }
 
   /* Extract the key MPI from the SEXP.  */
-  if ((ec = private_key_from_sexp(keyparms, param, &private_key)))
+  ec = private_key_from_sexp(keyparms, param, &private_key);
+  if (ec)
     {
       goto leave;
     }
   public_key
       = private_key
         + param.indcpa_secret_key_bytes; // offset of public key in private key
-
-  if ((ec
-       = _gcry_kyber_kem_enc(ciphertext, shared_secret_1, public_key, &param)))
+  ec = _gcry_kyber_kem_enc(ciphertext, shared_secret_1, public_key, &param);
+  if (ec)
     {
       goto leave;
     }
-
-  if ((ec = _gcry_kyber_kem_dec(
-           shared_secret_2, ciphertext, private_key, &param)))
+  ec = _gcry_kyber_kem_dec(shared_secret_2, ciphertext, private_key, &param);
+  if (ec)
     {
       goto leave;
     }
@@ -241,8 +241,8 @@ static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
   gcry_kyber_param_t param;
   gcry_mpi_t sk_mpi = NULL, pk_mpi = NULL;
 
-
-  if ((ec = kyber_params_from_key_param(genparms, &param, &nbits)))
+  ec = kyber_params_from_key_param(genparms, &param, &nbits);
+  if (ec)
     {
       goto leave;
     }
@@ -274,7 +274,8 @@ static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
                       NULL);
     }
   /* call the key check function for now so that we know that it is working: */
-  if ((ec = kyber_check_secret_key(*r_skey)))
+  ec = kyber_check_secret_key(*r_skey);
+  if (ec)
     {
       goto leave;
     }
@@ -292,7 +293,7 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
                                    gcry_sexp_t keyparms)
 {
 
-  gpg_err_code_t ec = 0;
+  gpg_err_code_t ec         = 0;
   unsigned char *ciphertext = NULL, *public_key = NULL, *shared_secret = NULL;
 
   gcry_kyber_param_t param;
@@ -304,8 +305,8 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-
-  if ((ec = kyber_params_from_key_param(keyparms, &param, NULL)))
+  ec = kyber_params_from_key_param(keyparms, &param, NULL);
+  if (ec)
     {
       goto leave;
     }
@@ -313,13 +314,13 @@ static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
   ciphertext = xtrymalloc(param.ciphertext_bytes);
 
   /* Extract the public key MPI from the SEXP.  */
-  if ((ec = public_key_from_sexp(keyparms, param, &public_key)))
+  ec = public_key_from_sexp(keyparms, param, &public_key);
+  if (ec)
     {
       goto leave;
     }
-
-  if ((ec
-       = _gcry_kyber_kem_enc(ciphertext, shared_secret, public_key, &param)))
+  ec = _gcry_kyber_kem_enc(ciphertext, shared_secret, public_key, &param);
+  if (ec)
     {
       goto leave;
     }
@@ -353,7 +354,7 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
                                      gcry_sexp_t s_data,
                                      gcry_sexp_t keyparms)
 {
-  gpg_err_code_t ec = 0;
+  gpg_err_code_t ec          = 0;
   unsigned char *private_key = NULL, *ciphertext = NULL, *shared_secret = NULL;
 
   shared_secret = xtrymalloc_secure(GCRY_KYBER_SSBYTES);
@@ -365,27 +366,29 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
     }
 
   gcry_kyber_param_t param;
-
-  if ((ec = kyber_params_from_key_param(keyparms, &param, NULL)))
+  ec = kyber_params_from_key_param(keyparms, &param, NULL);
+  if (ec)
     {
       goto leave;
     }
 
   /* Extract the key MPI from the SEXP.  */
-  if ((ec = private_key_from_sexp(keyparms, param, &private_key)))
+  ec = private_key_from_sexp(keyparms, param, &private_key);
+  if (ec)
     {
       goto leave;
     }
 
   /* Extract the key Ciphertext from the SEXP.  */
-  if ((ec = ciphertext_from_sexp(s_data, param, &ciphertext)))
+  ec = ciphertext_from_sexp(s_data, param, &ciphertext);
+  if (ec)
     {
       goto leave;
     }
 
   // ========== perform the decryption ===============
-  if ((ec
-       = _gcry_kyber_kem_dec(shared_secret, ciphertext, private_key, &param)))
+  ec = _gcry_kyber_kem_dec(shared_secret, ciphertext, private_key, &param);
+  if (ec)
     {
       goto leave;
     }

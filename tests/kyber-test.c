@@ -103,7 +103,7 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
   gcry_mpi_t ss, ss2;
   int rc;
 
-  if (verbose)
+  if (verbose > 1)
     info("creating Kyber %u key\n", kyber_bits);
 
   rc = gcry_sexp_build(&keyparm,
@@ -521,15 +521,15 @@ int main(int argc, char **argv)
     }
 
   if (!fname)
-
+  {
     test_hex_decoding();
+  }
 
   printf("starting generate/encrypt/decrypt test\n");
   for (i = 0; i < N_GEN_ENC_DEC_TESTS; i++)
     {
-      if (check_kyber_gen_enc_dec(kyber_bits[i % 3], (i < 3)))
+      if (check_kyber_gen_enc_dec(kyber_bits[i % 3], (i < 3) && verbose))
         {
-          // cannot happen:
           fail("check_kyber_gen_enc_dec() yielded an error, aborting");
         }
       printf(".");
@@ -555,7 +555,7 @@ int main(int argc, char **argv)
     }
   else
     {
-      check_kyber_kat(fname, kyber_bits[i]);
+        fail("handling of user chosen test data file is not supported");
     }
 leave:
   xfree(fname);
