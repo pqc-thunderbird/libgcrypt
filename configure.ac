@@ -216,7 +216,7 @@ available_ciphers="$available_ciphers sm4 aria"
 enabled_ciphers=""
 
 # Definitions for public-key ciphers.
-available_pubkey_ciphers="dsa elgamal rsa ecc"
+available_pubkey_ciphers="dsa elgamal rsa ecc sphincsplus"
 enabled_pubkey_ciphers=""
 
 # Definitions for message digests.
@@ -3041,6 +3041,13 @@ AM_CONDITIONAL(USE_DSA, [test "$found" = "1"])
 if test "$found" = "1" ; then
    GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS dsa.lo"
    AC_DEFINE(USE_DSA, 1, [Defined if this module should be included])
+fi
+
+LIST_MEMBER(sphincsplus, $enabled_pubkey_ciphers)
+AM_CONDITIONAL(USE_SPHINCSPLUS, [test "$found" = "1"])
+if test "$found" = "1" ; then
+  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS sphincsplus.lo sphincs-sha2.lo sphincs-address.lo sphincs-randombytes.lo sphincs-merkle.lo sphincs-wots.lo sphincs-wotsx1.lo sphincs-utils.lo sphincs-utilsx1.lo sphincs-fors.lo sphincs-sign.lo sphincs-fips202.lo sphincs-hash_sha2.lo sphincs-thash_sha2_simple.lo"
+   AC_DEFINE(USE_SPHINCSPLUS, 1, [Defined if this module should be included])
 fi
 
 LIST_MEMBER(rsa, $enabled_pubkey_ciphers)
