@@ -120,6 +120,12 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
   {
       gcry_control(GCRYCTL_RST_SECMEM_PEAK_USG);
   }
+
+  if(do_print_secmem_peak_usages)
+  {
+      printf("\nsecmem stats before test:\n");
+      gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
+  }
   rc = gcry_pk_genkey(&key, keyparm);
   if(do_print_secmem_peak_usages)
   {
@@ -216,6 +222,12 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
 
 leave:
   return rc;
+
+  if(do_print_secmem_peak_usages)
+  {
+      printf("\nsecmem stats at the end of the test:\n");
+      gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
+  }
 }
 static void check_kyber_kat(const char *fname, unsigned kyber_bits)
 {
