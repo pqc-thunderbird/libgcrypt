@@ -28,7 +28,7 @@ void _gcry_kyber_polyvec_frombytes(gcry_kyber_polyvec *r, const uint8_t* a, gcry
 void _gcry_kyber_polyvec_ntt(gcry_kyber_polyvec *r, gcry_kyber_param_t const* param);
 void _gcry_kyber_polyvec_invntt_tomont(gcry_kyber_polyvec *r, gcry_kyber_param_t const* param);
 
-void _gcry_kyber_polyvec_basemul_acc_montgomery(gcry_kyber_poly *r, const gcry_kyber_polyvec *a, const gcry_kyber_polyvec *b, gcry_kyber_param_t const* param);
+gcry_err_code_t _gcry_kyber_polyvec_basemul_acc_montgomery(gcry_kyber_poly *r, const gcry_kyber_polyvec *a, const gcry_kyber_polyvec *b, gcry_kyber_param_t const* param);
 
 void _gcry_kyber_polyvec_reduce(gcry_kyber_polyvec *r, gcry_kyber_param_t const* param);
 
