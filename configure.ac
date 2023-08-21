@@ -3342,7 +3342,7 @@ fi
 LIST_MEMBER(kyber, $enabled_pubkey_ciphers)
 AM_CONDITIONAL(USE_KYBER, [test "$found" = "1"])
 if test "$found" = "1" ; then
-  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS kyber.lo kyber-common.lo kyber_ntt.lo kyber_poly.lo kyber_polyvec.lo  kyber_symmetric.lo  kyber_fips202.lo kyber_cbd.lo kyber_aux.lo"
+  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS kyber.lo kyber-common.lo kyber_ntt.lo kyber_poly.lo kyber_polyvec.lo  kyber_symmetric.lo  kyber_cbd.lo kyber_aux.lo"
    AC_DEFINE(USE_KYBER, 1, [Defined if this module should be included])
 fi
 
