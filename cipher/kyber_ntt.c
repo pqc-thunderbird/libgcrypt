@@ -3,7 +3,7 @@
 #include "kyber_ntt.h"
 #include "kyber_aux.h"
 
-/* Code to generate zetas and zetas_inv used in the number-theoretic transform:
+/* For reference: code to generate zetas and zetas_inv used in the number-theoretic transform:
 
 #define KYBER_ROOT_OF_UNITY 17
 

@@ -1,7 +1,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-//#include <config.h>
+// #include <config.h>
 #include "kyber-common.h"
 #include "kyber_params.h"
 #include "kyber_polyvec.h"
@@ -210,7 +210,8 @@ static gcry_err_code_t _gcry_kyber_gen_matrix(
         {
 
           gcry_md_hd_t h;
-          if ((ec = _gcry_md_open(&h, GCRY_MD_SHAKE128, GCRY_MD_FLAG_SECURE)))
+          ec = _gcry_md_open(&h, GCRY_MD_SHAKE128, GCRY_MD_FLAG_SECURE);
+          if (ec)
             {
               return ec;
             }
@@ -275,10 +276,26 @@ static gcry_error_t _gcry_kyber_indcpa_keypair(uint8_t *pk,
                      skpv = {.vec = NULL};
   gcry_error_t ec         = 0;
 
-  if ((ec = _gcry_kyber_polymatrix_create(&a, param))
-      || (ec = _gcry_kyber_polyvec_create(&e, param))
-      || (ec = _gcry_kyber_polyvec_create(&pkpv, param))
-      || (ec = _gcry_kyber_polyvec_create(&skpv, param)))
+  ec = _gcry_kyber_polymatrix_create(&a, param);
+  if (ec)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+  ec = _gcry_kyber_polyvec_create(&e, param);
+  if (ec)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+  ec = _gcry_kyber_polyvec_create(&pkpv, param);
+  if (ec)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+  ec = _gcry_kyber_polyvec_create(&skpv, param);
+  if (ec)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
@@ -307,8 +324,12 @@ static gcry_error_t _gcry_kyber_indcpa_keypair(uint8_t *pk,
   // matrix-vector multiplication
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_polyvec_basemul_acc_montgomery(
+      ec = _gcry_kyber_polyvec_basemul_acc_montgomery(
           &pkpv.vec[i], &a[i], &skpv, param);
+      if (ec)
+        {
+          goto leave;
+        }
       _gcry_kyber_poly_tomont(&pkpv.vec[i]);
     }
 
@@ -350,71 +371,95 @@ static gcry_error_t _gcry_kyber_indcpa_enc(
     const uint8_t coins[GCRY_KYBER_SYMBYTES],
     gcry_kyber_param_t const *param)
 {
-  unsigned int i;
-  uint8_t seed[GCRY_KYBER_SYMBYTES];
-  uint8_t nonce         = 0;
-  gcry_kyber_polyvec sp = {.vec = NULL}, pkpv = {.vec = NULL},
-                     ep = {.vec = NULL}, *at = NULL, b = {.vec = NULL};
-  gcry_error_t ec = 0;
-  gcry_kyber_poly v, k, epp;
+    unsigned int i;
+    uint8_t seed[GCRY_KYBER_SYMBYTES];
+    uint8_t nonce         = 0;
+    gcry_kyber_polyvec sp = {.vec = NULL}, pkpv = {.vec = NULL},
+                       ep = {.vec = NULL}, *at = NULL, b = {.vec = NULL};
+    gcry_error_t ec = 0;
+    gcry_kyber_poly v, k, epp;
 
-  if ((ec = _gcry_kyber_polyvec_create(&sp, param))
-      || (ec = _gcry_kyber_polyvec_create(&pkpv, param))
-      || (ec = _gcry_kyber_polyvec_create(&ep, param))
-      || (ec = _gcry_kyber_polyvec_create(&b, param))
-      || (ec = _gcry_kyber_polymatrix_create(&at, param)))
+    ec = _gcry_kyber_polyvec_create(&sp, param);
+    if (ec)
     {
-      goto end;
+        goto leave;
+    }
+    ec = _gcry_kyber_polyvec_create(&pkpv, param);
+    if (ec)
+    {
+        goto leave;
+    }
+    ec = _gcry_kyber_polyvec_create(&ep, param);
+    if (ec)
+    {
+        goto leave;
+    }
+    ec = _gcry_kyber_polyvec_create(&b, param);
+    if (ec)
+    {
+        goto leave;
+    }
+    ec = _gcry_kyber_polymatrix_create(&at, param);
+    if (ec)
+    {
+        goto leave;
     }
 
-
-  _gcry_kyber_unpack_pk(&pkpv, seed, pk, param);
-  _gcry_kyber_poly_frommsg(&k, m);
-  if ((ec = gen_at(at, seed, param)))
+    _gcry_kyber_unpack_pk(&pkpv, seed, pk, param);
+    _gcry_kyber_poly_frommsg(&k, m);
+    if ((ec = gen_at(at, seed, param)))
     {
-      goto end;
+        goto leave;
     }
 
-  for (i = 0; i < param->k; i++)
+    for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_getnoise_eta1(sp.vec + i, coins, nonce++, param);
+        _gcry_kyber_poly_getnoise_eta1(sp.vec + i, coins, nonce++, param);
     }
-  for (i = 0; i < param->k; i++)
+    for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_getnoise_eta2(ep.vec + i, coins, nonce++);
+        _gcry_kyber_poly_getnoise_eta2(ep.vec + i, coins, nonce++);
     }
-  _gcry_kyber_poly_getnoise_eta2(&epp, coins, nonce++);
+    _gcry_kyber_poly_getnoise_eta2(&epp, coins, nonce++);
 
-  _gcry_kyber_polyvec_ntt(&sp, param);
+    _gcry_kyber_polyvec_ntt(&sp, param);
 
-  // matrix-vector multiplication
-  for (i = 0; i < param->k; i++)
+    // matrix-vector multiplication
+    for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_polyvec_basemul_acc_montgomery(
-          &b.vec[i], &at[i], &sp, param);
+        ec = _gcry_kyber_polyvec_basemul_acc_montgomery(
+                &b.vec[i], &at[i], &sp, param);
+        if (ec)
+        {
+            goto leave;
+        }
     }
 
-  _gcry_kyber_polyvec_basemul_acc_montgomery(&v, &pkpv, &sp, param);
+    ec = _gcry_kyber_polyvec_basemul_acc_montgomery(&v, &pkpv, &sp, param);
+    if(ec)
+    {
+        goto leave;
+    }
 
-  _gcry_kyber_polyvec_invntt_tomont(&b, param);
-  _gcry_kyber_poly_invntt_tomont(&v);
+    _gcry_kyber_polyvec_invntt_tomont(&b, param);
+    _gcry_kyber_poly_invntt_tomont(&v);
 
-  _gcry_kyber_polyvec_add(&b, &b, &ep, param);
-  _gcry_kyber_poly_add(&v, &v, &epp);
-  _gcry_kyber_poly_add(&v, &v, &k);
-  _gcry_kyber_polyvec_reduce(&b, param);
-  _gcry_kyber_poly_reduce(&v);
+    _gcry_kyber_polyvec_add(&b, &b, &ep, param);
+    _gcry_kyber_poly_add(&v, &v, &epp);
+    _gcry_kyber_poly_add(&v, &v, &k);
+    _gcry_kyber_polyvec_reduce(&b, param);
+    _gcry_kyber_poly_reduce(&v);
 
-  _gcry_kyber_pack_ciphertext(c, &b, &v, param);
-end:
+    _gcry_kyber_pack_ciphertext(c, &b, &v, param);
+leave:
 
-  _gcry_kyber_polyvec_destroy(&sp);
-  _gcry_kyber_polyvec_destroy(&pkpv);
-  _gcry_kyber_polyvec_destroy(&ep);
-  _gcry_kyber_polyvec_destroy(&b);
-  _gcry_kyber_polymatrix_destroy(&at, param);
+    _gcry_kyber_polyvec_destroy(&sp);
+    _gcry_kyber_polyvec_destroy(&pkpv);
+    _gcry_kyber_polyvec_destroy(&ep);
+    _gcry_kyber_polyvec_destroy(&b);
+    _gcry_kyber_polymatrix_destroy(&at, param);
 
-  return ec;
+    return ec;
 }
 
 /*************************************************
@@ -439,25 +484,35 @@ static gcry_error_t _gcry_kyber_indcpa_dec(uint8_t *m,
   gcry_kyber_poly v, mp;
   gcry_error_t ec = 0;
 
-  if ((ec = _gcry_kyber_polyvec_create(&b, param))
-      || (ec = _gcry_kyber_polyvec_create(&skpv, param)))
+  ec = _gcry_kyber_polyvec_create(&b, param);
+  if (ec)
     {
       ec = gpg_error_from_syserror();
-      goto end;
+      goto leave;
+    }
+  ec = _gcry_kyber_polyvec_create(&skpv, param);
+  if (ec)
+    {
+      ec = gpg_error_from_syserror();
+      goto leave;
     }
 
   _gcry_kyber_unpack_ciphertext(&b, &v, c, param);
   _gcry_kyber_unpack_sk(&skpv, sk, param);
 
   _gcry_kyber_polyvec_ntt(&b, param);
-  _gcry_kyber_polyvec_basemul_acc_montgomery(&mp, &skpv, &b, param);
+  ec = _gcry_kyber_polyvec_basemul_acc_montgomery(&mp, &skpv, &b, param);
+  if(ec)
+  {
+      goto leave;
+  }
   _gcry_kyber_poly_invntt_tomont(&mp);
 
   _gcry_kyber_poly_sub(&mp, &v, &mp);
   _gcry_kyber_poly_reduce(&mp);
 
   _gcry_kyber_poly_tomsg(m, &mp);
-end:
+leave:
   _gcry_kyber_polyvec_destroy(&skpv);
   _gcry_kyber_polyvec_destroy(&b);
   return ec;
@@ -530,8 +585,8 @@ gcry_err_code_t _gcry_kyber_kem_dec(uint8_t *ss,
 
   const uint8_t *pk = sk + param->indcpa_secret_key_bytes;
 
-  cmp = xtrymalloc(param->ciphertext_bytes);
-  if ((ec = _gcry_kyber_indcpa_dec(buf, ct, sk, param)))
+  ec = _gcry_kyber_indcpa_dec(buf, ct, sk, param);
+  if (ec)
     {
       goto end;
     }
@@ -542,22 +597,29 @@ gcry_err_code_t _gcry_kyber_kem_dec(uint8_t *ss,
          GCRY_KYBER_SYMBYTES);
   _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2 * GCRY_KYBER_SYMBYTES);
 
+
+  cmp = xtrymalloc_secure(param->ciphertext_bytes);
+  if (!cmp)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto end;
+    }
+  ec = _gcry_kyber_indcpa_enc(cmp, buf, pk, kr + GCRY_KYBER_SYMBYTES, param);
   /* coins are in kr+GCRY_KYBER_SYMBYTES */
-  if ((ec = _gcry_kyber_indcpa_enc(
-           cmp, buf, pk, kr + GCRY_KYBER_SYMBYTES, param)))
+  if (ec)
     {
       goto end;
     }
 
   fail = _gcry_consttime_bytes_differ(ct, cmp, param->ciphertext_bytes);
 
-
+  ec = _gcry_kyber_kyber_shake256_rkprf(ss,
+                                        sk + param->secret_key_bytes
+                                            - GCRY_KYBER_SYMBYTES,
+                                        ct,
+                                        param->ciphertext_bytes);
   /* Compute rejection key */
-  if ((ec = _gcry_kyber_kyber_shake256_rkprf(ss,
-                                             sk + param->secret_key_bytes
-                                                 - GCRY_KYBER_SYMBYTES,
-                                             ct,
-                                             param->ciphertext_bytes)))
+  if (ec)
     {
       goto end;
     }
@@ -604,8 +666,8 @@ gcry_err_code_t _gcry_kyber_kem_enc_derand(uint8_t *ct,
   _gcry_md_hash_buffer(GCRY_MD_SHA3_512, kr, buf, 2 * GCRY_KYBER_SYMBYTES);
 
   /* coins are in kr+GCRY_KYBER_SYMBYTES */
-  if ((ec
-       = _gcry_kyber_indcpa_enc(ct, buf, pk, kr + GCRY_KYBER_SYMBYTES, param)))
+  ec = _gcry_kyber_indcpa_enc(ct, buf, pk, kr + GCRY_KYBER_SYMBYTES, param);
+  if (ec)
     {
       goto end;
     }

@@ -1,7 +1,7 @@
 
 
 #include <stdint.h>
-//#include "gcrypt.h"
+// #include "gcrypt.h"
 #include "kyber_params.h"
 #include "kyber_poly.h"
 #include "kyber_polyvec.h"
@@ -293,23 +293,34 @@ void _gcry_kyber_polyvec_invntt_tomont(gcry_kyber_polyvec *r,
  *            - const gcry_kyber_polyvec *b: pointer to second input vector of
  *polynomials
  **************************************************/
-void _gcry_kyber_polyvec_basemul_acc_montgomery(
+gcry_err_code_t _gcry_kyber_polyvec_basemul_acc_montgomery(
     gcry_kyber_poly *r,
     const gcry_kyber_polyvec *a,
     const gcry_kyber_polyvec *b,
     gcry_kyber_param_t const *param)
 {
+  gcry_err_code_t ec = 0;
   unsigned int i;
-  gcry_kyber_poly t;
+  gcry_kyber_poly *t = NULL;
+  t                  = (gcry_kyber_poly *)xtrymalloc_secure(sizeof(*t));
+  if (!t)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+
 
   _gcry_kyber_poly_basemul_montgomery(r, &a->vec[0], &b->vec[0]);
   for (i = 1; i < param->k; i++)
     {
-      _gcry_kyber_poly_basemul_montgomery(&t, &a->vec[i], &b->vec[i]);
-      _gcry_kyber_poly_add(r, r, &t);
+      _gcry_kyber_poly_basemul_montgomery(t, &a->vec[i], &b->vec[i]);
+      _gcry_kyber_poly_add(r, r, t);
     }
 
   _gcry_kyber_poly_reduce(r);
+leave:
+  xfree(t);
+  return ec;
 }
 
 /*************************************************
