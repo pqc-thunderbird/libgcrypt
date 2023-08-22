@@ -112,6 +112,7 @@
 
 #define SHA3_DELIMITED_SUFFIX 0x06
 #define SHAKE_DELIMITED_SUFFIX 0x1F
+#define CSHAKE_DELIMITED_SUFFIX 0x04
 
 
 typedef struct
@@ -1032,6 +1033,16 @@ keccak_init (int algo, void *context, unsigned int flags)
       break;
     case GCRY_MD_SHAKE256:
       ctx->suffix = SHAKE_DELIMITED_SUFFIX;
+      ctx->blocksize = 1088 / 8;
+      ctx->outlen = 512 / 8;
+      break;
+    case GCRY_MD_CSHAKE128:
+      ctx->suffix = CSHAKE_DELIMITED_SUFFIX;
+      ctx->blocksize = 1344 / 8;
+      ctx->outlen = 256 / 8;
+      break;
+    case GCRY_MD_CSHAKE256:
+      ctx->suffix = CSHAKE_DELIMITED_SUFFIX;
       ctx->blocksize = 1088 / 8;
       ctx->outlen = 512 / 8;
       break;
