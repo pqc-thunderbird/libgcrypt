@@ -1,7 +1,6 @@
 
 
 #include <stdint.h>
-// #include "gcrypt.h"
 #include "kyber_params.h"
 #include "kyber_poly.h"
 #include "kyber_polyvec.h"
@@ -11,22 +10,23 @@ gcry_error_t _gcry_kyber_polymatrix_create(gcry_kyber_polyvec **polymat,
 {
   gcry_error_t ec = 0;
   unsigned i;
-
-  if (!(*polymat = xtrymalloc(sizeof(**polymat) * param->k)))
+  *polymat = xtrymalloc(sizeof(**polymat) * param->k);
+  if (!polymat)
     {
-      return gpg_error_from_syserror();
+      ec = gpg_error_from_syserror();
+      goto leave;
     }
   memset((polymat)[0], 0, sizeof(**polymat) * param->k);
 
   for (i = 0; i < param->k; i++)
     {
-      if ((ec = _gcry_kyber_polyvec_create(&(*polymat)[i], param)))
+      ec = _gcry_kyber_polyvec_create(&(*polymat)[i], param);
+      if (ec)
         {
-          ec = gpg_err_code_from_syserror();
-          goto end;
+          goto leave;
         }
     }
-end:
+leave:
   return ec;
 }
 
