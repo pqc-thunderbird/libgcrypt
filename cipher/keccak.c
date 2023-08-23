@@ -155,6 +155,12 @@ typedef struct KECCAK_CONTEXT_S
 #endif
 } KECCAK_CONTEXT;
 
+typedef struct CSHAKE_CONTEXT_S
+{
+    KECCAK_CONTEXT keccak_ctx;
+    int n_set;
+    int s_set;
+} CSHAKE_CONTEXT;
 
 
 #ifdef NEED_COMMON64
@@ -1026,23 +1032,15 @@ keccak_init (int algo, void *context, unsigned int flags)
       ctx->blocksize = 576 / 8;
       ctx->outlen = 512 / 8;
       break;
+    case GCRY_MD_CSHAKE128:
     case GCRY_MD_SHAKE128:
       ctx->suffix = SHAKE_DELIMITED_SUFFIX;
       ctx->blocksize = 1344 / 8;
       ctx->outlen = 256 / 8;
       break;
+    case GCRY_MD_CSHAKE256:
     case GCRY_MD_SHAKE256:
       ctx->suffix = SHAKE_DELIMITED_SUFFIX;
-      ctx->blocksize = 1088 / 8;
-      ctx->outlen = 512 / 8;
-      break;
-    case GCRY_MD_CSHAKE128:
-      ctx->suffix = CSHAKE_DELIMITED_SUFFIX;
-      ctx->blocksize = 1344 / 8;
-      ctx->outlen = 256 / 8;
-      break;
-    case GCRY_MD_CSHAKE256:
-      ctx->suffix = CSHAKE_DELIMITED_SUFFIX;
       ctx->blocksize = 1088 / 8;
       ctx->outlen = 512 / 8;
       break;
@@ -1070,9 +1068,11 @@ keccak_init (int algo, void *context, unsigned int flags)
 	case GCRY_MD_SHA3_512:
 	  kimd_func = KMID_FUNCTION_SHA3_512;
 	  break;
+	case GCRY_MD_CSHAKE128:
 	case GCRY_MD_SHAKE128:
 	  kimd_func = KMID_FUNCTION_SHAKE128;
 	  break;
+	case GCRY_MD_CSHAKE256:
 	case GCRY_MD_SHAKE256:
 	  kimd_func = KMID_FUNCTION_SHAKE256;
 	  break;
@@ -1121,6 +1121,25 @@ static void
 shake256_init (void *context, unsigned int flags)
 {
   keccak_init (GCRY_MD_SHAKE256, context, flags);
+}
+
+
+static void
+cshake128_init (void *context, unsigned int flags)
+{
+  CSHAKE_CONTEXT* cshake_context = (CSHAKE_CONTEXT*) context;
+  cshake_context->n_set = 0;
+  cshake_context->s_set = 0;
+  keccak_init (GCRY_MD_CSHAKE128, context, flags);
+}
+
+static void
+cshake256_init (void *context, unsigned int flags)
+{
+  CSHAKE_CONTEXT* cshake_context = (CSHAKE_CONTEXT*) context;
+  cshake_context->n_set = 0;
+  cshake_context->s_set = 0;
+  keccak_init (GCRY_MD_CSHAKE256, context, flags);
 }
 
 /* The routine final terminates the computation and
@@ -1516,6 +1535,7 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
       hash_len = 64;
       break;
 
+    case GCRY_MD_CSHAKE128:
     case GCRY_MD_SHAKE128:
       short_hash =
 	"\x58\x81\x09\x2d\xd8\x18\xbf\x5c\xf8\xa3\xdd\xb7\x93\xfb\xcb\xa7"
@@ -1529,6 +1549,7 @@ selftests_keccak (int algo, int extended, selftest_report_func_t report)
       hash_len = 32;
       break;
 
+    case GCRY_MD_CSHAKE256:
     case GCRY_MD_SHAKE256:
       short_hash =
 	"\x48\x33\x66\x60\x13\x60\xa8\x77\x1c\x68\x63\x08\x0c\xc4\x11\x4d"
@@ -1588,7 +1609,9 @@ run_selftests (int algo, int extended, selftest_report_func_t report)
     case GCRY_MD_SHA3_256:
     case GCRY_MD_SHA3_384:
     case GCRY_MD_SHA3_512:
+    case GCRY_MD_CSHAKE128:
     case GCRY_MD_SHAKE128:
+    case GCRY_MD_CSHAKE256:
     case GCRY_MD_SHAKE256:
       ec = selftests_keccak (algo, extended, report);
       break;
@@ -1707,4 +1730,24 @@ const gcry_md_spec_t _gcry_digest_spec_shake256 =
     _gcry_shake256_hash_buffers,
     sizeof (KECCAK_CONTEXT),
     run_selftests
+  };
+const gcry_md_spec_t _gcry_digest_spec_cshake128 =
+  {
+    GCRY_MD_CSHAKE128, {0, 1},
+    "CSHAKE128", shake128_asn, DIM (shake128_asn), NULL /* no oid_spec */, 32,
+    cshake128_init, keccak_write, keccak_final, keccak_shake_read,
+    keccak_extract,
+    _gcry_shake128_hash_buffers,
+    sizeof (CSHAKE_CONTEXT),
+    run_selftests
+  };
+const gcry_md_spec_t _gcry_digest_spec_cshake256 =
+  {
+    GCRY_MD_CSHAKE256, {0, 1},
+    "CSHAKE256", shake256_asn, DIM (shake256_asn), NULL /* no oid_spec */, 64,
+    cshake256_init, keccak_write, keccak_final, keccak_shake_read,
+    keccak_extract,
+    _gcry_shake256_hash_buffers,
+    sizeof (CSHAKE_CONTEXT),
+    run_selftests,
   };
