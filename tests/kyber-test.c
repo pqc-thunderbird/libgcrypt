@@ -569,6 +569,7 @@ int main(int argc, char **argv)
     {
         fail("handling of user chosen test data file is not supported");
     }
+  printf("\nAll tests passed.\n");
 leave:
   xfree(fname);
 }
