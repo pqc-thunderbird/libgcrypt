@@ -1041,6 +1041,24 @@ _gcry_md_setkey (gcry_md_hd_t hd, const void *key, size_t keylen)
 }
 
 
+gcry_error_t _gcry_md_set_add_input (gcry_md_hd_t h,
+                                   gcry_md_add_input_t addin_type,
+                                   const void* v, size_t v_len)
+{
+
+GcryDigestEntry *r;
+if (!h->ctx->list)
+  return GPG_ERR_DIGEST_ALGO; /* Might happen if no algo is enabled.  */
+for (r = h->ctx->list; r; r = r->next)
+  {
+    switch (r->spec->algo)
+      {
+          TODO
+      }
+  }
+}
+
+
 /* The new debug interface.  If SUFFIX is a string it creates an debug
    file for the context HD.  IF suffix is NULL, the file is closed and
    debugging is stopped.  */

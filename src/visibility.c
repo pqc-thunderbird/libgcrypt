@@ -1371,6 +1371,14 @@ gcry_md_setkey (gcry_md_hd_t hd, const void *key, size_t keylen)
   return gpg_error (_gcry_md_setkey (hd, key, keylen));
 }
 
+
+gcry_error_t gcry_md_set_add_input (gcry_md_hd_t *h,
+                                   gcry_md_add_input_t addin_type,
+                                   const void* v, size_t v_len)
+{
+return _gcry_md_set_add_input(h, addin_type, v, v_len);
+}
+
 void
 gcry_md_debug (gcry_md_hd_t hd, const char *suffix)
 {

@@ -1,6 +1,6 @@
 # easy-configuration with https://zed0.co.uk/clang-format-configurator/
 
-BasedOnStyle: Microsoft
+BasedOnStyle: GNU
 IndentWidth: 2
 SortIncludes: 'false'
 AlignConsecutiveAssignments: 'true'
@@ -12,7 +12,7 @@ BreakBeforeBinaryOperators: All
 IndentCaseLabels: 'false'
 MaxEmptyLinesToKeep: '2'
 NamespaceIndentation: None
-SpaceBeforeCpp11BracedList: 'true'
+#SpaceBeforeCpp11BracedList: 'false'
 UseTab: Never
 PointerAlignment: Right
 ColumnLimit: 79
