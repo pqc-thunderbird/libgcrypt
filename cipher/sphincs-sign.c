@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <stddef.h>
 #include <string.h>
 #include <stdint.h>
@@ -9,9 +11,10 @@
 #include "sphincs-hash.h"
 #include "sphincs-thash.h"
 #include "sphincs-address.h"
-#include "sphincs-randombytes.h"
 #include "sphincs-utils.h"
 #include "sphincs-merkle.h"
+
+#include "g10lib.h"
 
 /*
  * Returns the length of a secret key, in bytes
@@ -83,7 +86,7 @@ int crypto_sign_seed_keypair(unsigned char *pk, unsigned char *sk,
 int crypto_sign_keypair(unsigned char *pk, unsigned char *sk)
 {
   unsigned char seed[CRYPTO_SEEDBYTES];
-  randombytes(seed, CRYPTO_SEEDBYTES);
+  _gcry_randomize(seed, CRYPTO_SEEDBYTES, GCRY_VERY_STRONG_RANDOM);
   crypto_sign_seed_keypair(pk, sk, seed);
 
   return 0;
@@ -122,7 +125,7 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen,
     /* Optionally, signing can be made non-deterministic using optrand.
        This can help counter side-channel attacks that would benefit from
        getting a large number of traces when the signer uses the same nodes. */
-    randombytes(optrand, SPX_N);
+    _gcry_randomize(optrand, SPX_N, GCRY_VERY_STRONG_RANDOM);
     /* Compute the digest randomization value. */
     gen_message_random(sig, sk_prf, optrand, m, mlen, &ctx);
 

@@ -151,16 +151,12 @@ EXTRA_libcipher_la_SOURCES = \
 	blake2.c \
 	blake2b-amd64-avx2.S blake2b-amd64-avx512.S \
 	blake2s-amd64-avx.S blake2s-amd64-avx512.S \
-	sphincs-address.c sphincs-randombytes.c sphincs-merkle.c sphincs-wots.c sphincs-wotsx1.c sphincs-utils.c sphincs-utilsx1.c sphincs-fors.c sphincs-sign.c \
-	sphincs-params.h sphincs-address.h sphincs-randombytes.h sphincs-merkle.h sphincs-wots.h sphincs-wotsx1.h sphincs-utils.h sphincs-utilsx1.h sphincs-fors.h sphincs-api.h sphincs-hash.h sphincs-thash.h \
+	sphincs-address.c sphincs-merkle.c sphincs-wots.c sphincs-wotsx1.c sphincs-utils.c sphincs-utilsx1.c sphincs-fors.c sphincs-sign.c \
+	sphincs-params.h sphincs-address.h sphincs-merkle.h sphincs-wots.h sphincs-wotsx1.h sphincs-utils.h sphincs-utilsx1.h sphincs-fors.h sphincs-api.h sphincs-hash.h sphincs-thash.h \
 	sphincs-fips202.c sphincs-hash_shake.c \
 	sphincs-sha2.c \
 	sphincsplus.c \
-	sphincs-thash_sha2_simple.c
-# TODO: unify, define the same symbols
-#	sphincs-thash_haraka_robust.c sphincs-thash_haraka_simple.c \
-#	sphincs-thash_sha2_robust.c sphincs-thash_sha2_simple.c \
-#	sphincs-thash_shake_robust.c sphincs-thash_shake_simple.c
+	sphincs-thash.c
 
 gost28147.lo: gost-sb.h
 gost-sb.h: gost-s-box$(EXEEXT_FOR_BUILD)
