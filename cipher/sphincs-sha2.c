@@ -683,18 +683,19 @@ void seed_state(spx_ctx *ctx) {
     uint8_t block[SPX_SHA512_BLOCK_BYTES];
     size_t i;
 
-    for (i = 0; i < SPX_N; ++i) {
+    for (i = 0; i < ctx->n; ++i) {
         block[i] = ctx->pub_seed[i];
     }
-    for (i = SPX_N; i < SPX_SHA512_BLOCK_BYTES; ++i) {
+    for (i = ctx->n; i < SPX_SHA512_BLOCK_BYTES; ++i) {
         block[i] = 0;
     }
     /* block has been properly initialized for both SHA-256 and SHA-512 */
 
     sha256_inc_init(ctx->state_seeded);
     sha256_inc_blocks(ctx->state_seeded, block, 1);
-#if SPX_SHA512
-    sha512_inc_init(ctx->state_seeded_512);
-    sha512_inc_blocks(ctx->state_seeded_512, block, 1);
-#endif
+    if(ctx->do_use_sha512)
+    {
+        sha512_inc_init(ctx->state_seeded_512);
+        sha512_inc_blocks(ctx->state_seeded_512, block, 1);
+    }
 }

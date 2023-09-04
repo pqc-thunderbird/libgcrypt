@@ -21,7 +21,7 @@ void wots_gen_leafx1(unsigned char *dest,
     uint32_t *leaf_addr = info->leaf_addr;
     uint32_t *pk_addr = info->pk_addr;
     unsigned int i, k;
-    unsigned char pk_buffer[ SPX_WOTS_BYTES ];
+    unsigned char pk_buffer[ctx->WOTS_bytes];
     unsigned char *buffer;
     uint32_t wots_k_mask;
 
@@ -34,40 +34,40 @@ void wots_gen_leafx1(unsigned char *dest,
         wots_k_mask = (uint32_t)~0;
     }
 
-    set_keypair_addr( leaf_addr, leaf_idx );
-    set_keypair_addr( pk_addr, leaf_idx );
+    set_keypair_addr(ctx, leaf_addr, leaf_idx );
+    set_keypair_addr(ctx, pk_addr, leaf_idx );
 
-    for (i = 0, buffer = pk_buffer; i < SPX_WOTS_LEN; i++, buffer += SPX_N) {
+    for (i = 0, buffer = pk_buffer; i < ctx->WOTS_len; i++, buffer += ctx->n) {
         uint32_t wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k to */
             /* the step if we're generating a signature, ~0 if we're not */
 
         /* Start with the secret seed */
-        set_chain_addr(leaf_addr, i);
-        set_hash_addr(leaf_addr, 0);
-        set_type(leaf_addr, SPX_ADDR_TYPE_WOTSPRF);
+        set_chain_addr(ctx, leaf_addr, i);
+        set_hash_addr(ctx, leaf_addr, 0);
+        set_type(ctx, leaf_addr, SPX_ADDR_TYPE_WOTSPRF);
 
         prf_addr(buffer, ctx, leaf_addr);
 
-        set_type(leaf_addr, SPX_ADDR_TYPE_WOTS);
+        set_type(ctx, leaf_addr, SPX_ADDR_TYPE_WOTS);
 
         /* Iterate down the WOTS chain */
         for (k=0;; k++) {
             /* Check if this is the value that needs to be saved as a */
             /* part of the WOTS signature */
             if (k == wots_k) {
-                memcpy( info->wots_sig + i * SPX_N, buffer, SPX_N );
+                memcpy( info->wots_sig + i * ctx->n, buffer, ctx->n );
             }
 
             /* Check if we hit the top of the chain */
-            if (k == SPX_WOTS_W - 1) break;
+            if (k == ctx->WOTS_w - 1) break;
 
             /* Iterate one step on the chain */
-            set_hash_addr(leaf_addr, k);
+            set_hash_addr(ctx, leaf_addr, k);
 
             thash(buffer, buffer, 1, ctx, leaf_addr);
         }
     }
 
     /* Do the final thash to generate the public keys */
-    thash(dest, pk_buffer, SPX_WOTS_LEN, ctx, pk_addr);
+    thash(dest, pk_buffer, ctx->WOTS_len, ctx, pk_addr);
 }

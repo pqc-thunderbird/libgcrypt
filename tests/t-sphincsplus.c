@@ -61,6 +61,95 @@
 #define xfree(a)      gcry_free ((a))
 #define pass()        do { ; } while (0)
 
+typedef enum {
+  SHA2_128f,
+  SHA2_128s,
+  SHA2_192f,
+  SHA2_192s,
+  SHA2_256f,
+  SHA2_256s,
+  SHAKE_128f,
+  SHAKE_128s,
+  SHAKE_192f,
+  SHAKE_192s,
+  SHAKE_256f,
+  SHAKE_256s
+} sphincs_paramset;
+
+const char *hash_alg_map[] = {"SHA2", "SHAKE"};
+const char *variant_map[] = {"128f", "128s", "192f", "192s", "256f", "256s"};
+
+const char* hash_from_paramset(sphincs_paramset paramset) {
+  switch(paramset)
+  {
+   case SHA2_128f:
+   case SHA2_128s:
+   case SHA2_192f:
+   case SHA2_192s:
+   case SHA2_256f:
+   case SHA2_256s:
+    return hash_alg_map[0];
+   case SHAKE_128f:
+   case SHAKE_128s:
+   case SHAKE_192f:
+   case SHAKE_192s:
+   case SHAKE_256f:
+   case SHAKE_256s:
+      return hash_alg_map[1];
+  }
+  return NULL;
+}
+
+const char* variant_from_paramset(sphincs_paramset paramset) {
+  switch(paramset)
+  {
+     case SHA2_128f:
+     case SHAKE_128f:
+      return variant_map[0];
+     case SHA2_128s:
+     case SHAKE_128s:
+      return variant_map[1];
+     case SHA2_192f:
+     case SHAKE_192f:
+      return variant_map[2];
+     case SHA2_192s:
+     case SHAKE_192s:
+      return variant_map[3];
+     case SHA2_256f:
+     case SHAKE_256f:
+      return variant_map[4];
+     case SHA2_256s:
+     case SHAKE_256s:
+      return variant_map[5];
+  }
+  return NULL;
+}
+
+size_t nbits_from_paramset(sphincs_paramset paramset) {
+  switch(paramset)
+  {
+     case SHA2_128f:
+     case SHAKE_128f:
+     case SHA2_128s:
+     case SHAKE_128s:
+      return 32*8;
+     case SHA2_192f:
+     case SHAKE_192f:
+     case SHA2_192s:
+     case SHAKE_192s:
+      return 48*8;
+     case SHA2_256f:
+     case SHAKE_256f:
+     case SHA2_256s:
+     case SHAKE_256s:
+      return 64*8;
+  }
+  return 0;
+}
+
+  char hashalg[] = "SHA2";
+  char variant[] = "192s";
+
 
 /* Prepend FNAME with the srcdir environment variable's value and
  * return an allocated filename.  */
@@ -85,7 +174,7 @@ prepend_srcdir (const char *fname)
 static char *
 read_textline (FILE *fp, int *lineno)
 {
-  char line[40000];
+  char line[100000]; /* max smlen for sphincs+ is roughly 49k + msg size. 100k to be safe. */
   char *p;
 
   do
@@ -188,7 +277,7 @@ const char SPHINCSPLUS_MESSAGE_TMPL[] = "(data (flags eddsa) (value %b))";
 static int check_sphincsplus_roundtrip(size_t n_tests)
 {
   //char *sphincsplus_name[] = {"Dilithium2", "Dilithium3", "Dilithium5"};
-  char *sphincsplus_name[] = {"sphincsplus"};
+  const char *sphincsplus_name[] = {"sphincsplus"};
   //unsigned sphincsplus_nbits[] = {10496, 15616, 20736};
   unsigned sphincsplus_nbits[] = {512};
 
@@ -214,8 +303,10 @@ static int check_sphincsplus_roundtrip(size_t n_tests)
 
     rc = gcry_sexp_build(&keyparm,
                         NULL,
-                        "(genkey (sphincsplus (nbits%u)))",
+                        "(genkey (sphincsplus (nbits%u) (hash-alg%s) (variant%s)))",
                         sphincsplus_nbits[i],
+                        hashalg,
+                        variant,
                         NULL);
 
     if (rc)
@@ -304,7 +395,7 @@ typedef struct
   size_t result_buf_len;
 } test_vec_desc_entry;
 
-static void check_sphincsplus_kat(const char *fname, unsigned sphincsplus_bits)
+static void check_sphincsplus_kat(const char *fname)
 {
   const size_t nb_kat_tests = 0; /* zero means all */
   FILE *fp;
@@ -506,10 +597,11 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   // pk
   err = gcry_sexp_build(&public_key_sx,
                         NULL,
-                        "(public-key (sphincsplus (p %b) (nbits%u) ))",
+                        "(public-key (sphincsplus (p %b) (nbits%u)  (hash-alg%s) (variant%s) ))",
                         pk_len,
                         pk,
                         pk_len * 8,
+                        hashalg, variant,
                         NULL);
   if (err)
   {
@@ -549,6 +641,7 @@ leave:
     return 1;
   return 0;
 }
+
 int
 main (int argc, char **argv)
 {
@@ -613,7 +706,7 @@ int last_argc = -1;
 
     if(fname)
     {
-      check_sphincsplus_kat(fname, 10496);
+      check_sphincsplus_kat(fname);
       xfree(fname);
     }
     else

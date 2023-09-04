@@ -32,15 +32,15 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
                 void *info)
 {
     /* This is where we keep the intermediate nodes */
-    SPX_VLA(uint8_t, stack, tree_height*SPX_N);
+    SPX_VLA(uint8_t, stack, tree_height*ctx->n);
 
     uint32_t idx;
     uint32_t max_idx = (uint32_t)((1 << tree_height) - 1);
     for (idx = 0;; idx++) {
-        unsigned char current[2*SPX_N];   /* Current logical node is at */
-            /* index[SPX_N].  We do this to minimize the number of copies */
+        unsigned char current[2*ctx->n];   /* Current logical node is at */
+            /* index[ctx->n].  We do this to minimize the number of copies */
             /* needed during a thash */
-        gen_leaf( &current[SPX_N], ctx, idx + idx_offset,
+        gen_leaf( &current[ctx->n], ctx, idx + idx_offset,
                     info );
 
         /* Now combine the freshly generated right node with previously */
@@ -54,7 +54,7 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
             /* Check if we hit the top of the tree */
             if (h == tree_height) {
                 /* We hit the root; return it */
-                memcpy( root, &current[SPX_N], SPX_N );
+                memcpy( root, &current[ctx->n], ctx->n );
                 return;
             }
 
@@ -63,9 +63,9 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
              * authentication path; if it is, write it out
              */
             if ((internal_idx ^ internal_leaf) == 0x01) {
-                memcpy( &auth_path[ h * SPX_N ],
-                        &current[SPX_N],
-                        SPX_N );
+                memcpy( &auth_path[ h * ctx->n ],
+                        &current[ctx->n],
+                        ctx->n );
             }
 
             /*
@@ -83,18 +83,18 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
 
             /* Set the address of the node we're creating. */
             internal_idx_offset >>= 1;
-            set_tree_height(tree_addr, h + 1);
-            set_tree_index(tree_addr, internal_idx/2 + internal_idx_offset );
+            set_tree_height(ctx, tree_addr, h + 1);
+            set_tree_index(ctx, tree_addr, internal_idx/2 + internal_idx_offset );
 
-            unsigned char *left = &stack[h * SPX_N];
-            memcpy( &current[0], left, SPX_N );
-            thash( &current[1 * SPX_N],
-                   &current[0 * SPX_N],
+            unsigned char *left = &stack[h * ctx->n];
+            memcpy( &current[0], left, ctx->n );
+            thash( &current[1 * ctx->n],
+                   &current[0 * ctx->n],
                    2, ctx, tree_addr);
         }
 
         /* We've hit a left child; save the current for when we get the */
         /* corresponding right right */
-        memcpy( &stack[h * SPX_N], &current[SPX_N], SPX_N);
+        memcpy( &stack[h * ctx->n], &current[ctx->n], ctx->n);
     }
 }

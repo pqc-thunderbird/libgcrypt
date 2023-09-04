@@ -8,14 +8,7 @@
 #include "mpi.h"
 #include "cipher.h"
 #include "pubkey-internal.h"
-#include "params/params-sphincs-sha2-128f.h"
-
-typedef struct {
-    uint8_t secret_key_bytes;
-    uint8_t public_key_bytes;
-    uint16_t signature_bytes;
-} gcry_sphincsplus_param_t;
-
+#include "sphincs-context.h"
 
 static unsigned int
 /* TODOMTG nbits not meaningful for sphincsplus */
@@ -31,6 +24,273 @@ sphincsplus_get_nbits (gcry_sexp_t parms)
   return nbits;
 }
 
+typedef enum {
+  SHA2_128f,
+  SHA2_128s,
+  SHA2_192f,
+  SHA2_192s,
+  SHA2_256f,
+  SHA2_256s,
+  SHAKE_128f,
+  SHAKE_128s,
+  SHAKE_192f,
+  SHAKE_192s,
+  SHAKE_256f,
+  SHAKE_256s
+} sphincs_paramset;
+
+static gcry_err_code_t paramset_from_hash_and_variant(sphincs_paramset *paramset, const char *hash, const char* variant)
+{
+  if(strcmp(hash, "SHA2") == 0)
+  {
+    if(strcmp(variant, "128f") == 0)
+    {
+      *paramset = SHA2_128f;
+    }
+    else if(strcmp(variant, "128s") == 0)
+    {
+      *paramset = SHA2_128s;
+    }
+    else if(strcmp(variant, "192f") == 0)
+    {
+      *paramset = SHA2_192f;
+    }
+    else if(strcmp(variant, "192s") == 0)
+    {
+      *paramset = SHA2_192s;
+    }
+    else if(strcmp(variant, "256f") == 0)
+    {
+      *paramset = SHA2_256f;
+    }
+    else if(strcmp(variant, "256s") == 0)
+    {
+      *paramset = SHA2_256s;
+    }
+    else
+    {
+      return 1;
+    }
+  }
+  else if(strcmp(hash, "SHAKE") == 0)
+  {
+
+  }
+  else {
+    return 1; /* TODO: correct error code */
+  }
+
+  return 0;
+}
+
+
+static gcry_err_code_t gcry_sphincsplus_get_param_from_paramset_id(spx_ctx *param, sphincs_paramset paramset)
+{
+  switch(paramset)
+  {
+   case SHA2_128f:
+    param->n = 16;
+    param->d = 22;
+    param->full_height = 66;
+    param->FORS_height = 6;
+    param->FORS_trees = 33;
+    param->do_use_sha512 = 0;
+    param->is_sha2 = 1;
+    break;
+   case SHA2_128s:
+    param->n = 16;
+    param->d = 7;
+    param->full_height = 63;
+    param->FORS_height = 12;
+    param->FORS_trees = 14;
+    param->do_use_sha512 = 0;
+    param->is_sha2 = 1;
+    break;
+  case SHA2_192f:
+    param->n = 24;
+    param->d = 22;
+    param->full_height = 66;
+    param->FORS_height = 8;
+    param->FORS_trees = 33;
+    param->do_use_sha512 = 1;
+    param->is_sha2 = 1;
+    break;
+  case SHA2_192s:
+    param->n = 24;
+    param->d = 7;
+    param->full_height = 63;
+    param->FORS_height = 14;
+    param->FORS_trees = 17;
+    param->do_use_sha512 = 1;
+    param->is_sha2 = 1;
+    break;
+  case SHA2_256f:
+    param->n = 32;
+    param->d = 17;
+    param->full_height = 68;
+    param->FORS_height = 9;
+    param->FORS_trees = 35;
+    param->do_use_sha512 = 1;
+    param->is_sha2 = 1;
+    break;
+  case SHA2_256s:
+    param->n = 32;
+    param->d = 8;
+    param->full_height = 64;
+    param->FORS_height = 14;
+    param->FORS_trees = 22;
+    param->do_use_sha512 = 1;
+    param->is_sha2 = 1;
+    break;
+  default: return 1;
+  }
+
+  /* allocate buffers */
+  /* TODO: unallocate */
+  param->pub_seed = malloc(param->n);
+  param->sk_seed = malloc(param->n);
+  param->state_seeded = malloc(40);
+  param->state_seeded_512 = malloc(72);
+
+  /* derived and fix params */
+  param->addr_bytes = 32;
+  param->WOTS_w = 16;
+  param->WOTS_logw = 4;
+  param->seed_bytes = 3*param->n;
+  param->tree_height = param->full_height / param->d;
+  param->FORS_msg_bytes = (param->FORS_height * param->FORS_trees + 7) / 8;
+  param->FORS_bytes = (param->FORS_height + 1) * param->FORS_trees * param->n;
+  param->FORS_pk_bytes = param->n;
+  param->WOTS_len1 = 8 * param->n / param->WOTS_logw;
+  param->WOTS_len2 = 3; /* for all param->n in range [9..136] */
+
+  param->WOTS_len = param->WOTS_len1 + param->WOTS_len2;
+  param->WOTS_bytes = param->WOTS_len * param->n;
+  param->WOTS_pk_bytes = param->WOTS_bytes;
+
+  /* sig and key size */
+  param->signature_bytes = param->n + param->FORS_bytes + param->d * param->WOTS_bytes + param->full_height * param->n;
+  param->public_key_bytes = 2 * param->n;
+  param->secret_key_bytes = 2 * param->n + param->public_key_bytes;
+
+  /* hash offsets */
+  if(param->is_sha2)
+  {
+    param->offset_layer = 0;
+    param->offset_tree = 1;
+    param->offset_type = 9;
+    param->offset_kp_addr2 = 12;
+    param->offset_kp_addr1 = 13;
+    param->offset_chain_addr = 17;
+    param->offset_hash_addr = 21;
+    param->offset_tree_hgt = 17;
+    param->offset_tree_index = 18;
+  }
+  else {
+    param->offset_layer = 3;
+    param->offset_tree = 8;
+    param->offset_type = 19;
+    param->offset_kp_addr2 = 22;
+    param->offset_kp_addr1 = 23;
+    param->offset_chain_addr = 27;
+    param->offset_hash_addr = 31;
+    param->offset_tree_hgt = 27;
+    param->offset_tree_index = 28;
+  }
+
+  return 0;
+}
+
+const char *hash_alg_map[] = {"SHA2", "SHAKE"};
+const char *variant_map[] = {"128f", "128s", "192f", "192s", "256f", "256s"};
+static gcry_err_code_t sphincsplus_get_hash_alg_and_variant_from_sexp(gcry_sexp_t list, const char **hash_alg, const char **variant)
+{
+  // char buf[50];
+  // const char *s;
+  // size_t n;
+
+
+  // list = sexp_find_token (list, "nbits", 0);
+  // if (!list)
+  //   return 0; /* No NBITS found.  */
+
+  // s = sexp_nth_data (list, 1, &n);
+  // if (!s || n >= DIM (buf) - 1 )
+  //   {
+  //     /* NBITS given without a cdr.  */
+  //     sexp_release (list);
+  //     return GPG_ERR_INV_OBJ;
+  //   }
+  // memcpy (buf, s, n);
+  // buf[n] = 0;
+  // sexp_release (list);
+
+  // *hash_alg = hash_alg_map[0];
+  // *variant = variant_map[0];
+  // return 0;
+
+  const char *s_hashalg;
+  const char *s_variant;
+  size_t n_hashalg;
+  size_t n_variant;
+
+  gcry_sexp_t hashalg_sexp;
+  gcry_sexp_t variant_sexp;
+
+  hashalg_sexp = sexp_find_token (list, "hash-alg", 0);
+  if (!hashalg_sexp)
+    return 0; /* No hash-alg found.  */
+
+  s_hashalg = sexp_nth_data (hashalg_sexp, 1, &n_hashalg);
+  if (!s_hashalg)
+    {
+      /* hash-alg given without a cdr.  */
+      sexp_release (hashalg_sexp);
+      return GPG_ERR_INV_OBJ;
+    }
+
+  variant_sexp = sexp_find_token (list, "variant", 0);
+  if (!variant_sexp)
+    return 0; /* No hash-alg found.  */
+
+  s_variant = sexp_nth_data (variant_sexp, 1, &n_variant);
+  if (!s_variant)
+    {
+      /* hash-alg given without a cdr.  */
+      sexp_release (variant_sexp);
+      return GPG_ERR_INV_OBJ;
+    }
+
+
+  *hash_alg = NULL;
+  *variant = NULL;
+  for(size_t i = 0; i < DIM (hash_alg_map); i++)
+  {
+    if(strncmp(hash_alg_map[i], s_hashalg, n_hashalg) == 0)
+    {
+      *hash_alg = hash_alg_map[i];
+      break;
+    }
+  }
+  for(size_t i = 0; i < DIM (variant_map); i++)
+  {
+    if(strncmp(variant_map[i], s_variant, n_variant) == 0)
+    {
+      *variant = variant_map[i];
+      break;
+    }
+  }
+
+
+  sexp_release (hashalg_sexp);
+  sexp_release (variant_sexp);
+  if(!(*variant) || !(*hash_alg))
+  {
+    return GPG_ERR_INV_OBJ;
+  }
+  return 0;
+}
+
 static const char *sphincsplus_names[] = {
   "sphincsplus",
   "openpgp-sphincsplus",              // ? leave?
@@ -38,106 +298,6 @@ static const char *sphincsplus_names[] = {
 };
 
 
-static gcry_err_code_t gcry_sphincsplus_get_param_from_bit_size(size_t nbits,
-                                                    gcry_sphincsplus_param_t *param)
-{
-#if 0
-  // nbits: sphincsplus pubkey byte size * 8
-  switch (nbits)
-  {
-    case GCRY_SPHINCSPLUS2_NBITS:
-      param->id = GCRY_SPHINCSPLUS2;
-      param->k = 4;
-      param->l = 4;
-      param->eta = 2;
-      param->tau = 39;
-      param->beta = 78;
-      param->gamma1 = 1 << 17;
-      param->gamma2 = (GCRY_SPHINCSPLUS_Q-1)/88;
-      param->omega = 80;
-      break;
-    case GCRY_SPHINCSPLUS3_NBITS:
-      param->id = GCRY_SPHINCSPLUS3;
-      param->k = 6;
-      param->l = 5;
-      param->eta = 4;
-      param->tau = 49;
-      param->beta = 196;
-      param->gamma1 = 1 << 19;
-      param->gamma2 = (GCRY_SPHINCSPLUS_Q-1)/32;
-      param->omega = 55;
-      break;
-    case GCRY_SPHINCSPLUS5_NBITS:
-      param->id = GCRY_SPHINCSPLUS5;
-      param->k = 8;
-      param->l = 7;
-      param->eta = 2;
-      param->tau = 60;
-      param->beta = 120;
-      param->gamma1 = 1 << 19;
-      param->gamma2 = (GCRY_SPHINCSPLUS_Q-1)/32;
-      param->omega = 75;
-      break;
-    default:
-      return GPG_ERR_INV_ARG;
-  }
-
-    param->polyvech_packedbytes = param->omega + param->k;
-
-    if(param->gamma1 == (1 << 17))
-    {
-      param->polyz_packedbytes = 576;
-    }
-    else if(param->gamma1 == (1 << 19))
-    {
-      param->polyz_packedbytes = 640;
-    }
-    else
-    {
-      printf("error when determining polyz_packedbytes\n");
-      return GPG_ERR_GENERAL; // TODOMTG better errcode?
-    }
-
-
-    if(param->gamma2 == (GCRY_SPHINCSPLUS_Q-1)/88)
-    {
-      param->polyw1_packedbytes = 192;
-    }
-    else if(param->gamma2 == (GCRY_SPHINCSPLUS_Q-1)/32)
-    {
-      param->polyw1_packedbytes = 128;
-    }
-    else
-    {
-      printf("error when determining polyw1_packedbytes\n");
-      return GPG_ERR_GENERAL; // TODOMTG better errcode?
-    }
-
-    if(param->eta == 2)
-    {
-      param->polyeta_packedbytes = 96;
-    }
-    else if(param->eta == 4)
-    {
-      param->polyeta_packedbytes = 128;
-    }
-    else
-    {
-      printf("error when determining polyeta_packedbytes\n");
-      return GPG_ERR_GENERAL; // TODOMTG better errcode?
-    }
-
-    param->public_key_bytes = GCRY_SPHINCSPLUS_SEEDBYTES + param->k * GCRY_SPHINCSPLUS_POLYT1_PACKEDBYTES;
-    param->secret_key_bytes = 3 * GCRY_SPHINCSPLUS_SEEDBYTES
-                              + param->l * param->polyeta_packedbytes
-                              + param->k * param->polyeta_packedbytes
-                              + param->k * GCRY_SPHINCSPLUS_POLYT0_PACKEDBYTES;
-    param->signature_bytes = GCRY_SPHINCSPLUS_SEEDBYTES + param->l * param->polyz_packedbytes + param->polyvech_packedbytes;
-
-  return 0;
-#endif
-return 0;
-}
 
 
 static gcry_err_code_t extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
@@ -190,7 +350,7 @@ leave:
 
 
 static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
-                                             const gcry_sphincsplus_param_t param,
+                                             const spx_ctx param,
                                              unsigned char **sk_p)
 {
   return extract_opaque_mpi_from_sexp(
@@ -198,7 +358,7 @@ static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
 }
 
 static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms,
-                                            const gcry_sphincsplus_param_t param,
+                                            const spx_ctx param,
                                             unsigned char **pk_p)
 {
   return extract_opaque_mpi_from_sexp(
@@ -214,15 +374,20 @@ sphincsplus_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   unsigned char *pk = NULL;
   unsigned char * sk = NULL;
   unsigned int nbits;
-  gcry_sphincsplus_param_t param;
-  param.public_key_bytes = SPX_PK_BYTES;
-  param.secret_key_bytes = SPX_SK_BYTES;
-  param.signature_bytes = SPX_BYTES;
+  spx_ctx param;
+  sphincs_paramset paramset;
+
+  const char *hash_alg;
+  const char *variant;
 
   ec = _gcry_pk_util_get_nbits (genparms, &nbits);
   if (ec)
     return ec;
-  if ((ec = gcry_sphincsplus_get_param_from_bit_size(nbits, &param)))
+  if ((ec = sphincsplus_get_hash_alg_and_variant_from_sexp(genparms, &hash_alg, &variant)))
+    return ec;
+  if ((ec = paramset_from_hash_and_variant(&paramset, hash_alg, variant)))
+    return ec;
+  if ((ec = gcry_sphincsplus_get_param_from_paramset_id(&param, paramset)))
     return ec;
 
   if (!(sk = xtrymalloc_secure(param.secret_key_bytes))
@@ -232,7 +397,7 @@ sphincsplus_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
     goto leave;
   }
   //_gcry_sphincsplus_keypair(&param, pk, sk);
-  crypto_sign_keypair(pk, sk);
+  crypto_sign_keypair(&param, pk, sk);
 
   gcry_mpi_t sk_mpi = NULL;
   gcry_mpi_t pk_mpi = NULL;
@@ -252,13 +417,15 @@ sphincsplus_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
                       NULL,
                       "(key-data"
                       " (public-key"
-                      "  (sphincsplus(p%m) (nbits%u)))"
+                      "  (sphincsplus(p%m) (nbits%u) (hash-alg%s) (variant%s)))"
                       " (private-key"
-                      "  (sphincsplus(s%m) (nbits%u))))",
+                      "  (sphincsplus(s%m) (nbits%u) (hash-alg%s) (variant%s))))",
                       pk_mpi,
                       nbits,
+                      hash_alg, variant,
                       sk_mpi,
                       nbits,
+                      hash_alg, variant,
                       NULL);
 
     }
@@ -296,11 +463,16 @@ sphincsplus_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   size_t nwritten = 0;
 
   unsigned int nbits = sphincsplus_get_nbits (keyparms);
-  gcry_sphincsplus_param_t param;
-  param.public_key_bytes = SPX_PK_BYTES;
-  param.secret_key_bytes = SPX_SK_BYTES;
-  param.signature_bytes = SPX_BYTES;
-  if ((ec = gcry_sphincsplus_get_param_from_bit_size(nbits, &param)))
+  spx_ctx param;
+  sphincs_paramset paramset;
+  const char *hash_alg;
+  const char *variant;
+
+  if ((ec = sphincsplus_get_hash_alg_and_variant_from_sexp(keyparms, &hash_alg, &variant)))
+    return ec;
+  if ((ec = paramset_from_hash_and_variant(&paramset, hash_alg, variant)))
+    return ec;
+  if ((ec = gcry_sphincsplus_get_param_from_paramset_id(&param, paramset)))
     return ec;
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_SIGN, nbits);
 
@@ -343,7 +515,7 @@ sphincsplus_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 
   size_t sig_buf_len;
   //if(0 != _gcry_sphincsplus_sign(&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
-  if(0 != crypto_sign_signature(sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
+  if(0 != crypto_sign_signature(&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
   {
     printf("sign operation failed\n");
     ec = GPG_ERR_GENERAL;
@@ -386,14 +558,18 @@ sphincsplus_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparm
   gcry_mpi_t sig = NULL;
   gcry_mpi_t data = NULL;
   size_t nwritten = 0;
-  gcry_sphincsplus_param_t param;
-  param.public_key_bytes = SPX_PK_BYTES;
-  param.secret_key_bytes = SPX_SK_BYTES;
-  param.signature_bytes = SPX_BYTES;
+  spx_ctx param;
+  sphincs_paramset paramset;
+  const char *hash_alg;
+  const char *variant;
   gcry_sexp_t l1 = NULL;
 
   unsigned int nbits = sphincsplus_get_nbits (s_keyparms);
-  if ((ec = gcry_sphincsplus_get_param_from_bit_size(nbits, &param)))
+  if ((ec = sphincsplus_get_hash_alg_and_variant_from_sexp(s_keyparms, &hash_alg, &variant)))
+    return ec;
+  if ((ec = paramset_from_hash_and_variant(&paramset, hash_alg, variant)))
+    return ec;
+  if ((ec = gcry_sphincsplus_get_param_from_paramset_id(&param, paramset)))
     return ec;
 
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_VERIFY, nbits);
@@ -453,7 +629,7 @@ sphincsplus_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparm
     goto leave;
   }
 
-  if(0 != crypto_sign_verify(sig_buf, param.signature_bytes, data_buf, data_buf_len, pk_buf))
+  if(0 != crypto_sign_verify(&param, sig_buf, param.signature_bytes, data_buf, data_buf_len, pk_buf))
   {
     ec = GPG_ERR_GENERAL;
     goto leave;
