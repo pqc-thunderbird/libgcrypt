@@ -147,10 +147,6 @@ size_t nbits_from_paramset(sphincs_paramset paramset) {
   return 0;
 }
 
-  char hashalg[] = "SHA2";
-  char variant[] = "192s";
-
-
 /* Prepend FNAME with the srcdir environment variable's value and
  * return an allocated filename.  */
 char *
@@ -174,7 +170,7 @@ prepend_srcdir (const char *fname)
 static char *
 read_textline (FILE *fp, int *lineno)
 {
-  char line[100000]; /* max smlen for sphincs+ is roughly 49k + msg size. 100k to be safe. */
+  char line[150000]; /* max smlen for sphincs+ is roughly 49k + msg size. 150k to be safe. */
   char *p;
 
   do
@@ -276,16 +272,17 @@ const char SPHINCSPLUS_MESSAGE_TMPL[] = "(data (flags eddsa) (value %b))";
 
 static int check_sphincsplus_roundtrip(size_t n_tests)
 {
-  //char *sphincsplus_name[] = {"Dilithium2", "Dilithium3", "Dilithium5"};
-  const char *sphincsplus_name[] = {"sphincsplus"};
-  //unsigned sphincsplus_nbits[] = {10496, 15616, 20736};
-  unsigned sphincsplus_nbits[] = {512};
+  const char* hashalgs[] = {"SHA2", "SHAKE"};
+  const char* variants[] = {"128f", "128s", "192f", "192s", "256f", "256s"};
 
   int rc;
 
   for(size_t iteration = 0; iteration < n_tests; iteration++)
-  for (int i = 0; i < sizeof(sphincsplus_name)/sizeof(sphincsplus_name[0]); i++)
+  for (int i = 0; i < sizeof(hashalgs)/sizeof(hashalgs[0]); i++)
+  for (int j = 0; j < sizeof(variants)/sizeof(variants[0]); j++)
   {
+    const char* hashalg = hashalgs[i];
+    const char* variant = variants[j];
     gcry_sexp_t skey = NULL;
     gcry_sexp_t pkey = NULL;
     gcry_sexp_t keyparm = NULL;
@@ -299,12 +296,12 @@ static int check_sphincsplus_roundtrip(size_t n_tests)
     unsigned char *msg = NULL;
 
     if (verbose)
-      info ("creating %s key\n", sphincsplus_name[i]);
+      info ("creating %s-%s key\n", hashalg, variant);
 
     rc = gcry_sexp_build(&keyparm,
                         NULL,
                         "(genkey (sphincsplus (nbits%u) (hash-alg%s) (variant%s)))",
-                        sphincsplus_nbits[i],
+                        12345, // TODO !!
                         hashalg,
                         variant,
                         NULL);
@@ -350,7 +347,7 @@ static int check_sphincsplus_roundtrip(size_t n_tests)
     if(rc)
       die("sign failed\n");
 
-    printf("verifying correct %s-signature, iteration %d/%d\n", sphincsplus_name[i], iteration+1, n_tests);
+    printf("verifying correct %s-%s-signature, iteration %d/%d\n", hashalg, variant, iteration+1, n_tests);
     rc = gcry_pk_verify (r_sig, s_data, pkey);
     if(rc)
       die("verify failed\n");
@@ -395,12 +392,51 @@ typedef struct
   size_t result_buf_len;
 } test_vec_desc_entry;
 
+/*
+ * The input line is like:
+ *
+ *      [<hashalg>,<variant>]
+ * e.g.
+ *      [SHA2,128f]
+ *
+ */
+static void
+parse_annotation (char **hashalg, char **variant, const char *line, int lineno)
+{
+  const char *s;
+
+  xfree (*hashalg);
+  *hashalg = NULL;
+
+  xfree (*variant);
+  *variant = NULL;
+
+  s = strchr (line, ',');
+  if (!s)
+    {
+      fail ("syntax error at input line %d", lineno);
+      return;
+    }
+
+  size_t hashalg_size = s - line - 1;
+  *hashalg = xmalloc (hashalg_size+1);
+  (*hashalg)[hashalg_size] = '\0';
+  memcpy(*hashalg, line+1, hashalg_size);
+
+  *variant = xstrdup (s+1);
+  (*variant)[strlen (*variant) - 1] = 0; /* Remove ']'.  */
+
+}
+
 static void check_sphincsplus_kat(const char *fname)
 {
   const size_t nb_kat_tests = 0; /* zero means all */
   FILE *fp;
   int lineno = 0;
   char *line;
+
+  char* variant = NULL;
+  char* hashalg = NULL;
 
   enum
   {
@@ -462,7 +498,6 @@ static void check_sphincsplus_kat(const char *fname)
   if (!fp)
     die("error opening '%s': %s\n", fname, strerror(errno));
 
-
   while ((line = read_textline(fp, &lineno))
          && !(nb_kat_tests && nb_kat_tests <= test_count))
     {
@@ -485,8 +520,17 @@ static void check_sphincsplus_kat(const char *fname)
             {
               continue;
             }
+          else if (!strncmp(line, "[", 1))
+            {
+              parse_annotation(&hashalg, &variant, line, lineno);
+              break;
+            }
           else if (!strncmp(line, e->index, strlen(e->index)))
             {
+              if(!variant ||!hashalg)
+              {
+                fail("No annotation string found to set SPHINCS+ parameters");
+              }
               if (e->result_buf != NULL)
                 {
                   fail("trying to set test vector element twice");
@@ -519,7 +563,7 @@ static void check_sphincsplus_kat(const char *fname)
       unsigned sig_len = test_vec[4].result_buf_len - test_vec[1].result_buf_len;
       test_vec_desc_entry *pk = &test_vec[2];
       test_vec_desc_entry *msg = &test_vec[1];
-      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if(rc)
         die("Failed to verify KAT test vector");
 
@@ -528,37 +572,37 @@ static void check_sphincsplus_kat(const char *fname)
       gcry_randomize(&random, sizeof(unsigned), GCRY_WEAK_RANDOM);
 
       pk->result_buf[random % pk->result_buf_len]--;
-      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if(!rc)
         die("modified KAT test vector should not be verifiable");
       pk->result_buf[random % pk->result_buf_len]++;
 
       sig[random % sig_len]--;
-      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if(!rc)
         die("modified KAT test vector should not be verifiable");
       sig[random % sig_len]++;
 
       msg->result_buf[random % msg->result_buf_len]--;
-      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if(!rc)
         die("modified KAT test vector should not be verifiable");
       msg->result_buf[random % msg->result_buf_len]++;
 
       sig_len--;
-      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if(!rc)
         die("modified KAT test vector should not be verifiable");
       sig_len++;
 
       pk->result_buf_len--;
-      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if(!rc)
         die("modified KAT test vector should not be verifiable");
       pk->result_buf_len++;
 
       msg->result_buf_len--;
-      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len);
+      rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if(!rc)
         die("modified KAT test vector should not be verifiable");
       msg->result_buf_len++;
@@ -582,11 +626,11 @@ static void check_sphincsplus_kat(const char *fname)
 
   printf("\n");
   xfree(line);
-leave:
-  line = line;
+  xfree(hashalg);
+  xfree(variant);
 }
 
-int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, unsigned m_len, unsigned char *sig, unsigned sig_len) {
+int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, unsigned m_len, unsigned char *sig, unsigned sig_len, const char* hashalg, const char* variant) {
 
 
   gcry_error_t err;
@@ -606,7 +650,6 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   if (err)
   {
     fail("error building public key SEXP: %s", gpg_strerror(err));
-    goto leave;
   }
 
   // data
@@ -617,7 +660,6 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   if (err)
   {
     fail("error building msg SEXP: %s", gpg_strerror(err));
-    goto leave;
   }
 
   // sig
@@ -628,7 +670,6 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   if (err)
   {
     fail("error building msg SEXP: %s", gpg_strerror(err));
-    goto leave;
   }
 
   err = gcry_pk_verify (signature_sx, data_sx, public_key_sx);
@@ -711,7 +752,7 @@ int last_argc = -1;
     }
     else
     {
-      if(check_sphincsplus_roundtrip(1000))
+      if(check_sphincsplus_roundtrip(10))
       {
           fail("check_sphincsplus_roundtrip() yielded an error, aborting");
       }

@@ -74,7 +74,34 @@ static gcry_err_code_t paramset_from_hash_and_variant(sphincs_paramset *paramset
   }
   else if(strcmp(hash, "SHAKE") == 0)
   {
-
+    if(strcmp(variant, "128f") == 0)
+    {
+      *paramset = SHAKE_128f;
+    }
+    else if(strcmp(variant, "128s") == 0)
+    {
+      *paramset = SHAKE_128s;
+    }
+    else if(strcmp(variant, "192f") == 0)
+    {
+      *paramset = SHAKE_192f;
+    }
+    else if(strcmp(variant, "192s") == 0)
+    {
+      *paramset = SHAKE_192s;
+    }
+    else if(strcmp(variant, "256f") == 0)
+    {
+      *paramset = SHAKE_256f;
+    }
+    else if(strcmp(variant, "256s") == 0)
+    {
+      *paramset = SHAKE_256s;
+    }
+    else
+    {
+      return 1;
+    }
   }
   else {
     return 1; /* TODO: correct error code */
@@ -141,6 +168,60 @@ static gcry_err_code_t gcry_sphincsplus_get_param_from_paramset_id(spx_ctx *para
     param->FORS_trees = 22;
     param->do_use_sha512 = 1;
     param->is_sha2 = 1;
+    break;
+  case SHAKE_128f:
+    param->n = 16;
+    param->d = 22;
+    param->full_height = 66;
+    param->FORS_height = 6;
+    param->FORS_trees = 33;
+    param->do_use_sha512 = 0;
+    param->is_sha2 = 0;
+    break;
+   case SHAKE_128s:
+    param->n = 16;
+    param->d = 7;
+    param->full_height = 63;
+    param->FORS_height = 12;
+    param->FORS_trees = 14;
+    param->do_use_sha512 = 0;
+    param->is_sha2 = 0;
+    break;
+  case SHAKE_192f:
+    param->n = 24;
+    param->d = 22;
+    param->full_height = 66;
+    param->FORS_height = 8;
+    param->FORS_trees = 33;
+    param->do_use_sha512 = 0;
+    param->is_sha2 = 0;
+    break;
+  case SHAKE_192s:
+    param->n = 24;
+    param->d = 7;
+    param->full_height = 63;
+    param->FORS_height = 14;
+    param->FORS_trees = 17;
+    param->do_use_sha512 = 0;
+    param->is_sha2 = 0;
+    break;
+  case SHAKE_256f:
+    param->n = 32;
+    param->d = 17;
+    param->full_height = 68;
+    param->FORS_height = 9;
+    param->FORS_trees = 35;
+    param->do_use_sha512 = 0;
+    param->is_sha2 = 0;
+    break;
+  case SHAKE_256s:
+    param->n = 32;
+    param->d = 8;
+    param->full_height = 64;
+    param->FORS_height = 14;
+    param->FORS_trees = 22;
+    param->do_use_sha512 = 0;
+    param->is_sha2 = 0;
     break;
   default: return 1;
   }
