@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <stdint.h>
 #include <string.h>
 
@@ -8,6 +10,7 @@
 #include "sphincs-fips202.h"
 #include "sphincs-sha2.h"
 
+#include "g10lib.h"
 
 
 
@@ -25,7 +28,12 @@ void thash_shake_simple(unsigned char *out, const unsigned char *in, unsigned in
     memcpy(buf + ctx->n, addr, ctx->addr_bytes);
     memcpy(buf + ctx->n + ctx->addr_bytes, in, inblocks * ctx->n);
 
-    shake256(out, ctx->n, buf, ctx->n + ctx->addr_bytes + inblocks*ctx->n);
+    //shake256(out, ctx->n, buf, ctx->n + ctx->addr_bytes + inblocks*ctx->n);
+    gcry_md_hd_t hd;
+    _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+    _gcry_md_write(hd, buf, ctx->n + ctx->addr_bytes + inblocks*ctx->n);
+    _gcry_md_extract(hd, GCRY_MD_SHAKE256, out, ctx->n);
+    _gcry_md_close(hd);
 }
 
 

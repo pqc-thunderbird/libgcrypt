@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <stdint.h>
 #include <string.h>
 
@@ -7,7 +9,7 @@
 #include "sphincs-hash.h"
 #include "sphincs-sha2.h"
 #include "sphincs-fips202.h"
-
+#include "g10lib.h"
 
 
 static void initialize_hash_function_sha2(spx_ctx *ctx);
@@ -319,7 +321,13 @@ static void prf_addr_shake(unsigned char *out, const spx_ctx *ctx,
     memcpy(buf + ctx->n, addr, ctx->addr_bytes);
     memcpy(buf + ctx->n + ctx->addr_bytes, ctx->sk_seed, ctx->n);
 
-    shake256(out, ctx->n, buf, 2*ctx->n + ctx->addr_bytes);
+    //shake256(out, ctx->n, buf, 2*ctx->n + ctx->addr_bytes);
+
+    gcry_md_hd_t hd;
+    _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+    _gcry_md_write(hd, buf, 2*ctx->n + ctx->addr_bytes);
+    _gcry_md_extract(hd, GCRY_MD_SHAKE256, out, ctx->n);
+    _gcry_md_close(hd);
 }
 
 /**
@@ -332,6 +340,8 @@ static void gen_message_random_shake(unsigned char *R, const unsigned char *sk_p
                         const spx_ctx *ctx)
 {
     (void)ctx;
+
+/*
     uint64_t s_inc[26];
 
     shake256_inc_init(s_inc);
@@ -340,6 +350,16 @@ static void gen_message_random_shake(unsigned char *R, const unsigned char *sk_p
     shake256_inc_absorb(s_inc, m, mlen);
     shake256_inc_finalize(s_inc);
     shake256_inc_squeeze(R, ctx->n, s_inc);
+*/
+
+    gcry_md_hd_t hd;
+
+   _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+   _gcry_md_write(hd, sk_prf, ctx->n);
+   _gcry_md_write(hd, optrand, ctx->n);
+   _gcry_md_write(hd, m, mlen);
+   _gcry_md_extract(hd, GCRY_MD_SHAKE256, R, ctx->n);
+   _gcry_md_close(hd);
 }
 
 /**
@@ -361,14 +381,14 @@ static void hash_message_shake(unsigned char *digest, uint64_t *tree, uint32_t *
 
     unsigned char buf[SPX_DGST_BYTES];
     unsigned char *bufp = buf;
-    uint64_t s_inc[26];
 
-    shake256_inc_init(s_inc);
-    shake256_inc_absorb(s_inc, R, ctx->n);
-    shake256_inc_absorb(s_inc, pk, ctx->public_key_bytes);
-    shake256_inc_absorb(s_inc, m, mlen);
-    shake256_inc_finalize(s_inc);
-    shake256_inc_squeeze(buf, SPX_DGST_BYTES, s_inc);
+    gcry_md_hd_t hd;
+   _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+   _gcry_md_write(hd, R, ctx->n);
+   _gcry_md_write(hd, pk, ctx->public_key_bytes);
+   _gcry_md_write(hd, m, mlen);
+   _gcry_md_extract(hd, GCRY_MD_SHAKE256, buf, SPX_DGST_BYTES);
+   _gcry_md_close(hd);
 
     memcpy(digest, bufp, ctx->FORS_msg_bytes);
     bufp += ctx->FORS_msg_bytes;
