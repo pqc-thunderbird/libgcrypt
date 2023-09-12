@@ -470,7 +470,7 @@ int main(int argc, char **argv)
   char *fname   = NULL;
   unsigned i;
   int run_kat_tests      = 1;
-  unsigned kyber_bits[3] = {512, 768, 1024};
+  unsigned kyber_bits[3] = {128, 192, 256};
   if (argc)
     {
       argc--;
@@ -560,7 +560,7 @@ int main(int argc, char **argv)
       for (i = 0; i < sizeof(kyber_kat_files) / sizeof(kyber_kat_files[0]);
            i++)
         {
-          printf("starting KAT tests for Kyber%u ", kyber_bits[i]);
+          printf("starting KAT tests for Kyber with bit strength %u ", kyber_bits[i]);
           check_kyber_kat(kyber_kat_files[i], kyber_bits[i]);
           printf("\n");
         }
