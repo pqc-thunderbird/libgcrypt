@@ -17,21 +17,21 @@ static gcry_err_code_t _gcry_kyber_get_param_from_bit_size(
 {
   switch (nbits)
     {
-    case 512:
+    case 128:
       param->id                       = GCRY_KYBER_512;
       param->k                        = 2;
       param->eta1                     = 3;
       param->poly_compressed_bytes    = 128;
       param->polyvec_compressed_bytes = param->k * 320;
       break;
-    case 768:
+    case 192:
       param->id                       = GCRY_KYBER_768;
       param->k                        = 3;
       param->eta1                     = 2;
       param->poly_compressed_bytes    = 128;
       param->polyvec_compressed_bytes = param->k * 320;
       break;
-    case 1024:
+    case 256:
       param->id                       = GCRY_KYBER_1024;
       param->k                        = 4;
       param->eta1                     = 2;
@@ -75,15 +75,15 @@ static gcry_err_code_t kyber_params_from_key_param(const gcry_sexp_t keyparms,
     {
       if (param->id == GCRY_KYBER_512)
         {
-          *nbits_p = 512;
+          *nbits_p = 128;
         }
       else if (param->id == GCRY_KYBER_768)
         {
-          *nbits_p = 768;
+          *nbits_p = 192;
         }
       else if (param->id == GCRY_KYBER_1024)
         {
-          *nbits_p = 1024;
+          *nbits_p = 256;
         }
       else
         {
