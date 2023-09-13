@@ -244,7 +244,9 @@ static const gcry_md_spec_t * const digest_list_algo301[] =
 #endif
 #if USE_SHA512
     &_gcry_digest_spec_sha512_256,
-    &_gcry_digest_spec_sha512_224
+    &_gcry_digest_spec_sha512_224,
+    &_gcry_digest_spec_cshake128,
+    &_gcry_digest_spec_cshake256
 #else
     NULL,
     NULL
@@ -1066,6 +1068,10 @@ _gcry_md_set_add_input (gcry_md_hd_t h,
           if (!rc)
             {
               did_set = 1;
+            }
+          else
+            {
+              return rc;
             }
           break;
         }

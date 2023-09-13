@@ -27,15 +27,19 @@ gcry_err_code_t _gcry_cshake_alloc_buffer(buffer_t *buf, size_t reserve, int sec
   buf->fill_pos      = 0;
   if (secure)
     {
-      buf->data = xtrymalloc_secure(reserve);
+      buf->data = xtrymalloc_secure (reserve);
     }
   else
     {
-      buf->data = xtrymalloc(reserve);
+      buf->data = xtrymalloc (reserve);
     }
   if (!buf->data)
     {
-      ec = gpg_error_from_syserror();
+      ec = gpg_error_from_syserror ();
+    }
+  else
+    {
+      buf->allocated = reserve;
     }
   return ec;
 }
@@ -48,7 +52,7 @@ int _gcry_cshake_append_to_buffer(buffer_t *buf,
     {
       return 1;
     }
-  memcpy(buf->data, data, len);
+  memcpy(buf->data+buf->fill_pos, data, len);
   buf->fill_pos += len;
   return 0;
 }

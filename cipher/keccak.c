@@ -1468,7 +1468,7 @@ _gcry_cshake_input_n (CSHAKE_CONTEXT *cshake_ctx, const void *n, size_t n_len)
 
   // KECCAK[512](bytepad(encode_string(N)
   size_t bit_len;
-  unsigned char array[10];
+  unsigned char array[20];
   int err_flag = 0;
   gpg_err_code_t rc = 0;
   buffer_t buf1;
@@ -1476,14 +1476,15 @@ _gcry_cshake_input_n (CSHAKE_CONTEXT *cshake_ctx, const void *n, size_t n_len)
   buf1.data      = array;
   buf1.fill_pos  = 0;
 
-
-  rc = _gcry_cshake_alloc_buffer (&buf1, n_len + 10, 1);
   if (rc)
     {
       return rc;
     }
-  // rc = _gcry_cshake_encode_string(n, n_len, &buf1, &err_flag);
-
+  _gcry_cshake_left_encode (cshake_ctx->rate_in_bytes, &buf1, &err_flag);
+  if (err_flag)
+    {
+      return GPG_ERR_INTERNAL;
+    }
   /* perform encode_string as left-encoding the length and then the buffer */
   bit_len = _gcry_cshake_bit_len_from_byte_len (n_len, &err_flag);
   _gcry_cshake_left_encode (bit_len, &buf1, &err_flag);
@@ -1523,7 +1524,7 @@ _gcry_cshake_input_s (CSHAKE_CONTEXT *cshake_ctx, const void *s, size_t s_len)
     }
   keccak_write (&cshake_ctx->keccak_ctx, buf1.data, buf1.fill_pos);
   keccak_write (&cshake_ctx->keccak_ctx, s, s_len);
-  cshake_ctx->written_bytes_n_s = buf1.fill_pos + s_len;
+  cshake_ctx->written_bytes_n_s += buf1.fill_pos + s_len;
   cshake_ctx->s_set             = 1;
 
   /* complete byte_bad operation */
