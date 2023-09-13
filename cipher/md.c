@@ -27,6 +27,8 @@
 
 #include "g10lib.h"
 #include "cipher.h"
+#include "gcrypt.h"
+#include "keccak.h"
 
 
 /* This is the list of the digest implementations included in
@@ -58,6 +60,8 @@ static const gcry_md_spec_t * const digest_list[] =
      &_gcry_digest_spec_sha3_512,
      &_gcry_digest_spec_shake128,
      &_gcry_digest_spec_shake256,
+     &_gcry_digest_spec_cshake128,
+     &_gcry_digest_spec_cshake256,
 #endif
 #if USE_GOST_R_3411_94
      &_gcry_digest_spec_gost3411_94,
@@ -1041,23 +1045,37 @@ _gcry_md_setkey (gcry_md_hd_t hd, const void *key, size_t keylen)
 }
 
 
-gcry_error_t _gcry_md_set_add_input (gcry_md_hd_t h,
-                                   gcry_md_add_input_t addin_type,
-                                   const void* v, size_t v_len)
+gcry_error_t
+_gcry_md_set_add_input (gcry_md_hd_t h,
+                        gcry_md_add_input_t addin_type,
+                        const void *v,
+                        size_t v_len)
 {
-
-GcryDigestEntry *r;
-if (!h->ctx->list)
-  return GPG_ERR_DIGEST_ALGO; /* Might happen if no algo is enabled.  */
-for (r = h->ctx->list; r; r = r->next)
-  {
-    switch (r->spec->algo)
-      {
-          TODO
-      }
-  }
+  gpg_err_code_t rc = 0;
+  int did_set       = 0;
+  GcryDigestEntry *r;
+  if (!h->ctx->list)
+    return GPG_ERR_DIGEST_ALGO; /* Might happen if no algo is enabled.  */
+  for (r = h->ctx->list; r; r = r->next)
+    {
+      switch (r->spec->algo)
+        {
+        case GCRY_MD_CSHAKE128:
+        case GCRY_MD_CSHAKE256:
+          rc = _gcry_cshake_add_input (r->context, addin_type, v, v_len);
+          if (!rc)
+            {
+              did_set = 1;
+            }
+          break;
+        }
+    }
+  if (!did_set)
+    {
+      rc = GPG_ERR_DIGEST_ALGO;
+    }
+  return rc;
 }
-
 
 /* The new debug interface.  If SUFFIX is a string it creates an debug
    file for the context HD.  IF suffix is NULL, the file is closed and

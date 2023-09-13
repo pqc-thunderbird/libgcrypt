@@ -18,6 +18,7 @@
  */
 
 
+#include <alloca.h>
 #include <config.h>
 #include <string.h>
 #include "g10lib.h"
@@ -25,6 +26,8 @@
 #include "bufhelp.h"
 #include "cipher.h"
 #include "hash-common.h"
+#include "keccak.h"
+#include "cshake-common.h"
 
 
 
@@ -158,6 +161,8 @@ typedef struct KECCAK_CONTEXT_S
 typedef struct CSHAKE_CONTEXT_S
 {
     KECCAK_CONTEXT keccak_ctx;
+    unsigned int rate_in_bytes;
+    size_t written_bytes_n_s;
     int n_set;
     int s_set;
 } CSHAKE_CONTEXT;
@@ -1128,6 +1133,7 @@ static void
 cshake128_init (void *context, unsigned int flags)
 {
   CSHAKE_CONTEXT* cshake_context = (CSHAKE_CONTEXT*) context;
+  cshake_context->rate_in_bytes = 168;
   cshake_context->n_set = 0;
   cshake_context->s_set = 0;
   keccak_init (GCRY_MD_CSHAKE128, context, flags);
@@ -1137,6 +1143,7 @@ static void
 cshake256_init (void *context, unsigned int flags)
 {
   CSHAKE_CONTEXT* cshake_context = (CSHAKE_CONTEXT*) context;
+  cshake_context->rate_in_bytes = 136;
   cshake_context->n_set = 0;
   cshake_context->s_set = 0;
   keccak_init (GCRY_MD_CSHAKE256, context, flags);
@@ -1453,7 +1460,137 @@ _gcry_shake256_hash_buffers (void *outbuf, size_t nbytes,
 			   &_gcry_digest_spec_shake256);
 }
 
-
+/** cSHAKE related functions **/
+
+gpg_err_code_t
+_gcry_cshake_input_n (CSHAKE_CONTEXT *cshake_ctx, const void *n, size_t n_len)
+{
+
+  // KECCAK[512](bytepad(encode_string(N)
+  size_t bit_len;
+  unsigned char array[10];
+  int err_flag = 0;
+  gpg_err_code_t rc = 0;
+  buffer_t buf1;
+  buf1.allocated = sizeof (array);
+  buf1.data      = array;
+  buf1.fill_pos  = 0;
+
+
+  rc = _gcry_cshake_alloc_buffer (&buf1, n_len + 10, 1);
+  if (rc)
+    {
+      return rc;
+    }
+  // rc = _gcry_cshake_encode_string(n, n_len, &buf1, &err_flag);
+
+  /* perform encode_string as left-encoding the length and then the buffer */
+  bit_len = _gcry_cshake_bit_len_from_byte_len (n_len, &err_flag);
+  _gcry_cshake_left_encode (bit_len, &buf1, &err_flag);
+  if (err_flag)
+    {
+      return GPG_ERR_INTERNAL;
+    }
+  keccak_write (&cshake_ctx->keccak_ctx, buf1.data, buf1.fill_pos);
+  keccak_write (&cshake_ctx->keccak_ctx, n, n_len);
+  cshake_ctx->written_bytes_n_s = buf1.fill_pos + n_len;
+  cshake_ctx->n_set             = 1;
+  return GPG_ERR_NO_ERROR;
+}
+
+
+gpg_err_code_t
+_gcry_cshake_input_s (CSHAKE_CONTEXT *cshake_ctx, const void *s, size_t s_len)
+{
+
+  // KECCAK[512](bytepad(encode_string(N)
+  // KECCAK[512](bytepad(...<already fed> || encode_string(S), 136)
+  size_t bit_len;
+  unsigned char array[20];
+  int err_flag = 0;
+  size_t rem;
+  buffer_t buf1;
+  buf1.allocated = sizeof (array);
+  buf1.data      = array;
+  buf1.fill_pos  = 0;
+
+  /* perform encode_string as left-encoding the length and then the buffer */
+  bit_len = _gcry_cshake_bit_len_from_byte_len (s_len, &err_flag);
+  _gcry_cshake_left_encode (bit_len, &buf1, &err_flag);
+  if (err_flag)
+    {
+      return GPG_ERR_LIMIT_REACHED;
+    }
+  keccak_write (&cshake_ctx->keccak_ctx, buf1.data, buf1.fill_pos);
+  keccak_write (&cshake_ctx->keccak_ctx, s, s_len);
+  cshake_ctx->written_bytes_n_s = buf1.fill_pos + s_len;
+  cshake_ctx->s_set             = 1;
+
+  /* complete byte_bad operation */
+  rem = cshake_ctx->written_bytes_n_s % cshake_ctx->rate_in_bytes;
+  if (rem != 0)
+    {
+      rem = cshake_ctx->rate_in_bytes - rem;
+      memset (array, 0, sizeof (array));
+    }
+
+  while (rem > 0)
+    {
+      unsigned to_use = rem > sizeof (array) ? sizeof (array) : rem;
+      keccak_write (&cshake_ctx->keccak_ctx, array, to_use);
+      rem -= to_use;
+    }
+
+  return GPG_ERR_NO_ERROR;
+}
+
+gpg_err_code_t
+_gcry_cshake_add_input (void *context,
+                        gcry_md_add_input_t addin_type,
+                        const void *v,
+                        size_t v_len)
+{
+  gpg_err_code_t rc              = 0;
+  CSHAKE_CONTEXT *cshake_context = (CSHAKE_CONTEXT *)context;
+  /* if s is already set, then we cannot add further input special input */
+  if (cshake_context->s_set)
+    {
+      return GPG_ERR_INV_STATE;
+    }
+  /* when either N or S is set as non-empty, then actually use a different
+   * delimeter than in SHAKE */
+  if (v_len > 0)
+    {
+      cshake_context->keccak_ctx.suffix = CSHAKE_DELIMITED_SUFFIX;
+    }
+  if (addin_type == GCRY_MD_ADDIN_CSHAKE_N)
+    {
+      if (cshake_context->n_set)
+        {
+          return GPG_ERR_INV_STATE;
+        }
+      return _gcry_cshake_input_n (cshake_context, v, v_len);
+    }
+  else if (addin_type == GCRY_MD_ADDIN_CSHAKE_S)
+    {
+      if (!cshake_context->n_set)
+        {
+          rc = _gcry_cshake_input_n (cshake_context, NULL, 0);
+          if (rc)
+            {
+              return rc;
+            }
+        }
+      rc = _gcry_cshake_input_s (cshake_context, v, v_len);
+      if (rc)
+        {
+          return rc;
+        }
+    }
+  return GPG_ERR_NO_ERROR;
+}
+
+
 /*
      Self-test section.
  */
