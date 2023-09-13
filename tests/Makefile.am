@@ -39,6 +39,10 @@ if USE_ECC
 tests_bin += curves t-ecdsa t-ed25519 t-cv25519 t-x448 t-ed448
 endif
 
+if USE_SHA3
+tests_bin += cshake
+endif
+
 
 tests_bin_last = benchmark bench-slope
 
