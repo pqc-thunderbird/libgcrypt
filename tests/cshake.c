@@ -63,8 +63,87 @@ typedef struct {
 /* from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf */
 test_vec_t test_vecs[] = {
 
-    {GCRY_MD_CSHAKE128, "00010203", "", "Email Signature", 32, "C1C36925B6409A04F1B504FCBCA9D82B4017277CB5ED2B2065FC1D3814D5AAF5"},
+  { /* from
+       https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
+     */
+    GCRY_MD_CSHAKE128,
+    "00010203",
+    "",
+    "Email Signature",
+    32,
+    "C1C36925B6409A04F1B504FCBCA9D82B4017277CB5ED2B2065FC1D3814D5AAF5" },
+  {
 
+      /* from
+         https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
+       */
+      GCRY_MD_CSHAKE128,
+      "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F2021222"
+      "32"
+      "425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F4041424344454647"
+      "48"
+      "494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6"
+      "C6"
+      "D6E6F707172737475767778797A7B7C7D7E7F808182838485868788898A8B8C8D8E8F90"
+      "91"
+      "92939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B"
+      "5B"
+      "6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7",
+      "",
+      "Email Signature",
+      32,
+      "C5221D50E4F822D96A2E8881A961420F294B7B24FE3D2094BAED2C6524CC166B" },
+
+  {
+
+      /* from
+         https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
+       */
+      GCRY_MD_CSHAKE256,
+      "00010203",
+      "",
+      "Email Signature",
+      64,
+      "D008828E2B80AC9D2218FFEE1D070C48B8E4C87BFF32C9699D5B6896EEE0EDD164020E2"
+      "BE"
+      "0560858D9C00C037E34A96937C561A74C412BB4C746469527281C8C" },
+
+  {
+
+      /* from
+         https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
+       */
+      GCRY_MD_CSHAKE256,
+      "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F2021222"
+      "32"
+      "425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F4041424344454647"
+      "48"
+      "494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6"
+      "C6"
+      "D6E6F707172737475767778797A7B7C7D7E7F808182838485868788898A8B8C8D8E8F90"
+      "91"
+      "92939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B"
+      "5B"
+      "6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7",
+      "",
+      "Email Signature",
+      64,
+      "07DC27B11E51FBAC75BC7B3C1D983E8B4B85FB1DEFAF218912AC86430273091727F42B1"
+      "7ED1DF63E8EC118F04B23633C1DFB1574C8FB55CB45DA8E25AFB092BB" },
+  { /* Created with https://asecuritysite.com/golang/cs */
+    GCRY_MD_CSHAKE128,
+    "00010203",
+    "ABC",
+    "Email Signature",
+    32,
+    "5CF74DC523ADC0B97EC3614E703835277E9F818879AA1EAE5B2B4E4472EB6A68" },
+  { /* Created with https://asecuritysite.com/golang/cs */
+    GCRY_MD_CSHAKE256,
+    "00010203",
+    "ABC",
+    "Email Signature",
+    32,
+    "0C34C14C4A56E5FC01BE8C04C759DA61437E86B88DF3E21A934436D427A85E9D" },
 };
 
 
@@ -93,6 +172,8 @@ main (int argc, char **argv)
 {
   gpg_error_t err = GPG_ERR_NO_ERROR;
   int last_argc   = -1;
+
+  unsigned test_cnt = 0;
 
   if (argc)
     {
@@ -163,10 +244,11 @@ main (int argc, char **argv)
               goto leave;
             }
         }
-      data_buf = hex2buffer(test->data_hex, &data_len);
+      data_buf = hex2buffer (test->data_hex, &data_len);
       gcry_md_write (hd, data_buf, data_len);
       gcry_md_extract (hd, algo, result_buf, test->output_size_bytes);
       compare_buf = hex2buffer (test->expected_output_hex, &compare_len);
+      test_cnt++;
       if (compare_len != test->output_size_bytes)
         {
           fail ("algo %d, internal problem with test data lengths\n", algo);
@@ -175,17 +257,20 @@ main (int argc, char **argv)
       if (memcmp (compare_buf, result_buf, test->output_size_bytes))
         {
 
-          fail ("algo %d, result comparison failed in test\n", algo);
-          error_count++;
+          fail ("algo %d, result comparison failed in test %u\n", algo, i);
         }
-      xfree(compare_buf);
-      xfree(data_buf);
-      gcry_md_close(hd);
+      xfree (compare_buf);
+      xfree (data_buf);
+      gcry_md_close (hd);
     }
 
 
   if (verbose)
-    fprintf (stderr, "\nAll tests completed. Errors: %i\n", error_count);
+    fprintf (stderr, "\nAll %u tests completed. \n", test_cnt);
+  if(error_count || verbose)
+  {
+    fprintf (stderr, "\nThere were %i errors\n", error_count);
+  }
 leave:
   return err;
 }
