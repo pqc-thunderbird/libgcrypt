@@ -1548,7 +1548,10 @@ enum gcry_mac_algos
     GCRY_MAC_POLY1305_SERPENT   = 505,
     GCRY_MAC_POLY1305_SEED      = 506,
     GCRY_MAC_POLY1305_SM4       = 507,
-    GCRY_MAC_POLY1305_ARIA      = 508
+    GCRY_MAC_POLY1305_ARIA      = 508,
+
+    GCRY_MAC_KMAC128_128        = 601,
+    GCRY_MAC_KMAC256_256        = 602
   };
 
 /* Flags used with the open function.  */

@@ -29,38 +29,38 @@
 #include <stdarg.h>
 #include <assert.h>
 #ifdef HAVE_STDINT_H
-# include <stdint.h> /* uintptr_t */
+#include <stdint.h> /* uintptr_t */
 #elif defined(HAVE_INTTYPES_H)
-# include <inttypes.h>
+#include <inttypes.h>
 #else
 /* In this case, uintptr_t is provided by config.h. */
 #endif
 
-//#include "../src/gcrypt-int.h"
-//#include "../src/gcrypt-testapi.h"
+// #include "../src/gcrypt-int.h"
+// #include "../src/gcrypt-testapi.h"
 
 #define PGM "cSHAKE"
 #include "t-common.h"
 #include "gcrypt.h"
 
 #if __GNUC__ >= 4
-#  define ALWAYS_INLINE __attribute__((always_inline))
+#define ALWAYS_INLINE __attribute__ ((always_inline))
 #else
-#  define ALWAYS_INLINE
+#define ALWAYS_INLINE
 #endif
 
-typedef struct {
+typedef struct
+{
 
   enum gcry_md_algos algo;
-  const char* data_hex;
-  const char* n;
-  const char* s;
+  const char *data_hex;
+  const char *n;
+  const char *s;
   unsigned output_size_bytes;
-  const char* expected_output_hex;
+  const char *expected_output_hex;
 
 } test_vec_t;
 
-/* from https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf */
 test_vec_t test_vecs[] = {
 
   { /* from
@@ -72,64 +72,58 @@ test_vec_t test_vecs[] = {
     "Email Signature",
     32,
     "C1C36925B6409A04F1B504FCBCA9D82B4017277CB5ED2B2065FC1D3814D5AAF5" },
-  {
+  { /* from
+       https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
+     */
+    GCRY_MD_CSHAKE128,
+    "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F2021222"
+    "32"
+    "425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F4041424344454647"
+    "48"
+    "494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6"
+    "C6"
+    "D6E6F707172737475767778797A7B7C7D7E7F808182838485868788898A8B8C8D8E8F90"
+    "91"
+    "92939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B"
+    "5B"
+    "6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7",
+    "",
+    "Email Signature",
+    32,
+    "C5221D50E4F822D96A2E8881A961420F294B7B24FE3D2094BAED2C6524CC166B" },
 
-      /* from
-         https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
-       */
-      GCRY_MD_CSHAKE128,
-      "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F2021222"
-      "32"
-      "425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F4041424344454647"
-      "48"
-      "494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6"
-      "C6"
-      "D6E6F707172737475767778797A7B7C7D7E7F808182838485868788898A8B8C8D8E8F90"
-      "91"
-      "92939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B"
-      "5B"
-      "6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7",
-      "",
-      "Email Signature",
-      32,
-      "C5221D50E4F822D96A2E8881A961420F294B7B24FE3D2094BAED2C6524CC166B" },
+  { /* from
+       https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
+     */
+    GCRY_MD_CSHAKE256,
+    "00010203",
+    "",
+    "Email Signature",
+    64,
+    "D008828E2B80AC9D2218FFEE1D070C48B8E4C87BFF32C9699D5B6896EEE0EDD164020E2"
+    "BE"
+    "0560858D9C00C037E34A96937C561A74C412BB4C746469527281C8C" },
 
-  {
-
-      /* from
-         https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
-       */
-      GCRY_MD_CSHAKE256,
-      "00010203",
-      "",
-      "Email Signature",
-      64,
-      "D008828E2B80AC9D2218FFEE1D070C48B8E4C87BFF32C9699D5B6896EEE0EDD164020E2"
-      "BE"
-      "0560858D9C00C037E34A96937C561A74C412BB4C746469527281C8C" },
-
-  {
-
-      /* from
-         https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
-       */
-      GCRY_MD_CSHAKE256,
-      "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F2021222"
-      "32"
-      "425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F4041424344454647"
-      "48"
-      "494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6"
-      "C6"
-      "D6E6F707172737475767778797A7B7C7D7E7F808182838485868788898A8B8C8D8E8F90"
-      "91"
-      "92939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B"
-      "5B"
-      "6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7",
-      "",
-      "Email Signature",
-      64,
-      "07DC27B11E51FBAC75BC7B3C1D983E8B4B85FB1DEFAF218912AC86430273091727F42B1"
-      "7ED1DF63E8EC118F04B23633C1DFB1574C8FB55CB45DA8E25AFB092BB" },
+  { /* from
+       https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/cSHAKE_samples.pdf
+     */
+    GCRY_MD_CSHAKE256,
+    "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F2021222"
+    "32"
+    "425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F4041424344454647"
+    "48"
+    "494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6"
+    "C6"
+    "D6E6F707172737475767778797A7B7C7D7E7F808182838485868788898A8B8C8D8E8F90"
+    "91"
+    "92939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A9AAABACADAEAFB0B1B2B3B4B"
+    "5B"
+    "6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7",
+    "",
+    "Email Signature",
+    64,
+    "07DC27B11E51FBAC75BC7B3C1D983E8B4B85FB1DEFAF218912AC86430273091727F42B1"
+    "7ED1DF63E8EC118F04B23633C1DFB1574C8FB55CB45DA8E25AFB092BB" },
   { /* Created with https://asecuritysite.com/golang/cs */
     GCRY_MD_CSHAKE128,
     "00010203",
@@ -154,13 +148,13 @@ hex2buffer (const char *string, size_t *r_length)
   unsigned char *buffer;
   size_t length;
 
-  buffer = xmalloc (strlen(string)/2+1);
+  buffer = xmalloc (strlen (string) / 2 + 1);
   length = 0;
-  for (s=string; *s; s +=2 )
+  for (s = string; *s; s += 2)
     {
-      if (!hexdigitp (s) || !hexdigitp (s+1))
+      if (!hexdigitp (s) || !hexdigitp (s + 1))
         die ("invalid hex digits in \"%s\"\n", string);
-      ((unsigned char*)buffer)[length++] = xtoi_2 (s);
+      ((unsigned char *)buffer)[length++] = xtoi_2 (s);
     }
   *r_length = length;
   return buffer;
@@ -205,15 +199,16 @@ main (int argc, char **argv)
     }
   for (unsigned i = 0; i < DIM (test_vecs); i++)
     {
-      gcry_md_hd_t hd;
+      gcry_md_hd_t hd, hd2;
       enum gcry_md_algos algo = test_vecs[i].algo;
       test_vec_t *test        = &test_vecs[i];
       unsigned char result_buf[256];
-      // unsigned char compare_buf[256];
+      unsigned char result_buf2[256];
       void *compare_buf, *data_buf;
       size_t compare_len, data_len;
-
-      err = gcry_md_open (&hd, algo, 0);
+      /* vary the secure flag in each test */
+      int flags = i % 2 ? GCRY_MD_FLAG_SECURE : 0;
+      err = gcry_md_open (&hd, algo, flags);
       if (err)
         {
           fail (
@@ -246,7 +241,29 @@ main (int argc, char **argv)
         }
       data_buf = hex2buffer (test->data_hex, &data_len);
       gcry_md_write (hd, data_buf, data_len);
+      err = gcry_md_copy (&hd2, hd);
+      if (err)
+        {
+          fail ("algo %d, problem with copying of hash context object\n",
+                algo);
+        }
+      else
+        {
+          gcry_md_extract (hd2, algo, result_buf2, test->output_size_bytes);
+        }
       gcry_md_extract (hd, algo, result_buf, test->output_size_bytes);
+      if (!err)
+        {
+          if (memcmp (result_buf, result_buf2, test->output_size_bytes))
+            {
+              fail ("algo %d, result comparison with that copied of copied MD "
+                    "CTX object failed in test %u\n",
+                    algo,
+                    i);
+            }
+        }
+      /* restore the clean error state after the copy operation */
+      err = GPG_ERR_NO_ERROR;
       compare_buf = hex2buffer (test->expected_output_hex, &compare_len);
       test_cnt++;
       if (compare_len != test->output_size_bytes)
@@ -262,15 +279,16 @@ main (int argc, char **argv)
       xfree (compare_buf);
       xfree (data_buf);
       gcry_md_close (hd);
+      gcry_md_close (hd2);
     }
 
 
   if (verbose)
     fprintf (stderr, "\nAll %u tests completed. \n", test_cnt);
-  if(error_count || verbose)
-  {
-    fprintf (stderr, "\nThere were %i errors\n", error_count);
-  }
+  if (error_count || verbose)
+    {
+      fprintf (stderr, "\nThere were %i errors\n", error_count);
+    }
 leave:
   return err;
 }

@@ -71,8 +71,8 @@ gcry_err_code_t _gcry_cshake_encode_string(const unsigned char input[],
                               int *error_flag);
 
 
-gcry_err_code_t _gcry_cshake_byte_pad(unsigned char input[],
+/*gcry_err_code_t _gcry_cshake_bytepad(unsigned char input[],
                          size_t input_byte_length,
                          size_t w_in_bytes,
-                         buffer_t *buf);
+                         buffer_t *buf);*/
 #endif

@@ -15800,6 +15800,21 @@ check_one_hmac (int algo, const char *data, int datalen,
 }
 
 static void
+check_kmac (void)
+{
+  static const struct algos
+  {
+    int algo;
+    const char *data;
+    const char *key;
+    const char *dom_sep;
+    const char *expect;
+  } algos[] =
+    {
+    };
+}
+
+static void
 check_hmac (void)
 {
   static const struct algos
@@ -18451,6 +18466,7 @@ main (int argc, char **argv)
         {
           check_digests ();
           check_hmac ();
+          check_kmac ();
           check_mac ();
         }
       else if (!selftest_only)
@@ -18460,6 +18476,7 @@ main (int argc, char **argv)
           check_bulk_cipher_modes ();
           check_digests ();
           check_hmac ();
+          check_kmac ();
           check_mac ();
           check_pubkey ();
         }

@@ -70,7 +70,6 @@ size_t left_or_right_encode(size_t s,
 {
   int i;
   size_t bytes_appended = 0;
-  *error_flag           = 0;
   // determine number of octets needed to encode s
   for (i = sizeof(s); i > 0; i--)
     {
@@ -129,7 +128,6 @@ size_t _gcry_cshake_right_encode(size_t s, buffer_t *output_buffer, int *error_f
 
 static size_t byte_len_from_bit_len(size_t bit_length, int *error_flag)
 {
-  *error_flag = 0;
   if (bit_length % 8)
     {
       *error_flag = 1;
@@ -174,8 +172,8 @@ gcry_err_code_t _gcry_cshake_encode_string(const unsigned char input[],
   return GPG_ERR_NO_ERROR;
 }
 
-
-gcry_err_code_t _gcry_cshake_byte_pad(unsigned char input[],
+#if 0
+gcry_err_code_t _gcry_cshake_bytepad(unsigned char input[],
                          size_t input_byte_length,
                          size_t w_in_bytes,
                          buffer_t *buf)
@@ -205,3 +203,4 @@ gcry_err_code_t _gcry_cshake_byte_pad(unsigned char input[],
     }
   return GPG_ERR_NO_ERROR;
 }
+#endif
