@@ -20,6 +20,7 @@
 
 #include <alloca.h>
 #include <config.h>
+#include <gpg-error.h>
 #include <string.h>
 #include "g10lib.h"
 #include "bithelp.h"
@@ -1462,7 +1463,9 @@ _gcry_shake256_hash_buffers (void *outbuf, size_t nbytes,
 
 /** cSHAKE related functions **/
 
-gpg_err_code_t
+
+/* may only be called with values of n_len that, multiplied by 8 still fit into a size_t */
+static gpg_err_code_t
 _gcry_cshake_input_n (CSHAKE_CONTEXT *cshake_ctx, const void *n, size_t n_len)
 {
 
@@ -1471,7 +1474,7 @@ _gcry_cshake_input_n (CSHAKE_CONTEXT *cshake_ctx, const void *n, size_t n_len)
   unsigned char array[20];
   int err_flag = 0;
   gpg_err_code_t rc = 0;
-  buffer_t buf1;
+  cshake_buffer_t buf1;
   buf1.allocated = sizeof (array);
   buf1.data      = array;
   buf1.fill_pos  = 0;
@@ -1480,14 +1483,10 @@ _gcry_cshake_input_n (CSHAKE_CONTEXT *cshake_ctx, const void *n, size_t n_len)
     {
       return rc;
     }
-  _gcry_cshake_left_encode (cshake_ctx->rate_in_bytes, &buf1, &err_flag);
-  if (err_flag)
-    {
-      return GPG_ERR_INTERNAL;
-    }
+  _gcry_cshake_left_encode (cshake_ctx->rate_in_bytes, &buf1);
   /* perform encode_string as left-encoding the length and then the buffer */
-  bit_len = _gcry_cshake_bit_len_from_byte_len (n_len, &err_flag);
-  _gcry_cshake_left_encode (bit_len, &buf1, &err_flag);
+  bit_len = _gcry_cshake_bit_len_from_byte_len (n_len);
+  _gcry_cshake_left_encode (bit_len, &buf1);
   if (err_flag)
     {
       return GPG_ERR_INTERNAL;
@@ -1500,29 +1499,26 @@ _gcry_cshake_input_n (CSHAKE_CONTEXT *cshake_ctx, const void *n, size_t n_len)
 }
 
 
-gpg_err_code_t
+/* may only be called with values of n_len that, multiplied by 8 still fit into a size_t */
+static gpg_err_code_t
 _gcry_cshake_input_s (CSHAKE_CONTEXT *cshake_ctx, const void *s, size_t s_len)
 {
 
-  // KECCAK[512](bytepad(encode_string(N)
-  // KECCAK[512](bytepad(...<already fed> || encode_string(S), 136)
+  // KECCAK[(256 or 512)](bytepad(encode_string(N)
+  // KECCAK[(256 or 512)](bytepad(...<already fed> || encode_string(S), w = (168 or 136))
   size_t bit_len;
   unsigned char array[20];
-  int err_flag = 0;
   size_t rem;
-  buffer_t buf1;
+  cshake_buffer_t buf1;
   buf1.allocated = sizeof (array);
   buf1.data      = array;
   buf1.fill_pos  = 0;
 
   /* perform encode_string as left-encoding the length and then the buffer */
-  bit_len = _gcry_cshake_bit_len_from_byte_len (s_len, &err_flag);
-  _gcry_cshake_left_encode (bit_len, &buf1, &err_flag);
-  if (err_flag)
-    {
-        /* TODO: Catch overly long value of S earlier, then this function does not have to return error codes */
-      return GPG_ERR_LIMIT_REACHED;
-    }
+  bit_len = _gcry_cshake_bit_len_from_byte_len (s_len);
+
+  _gcry_cshake_left_encode (bit_len, &buf1);
+
   keccak_write (&cshake_ctx->keccak_ctx, buf1.data, buf1.fill_pos);
   keccak_write (&cshake_ctx->keccak_ctx, s, s_len);
   cshake_ctx->written_bytes_n_s += buf1.fill_pos + s_len;
@@ -1559,6 +1555,11 @@ _gcry_cshake_add_input (void *context,
     {
       return GPG_ERR_INV_STATE;
     }
+  /* catch overly long input already here that will cause a problem when it's byte length is converted to bit length */
+  if( ((size_t)v_len * 8) < v_len)
+  {
+       return GPG_ERR_TOO_LARGE;
+  }
   /* when either N or S is set as non-empty, then actually use a different
    * delimeter than in SHAKE */
   if (v_len > 0)

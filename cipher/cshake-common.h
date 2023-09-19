@@ -36,12 +36,9 @@ typedef struct
   size_t fill_pos;
   unsigned char *data;
 
-} buffer_t;
+} cshake_buffer_t;
 
-
-size_t _gcry_cshake_bit_len_from_byte_len(size_t byte_length, int *error_flag);
-
-gcry_err_code_t _gcry_cshake_alloc_buffer(buffer_t *buf, size_t reserve, int secure);
+size_t _gcry_cshake_bit_len_from_byte_len (size_t byte_length);
 
 /**
  * @brief Append data to a buffer
@@ -52,27 +49,35 @@ gcry_err_code_t _gcry_cshake_alloc_buffer(buffer_t *buf, size_t reserve, int sec
  *
  * @return 0 on success, 1 if the buffer is overfilled
  */
-int _gcry_cshake_append_to_buffer(buffer_t *buf,
-                            const unsigned char *data,
-                            size_t len);
+int _gcry_cshake_append_to_buffer (cshake_buffer_t *buf,
+                                   const unsigned char *data,
+                                   size_t len);
 
 
-int _gcry_cshake_append_byte_to_buffer(buffer_t *buf, const unsigned char byte);
+int _gcry_cshake_append_byte_to_buffer (cshake_buffer_t *buf,
+                                        const unsigned char byte);
+
+/**
+ * Performs left_encode as defined in
+ * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-185.pdf.
+ * Caller must ensure that sufficient capacity is left in the output buffer to
+ * perform the encoding. The function appends at most one byte more (one
+ * because of additional length octed) than the byte size needed to represent
+ * the value of the input parameter s.
+ */
+size_t _gcry_cshake_left_encode (size_t s, cshake_buffer_t *output_buffer);
 
 
-size_t _gcry_cshake_left_encode(size_t s, buffer_t *output_buffer, int *error_flag);
+/**
+ * Performs right_encode as defined in
+ * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-185.pdf.
+ * Caller must ensure that sufficient capacity is left in the output buffer to
+ * perform the encoding. The function appends at most one byte more (one
+ * because of additional length octed) than the byte size needed to represent
+ * the value of the input parameter s.
+ */
+size_t _gcry_cshake_right_encode (size_t s, cshake_buffer_t *output_buffer);
 
 
-size_t _gcry_cshake_right_encode(size_t s, buffer_t *output_buffer, int *error_flag);
 
-gcry_err_code_t _gcry_cshake_encode_string(const unsigned char input[],
-                              size_t input_byte_length,
-                              buffer_t *buf,
-                              int *error_flag);
-
-
-/*gcry_err_code_t _gcry_cshake_bytepad(unsigned char input[],
-                         size_t input_byte_length,
-                         size_t w_in_bytes,
-                         buffer_t *buf);*/
 #endif

@@ -20,58 +20,44 @@
 #include "cshake-common.h"
 
 
-gcry_err_code_t _gcry_cshake_alloc_buffer(buffer_t *buf, size_t reserve, int secure)
-{
-  gcry_err_code_t ec = 0;
-  buf->allocated     = 0;
-  buf->fill_pos      = 0;
-  if (secure)
-    {
-      buf->data = xtrymalloc_secure (reserve);
-    }
-  else
-    {
-      buf->data = xtrymalloc (reserve);
-    }
-  if (!buf->data)
-    {
-      ec = gpg_error_from_syserror ();
-    }
-  else
-    {
-      buf->allocated = reserve;
-    }
-  return ec;
-}
 
-int _gcry_cshake_append_to_buffer(buffer_t *buf,
-                            const unsigned char *data,
-                            size_t len)
+int
+_gcry_cshake_append_to_buffer (cshake_buffer_t *buf,
+                               const unsigned char *data,
+                               size_t len)
 {
   if (buf->allocated - buf->fill_pos < len)
     {
       return 1;
     }
-  memcpy(buf->data+buf->fill_pos, data, len);
+  memcpy (buf->data + buf->fill_pos, data, len);
   buf->fill_pos += len;
   return 0;
 }
 
-int append_byte_to_buffer(buffer_t *buf, const unsigned char b)
+int
+append_byte_to_buffer (cshake_buffer_t *buf, const unsigned char b)
 {
-  return _gcry_cshake_append_to_buffer(buf, &b, 1);
+  return _gcry_cshake_append_to_buffer (buf, &b, 1);
 }
 
-static
-size_t left_or_right_encode(size_t s,
-                            buffer_t *output_buffer,
-                            encoded_direction_t dir,
-                            int *error_flag)
+/**
+ * Performs left_encode or right_encode as defined in
+ * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-185.pdf.
+ * Caller must ensure that sufficient capacity is left in the output buffer.
+ * The function appends at most one byte more (one because of additional length
+ * octed) than the byte size
+ * needed to represent the value of the input parameter s.
+ */
+static size_t
+left_or_right_encode (size_t s,
+                      cshake_buffer_t *output_buffer,
+                      encoded_direction_t dir)
 {
   int i;
   size_t bytes_appended = 0;
   // determine number of octets needed to encode s
-  for (i = sizeof(s); i > 0; i--)
+  for (i = sizeof (s); i > 0; i--)
     {
       unsigned char t = (s >> ((i - 1) * 8) & (size_t)0xFF);
       if (t != 0)
@@ -85,9 +71,9 @@ size_t left_or_right_encode(size_t s,
     }
   if (dir == left)
     {
-      if (append_byte_to_buffer(output_buffer, i))
+      if (append_byte_to_buffer (output_buffer, i))
         {
-          *error_flag = 1;
+          /* error */
           return 0;
         }
       bytes_appended++;
@@ -95,19 +81,19 @@ size_t left_or_right_encode(size_t s,
   // big endian encoding of s
   for (int j = i; j > 0; j--)
     {
-      if (append_byte_to_buffer(output_buffer,
-                                s >> (j - 1) * 8 & ((size_t)0xFF)))
+      if (append_byte_to_buffer (output_buffer,
+                                 s >> (j - 1) * 8 & ((size_t)0xFF)))
         {
-          *error_flag = 1;
+          /* error */
           return 0;
         }
       bytes_appended++;
     }
   if (dir == right)
     {
-      if (append_byte_to_buffer(output_buffer, (unsigned char)i))
+      if (append_byte_to_buffer (output_buffer, (unsigned char)i))
         {
-          *error_flag = 1;
+          /* error */
           return 0;
         }
       bytes_appended++;
@@ -115,92 +101,33 @@ size_t left_or_right_encode(size_t s,
   return bytes_appended;
 }
 
-size_t _gcry_cshake_left_encode(size_t s, buffer_t *output_buffer, int *error_flag)
+size_t
+_gcry_cshake_left_encode (size_t s,
+                          cshake_buffer_t *output_buffer)
 {
-  return left_or_right_encode(s, output_buffer, left, error_flag);
+  return left_or_right_encode (s, output_buffer, left);
 }
 
-size_t _gcry_cshake_right_encode(size_t s, buffer_t *output_buffer, int *error_flag)
+size_t
+_gcry_cshake_right_encode (size_t s,
+                           cshake_buffer_t *output_buffer)
 {
-  size_t result = left_or_right_encode(s, output_buffer, right, error_flag);
+  size_t result = left_or_right_encode (s, output_buffer, right);
   return result;
 }
 
-static size_t byte_len_from_bit_len(size_t bit_length, int *error_flag)
-{
-  if (bit_length % 8)
-    {
-      *error_flag = 1;
-      return 0;
-    }
-  return bit_length / 8;
-}
-
-size_t _gcry_cshake_bit_len_from_byte_len(size_t byte_length, int *error_flag)
+/**
+ * Convert byte length to bit length. Returns zero on overflow, i.e.
+ * precondition that bit length fits into size_t has to be checked by the
+ * caller.
+ */
+size_t
+_gcry_cshake_bit_len_from_byte_len (size_t byte_length)
 {
   size_t bit_length = 8 * byte_length;
   if (bit_length < byte_length)
     {
-      *error_flag = 1;
       return 0;
     }
   return bit_length;
 }
-
-
-gcry_err_code_t _gcry_cshake_encode_string(const unsigned char input[],
-                              size_t input_byte_length,
-                              buffer_t *buf,
-                              int *error_flag)
-{
-
-  size_t bit_len = _gcry_cshake_bit_len_from_byte_len(input_byte_length, error_flag);
-  if (error_flag)
-    {
-      return GPG_ERR_INTERNAL;
-    }
-
-  _gcry_cshake_left_encode(bit_len, buf, error_flag);
-  if (error_flag)
-    {
-      return GPG_ERR_INTERNAL;
-    }
-  if (_gcry_cshake_append_to_buffer(buf, input, input_byte_length))
-    {
-      return GPG_ERR_INTERNAL; // TODO: MEMORY EXHAUSTION (IF REALLOCATING)
-    }
-  return GPG_ERR_NO_ERROR;
-}
-
-#if 0
-gcry_err_code_t _gcry_cshake_bytepad(unsigned char input[],
-                         size_t input_byte_length,
-                         size_t w_in_bytes,
-                         buffer_t *buf)
-{
-  int error_flag       = 0;
-  size_t written_bytes = _gcry_cshake_left_encode(w_in_bytes, buf, &error_flag);
-  if (error_flag)
-    {
-      return GPG_ERR_INTERNAL;
-    }
-  if (_gcry_cshake_append_to_buffer(buf, input, input_byte_length))
-    {
-      return GPG_ERR_INTERNAL;
-    }
-
-  written_bytes += input_byte_length;
-  if (w_in_bytes > written_bytes)
-    {
-      const size_t nb_trail_zeroes = w_in_bytes - written_bytes;
-      for (size_t i = 0; i < nb_trail_zeroes; i++)
-        {
-          if (append_byte_to_buffer(buf, 0))
-            {
-              return GPG_ERR_INTERNAL;
-            }
-        }
-    }
-  return GPG_ERR_NO_ERROR;
-}
-#endif
