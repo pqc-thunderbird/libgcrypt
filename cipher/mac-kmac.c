@@ -38,31 +38,37 @@ write_encoded_key (gcry_mac_hd_t h, const unsigned char *key, size_t keylen)
   size_t written_bytes = 0;
   size_t bit_len;
   int err_flag = 0;
+  gcry_buffer_t buf1;
   unsigned char array[20];
   unsigned rate_in_bytes = h->u.kmac.cshake_rate_in_bytes;
   size_t rem;
 
-  buffer_t buf1;
-  buf1.allocated = sizeof (array);
-  buf1.data      = array;
-  buf1.fill_pos  = 0;
+  /* catch overly large size of key early that would cause problem in
+   * subseuqently invoked conversion routines */
+  if (((size_t)keylen * 8) < keylen || keylen > 0xFFFFFFFF)
+    {
+      return GPG_ERR_TOO_LARGE;
+    }
+  buf1.size = sizeof (array);
+  buf1.data = array;
+  buf1.len  = 0;
   /* bytepad(encode_string(key), <keccak_rate>) */
   /* inside bytepad: leading encoding of w */
-  _gcry_cshake_left_encode (h->u.kmac.cshake_rate_in_bytes, &buf1, &err_flag);
+  _gcry_cshake_left_encode (h->u.kmac.cshake_rate_in_bytes, &buf1);
   if (err_flag)
     {
       return GPG_ERR_INTERNAL;
     }
 
   /* encode_string(key) */
-  bit_len = _gcry_cshake_bit_len_from_byte_len (keylen, &err_flag);
-  _gcry_cshake_left_encode (bit_len, &buf1, &err_flag);
+  bit_len = _gcry_cshake_bit_len_from_byte_len (keylen);
+  _gcry_cshake_left_encode (bit_len, &buf1);
   if (err_flag)
     {
       return GPG_ERR_INTERNAL;
     }
-  _gcry_md_write (h->u.kmac.md_ctx, buf1.data, buf1.fill_pos);
-  written_bytes += buf1.fill_pos;
+  _gcry_md_write (h->u.kmac.md_ctx, buf1.data, buf1.len);
+  written_bytes += buf1.len;
   _gcry_md_write (h->u.kmac.md_ctx, key, keylen);
   written_bytes += keylen;
 
@@ -89,21 +95,15 @@ kmac_finalize (gcry_mac_hd_t h)
 {
 
   size_t bit_len;
-  int err_flag = 0;
   unsigned char array[20];
 
-  buffer_t buf1;
-  buf1.allocated = sizeof (array);
-  buf1.data      = array;
-  buf1.fill_pos  = 0;
-  bit_len = _gcry_cshake_bit_len_from_byte_len (h->u.kmac.output_byte_len,
-                                                &err_flag);
-  _gcry_cshake_right_encode (bit_len, &buf1, &err_flag);
-  if (err_flag)
-    {
-      return GPG_ERR_INTERNAL;
-    }
-  _gcry_md_write (h->u.kmac.md_ctx, buf1.data, buf1.fill_pos);
+  gcry_buffer_t buf1;
+  buf1.size = sizeof (array);
+  buf1.data = array;
+  buf1.len  = 0;
+  bit_len   = _gcry_cshake_bit_len_from_byte_len (h->u.kmac.output_byte_len);
+  _gcry_cshake_right_encode (bit_len, &buf1);
+  _gcry_md_write (h->u.kmac.md_ctx, buf1.data, buf1.len);
   h->u.kmac.finalized = 1;
   return GPG_ERR_NO_ERROR;
 }
@@ -122,7 +122,7 @@ kmac_open (gcry_mac_hd_t h)
     case GCRY_MAC_KMAC128_128:
       md_algo         = GCRY_MD_CSHAKE128;
       rate_in_bytes   = 168;
-      output_byte_len = 256/8;
+      output_byte_len = 256 / 8;
       break;
     case GCRY_MAC_KMAC256_256:
       md_algo         = GCRY_MD_CSHAKE256;
@@ -150,7 +150,7 @@ kmac_open (gcry_mac_hd_t h)
     }
   h->u.kmac.md_ctx = hd;
 
-  err = _gcry_md_ctl(hd, GCRYCTL_CSHAKE_N, (unsigned char*)"KMAC", 4);
+  err = _gcry_md_ctl (hd, GCRYCTL_CSHAKE_N, (unsigned char *)"KMAC", 4);
   if (err)
     {
       return err;
@@ -171,7 +171,7 @@ kmac_close (gcry_mac_hd_t h)
 {
   _gcry_md_close (h->u.kmac.md_ctx);
   h->u.kmac.md_ctx = NULL;
-  xfree(h->u.kmac.computed_mac);
+  xfree (h->u.kmac.computed_mac);
   xfree (h->u.kmac.buffered_key);
 }
 
@@ -203,14 +203,21 @@ gcry_err_code_t
 kmac_setiv (gcry_mac_hd_t h, const unsigned char *iv, size_t ivlen)
 {
   gpg_err_code_t err = GPG_ERR_NO_ERROR;
+
+  /* catch overly large size of IV early that would cause problem in
+   * subseuqently invoked conversion routines */
+  if (((size_t)ivlen * 8) < ivlen || ivlen > 0xFFFFFFFF)
+    {
+      return GPG_ERR_TOO_LARGE;
+    }
   /* if key is stored in context already, then write it after having set
    * S in cshake and free the buffer */
   if (h->u.kmac.s_set)
     {
       return GPG_ERR_INV_STATE;
     }
-  err = _gcry_md_ctl(
-      h->u.kmac.md_ctx, GCRYCTL_CSHAKE_S, (unsigned char*)iv, ivlen);
+  err = _gcry_md_ctl (
+      h->u.kmac.md_ctx, GCRYCTL_CSHAKE_S, (unsigned char *)iv, ivlen);
   if (err)
     {
       return err;
@@ -231,7 +238,7 @@ kmac_setiv (gcry_mac_hd_t h, const unsigned char *iv, size_t ivlen)
         {
           return err;
         }
-      xfree(h->u.kmac.buffered_key);
+      xfree (h->u.kmac.buffered_key);
       h->u.kmac.buffered_key     = NULL;
       h->u.kmac.buffered_key_len = 0;
     }
@@ -322,7 +329,7 @@ kmac_verify (gcry_mac_hd_t h, const unsigned char *buf, size_t buflen)
    * caught by the higher-level generic MAC API).
    */
   gpg_err_code_t err = GPG_ERR_NO_ERROR;
-  size_t outlen              = h->u.kmac.output_byte_len;
+  size_t outlen      = h->u.kmac.output_byte_len;
   if (buflen != outlen)
     {
       return GPG_ERR_INV_LENGTH;
@@ -332,7 +339,8 @@ kmac_verify (gcry_mac_hd_t h, const unsigned char *buf, size_t buflen)
     {
       return err;
     }
-  return buf_eq_const (buf, h->u.kmac.computed_mac, outlen) ? 0 : GPG_ERR_CHECKSUM;
+  return buf_eq_const (buf, h->u.kmac.computed_mac, outlen) ? 0
+                                                            : GPG_ERR_CHECKSUM;
 }
 static unsigned int
 kmac_get_maclen (int algo)

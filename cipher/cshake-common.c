@@ -21,22 +21,31 @@
 
 
 
+/**
+ * @brief Append data to a buffer
+ *
+ * @param buf the buffer to append data to
+ * @param data data to append
+ * @param len length of the data
+ *
+ * @return 0 on success, 1 if the buffer is overfilled
+ */
 int
-_gcry_cshake_append_to_buffer (cshake_buffer_t *buf,
+_gcry_cshake_append_to_buffer (gcry_buffer_t *buf,
                                const unsigned char *data,
                                size_t len)
 {
-  if (buf->allocated - buf->fill_pos < len)
+  if (buf->size - buf->len < len)
     {
       return 1;
     }
-  memcpy (buf->data + buf->fill_pos, data, len);
-  buf->fill_pos += len;
+  memcpy (((unsigned char*) buf->data) + buf->len, data, len);
+  buf->len += len;
   return 0;
 }
 
-int
-append_byte_to_buffer (cshake_buffer_t *buf, const unsigned char b)
+static int
+append_byte_to_buffer (gcry_buffer_t *buf, const unsigned char b)
 {
   return _gcry_cshake_append_to_buffer (buf, &b, 1);
 }
@@ -51,7 +60,7 @@ append_byte_to_buffer (cshake_buffer_t *buf, const unsigned char b)
  */
 static size_t
 left_or_right_encode (size_t s,
-                      cshake_buffer_t *output_buffer,
+                      gcry_buffer_t *output_buffer,
                       encoded_direction_t dir)
 {
   int i;
@@ -103,14 +112,14 @@ left_or_right_encode (size_t s,
 
 size_t
 _gcry_cshake_left_encode (size_t s,
-                          cshake_buffer_t *output_buffer)
+                          gcry_buffer_t *output_buffer)
 {
   return left_or_right_encode (s, output_buffer, left);
 }
 
 size_t
 _gcry_cshake_right_encode (size_t s,
-                           cshake_buffer_t *output_buffer)
+                           gcry_buffer_t *output_buffer)
 {
   size_t result = left_or_right_encode (s, output_buffer, right);
   return result;

@@ -1474,10 +1474,10 @@ _gcry_cshake_input_n (CSHAKE_CONTEXT *cshake_ctx, const void *n, size_t n_len)
   unsigned char array[20];
   int err_flag = 0;
   gpg_err_code_t rc = 0;
-  cshake_buffer_t buf1;
-  buf1.allocated = sizeof (array);
+  gcry_buffer_t buf1;
+  buf1.size = sizeof (array);
   buf1.data      = array;
-  buf1.fill_pos  = 0;
+  buf1.len= 0;
 
   if (rc)
     {
@@ -1491,9 +1491,9 @@ _gcry_cshake_input_n (CSHAKE_CONTEXT *cshake_ctx, const void *n, size_t n_len)
     {
       return GPG_ERR_INTERNAL;
     }
-  keccak_write (&cshake_ctx->keccak_ctx, buf1.data, buf1.fill_pos);
+  keccak_write (&cshake_ctx->keccak_ctx, buf1.data, buf1.len);
   keccak_write (&cshake_ctx->keccak_ctx, n, n_len);
-  cshake_ctx->written_bytes_n_s = buf1.fill_pos + n_len;
+  cshake_ctx->written_bytes_n_s = buf1.len + n_len;
   cshake_ctx->n_set             = 1;
   return GPG_ERR_NO_ERROR;
 }
@@ -1509,19 +1509,19 @@ _gcry_cshake_input_s (CSHAKE_CONTEXT *cshake_ctx, const void *s, size_t s_len)
   size_t bit_len;
   unsigned char array[20];
   size_t rem;
-  cshake_buffer_t buf1;
-  buf1.allocated = sizeof (array);
+  gcry_buffer_t buf1;
+  buf1.size = sizeof (array);
   buf1.data      = array;
-  buf1.fill_pos  = 0;
+  buf1.len  = 0;
 
   /* perform encode_string as left-encoding the length and then the buffer */
   bit_len = _gcry_cshake_bit_len_from_byte_len (s_len);
 
   _gcry_cshake_left_encode (bit_len, &buf1);
 
-  keccak_write (&cshake_ctx->keccak_ctx, buf1.data, buf1.fill_pos);
+  keccak_write (&cshake_ctx->keccak_ctx, buf1.data, buf1.len);
   keccak_write (&cshake_ctx->keccak_ctx, s, s_len);
-  cshake_ctx->written_bytes_n_s += buf1.fill_pos + s_len;
+  cshake_ctx->written_bytes_n_s += buf1.len + s_len;
   cshake_ctx->s_set             = 1;
 
   /* complete byte_bad operation */
@@ -1555,11 +1555,12 @@ _gcry_cshake_add_input (void *context,
     {
       return GPG_ERR_INV_STATE;
     }
-  /* catch overly long input already here that will cause a problem when it's byte length is converted to bit length */
-  if( ((size_t)v_len * 8) < v_len)
-  {
-       return GPG_ERR_TOO_LARGE;
-  }
+  /* catch overly long input already here that will cause a problem when it's
+   * byte length is converted to bit length */
+  if (((size_t)v_len * 8) < v_len || v_len > 0xFFFFFFFF)
+    {
+      return GPG_ERR_TOO_LARGE;
+    }
   /* when either N or S is set as non-empty, then actually use a different
    * delimeter than in SHAKE */
   if (v_len > 0)
