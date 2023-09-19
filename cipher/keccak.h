@@ -32,6 +32,6 @@
 
 
 gpg_err_code_t _gcry_cshake_add_input(void* context,
-                        gcry_md_add_input_t addin_type,
+                        enum gcry_ctl_cmds addin_type,
                         const void *v,
                         size_t v_len);

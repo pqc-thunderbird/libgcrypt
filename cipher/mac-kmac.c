@@ -150,7 +150,7 @@ kmac_open (gcry_mac_hd_t h)
     }
   h->u.kmac.md_ctx = hd;
 
-  err = _gcry_md_set_add_input (hd, GCRY_MD_ADDIN_CSHAKE_N, "KMAC", 4);
+  err = _gcry_md_ctl(hd, GCRYCTL_CSHAKE_N, (unsigned char*)"KMAC", 4);
   if (err)
     {
       return err;
@@ -209,8 +209,8 @@ kmac_setiv (gcry_mac_hd_t h, const unsigned char *iv, size_t ivlen)
     {
       return GPG_ERR_INV_STATE;
     }
-  err = _gcry_md_set_add_input (
-      h->u.kmac.md_ctx, GCRY_MD_ADDIN_CSHAKE_S, iv, ivlen);
+  err = _gcry_md_ctl(
+      h->u.kmac.md_ctx, GCRYCTL_CSHAKE_S, (unsigned char*)iv, ivlen);
   if (err)
     {
       return err;

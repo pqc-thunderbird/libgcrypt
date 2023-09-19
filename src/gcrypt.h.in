@@ -333,7 +333,9 @@ enum gcry_ctl_cmds
     GCRYCTL_FIPS_SERVICE_INDICATOR_FUNCTION = 84,
     GCRYCTL_FIPS_SERVICE_INDICATOR_MAC = 85,
     GCRYCTL_FIPS_SERVICE_INDICATOR_MD = 86,
-    GCRYCTL_FIPS_SERVICE_INDICATOR_PK_FLAGS = 87
+    GCRYCTL_FIPS_SERVICE_INDICATOR_PK_FLAGS = 87,
+    GCRYCTL_CSHAKE_N = 88,
+    GCRYCTL_CSHAKE_S = 89
   };
 
 /* Perform various operations defined by CMD. */
@@ -1317,12 +1319,6 @@ enum gcry_md_flags
     GCRY_MD_FLAG_BUGEMU1 = 0x0100
   };
 
-
-typedef enum
-  {
-    GCRY_MD_ADDIN_CSHAKE_N = 1,
-    GCRY_MD_ADDIN_CSHAKE_S = 2
-  } gcry_md_add_input_t;
 
 /* (Forward declaration.)  */
 struct gcry_md_context;

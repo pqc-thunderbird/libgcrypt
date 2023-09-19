@@ -1548,7 +1548,7 @@ _gcry_cshake_input_s (CSHAKE_CONTEXT *cshake_ctx, const void *s, size_t s_len)
 
 gpg_err_code_t
 _gcry_cshake_add_input (void *context,
-                        gcry_md_add_input_t addin_type,
+                        enum gcry_ctl_cmds addin_type,
                         const void *v,
                         size_t v_len)
 {
@@ -1565,7 +1565,7 @@ _gcry_cshake_add_input (void *context,
     {
       cshake_context->keccak_ctx.suffix = CSHAKE_DELIMITED_SUFFIX;
     }
-  if (addin_type == GCRY_MD_ADDIN_CSHAKE_N)
+  if (addin_type == GCRYCTL_CSHAKE_N)
     {
       if (cshake_context->n_set)
         {
@@ -1573,7 +1573,7 @@ _gcry_cshake_add_input (void *context,
         }
       return _gcry_cshake_input_n (cshake_context, v, v_len);
     }
-  else if (addin_type == GCRY_MD_ADDIN_CSHAKE_S)
+  else if (addin_type == GCRYCTL_CSHAKE_S)
     {
       if (!cshake_context->n_set)
         {

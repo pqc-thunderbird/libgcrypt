@@ -300,6 +300,5 @@ EXPORTS
 
       gcry_cipher_setup_geniv   @262
       gcry_cipher_geniv         @263
-      gcry_md_set_add_input     @264
 
 ;; end of file with public symbols for Windows.

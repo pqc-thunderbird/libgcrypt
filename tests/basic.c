@@ -16169,6 +16169,19 @@ check_one_mac (int algo, const char *data, int datalen,
       return;
     }
 
+
+  /* test different order of setting IV and key for one KMAC variant */
+  if (algo == GCRY_MAC_KMAC128_128 && ivlen && iv)
+    {
+      clutter_vector_registers();
+      err = gcry_mac_setiv (hd, iv, ivlen);
+      if (err)
+        fail("algo %d, mac gcry_mac_ivkey failed: %s\n", algo,
+             gpg_strerror (err));
+      if (err)
+        goto out;
+    }
+
   clutter_vector_registers();
   err = gcry_mac_setkey (hd, key, keylen);
   if (err)
@@ -16185,7 +16198,7 @@ check_one_mac (int algo, const char *data, int datalen,
       goto out;
     }
 
-  if (ivlen && iv)
+  if (algo != GCRY_MAC_KMAC128_128 && ivlen && iv)
     {
       clutter_vector_registers();
       err = gcry_mac_setiv (hd, iv, ivlen);
@@ -17294,7 +17307,7 @@ check_mac (void)
 		 gcry_mac_algo_name (algos[i].algo),
 		 algos[i].algo, (int)strlen(algos[i].key),
                  (!strcmp(algos[i].data, "!") || !strcmp(algos[i].data, "?"))
-                   ? 1000000 : (int)strlen(algos[i].data));
+                   ? 1000000 : ( algos[i].dlen ?  algos[i].dlen : (int)strlen(algos[i].data)));
 
       klen = algos[i].klen ? algos[i].klen : strlen(algos[i].key);
       dlen = algos[i].dlen ? algos[i].dlen : strlen (algos[i].data);

@@ -1002,58 +1002,14 @@ prepare_macpads (gcry_md_hd_t a, const unsigned char *key, size_t keylen)
 }
 
 
-gcry_err_code_t
-_gcry_md_ctl (gcry_md_hd_t hd, int cmd, void *buffer, size_t buflen)
-{
-  gcry_err_code_t rc = 0;
 
-  (void)buflen; /* Currently not used.  */
-
-  switch (cmd)
-    {
-    case GCRYCTL_FINALIZE:
-      md_final (hd);
-      break;
-    case GCRYCTL_START_DUMP:
-      md_start_debug (hd, buffer);
-      break;
-    case GCRYCTL_STOP_DUMP:
-      md_stop_debug ( hd );
-      break;
-    default:
-      rc = GPG_ERR_INV_OP;
-    }
-  return rc;
-}
-
-
-gcry_err_code_t
-_gcry_md_setkey (gcry_md_hd_t hd, const void *key, size_t keylen)
-{
-  gcry_err_code_t rc;
-
-  if (hd->ctx->flags.hmac)
-    {
-      rc = prepare_macpads (hd, key, keylen);
-      if (!rc)
-	_gcry_md_reset (hd);
-    }
-  else
-    {
-      rc = md_setkey (hd, key, keylen);
-    }
-
-  return rc;
-}
-
-
-gcry_error_t
+static gcry_err_code_t
 _gcry_md_set_add_input (gcry_md_hd_t h,
-                        gcry_md_add_input_t addin_type,
+                        enum gcry_ctl_cmds addin_type,
                         const void *v,
                         size_t v_len)
 {
-  gpg_err_code_t rc = 0;
+  gcry_err_code_t rc = 0;
   int did_set       = 0;
   GcryDigestEntry *r;
   if (!h->ctx->list)
@@ -1082,6 +1038,56 @@ _gcry_md_set_add_input (gcry_md_hd_t h,
     }
   return rc;
 }
+
+
+gcry_err_code_t
+_gcry_md_ctl (gcry_md_hd_t hd, int cmd, void *buffer, size_t buflen)
+{
+  gcry_err_code_t rc = 0;
+
+  (void)buflen; /* Currently not used.  */
+
+  switch (cmd)
+    {
+    case GCRYCTL_FINALIZE:
+      md_final (hd);
+      break;
+    case GCRYCTL_START_DUMP:
+      md_start_debug (hd, buffer);
+      break;
+    case GCRYCTL_STOP_DUMP:
+      md_stop_debug ( hd );
+      break;
+    case GCRYCTL_CSHAKE_N:
+    case GCRYCTL_CSHAKE_S:
+      rc = _gcry_md_set_add_input(hd, cmd, buffer, buflen);
+      break;
+    default:
+      rc = GPG_ERR_INV_OP;
+    }
+  return rc;
+}
+
+
+gcry_err_code_t
+_gcry_md_setkey (gcry_md_hd_t hd, const void *key, size_t keylen)
+{
+  gcry_err_code_t rc;
+
+  if (hd->ctx->flags.hmac)
+    {
+      rc = prepare_macpads (hd, key, keylen);
+      if (!rc)
+	_gcry_md_reset (hd);
+    }
+  else
+    {
+      rc = md_setkey (hd, key, keylen);
+    }
+
+  return rc;
+}
+
 
 /* The new debug interface.  If SUFFIX is a string it creates an debug
    file for the context HD.  IF suffix is NULL, the file is closed and

@@ -138,6 +138,20 @@ test_vec_t test_vecs[] = {
     "Email Signature",
     32,
     "0C34C14C4A56E5FC01BE8C04C759DA61437E86B88DF3E21A934436D427A85E9D" },
+  { /* Created with https://asecuritysite.com/golang/cs */
+    GCRY_MD_CSHAKE128,
+    "00010203",
+    "ABC",
+    "",
+    32,
+    "266035DF0BEC07A61073571CB3DEB195002955D8A7C88B821A0B1D20ECAC6B5B" },
+  { /* Created with https://asecuritysite.com/golang/cs */
+    GCRY_MD_CSHAKE256,
+    "00010203",
+    "ABC",
+    "",
+    32,
+    "89D888D030A5CF82CAFB3D9D2B7869C91B46D186700306265606CC97D3DAE42A" }
 };
 
 
@@ -208,7 +222,7 @@ main (int argc, char **argv)
       size_t compare_len, data_len;
       /* vary the secure flag in each test */
       int flags = i % 2 ? GCRY_MD_FLAG_SECURE : 0;
-      err = gcry_md_open (&hd, algo, flags);
+      err       = gcry_md_open (&hd, algo, flags);
       if (err)
         {
           fail (
@@ -217,8 +231,8 @@ main (int argc, char **argv)
         }
       if (strlen (test->n))
         {
-          err = gcry_md_set_add_input (
-              hd, GCRY_MD_ADDIN_CSHAKE_N, test->n, strlen (test->n));
+          err = gcry_md_ctl(
+              hd, GCRYCTL_CSHAKE_N, (unsigned char*) test->n, strlen (test->n));
           if (err)
             {
               fail ("algo %d, gcry_md_set_add_input (N) failed: %s\n",
@@ -229,8 +243,8 @@ main (int argc, char **argv)
         }
       if (strlen (test->s))
         {
-          err = gcry_md_set_add_input (
-              hd, GCRY_MD_ADDIN_CSHAKE_S, test->s, strlen (test->s));
+          err = gcry_md_ctl(
+              hd, GCRYCTL_CSHAKE_S, (unsigned char*) test->s, strlen (test->s));
           if (err)
             {
               fail ("algo %d, gcry_md_set_add_input (S) failed: %s\n",
@@ -239,6 +253,33 @@ main (int argc, char **argv)
               goto leave;
             }
         }
+      {
+        gcry_err_code_t exp_err = GPG_ERR_INV_STATE;
+        if (strlen (test->n))
+          {
+            /* try to set n or s again */
+            exp_err = gcry_md_ctl(
+                hd, GCRYCTL_CSHAKE_N, (unsigned char*) test->n, strlen (test->n));
+          }
+        else if (strlen (test->s))
+          {
+            exp_err = gcry_md_ctl(
+                hd, GCRYCTL_CSHAKE_S, (unsigned char*) test->s, strlen (test->s));
+          }
+
+        if (exp_err != gpg_error(GPG_ERR_INV_STATE))
+          {
+            fail ("algo %d: wrong error code when setting additional "
+                  "input in wrong order: "
+                  "%d (%s), but "
+                  "expected %d (%s)\n",
+                  algo,
+                  exp_err,
+                  gpg_strerror (exp_err),
+                  gpg_error(GPG_ERR_INV_STATE),
+                  gpg_strerror (GPG_ERR_INV_STATE));
+          }
+      }
       data_buf = hex2buffer (test->data_hex, &data_len);
       gcry_md_write (hd, data_buf, data_len);
       err = gcry_md_copy (&hd2, hd);
@@ -263,7 +304,7 @@ main (int argc, char **argv)
             }
         }
       /* restore the clean error state after the copy operation */
-      err = GPG_ERR_NO_ERROR;
+      err         = GPG_ERR_NO_ERROR;
       compare_buf = hex2buffer (test->expected_output_hex, &compare_len);
       test_cnt++;
       if (compare_len != test->output_size_bytes)
