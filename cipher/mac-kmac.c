@@ -31,13 +31,12 @@
 #include "cshake-common.h"
 #include "bufhelp.h"
 
-static gcry_err_code_t
+static void
 write_encoded_key (gcry_mac_hd_t h, const unsigned char *key, size_t keylen)
 {
 
   size_t written_bytes = 0;
   size_t bit_len;
-  int err_flag = 0;
   gcry_buffer_t buf1;
   unsigned char array[20];
   unsigned rate_in_bytes = h->u.kmac.cshake_rate_in_bytes;
@@ -45,28 +44,16 @@ write_encoded_key (gcry_mac_hd_t h, const unsigned char *key, size_t keylen)
 
   /* catch overly large size of key early that would cause problem in
    * subseuqently invoked conversion routines */
-  if (((size_t)keylen * 8) < keylen || keylen > 0xFFFFFFFF)
-    {
-      return GPG_ERR_TOO_LARGE;
-    }
   buf1.size = sizeof (array);
   buf1.data = array;
   buf1.len  = 0;
   /* bytepad(encode_string(key), <keccak_rate>) */
   /* inside bytepad: leading encoding of w */
   _gcry_cshake_left_encode (h->u.kmac.cshake_rate_in_bytes, &buf1);
-  if (err_flag)
-    {
-      return GPG_ERR_INTERNAL;
-    }
 
   /* encode_string(key) */
   bit_len = _gcry_cshake_bit_len_from_byte_len (keylen);
   _gcry_cshake_left_encode (bit_len, &buf1);
-  if (err_flag)
-    {
-      return GPG_ERR_INTERNAL;
-    }
   _gcry_md_write (h->u.kmac.md_ctx, buf1.data, buf1.len);
   written_bytes += buf1.len;
   _gcry_md_write (h->u.kmac.md_ctx, key, keylen);
@@ -87,7 +74,7 @@ write_encoded_key (gcry_mac_hd_t h, const unsigned char *key, size_t keylen)
       _gcry_md_write (h->u.kmac.md_ctx, array, to_use);
       rem -= to_use;
     }
-  return GPG_ERR_NO_ERROR;
+  return;
 }
 
 static gpg_err_code_t
@@ -179,6 +166,13 @@ static gcry_err_code_t
 kmac_setkey (gcry_mac_hd_t h, const unsigned char *key, size_t keylen)
 {
   gcry_err_code_t err = GPG_ERR_NO_ERROR;
+
+  /* catch overly large size of key early that would cause problem in
+   * subseuqently invoked conversion routines */
+  if (((size_t)keylen * 8) < keylen || keylen > 0xFFFFFFFF)
+    {
+      return GPG_ERR_TOO_LARGE;
+    }
   /* if IV=S was set already, then encode and write key to cSHAKE, else
    * store it. */
   if (!h->u.kmac.s_set)
@@ -193,7 +187,7 @@ kmac_setkey (gcry_mac_hd_t h, const unsigned char *key, size_t keylen)
     }
   else
     {
-      err = write_encoded_key (h, key, keylen);
+      write_encoded_key (h, key, keylen);
     }
   h->u.kmac.key_set = 1;
   return err;
@@ -225,14 +219,14 @@ kmac_setiv (gcry_mac_hd_t h, const unsigned char *iv, size_t ivlen)
   h->u.kmac.s_set = 1;
   if (h->u.kmac.buffered_key != NULL)
     {
-      /* TODO: The potential error here causes that this function does not
-       * offer strong exception guarantee. The only reason to fail is an
+      /* The potential error here causes that this function does not
+       * offer strong exception guarantee. But the only reason to fail is an
        * exorbitant key size that cannot be encoded in a size_t in bits. Thus
        * it is better to catch this condition earlier when actually providing
        * the key to the API and then let write_encoded_key() have return type
        * void.
        */
-      err = write_encoded_key (
+      write_encoded_key (
           h, h->u.kmac.buffered_key, h->u.kmac.buffered_key_len);
       if (err)
         {
