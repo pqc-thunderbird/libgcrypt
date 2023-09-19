@@ -1520,6 +1520,7 @@ _gcry_cshake_input_s (CSHAKE_CONTEXT *cshake_ctx, const void *s, size_t s_len)
   _gcry_cshake_left_encode (bit_len, &buf1, &err_flag);
   if (err_flag)
     {
+        /* TODO: Catch overly long value of S earlier, then this function does not have to return error codes */
       return GPG_ERR_LIMIT_REACHED;
     }
   keccak_write (&cshake_ctx->keccak_ctx, buf1.data, buf1.fill_pos);
@@ -1589,6 +1590,26 @@ _gcry_cshake_add_input (void *context,
         }
     }
   return GPG_ERR_NO_ERROR;
+}
+
+
+static void
+cshake_write (void *context, const void *inbuf_arg, size_t inlen)
+{
+
+  CSHAKE_CONTEXT *cshake_context = (CSHAKE_CONTEXT *)context;
+  if (cshake_context->n_set && !cshake_context->s_set)
+    {
+
+      /* Note that the subsequently called function may return an error
+       * according to its signature. However, this can only happen, if the
+       * conversion of the byte length to bit length overflowed. Even if on
+       * other error conditions should be added to the called function, it is
+       * not really feasible that they apply to setting an empty S. */
+      _gcry_cshake_input_s (cshake_context, NULL, 0);
+      /* ignore the error from the called function */
+    }
+  return keccak_write (&cshake_context->keccak_ctx, inbuf_arg, inlen);
 }
 
 
@@ -1873,7 +1894,7 @@ const gcry_md_spec_t _gcry_digest_spec_cshake128 =
   {
     GCRY_MD_CSHAKE128, {0, 1},
     "CSHAKE128", shake128_asn, DIM (shake128_asn), NULL /* no oid_spec */, 32,
-    cshake128_init, keccak_write, keccak_final, keccak_shake_read,
+    cshake128_init, cshake_write, keccak_final, keccak_shake_read,
     keccak_extract,
     _gcry_shake128_hash_buffers,
     sizeof (CSHAKE_CONTEXT),
@@ -1883,7 +1904,7 @@ const gcry_md_spec_t _gcry_digest_spec_cshake256 =
   {
     GCRY_MD_CSHAKE256, {0, 1},
     "CSHAKE256", shake256_asn, DIM (shake256_asn), NULL /* no oid_spec */, 64,
-    cshake256_init, keccak_write, keccak_final, keccak_shake_read,
+    cshake256_init, cshake_write, keccak_final, keccak_shake_read,
     keccak_extract,
     _gcry_shake256_hash_buffers,
     sizeof (CSHAKE_CONTEXT),

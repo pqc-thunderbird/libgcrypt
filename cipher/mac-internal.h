@@ -131,6 +131,8 @@ struct gcry_mac_handle
     } imit;
     struct {
       gcry_md_hd_t md_ctx;
+      unsigned char* computed_mac;
+      int have_computed_mac;
       int md_algo;
       unsigned cshake_rate_in_bytes;
       unsigned char* buffered_key;

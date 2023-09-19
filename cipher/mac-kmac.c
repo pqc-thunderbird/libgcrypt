@@ -122,12 +122,12 @@ kmac_open (gcry_mac_hd_t h)
     case GCRY_MAC_KMAC128_128:
       md_algo         = GCRY_MD_CSHAKE128;
       rate_in_bytes   = 168;
-      output_byte_len = 128 / 8;
+      output_byte_len = 256/8;
       break;
     case GCRY_MAC_KMAC256_256:
       md_algo         = GCRY_MD_CSHAKE256;
       rate_in_bytes   = 136;
-      output_byte_len = 256 / 8;
+      output_byte_len = 512 / 8;
       break;
     default:
       return GPG_ERR_INV_ARG;
@@ -139,6 +139,8 @@ kmac_open (gcry_mac_hd_t h)
   h->u.kmac.output_byte_len      = output_byte_len;
   h->u.kmac.finalized            = 0;
   h->u.kmac.cshake_rate_in_bytes = rate_in_bytes;
+  h->u.kmac.computed_mac         = NULL;
+  h->u.kmac.have_computed_mac    = 0;
   flags                          = (secure ? GCRY_MD_FLAG_SECURE : 0);
 
   err = _gcry_md_open (&hd, md_algo, flags);
@@ -153,6 +155,12 @@ kmac_open (gcry_mac_hd_t h)
     {
       return err;
     }
+  h->u.kmac.computed_mac = secure ? xtrymalloc_secure (output_byte_len)
+                                  : xtrymalloc (output_byte_len);
+  if (!h->u.kmac.computed_mac)
+    {
+      return gpg_err_code_from_syserror ();
+    }
 
   return GPG_ERR_NO_ERROR;
 }
@@ -163,6 +171,7 @@ kmac_close (gcry_mac_hd_t h)
 {
   _gcry_md_close (h->u.kmac.md_ctx);
   h->u.kmac.md_ctx = NULL;
+  xfree(h->u.kmac.computed_mac);
   xfree (h->u.kmac.buffered_key);
 }
 
@@ -206,14 +215,23 @@ kmac_setiv (gcry_mac_hd_t h, const unsigned char *iv, size_t ivlen)
     {
       return err;
     }
+  h->u.kmac.s_set = 1;
   if (h->u.kmac.buffered_key != NULL)
     {
+      /* TODO: The potential error here causes that this function does not
+       * offer strong exception guarantee. The only reason to fail is an
+       * exorbitant key size that cannot be encoded in a size_t in bits. Thus
+       * it is better to catch this condition earlier when actually providing
+       * the key to the API and then let write_encoded_key() have return type
+       * void.
+       */
       err = write_encoded_key (
           h, h->u.kmac.buffered_key, h->u.kmac.buffered_key_len);
       if (err)
         {
           return err;
         }
+      xfree(h->u.kmac.buffered_key);
       h->u.kmac.buffered_key     = NULL;
       h->u.kmac.buffered_key_len = 0;
     }
@@ -233,7 +251,18 @@ kmac_reset (gcry_mac_hd_t h)
 static gcry_err_code_t
 kmac_write (gcry_mac_hd_t h, const unsigned char *buf, size_t buflen)
 {
-  if (!h->u.kmac.key_set || !h->u.kmac.s_set || h->u.kmac.finalized)
+  gpg_err_code_t err = 0;
+
+  /* If IV (=S in KMAC) was not set, it is implicitly empty */
+  if (!h->u.kmac.s_set)
+    {
+      err = kmac_setiv (h, NULL, 0);
+      if (err)
+        {
+          return err;
+        }
+    }
+  if (!h->u.kmac.key_set || h->u.kmac.finalized)
     {
       return GPG_ERR_INV_STATE;
     }
@@ -243,21 +272,39 @@ kmac_write (gcry_mac_hd_t h, const unsigned char *buf, size_t buflen)
 
 
 static gcry_err_code_t
-kmac_read (gcry_mac_hd_t h, unsigned char *outbuf, size_t *outlen)
+kmac_read (gcry_mac_hd_t h, unsigned char *outbuf, size_t *outlen_ptr)
 {
 
-  gpg_err_code_t err = GPG_ERR_NO_ERROR;
-  if (*outlen > h->u.kmac.output_byte_len)
+  /* Both read and verify may be called in any order. Thus the KMAC context
+   * hold the computed in a buffer. */
+  if (outlen_ptr && *outlen_ptr > h->u.kmac.output_byte_len)
     {
-      *outlen = h->u.kmac.output_byte_len;
+      *outlen_ptr = h->u.kmac.output_byte_len;
     }
-  err = kmac_finalize (h);
-  if (err)
+  if (!h->u.kmac.have_computed_mac)
     {
-      return err;
+      gpg_err_code_t err = GPG_ERR_NO_ERROR;
+      err                = kmac_finalize (h);
+      if (err)
+        {
+          return err;
+        }
+
+      err = _gcry_md_extract (h->u.kmac.md_ctx,
+                              h->u.kmac.md_algo,
+                              h->u.kmac.computed_mac,
+                              h->u.kmac.output_byte_len);
+      if (err)
+        {
+          return err;
+        }
+      h->u.kmac.have_computed_mac = 1;
     }
-  return _gcry_md_extract (
-      h->u.kmac.md_ctx, h->u.kmac.md_algo, outbuf, *outlen);
+  if (outlen_ptr)
+    {
+      memcpy (outbuf, h->u.kmac.computed_mac, *outlen_ptr);
+    }
+  return GPG_ERR_NO_ERROR;
 }
 
 
@@ -274,20 +321,18 @@ kmac_verify (gcry_mac_hd_t h, const unsigned char *buf, size_t buflen)
    * verifies correctly with probability 1/256 (the case of zero-length MACs is
    * caught by the higher-level generic MAC API).
    */
-  gpg_err_code_t err         = GPG_ERR_NO_ERROR;
-  unsigned char *compare_buf = NULL;
+  gpg_err_code_t err = GPG_ERR_NO_ERROR;
   size_t outlen              = h->u.kmac.output_byte_len;
   if (buflen != outlen)
     {
       return GPG_ERR_INV_LENGTH;
     }
-  compare_buf = xtrymalloc (outlen);
-  err         = kmac_read (h, compare_buf, &outlen);
+  err = kmac_read (h, NULL, NULL);
   if (err)
     {
       return err;
     }
-  return buf_eq_const (buf, compare_buf, outlen) ? 0 : GPG_ERR_CHECKSUM;
+  return buf_eq_const (buf, h->u.kmac.computed_mac, outlen) ? 0 : GPG_ERR_CHECKSUM;
 }
 static unsigned int
 kmac_get_maclen (int algo)
@@ -295,9 +340,9 @@ kmac_get_maclen (int algo)
   switch (algo)
     {
     case GCRY_MAC_KMAC128_128:
-      return 128 / 8;
-    case GCRY_MAC_KMAC256_256:
       return 256 / 8;
+    case GCRY_MAC_KMAC256_256:
+      return 512 / 8;
     default:
       return 0;
     }
