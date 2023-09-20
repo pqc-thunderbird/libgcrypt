@@ -60,6 +60,6 @@ typedef struct {
     uint8_t offset_tree_index; /* The start of the 4 byte field used to specify the node in the FORS or Merkle tree */
 
     uint8_t is_sha2;  /* Boolean: is a SHA2 parameter set (SHAKE otherwise) */
-} spx_ctx;
+} _gcry_sphincsplus_param_t;
 
 #endif

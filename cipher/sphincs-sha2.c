@@ -14,9 +14,9 @@
 // /**
 //  * Absorb the constant pub_seed using one round of the compression function
 //  * This initializes state_seeded and state_seeded_512, which can then be
-//  * reused in thash
+//  * reused in _gcry_sphincsplus_thash
 //  **/
-// void seed_state(spx_ctx *ctx) {
+// void seed_state(_gcry_sphincsplus_param_t *ctx) {
 //     uint8_t block[SPX_SHA512_BLOCK_BYTES];
 //     size_t i;
 

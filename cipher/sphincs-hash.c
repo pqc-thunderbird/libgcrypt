@@ -8,38 +8,37 @@
 #include "sphincs-params.h"
 #include "sphincs-hash.h"
 #include "sphincs-sha2.h"
-#include "sphincs-fips202.h"
 
 #include "g10lib.h"
 #include "mgf.h"
 
 
 
-static void initialize_hash_function_sha2(spx_ctx *ctx);
-static void initialize_hash_function_shake(spx_ctx *ctx);
-static void prf_addr_sha2(unsigned char *out, const spx_ctx *ctx,
+static void initialize_hash_function_sha2(_gcry_sphincsplus_param_t *ctx);
+static void initialize_hash_function_shake(_gcry_sphincsplus_param_t *ctx);
+static void prf_addr_sha2(unsigned char *out, const _gcry_sphincsplus_param_t *ctx,
               const uint32_t addr[8]);
-static void prf_addr_shake(unsigned char *out, const spx_ctx *ctx,
+static void prf_addr_shake(unsigned char *out, const _gcry_sphincsplus_param_t *ctx,
               const uint32_t addr[8]);
 static gcry_err_code_t gen_message_random_sha2(unsigned char *R, const unsigned char *sk_prf,
         const unsigned char *optrand,
         const unsigned char *m, unsigned long long mlen,
-        const spx_ctx *ctx);
+        const _gcry_sphincsplus_param_t *ctx);
 static void gen_message_random_shake(unsigned char *R, const unsigned char *sk_prf,
         const unsigned char *optrand,
         const unsigned char *m, unsigned long long mlen,
-        const spx_ctx *ctx);
+        const _gcry_sphincsplus_param_t *ctx);
 static void hash_message_sha2(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
-                  const spx_ctx *ctx);
+                  const _gcry_sphincsplus_param_t *ctx);
 static void hash_message_shake(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
-                  const spx_ctx *ctx);
+                  const _gcry_sphincsplus_param_t *ctx);
 
 
-void initialize_hash_function(spx_ctx *ctx)
+void _gcry_sphincsplus_initialize_hash_function(_gcry_sphincsplus_param_t *ctx)
 {
     if(ctx->is_sha2)
     {
@@ -51,7 +50,7 @@ void initialize_hash_function(spx_ctx *ctx)
     }
 }
 
-void prf_addr(unsigned char *out, const spx_ctx *ctx,
+void _gcry_sphincsplus_prf_addr(unsigned char *out, const _gcry_sphincsplus_param_t *ctx,
               const uint32_t addr[8])
 {
     if(ctx->is_sha2)
@@ -64,10 +63,10 @@ void prf_addr(unsigned char *out, const spx_ctx *ctx,
     }
 }
 
-void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
+void _gcry_sphincsplus_gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
                         const unsigned char *m, unsigned long long mlen,
-                        const spx_ctx *ctx)
+                        const _gcry_sphincsplus_param_t *ctx)
 {
     if(ctx->is_sha2)
     {
@@ -80,10 +79,10 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
     }
 }
 
-void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
+void _gcry_sphincsplus_hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
-                  const spx_ctx *ctx)
+                  const _gcry_sphincsplus_param_t *ctx)
 
 {
     if(ctx->is_sha2)
@@ -98,7 +97,7 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
 
 /* For SHA, there is no immediate reason to initialize at the start,
    so this function is an empty operation. */
-void initialize_hash_function_sha2(spx_ctx *ctx)
+void initialize_hash_function_sha2(_gcry_sphincsplus_param_t *ctx)
 {
     /* TODO: implement this speed optimization */
     //seed_state(ctx);
@@ -107,7 +106,7 @@ void initialize_hash_function_sha2(spx_ctx *ctx)
 /*
  * Computes PRF(pk_seed, sk_seed, addr).
  */
-static void prf_addr_sha2(unsigned char *out, const spx_ctx *ctx,
+static void prf_addr_sha2(unsigned char *out, const _gcry_sphincsplus_param_t *ctx,
               const uint32_t addr[8])
 {
     unsigned char sha256_pubseed_block[SPX_SHA256_BLOCK_BYTES];
@@ -135,7 +134,7 @@ static void prf_addr_sha2(unsigned char *out, const spx_ctx *ctx,
 static gcry_err_code_t gen_message_random_sha2(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
                         const unsigned char *m, unsigned long long mlen,
-                        const spx_ctx *ctx)
+                        const _gcry_sphincsplus_param_t *ctx)
 {
     /* HMAC-SHA-X(SK.prf, OptRand||M) */
 
@@ -201,7 +200,7 @@ leave:
 static void hash_message_sha2(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
-                  const spx_ctx *ctx)
+                  const _gcry_sphincsplus_param_t *ctx)
 {
     size_t SPX_TREE_BITS = (ctx->tree_height * (ctx->d - 1));
     size_t SPX_TREE_BYTES = ((SPX_TREE_BITS + 7) / 8);
@@ -246,7 +245,7 @@ static void hash_message_sha2(unsigned char *digest, uint64_t *tree, uint32_t *l
     /* If R + pk + message cannot fill up an entire block */
     if (ctx->n + ctx->public_key_bytes + mlen < SPX_INBLOCKS * shax_block_bytes) {
         memcpy(inbuf + ctx->n + ctx->public_key_bytes, m, mlen);
-        _gcry_md_write(hd, inbuf, SPX_INBLOCKS*shax_block_bytes);
+        _gcry_md_write(hd, inbuf, ctx->n + ctx->public_key_bytes + mlen);
     }
     /* Otherwise first fill a block, so that finalize only uses the message */
     else {
@@ -274,11 +273,11 @@ static void hash_message_sha2(unsigned char *digest, uint64_t *tree, uint32_t *l
     memcpy(digest, bufp, ctx->FORS_msg_bytes);
     bufp += ctx->FORS_msg_bytes;
 
-    *tree = bytes_to_ull(bufp, SPX_TREE_BYTES);
+    *tree = _gcry_sphincsplus_bytes_to_ull(bufp, SPX_TREE_BYTES);
     *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
     bufp += SPX_TREE_BYTES;
 
-    *leaf_idx = (uint32_t)bytes_to_ull(bufp, SPX_LEAF_BYTES);
+    *leaf_idx = (uint32_t)_gcry_sphincsplus_bytes_to_ull(bufp, SPX_LEAF_BYTES);
     *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
 }
 
@@ -286,7 +285,7 @@ static void hash_message_sha2(unsigned char *digest, uint64_t *tree, uint32_t *l
 
 /* For SHAKE256, there is no immediate reason to initialize at the start,
    so this function is an empty operation. */
-static void initialize_hash_function_shake(spx_ctx* ctx)
+static void initialize_hash_function_shake(_gcry_sphincsplus_param_t* ctx)
 {
     (void)ctx; /* Suppress an 'unused parameter' warning. */
 }
@@ -294,7 +293,7 @@ static void initialize_hash_function_shake(spx_ctx* ctx)
 /*
  * Computes PRF(pk_seed, sk_seed, addr)
  */
-static void prf_addr_shake(unsigned char *out, const spx_ctx *ctx,
+static void prf_addr_shake(unsigned char *out, const _gcry_sphincsplus_param_t *ctx,
               const uint32_t addr[8])
 {
     unsigned char buf[2*ctx->n + ctx->addr_bytes];
@@ -319,7 +318,7 @@ static void prf_addr_shake(unsigned char *out, const spx_ctx *ctx,
 static void gen_message_random_shake(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
                         const unsigned char *m, unsigned long long mlen,
-                        const spx_ctx *ctx)
+                        const _gcry_sphincsplus_param_t *ctx)
 {
     gcry_md_hd_t hd;
 
@@ -340,7 +339,7 @@ static void gen_message_random_shake(unsigned char *R, const unsigned char *sk_p
 static void hash_message_shake(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
-                  const spx_ctx *ctx)
+                  const _gcry_sphincsplus_param_t *ctx)
 {
     size_t SPX_TREE_BITS = ctx->tree_height * (ctx->d - 1);
     size_t SPX_TREE_BYTES = (SPX_TREE_BITS + 7) / 8;
@@ -362,10 +361,10 @@ static void hash_message_shake(unsigned char *digest, uint64_t *tree, uint32_t *
     memcpy(digest, bufp, ctx->FORS_msg_bytes);
     bufp += ctx->FORS_msg_bytes;
 
-    *tree = bytes_to_ull(bufp, SPX_TREE_BYTES);
+    *tree = _gcry_sphincsplus_bytes_to_ull(bufp, SPX_TREE_BYTES);
     *tree &= (~(uint64_t)0) >> (64 - SPX_TREE_BITS);
     bufp += SPX_TREE_BYTES;
 
-    *leaf_idx = (uint32_t)bytes_to_ull(bufp, SPX_LEAF_BYTES);
+    *leaf_idx = (uint32_t)_gcry_sphincsplus_bytes_to_ull(bufp, SPX_LEAF_BYTES);
     *leaf_idx &= (~(uint32_t)0) >> (32 - SPX_LEAF_BITS);
 }

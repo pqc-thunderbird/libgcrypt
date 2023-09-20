@@ -8,7 +8,7 @@
 
 /*
  * Generate the entire Merkle tree, computing the authentication path for
- * leaf_idx, and the resulting root node using Merkle's TreeHash algorithm.
+ * leaf_idx, and the resulting root node using Merkle's _gcry_sphincsplus_treehash algorithm.
  * Expects the layer and tree parts of the tree_addr to be set, as well as the
  * tree type (i.e. SPX_ADDR_TYPE_HASHTREE or SPX_ADDR_TYPE_FORSTREE)
  *
@@ -21,12 +21,12 @@
  * This works by using the standard Merkle tree building algorithm,
  */
 void treehashx1(unsigned char *root, unsigned char *auth_path,
-                const spx_ctx* ctx,
+                const _gcry_sphincsplus_param_t* ctx,
                 uint32_t leaf_idx, uint32_t idx_offset,
                 uint32_t tree_height,
                 void (*gen_leaf)(
                    unsigned char* /* Where to write the leaves */,
-                   const spx_ctx* /* ctx */,
+                   const _gcry_sphincsplus_param_t* /* ctx */,
                    uint32_t idx, void *info),
                 uint32_t tree_addr[8],
                 void *info)
@@ -39,7 +39,7 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
     for (idx = 0;; idx++) {
         unsigned char current[2*ctx->n];   /* Current logical node is at */
             /* index[ctx->n].  We do this to minimize the number of copies */
-            /* needed during a thash */
+            /* needed during a _gcry_sphincsplus_thash */
         gen_leaf( &current[ctx->n], ctx, idx + idx_offset,
                     info );
 
@@ -83,12 +83,12 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
 
             /* Set the address of the node we're creating. */
             internal_idx_offset >>= 1;
-            set_tree_height(ctx, tree_addr, h + 1);
-            set_tree_index(ctx, tree_addr, internal_idx/2 + internal_idx_offset );
+            _gcry_sphincsplus_set_tree_height(ctx, tree_addr, h + 1);
+            _gcry_sphincsplus_set_tree_index(ctx, tree_addr, internal_idx/2 + internal_idx_offset );
 
             unsigned char *left = &stack[h * ctx->n];
             memcpy( &current[0], left, ctx->n );
-            thash( &current[1 * ctx->n],
+            _gcry_sphincsplus_thash( &current[1 * ctx->n],
                    &current[0 * ctx->n],
                    2, ctx, tree_addr);
         }

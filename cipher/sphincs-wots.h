@@ -11,13 +11,13 @@
  *
  * Writes the computed public key to 'pk'.
  */
-void wots_pk_from_sig(unsigned char *pk,
+void _gcry_sphincsplus_wots_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *msg,
-                      const spx_ctx *ctx, uint32_t addr[8]);
+                      const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8]);
 
 /*
  * Compute the chain lengths needed for a given message hash
  */
-void chain_lengths(const spx_ctx *ctx, unsigned int *lengths, const unsigned char *msg);
+void chain_lengths(const _gcry_sphincsplus_param_t *ctx, unsigned int *lengths, const unsigned char *msg);
 
 #endif

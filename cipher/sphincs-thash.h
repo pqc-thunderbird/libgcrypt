@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const spx_ctx *ctx, uint32_t addr[8]);
+void _gcry_sphincsplus_thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
+           const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8]);
 
 #endif

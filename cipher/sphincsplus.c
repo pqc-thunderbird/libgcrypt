@@ -111,7 +111,7 @@ static gcry_err_code_t paramset_from_hash_and_variant(sphincs_paramset *paramset
 }
 
 
-static gcry_err_code_t gcry_sphincsplus_get_param_from_paramset_id(spx_ctx *param, sphincs_paramset paramset)
+static gcry_err_code_t gcry_sphincsplus_get_param_from_paramset_id(_gcry_sphincsplus_param_t *param, sphincs_paramset paramset)
 {
   switch(paramset)
   {
@@ -431,7 +431,7 @@ leave:
 
 
 static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
-                                             const spx_ctx param,
+                                             const _gcry_sphincsplus_param_t param,
                                              unsigned char **sk_p)
 {
   return extract_opaque_mpi_from_sexp(
@@ -439,7 +439,7 @@ static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
 }
 
 static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms,
-                                            const spx_ctx param,
+                                            const _gcry_sphincsplus_param_t param,
                                             unsigned char **pk_p)
 {
   return extract_opaque_mpi_from_sexp(
@@ -455,7 +455,7 @@ sphincsplus_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   unsigned char *pk = NULL;
   unsigned char * sk = NULL;
   unsigned int nbits;
-  spx_ctx param;
+  _gcry_sphincsplus_param_t param;
   sphincs_paramset paramset;
 
   const char *hash_alg;
@@ -477,8 +477,7 @@ sphincsplus_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
     ec = gpg_err_code_from_syserror();
     goto leave;
   }
-  //_gcry_sphincsplus_keypair(&param, pk, sk);
-  crypto_sign_keypair(&param, pk, sk);
+  _gcry_sphincsplus_keypair(&param, pk, sk);
 
   gcry_mpi_t sk_mpi = NULL;
   gcry_mpi_t pk_mpi = NULL;
@@ -544,7 +543,7 @@ sphincsplus_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   size_t nwritten = 0;
 
   unsigned int nbits = sphincsplus_get_nbits (keyparms);
-  spx_ctx param;
+  _gcry_sphincsplus_param_t param;
   sphincs_paramset paramset;
   const char *hash_alg;
   const char *variant;
@@ -595,8 +594,7 @@ sphincsplus_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   }
 
   size_t sig_buf_len;
-  //if(0 != _gcry_sphincsplus_sign(&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
-  if(0 != crypto_sign_signature(&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
+  if(0 != _gcry_sphincsplus_signature(&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
   {
     printf("sign operation failed\n");
     ec = GPG_ERR_GENERAL;
@@ -639,7 +637,7 @@ sphincsplus_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparm
   gcry_mpi_t sig = NULL;
   gcry_mpi_t data = NULL;
   size_t nwritten = 0;
-  spx_ctx param;
+  _gcry_sphincsplus_param_t param;
   sphincs_paramset paramset;
   const char *hash_alg;
   const char *variant;
@@ -710,7 +708,7 @@ sphincsplus_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparm
     goto leave;
   }
 
-  if(0 != crypto_sign_verify(&param, sig_buf, param.signature_bytes, data_buf, data_buf_len, pk_buf))
+  if(0 != _gcry_sphincsplus_verify(&param, sig_buf, param.signature_bytes, data_buf, data_buf_len, pk_buf))
   {
     ec = GPG_ERR_GENERAL;
     goto leave;

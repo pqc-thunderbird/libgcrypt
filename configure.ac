@@ -3046,7 +3046,7 @@ fi
 LIST_MEMBER(sphincsplus, $enabled_pubkey_ciphers)
 AM_CONDITIONAL(USE_SPHINCSPLUS, [test "$found" = "1"])
 if test "$found" = "1" ; then
-  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS sphincsplus.lo sphincs-sha2.lo sphincs-address.lo sphincs-merkle.lo sphincs-wots.lo sphincs-wotsx1.lo sphincs-utils.lo sphincs-utilsx1.lo sphincs-fors.lo sphincs-sign.lo sphincs-fips202.lo sphincs-hash.lo sphincs-thash.lo"
+  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS sphincsplus.lo sphincs-sha2.lo sphincs-address.lo sphincs-merkle.lo sphincs-wots.lo sphincs-wotsx1.lo sphincs-utils.lo sphincs-utilsx1.lo sphincs-fors.lo sphincs-sign.lo sphincs-hash.lo sphincs-thash.lo"
    AC_DEFINE(USE_SPHINCSPLUS, 1, [Defined if this module should be included])
 fi
 

@@ -22,7 +22,7 @@
  */
 static void gen_chain(unsigned char *out, const unsigned char *in,
                       unsigned int start, unsigned int steps,
-                      const spx_ctx *ctx, uint32_t addr[8])
+                      const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 {
     uint32_t i;
 
@@ -31,8 +31,8 @@ static void gen_chain(unsigned char *out, const unsigned char *in,
 
     /* Iterate 'steps' calls to the hash function. */
     for (i = start; i < (start+steps) && i < ctx->WOTS_w; i++) {
-        set_hash_addr(ctx, addr, i);
-        thash(out, out, 1, ctx, addr);
+        _gcry_sphincsplus_set_hash_addr(ctx, addr, i);
+        _gcry_sphincsplus_thash(out, out, 1, ctx, addr);
     }
 }
 
@@ -41,7 +41,7 @@ static void gen_chain(unsigned char *out, const unsigned char *in,
  * Interprets an array of bytes as integers in base w.
  * This only works when log_w is a divisor of 8.
  */
-static void base_w(const spx_ctx *ctx, unsigned int *output, const int out_len,
+static void base_w(const _gcry_sphincsplus_param_t *ctx, unsigned int *output, const int out_len,
                    const unsigned char *input)
 {
     int in = 0;
@@ -63,7 +63,7 @@ static void base_w(const spx_ctx *ctx, unsigned int *output, const int out_len,
 }
 
 /* Computes the WOTS+ checksum over a message (in base_w). */
-static void wots_checksum(const spx_ctx *ctx, unsigned int *csum_base_w,
+static void wots_checksum(const _gcry_sphincsplus_param_t *ctx, unsigned int *csum_base_w,
                           const unsigned int *msg_base_w)
 {
     unsigned int csum = 0;
@@ -78,12 +78,12 @@ static void wots_checksum(const spx_ctx *ctx, unsigned int *csum_base_w,
     /* Convert checksum to base_w. */
     /* Make sure expected empty zero bits are the least significant bits. */
     csum = csum << ((8 - ((ctx->WOTS_len2 * ctx->WOTS_logw) % 8)) % 8);
-    ull_to_bytes(csum_bytes, sizeof(csum_bytes), csum);
+    _gcry_sphincsplus_ull_to_bytes(csum_bytes, sizeof(csum_bytes), csum);
     base_w(ctx, csum_base_w, ctx->WOTS_len2, csum_bytes);
 }
 
 /* Takes a message and derives the matching chain lengths. */
-void chain_lengths(const spx_ctx *ctx, unsigned int *lengths, const unsigned char *msg)
+void chain_lengths(const _gcry_sphincsplus_param_t *ctx, unsigned int *lengths, const unsigned char *msg)
 {
     base_w(ctx, lengths, ctx->WOTS_len1, msg);
     wots_checksum(ctx, lengths + ctx->WOTS_len1, lengths);
@@ -94,9 +94,9 @@ void chain_lengths(const spx_ctx *ctx, unsigned int *lengths, const unsigned cha
  *
  * Writes the computed public key to 'pk'.
  */
-void wots_pk_from_sig(unsigned char *pk,
+void _gcry_sphincsplus_wots_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *msg,
-                      const spx_ctx *ctx, uint32_t addr[8])
+                      const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 {
     unsigned int lengths[ctx->WOTS_len];
     uint32_t i;
@@ -104,7 +104,7 @@ void wots_pk_from_sig(unsigned char *pk,
     chain_lengths(ctx, lengths, msg);
 
     for (i = 0; i < ctx->WOTS_len; i++) {
-        set_chain_addr(ctx, addr, i);
+        _gcry_sphincsplus_set_chain_addr(ctx, addr, i);
         gen_chain(pk + i*ctx->n, sig + i*ctx->n,
                   lengths[i], ctx->WOTS_w - 1 - lengths[i], ctx, addr);
     }

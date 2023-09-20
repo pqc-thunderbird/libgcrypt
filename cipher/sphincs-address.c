@@ -8,7 +8,7 @@
 /*
  * Specify which level of Merkle tree (the "layer") we're working on
  */
-void set_layer_addr(const spx_ctx *ctx, uint32_t addr[8], uint32_t layer)
+void _gcry_sphincsplus_set_layer_addr(const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8], uint32_t layer)
 {
     ((unsigned char *)addr)[ctx->offset_layer] = (unsigned char)layer;
 }
@@ -16,13 +16,13 @@ void set_layer_addr(const spx_ctx *ctx, uint32_t addr[8], uint32_t layer)
 /*
  * Specify which Merkle tree within the level (the "tree address") we're working on
  */
-void set_tree_addr(const spx_ctx *ctx, uint32_t addr[8], uint64_t tree)
+void _gcry_sphincsplus_set_tree_addr(const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8], uint64_t tree)
 {
     /* TODO: assert? */
 //#if (SPX_TREE_HEIGHT * (SPX_D - 1)) > 64
 //    #error Subtree addressing is currently limited to at most 2^64 trees
 //#endif
-    ull_to_bytes(&((unsigned char *)addr)[ctx->offset_tree], 8, tree );
+    _gcry_sphincsplus_ull_to_bytes(&((unsigned char *)addr)[ctx->offset_tree], 8, tree );
 }
 
 /*
@@ -31,7 +31,7 @@ void set_tree_addr(const spx_ctx *ctx, uint32_t addr[8], uint64_t tree)
  * hashes don't accidentally get the same address structure.  The type will be
  * one of the SPX_ADDR_TYPE constants
  */
-void set_type(const spx_ctx *ctx, uint32_t addr[8], uint32_t type)
+void _gcry_sphincsplus_set_type(const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8], uint32_t type)
 {
     ((unsigned char *)addr)[ctx->offset_type] = (unsigned char)type;
 }
@@ -40,7 +40,7 @@ void set_type(const spx_ctx *ctx, uint32_t addr[8], uint32_t type)
  * Copy the layer and tree fields of the address structure.  This is used
  * when we're doing multiple types of hashes within the same Merkle tree
  */
-void copy_subtree_addr(const spx_ctx *ctx, uint32_t out[8], const uint32_t in[8])
+void _gcry_sphincsplus_copy_subtree_addr(const _gcry_sphincsplus_param_t *ctx, uint32_t out[8], const uint32_t in[8])
 {
     memcpy( out, in, ctx->offset_tree+8 );
 }
@@ -51,7 +51,7 @@ void copy_subtree_addr(const spx_ctx *ctx, uint32_t out[8], const uint32_t in[8]
  * Specify which Merkle leaf we're working on; that is, which OTS keypair
  * we're talking about.
  */
-void set_keypair_addr(const spx_ctx *ctx, uint32_t addr[8], uint32_t keypair)
+void _gcry_sphincsplus_set_keypair_addr(const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8], uint32_t keypair)
 {
     if(ctx->full_height / ctx->d > 8)
     {
@@ -66,7 +66,7 @@ void set_keypair_addr(const spx_ctx *ctx, uint32_t addr[8], uint32_t keypair)
  * Copy the layer, tree and keypair fields of the address structure.  This is
  * used when we're doing multiple things within the same OTS keypair
  */
-void copy_keypair_addr(const spx_ctx *ctx, uint32_t out[8], const uint32_t in[8])
+void _gcry_sphincsplus_copy_keypair_addr(const _gcry_sphincsplus_param_t *ctx, uint32_t out[8], const uint32_t in[8])
 {
     memcpy( out, in, ctx->offset_tree+8 );
     if(ctx->full_height / ctx->d > 8)
@@ -80,7 +80,7 @@ void copy_keypair_addr(const spx_ctx *ctx, uint32_t out[8], const uint32_t in[8]
  * Specify which Merkle chain within the OTS we're working with
  * (the chain address)
  */
-void set_chain_addr(const spx_ctx *ctx, uint32_t addr[8], uint32_t chain)
+void _gcry_sphincsplus_set_chain_addr(const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8], uint32_t chain)
 {
     ((unsigned char *)addr)[ctx->offset_chain_addr] = (unsigned char)chain;
 }
@@ -89,7 +89,7 @@ void set_chain_addr(const spx_ctx *ctx, uint32_t addr[8], uint32_t chain)
  * Specify where in the Merkle chain we are
 * (the hash address)
  */
-void set_hash_addr(const spx_ctx *ctx, uint32_t addr[8], uint32_t hash)
+void _gcry_sphincsplus_set_hash_addr(const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8], uint32_t hash)
 {
     ((unsigned char *)addr)[ctx->offset_hash_addr] = (unsigned char)hash;
 }
@@ -100,7 +100,7 @@ void set_hash_addr(const spx_ctx *ctx, uint32_t addr[8], uint32_t hash)
  * Specify the height of the node in the Merkle/FORS tree we are in
  * (the tree height)
  */
-void set_tree_height(const spx_ctx *ctx, uint32_t addr[8], uint32_t tree_height)
+void _gcry_sphincsplus_set_tree_height(const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8], uint32_t tree_height)
 {
     ((unsigned char *)addr)[ctx->offset_tree_hgt] = (unsigned char)tree_height;
 }
@@ -109,7 +109,7 @@ void set_tree_height(const spx_ctx *ctx, uint32_t addr[8], uint32_t tree_height)
  * Specify the distance from the left edge of the node in the Merkle/FORS tree
  * (the tree index)
  */
-void set_tree_index(const spx_ctx *ctx, uint32_t addr[8], uint32_t tree_index)
+void _gcry_sphincsplus_set_tree_index(const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8], uint32_t tree_index)
 {
-    u32_to_bytes(&((unsigned char *)addr)[ctx->offset_tree_index], tree_index );
+    _gcry_sphincsplus_u32_to_bytes(&((unsigned char *)addr)[ctx->offset_tree_index], tree_index );
 }

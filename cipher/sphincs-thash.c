@@ -7,7 +7,6 @@
 #include "sphincs-address.h"
 #include "sphincs-utils.h"
 
-#include "sphincs-fips202.h"
 #include "sphincs-sha2.h"
 
 #include "g10lib.h"
@@ -20,7 +19,7 @@
  * Takes an array of inblocks concatenated arrays of ctx->n bytes.
  */
 void thash_shake_simple(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const spx_ctx *ctx, uint32_t addr[8])
+           const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 {
     SPX_VLA(uint8_t, buf, ctx->n + ctx->addr_bytes + inblocks*ctx->n);
 
@@ -43,7 +42,7 @@ void thash_shake_simple(unsigned char *out, const unsigned char *in, unsigned in
 // * Takes an array of inblocks concatenated arrays of ctx->n bytes.
 // */
 //void thash_shake_robust(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-//           const spx_ctx *ctx, uint32_t addr[8])
+//           const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 //{
 //    SPX_VLA(uint8_t, buf, ctx->n + ctx->addr_bytes + inblocks*ctx->n);
 //    SPX_VLA(uint8_t, bitmask, inblocks * ctx->n);
@@ -70,13 +69,13 @@ void thash_shake_simple(unsigned char *out, const unsigned char *in, unsigned in
 
 
 static void thash_512_simple(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const spx_ctx *ctx, uint32_t addr[8]);
+           const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8]);
 
 /**
  * Takes an array of inblocks concatenated arrays of ctx->n bytes.
  */
 void thash_sha2_simple(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const spx_ctx *ctx, uint32_t addr[8])
+           const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 {
     if(ctx->do_use_sha512)
     {
@@ -114,7 +113,7 @@ void thash_sha2_simple(unsigned char *out, const unsigned char *in, unsigned int
 }
 
 static void thash_512_simple(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const spx_ctx *ctx, uint32_t addr[8])
+           const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 {
     // unsigned char outbuf[SPX_SHA512_OUTPUT_BYTES];
     // uint8_t sha2_state[72];
@@ -149,13 +148,13 @@ static void thash_512_simple(unsigned char *out, const unsigned char *in, unsign
 
 
 //static void thash_512_robust(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-//           const spx_ctx *ctx, uint32_t addr[8]);
+//           const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8]);
 //
 ///**
 // * Takes an array of inblocks concatenated arrays of ctx->n bytes.
 // */
 //void thash_sha2_robust(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-//           const spx_ctx *ctx, uint32_t addr[8])
+//           const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 //{
 //    if(ctx->do_use_sha512)
 //    {
@@ -187,7 +186,7 @@ static void thash_512_simple(unsigned char *out, const unsigned char *in, unsign
 //}
 //
 //static void thash_512_robust(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-//           const spx_ctx *ctx, uint32_t addr[8])
+//           const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 //{
 //    unsigned char outbuf[SPX_SHA512_OUTPUT_BYTES];
 //    SPX_VLA(uint8_t, bitmask, inblocks * ctx->n);
@@ -212,8 +211,8 @@ static void thash_512_simple(unsigned char *out, const unsigned char *in, unsign
 //}
 
 
-void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const spx_ctx *ctx, uint32_t addr[8])
+void _gcry_sphincsplus_thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
+           const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 {
     if(ctx->is_sha2)
     {

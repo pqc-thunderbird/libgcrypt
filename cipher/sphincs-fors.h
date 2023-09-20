@@ -10,9 +10,9 @@
  * Signs a message m, deriving the secret key from sk_seed and the FTS address.
  * Assumes m contains at least SPX_FORS_HEIGHT * SPX_FORS_TREES bits.
  */
-void fors_sign(unsigned char *sig, unsigned char *pk,
+void _gcry_sphincsplus_fors_sign(unsigned char *sig, unsigned char *pk,
                const unsigned char *m,
-               const spx_ctx* ctx,
+               const _gcry_sphincsplus_param_t* ctx,
                const uint32_t fors_addr[8]);
 
 /**
@@ -22,9 +22,9 @@ void fors_sign(unsigned char *sig, unsigned char *pk,
  * typical use-case when used as an FTS below an OTS in a hypertree.
  * Assumes m contains at least SPX_FORS_HEIGHT * SPX_FORS_TREES bits.
  */
-void fors_pk_from_sig(unsigned char *pk,
+void _gcry_sphincsplus_fors_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *m,
-                      const spx_ctx* ctx,
+                      const _gcry_sphincsplus_param_t* ctx,
                       const uint32_t fors_addr[8]);
 
 #endif

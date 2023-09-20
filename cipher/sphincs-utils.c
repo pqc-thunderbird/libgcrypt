@@ -8,7 +8,7 @@
 /**
  * Converts the value of 'in' to 'outlen' bytes in big-endian byte order.
  */
-void ull_to_bytes(unsigned char *out, unsigned int outlen,
+void _gcry_sphincsplus_ull_to_bytes(unsigned char *out, unsigned int outlen,
                   unsigned long long in)
 {
     int i;
@@ -20,7 +20,7 @@ void ull_to_bytes(unsigned char *out, unsigned int outlen,
     }
 }
 
-void u32_to_bytes(unsigned char *out, uint32_t in)
+void _gcry_sphincsplus_u32_to_bytes(unsigned char *out, uint32_t in)
 {
     out[0] = (unsigned char)(in >> 24);
     out[1] = (unsigned char)(in >> 16);
@@ -31,7 +31,7 @@ void u32_to_bytes(unsigned char *out, uint32_t in)
 /**
  * Converts the inlen bytes in 'in' from big-endian byte order to an integer.
  */
-unsigned long long bytes_to_ull(const unsigned char *in, unsigned int inlen)
+unsigned long long _gcry_sphincsplus_bytes_to_ull(const unsigned char *in, unsigned int inlen)
 {
     unsigned long long retval = 0;
     unsigned int i;
@@ -46,10 +46,10 @@ unsigned long long bytes_to_ull(const unsigned char *in, unsigned int inlen)
  * Computes a root node given a leaf and an auth path.
  * Expects address to be complete other than the tree_height and tree_index.
  */
-void compute_root(unsigned char *root, const unsigned char *leaf,
+void _gcry_sphincsplus_compute_root(unsigned char *root, const unsigned char *leaf,
                   uint32_t leaf_idx, uint32_t idx_offset,
                   const unsigned char *auth_path, uint32_t tree_height,
-                  const spx_ctx *ctx, uint32_t addr[8])
+                  const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 {
     uint32_t i;
     unsigned char buffer[2 * ctx->n];
@@ -70,16 +70,16 @@ void compute_root(unsigned char *root, const unsigned char *leaf,
         leaf_idx >>= 1;
         idx_offset >>= 1;
         /* Set the address of the node we're creating. */
-        set_tree_height(ctx, addr, i + 1);
-        set_tree_index(ctx, addr, leaf_idx + idx_offset);
+        _gcry_sphincsplus_set_tree_height(ctx, addr, i + 1);
+        _gcry_sphincsplus_set_tree_index(ctx, addr, leaf_idx + idx_offset);
 
         /* Pick the right or left neighbor, depending on parity of the node. */
         if (leaf_idx & 1) {
-            thash(buffer + ctx->n, buffer, 2, ctx, addr);
+            _gcry_sphincsplus_thash(buffer + ctx->n, buffer, 2, ctx, addr);
             memcpy(buffer, auth_path, ctx->n);
         }
         else {
-            thash(buffer, buffer, 2, ctx, addr);
+            _gcry_sphincsplus_thash(buffer, buffer, 2, ctx, addr);
             memcpy(buffer + ctx->n, auth_path, ctx->n);
         }
         auth_path += ctx->n;
@@ -88,24 +88,24 @@ void compute_root(unsigned char *root, const unsigned char *leaf,
     /* The last iteration is exceptional; we do not copy an auth_path node. */
     leaf_idx >>= 1;
     idx_offset >>= 1;
-    set_tree_height(ctx, addr, tree_height);
-    set_tree_index(ctx, addr, leaf_idx + idx_offset);
-    thash(root, buffer, 2, ctx, addr);
+    _gcry_sphincsplus_set_tree_height(ctx, addr, tree_height);
+    _gcry_sphincsplus_set_tree_index(ctx, addr, leaf_idx + idx_offset);
+    _gcry_sphincsplus_thash(root, buffer, 2, ctx, addr);
 }
 
 /**
  * For a given leaf index, computes the authentication path and the resulting
- * root node using Merkle's TreeHash algorithm.
+ * root node using Merkle's _gcry_sphincsplus_treehash algorithm.
  * Expects the layer and tree parts of the tree_addr to be set, as well as the
  * tree type (i.e. SPX_ADDR_TYPE_HASHTREE or SPX_ADDR_TYPE_FORSTREE).
  * Applies the offset idx_offset to indices before building addresses, so that
  * it is possible to continue counting indices across trees.
  */
-void treehash(unsigned char *root, unsigned char *auth_path, const spx_ctx* ctx,
+void _gcry_sphincsplus_treehash(unsigned char *root, unsigned char *auth_path, const _gcry_sphincsplus_param_t* ctx,
               uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,
               void (*gen_leaf)(
                  unsigned char* /* leaf */,
-                 const spx_ctx* /* ctx */,
+                 const _gcry_sphincsplus_param_t* /* ctx */,
                  uint32_t /* addr_idx */, const uint32_t[8] /* tree_addr */),
               uint32_t tree_addr[8])
 {
@@ -132,11 +132,11 @@ void treehash(unsigned char *root, unsigned char *auth_path, const spx_ctx* ctx,
             tree_idx = (idx >> (heights[offset - 1] + 1));
 
             /* Set the address of the node we're creating. */
-            set_tree_height(ctx, tree_addr, heights[offset - 1] + 1);
-            set_tree_index(ctx, tree_addr,
+            _gcry_sphincsplus_set_tree_height(ctx, tree_addr, heights[offset - 1] + 1);
+            _gcry_sphincsplus_set_tree_index(ctx, tree_addr,
                            tree_idx + (idx_offset >> (heights[offset-1] + 1)));
             /* Hash the top-most nodes from the stack together. */
-            thash(stack + (offset - 2)*ctx->n,
+            _gcry_sphincsplus_thash(stack + (offset - 2)*ctx->n,
                   stack + (offset - 2)*ctx->n, 2, ctx, tree_addr);
             offset--;
             /* Note that the top-most node is now one layer higher. */

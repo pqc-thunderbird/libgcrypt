@@ -154,7 +154,7 @@ EXTRA_libcipher_la_SOURCES = \
 	blake2s-amd64-avx.S blake2s-amd64-avx512.S \
 	sphincs-address.c sphincs-merkle.c sphincs-wots.c sphincs-wotsx1.c sphincs-utils.c sphincs-utilsx1.c sphincs-fors.c sphincs-sign.c \
 	sphincs-params.h sphincs-address.h sphincs-merkle.h sphincs-wots.h sphincs-wotsx1.h sphincs-utils.h sphincs-utilsx1.h sphincs-fors.h sphincs-api.h sphincs-hash.h sphincs-thash.h \
-	sphincs-fips202.c sphincs-hash_shake.c \
+	sphincs-hash_shake.c \
 	sphincs-sha2.c \
 	sphincsplus.c \
 	sphincs-thash.c
