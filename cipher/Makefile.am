@@ -36,8 +36,8 @@ noinst_LTLIBRARIES = libcipher.la
 GCRYPT_MODULES = @GCRYPT_CIPHERS@ @GCRYPT_PUBKEY_CIPHERS@ \
                  @GCRYPT_DIGESTS@ @GCRYPT_KDFS@
 
-libcipher_la_DEPENDENCIES = $(GCRYPT_MODULES)
-libcipher_la_LIBADD = $(GCRYPT_MODULES)
+libcipher_la_DEPENDENCIES = $(GCRYPT_MODULES) mgf.lo
+libcipher_la_LIBADD = $(GCRYPT_MODULES) mgf.lo
 
 libcipher_la_SOURCES = \
 	cipher.c cipher-internal.h \
@@ -115,6 +115,7 @@ EXTRA_libcipher_la_SOURCES = \
 	rijndael-s390x.c                                   \
 	rmd160.c \
 	rsa.c \
+	mgf.c mgf.h \
 	salsa20.c salsa20-amd64.S salsa20-armv7-neon.S \
 	scrypt.c \
 	seed.c \

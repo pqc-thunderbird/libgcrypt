@@ -9,7 +9,10 @@
 #include "sphincs-hash.h"
 #include "sphincs-sha2.h"
 #include "sphincs-fips202.h"
+
 #include "g10lib.h"
+#include "mgf.h"
+
 
 
 static void initialize_hash_function_sha2(spx_ctx *ctx);
@@ -18,7 +21,7 @@ static void prf_addr_sha2(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8]);
 static void prf_addr_shake(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8]);
-static void gen_message_random_sha2(unsigned char *R, const unsigned char *sk_prf,
+static gcry_err_code_t gen_message_random_sha2(unsigned char *R, const unsigned char *sk_prf,
         const unsigned char *optrand,
         const unsigned char *m, unsigned long long mlen,
         const spx_ctx *ctx);
@@ -68,6 +71,7 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
 {
     if(ctx->is_sha2)
     {
+        /* TODO: propagate error from call */
         gen_message_random_sha2(R, sk_prf, optrand, m, mlen, ctx);
     }
     else
@@ -138,20 +142,31 @@ void initialize_hash_function_sha2(spx_ctx *ctx)
 static void prf_addr_sha2(unsigned char *out, const spx_ctx *ctx,
               const uint32_t addr[8])
 {
-    uint8_t sha2_state[40];
-    unsigned char buf[SPX_SHA256_ADDR_BYTES + ctx->n];
-    unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
+    //uint8_t sha2_state[40];
+    //unsigned char buf[SPX_SHA256_ADDR_BYTES + ctx->n];
+    //unsigned char outbuf[SPX_SHA256_OUTPUT_BYTES];
 
-    /* Retrieve precomputed state containing pub_seed */
-    memcpy(sha2_state, ctx->state_seeded, 40 * sizeof(uint8_t));
+    ///* Retrieve precomputed state containing pub_seed */
+    //memcpy(sha2_state, ctx->state_seeded, 40 * sizeof(uint8_t));
 
-    /* Remainder: ADDR^c ‖ SK.seed */
-    memcpy(buf, addr, SPX_SHA256_ADDR_BYTES);
-    memcpy(buf + SPX_SHA256_ADDR_BYTES, ctx->sk_seed, ctx->n);
+    ///* Remainder: ADDR^c ‖ SK.seed */
+    //memcpy(buf, addr, SPX_SHA256_ADDR_BYTES);
+    //memcpy(buf + SPX_SHA256_ADDR_BYTES, ctx->sk_seed, ctx->n);
 
-    sha256_inc_finalize(outbuf, sha2_state, buf, SPX_SHA256_ADDR_BYTES + ctx->n);
+    //sha256_inc_finalize(outbuf, sha2_state, buf, SPX_SHA256_ADDR_BYTES + ctx->n);
+    unsigned char sha256_pubseed_block[SPX_SHA256_BLOCK_BYTES];
+    memset(sha256_pubseed_block, 0, SPX_SHA256_BLOCK_BYTES);
+    memcpy(sha256_pubseed_block, ctx->pub_seed, ctx->n);
+    gcry_md_hd_t hd;
+    /* TODO: md_open can give error code... */
+    _gcry_md_open (&hd, GCRY_MD_SHA256, GCRY_MD_FLAG_SECURE);
+    _gcry_md_write(hd, sha256_pubseed_block, SPX_SHA256_BLOCK_BYTES);
+    _gcry_md_write(hd, (uint8_t*)addr, SPX_SHA256_ADDR_BYTES);
+    _gcry_md_write(hd, ctx->sk_seed, ctx->n);
+    //_gcry_md_write(hd, buf, SPX_SHA256_ADDR_BYTES + ctx->n);
+    memcpy(out, _gcry_md_read(hd, GCRY_MD_SHA256), ctx->n);
+    _gcry_md_close(hd);
 
-    memcpy(out, outbuf, ctx->n);
 }
 
 /**
@@ -162,58 +177,65 @@ static void prf_addr_sha2(unsigned char *out, const spx_ctx *ctx,
  * prefix. This is necessary to prevent having to move the message around (and
  * allocate memory for it).
  */
-static void gen_message_random_sha2(unsigned char *R, const unsigned char *sk_prf,
+static gcry_err_code_t gen_message_random_sha2(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
                         const unsigned char *m, unsigned long long mlen,
                         const spx_ctx *ctx)
 {
-    (void)ctx;
-    shaX_cfg shax_ctx;
-    shaX_cfg_init(&shax_ctx, ctx->n);
+    // HMAC-SHA-X(SK.prf, OptRand||M)
 
-    unsigned char buf[shax_ctx.shax_block_bytes + shax_ctx.shax_output_bytes];
-    uint8_t state[8 + shax_ctx.shax_output_bytes];
-    int i;
+    int hmac_shaX_algo;
+    gcry_mac_hd_t hd = NULL;
+    gcry_err_code_t ec;
+    size_t outlen;
 
-/* TODO: asssert? */
-// #if ctx->n > shax_ctx.shax_block_bytes
-//     #error "Currently only supports ctx->n of at most shax_ctx.shax_block_bytes"
-// #endif
-
-    /* This implements HMAC-SHA */
-    for (i = 0; i < ctx->n; i++) {
-        buf[i] = 0x36 ^ sk_prf[i];
+    if(ctx->do_use_sha512)
+    {
+        hmac_shaX_algo = GCRY_MAC_HMAC_SHA512;
     }
-    memset(buf + ctx->n, 0x36, shax_ctx.shax_block_bytes - ctx->n);
-
-    shax_ctx.shaX_inc_init(state);
-    shax_ctx.shaX_inc_blocks(state, buf, 1);
-
-    memcpy(buf, optrand, ctx->n);
-
-    /* If optrand + message cannot fill up an entire block */
-    if (ctx->n + mlen < shax_ctx.shax_block_bytes) {
-        memcpy(buf + ctx->n, m, mlen);
-        shax_ctx.shaX_inc_finalize(buf + shax_ctx.shax_block_bytes, state,
-                            buf, mlen + ctx->n);
-    }
-    /* Otherwise first fill a block, so that finalize only uses the message */
-    else {
-        memcpy(buf + ctx->n, m, shax_ctx.shax_block_bytes - ctx->n);
-        shax_ctx.shaX_inc_blocks(state, buf, 1);
-
-        m += shax_ctx.shax_block_bytes - ctx->n;
-        mlen -= shax_ctx.shax_block_bytes - ctx->n;
-        shax_ctx.shaX_inc_finalize(buf + shax_ctx.shax_block_bytes, state, m, mlen);
+    else
+    {
+        hmac_shaX_algo = GCRY_MAC_HMAC_SHA256;
     }
 
-    for (i = 0; i < ctx->n; i++) {
-        buf[i] = 0x5c ^ sk_prf[i];
+    ec = _gcry_mac_open (&hd, hmac_shaX_algo, GCRY_MAC_FLAG_SECURE, NULL);
+    if(ec)
+    {
+        goto leave;
     }
-    memset(buf + ctx->n, 0x5c, shax_ctx.shax_block_bytes - ctx->n);
 
-    shax_ctx.shaX(buf, buf, shax_ctx.shax_block_bytes + shax_ctx.shax_output_bytes);
-    memcpy(R, buf, ctx->n);
+    ec = _gcry_mac_setkey (hd, sk_prf, ctx->n);
+    if(ec)
+    {
+        goto leave;
+    }
+
+    ec = _gcry_mac_write (hd, optrand, ctx->n);
+    if(ec)
+    {
+        goto leave;
+    }
+
+    ec = _gcry_mac_write (hd, m, mlen);
+    if(ec)
+    {
+        goto leave;
+    }
+
+    ec = _gcry_mac_read (hd, R, &outlen);
+    if(ec)
+    {
+        goto leave;
+    }
+
+    if(outlen != ctx->n)
+    {
+        ec = GPG_ERR_INV_STATE;
+    }
+
+leave:
+    _gcry_mac_close(hd);
+    return ec;
 }
 
 /**
@@ -283,7 +305,18 @@ static void hash_message_sha2(unsigned char *digest, uint64_t *tree, uint32_t *l
 
     /* By doing this in two steps, we prevent hashing the message twice;
        otherwise each iteration in MGF1 would hash the message again. */
-    shax_ctx.mgf1_X(bufp, SPX_DGST_BYTES, seed, 2*ctx->n + shax_ctx.shax_output_bytes);
+    //shax_ctx.mgf1_X(bufp, SPX_DGST_BYTES, seed, 2*ctx->n + shax_ctx.shax_output_bytes);
+    int algo;
+    if(ctx->do_use_sha512)
+    {
+        algo = GCRY_MD_SHA512;
+    }
+    else {
+        algo = GCRY_MD_SHA256;
+    }
+    // TODO check err
+    mgf1(bufp, SPX_DGST_BYTES, seed, 2*ctx->n + shax_ctx.shax_output_bytes, algo);
+
 
     memcpy(digest, bufp, ctx->FORS_msg_bytes);
     bufp += ctx->FORS_msg_bytes;
@@ -354,6 +387,7 @@ static void gen_message_random_shake(unsigned char *R, const unsigned char *sk_p
 
     gcry_md_hd_t hd;
 
+    /* TODO: check and return err */
    _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
    _gcry_md_write(hd, sk_prf, ctx->n);
    _gcry_md_write(hd, optrand, ctx->n);
