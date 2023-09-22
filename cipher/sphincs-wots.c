@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <stdint.h>
 #include <string.h>
 
@@ -8,6 +10,8 @@
 #include "sphincs-wots.h"
 #include "sphincs-wotsx1.h"
 #include "sphincs-address.h"
+
+#include "g10lib.h"
 
 // TODO clarify address expectations, and make them more uniform.
 // TODO i.e. do we expect types to be set already?
@@ -63,12 +67,22 @@ static void base_w(const _gcry_sphincsplus_param_t *ctx, unsigned int *output, c
 }
 
 /* Computes the WOTS+ checksum over a message (in base_w). */
-static void wots_checksum(const _gcry_sphincsplus_param_t *ctx, unsigned int *csum_base_w,
+static gcry_err_code_t wots_checksum(const _gcry_sphincsplus_param_t *ctx, unsigned int *csum_base_w,
                           const unsigned int *msg_base_w)
 {
+    gcry_err_code_t ec = 0;
     unsigned int csum = 0;
-    unsigned char csum_bytes[(ctx->WOTS_len2 * ctx->WOTS_logw + 7) / 8];
+    // unsigned char csum_bytes[(ctx->WOTS_len2 * ctx->WOTS_logw + 7) / 8];
+    size_t csum_bytes_len = (ctx->WOTS_len2 * ctx->WOTS_logw + 7) / 8;
+    unsigned char *csum_bytes = NULL;
     unsigned int i;
+
+    csum_bytes = xtrymalloc_secure(csum_bytes_len);
+    if (!csum_bytes)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
     /* Compute checksum. */
     for (i = 0; i < ctx->WOTS_len1; i++) {
@@ -78,12 +92,16 @@ static void wots_checksum(const _gcry_sphincsplus_param_t *ctx, unsigned int *cs
     /* Convert checksum to base_w. */
     /* Make sure expected empty zero bits are the least significant bits. */
     csum = csum << ((8 - ((ctx->WOTS_len2 * ctx->WOTS_logw) % 8)) % 8);
-    _gcry_sphincsplus_ull_to_bytes(csum_bytes, sizeof(csum_bytes), csum);
+    _gcry_sphincsplus_ull_to_bytes(csum_bytes, csum_bytes_len, csum);
     base_w(ctx, csum_base_w, ctx->WOTS_len2, csum_bytes);
+
+leave:
+    xfree(csum_bytes);
+	return ec;
 }
 
 /* Takes a message and derives the matching chain lengths. */
-void chain_lengths(const _gcry_sphincsplus_param_t *ctx, unsigned int *lengths, const unsigned char *msg)
+void _gcry_sphincsplus_chain_lengths(const _gcry_sphincsplus_param_t *ctx, unsigned int *lengths, const unsigned char *msg)
 {
     base_w(ctx, lengths, ctx->WOTS_len1, msg);
     wots_checksum(ctx, lengths + ctx->WOTS_len1, lengths);
@@ -94,18 +112,32 @@ void chain_lengths(const _gcry_sphincsplus_param_t *ctx, unsigned int *lengths, 
  *
  * Writes the computed public key to 'pk'.
  */
-void _gcry_sphincsplus_wots_pk_from_sig(unsigned char *pk,
+gcry_err_code_t
+_gcry_sphincsplus_wots_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *msg,
                       const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 {
-    unsigned int lengths[ctx->WOTS_len];
+    gcry_err_code_t ec = 0;
+    // unsigned int lengths[ctx->WOTS_len];
+    unsigned int *lengths = NULL;
     uint32_t i;
 
-    chain_lengths(ctx, lengths, msg);
+    lengths = xtrymalloc_secure(sizeof(unsigned int) * ctx->WOTS_len);
+    if (!lengths)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+
+    _gcry_sphincsplus_chain_lengths(ctx, lengths, msg);
 
     for (i = 0; i < ctx->WOTS_len; i++) {
         _gcry_sphincsplus_set_chain_addr(ctx, addr, i);
         gen_chain(pk + i*ctx->n, sig + i*ctx->n,
                   lengths[i], ctx->WOTS_w - 1 - lengths[i], ctx, addr);
     }
+
+leave:
+    xfree(lengths);
+	return ec;
 }

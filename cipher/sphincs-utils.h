@@ -1,10 +1,13 @@
 #ifndef SPX_UTILS_H
 #define SPX_UTILS_H
 
+#include "config.h"
+
 #include <stdint.h>
 #include "sphincs-params.h"
 #include "sphincs-context.h"
 
+#include "g10lib.h"
 
 /* To support MSVC use alloca() instead of VLAs. See #20. */
 #ifdef _MSC_VER
@@ -33,7 +36,7 @@ unsigned long long _gcry_sphincsplus_bytes_to_ull(const unsigned char *in, unsig
  * Computes a root node given a leaf and an auth path.
  * Expects address to be complete other than the tree_height and tree_index.
  */
-void _gcry_sphincsplus_compute_root(unsigned char *root, const unsigned char *leaf,
+gcry_err_code_t _gcry_sphincsplus_compute_root(unsigned char *root, const unsigned char *leaf,
                   uint32_t leaf_idx, uint32_t idx_offset,
                   const unsigned char *auth_path, uint32_t tree_height,
                   const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8]);

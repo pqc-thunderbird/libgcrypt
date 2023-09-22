@@ -12,7 +12,7 @@
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [root || PUB_SEED]
  */
-int _gcry_sphincsplus_seed_keypair(const _gcry_sphincsplus_param_t *ctx, unsigned char *pk, unsigned char *sk,
+int _gcry_sphincsplus_seed_keypair(_gcry_sphincsplus_param_t *ctx, unsigned char *pk, unsigned char *sk,
                              const unsigned char *seed);
 
 /*
@@ -20,18 +20,18 @@ int _gcry_sphincsplus_seed_keypair(const _gcry_sphincsplus_param_t *ctx, unsigne
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [root || PUB_SEED]
  */
-int _gcry_sphincsplus_keypair(const _gcry_sphincsplus_param_t *ctx, unsigned char *pk, unsigned char *sk);
+int _gcry_sphincsplus_keypair(_gcry_sphincsplus_param_t *ctx, unsigned char *pk, unsigned char *sk);
 
 /**
  * Returns an array containing a detached signature.
  */
-int _gcry_sphincsplus_signature(const _gcry_sphincsplus_param_t *ctx, uint8_t *sig, size_t *siglen,
+int _gcry_sphincsplus_signature(_gcry_sphincsplus_param_t *ctx, uint8_t *sig, size_t *siglen,
                           const uint8_t *m, size_t mlen, const uint8_t *sk);
 
 /**
  * Verifies a detached signature and message under a given public key.
  */
-int _gcry_sphincsplus_verify(const _gcry_sphincsplus_param_t *ctx, const uint8_t *sig, size_t siglen,
+int _gcry_sphincsplus_verify(_gcry_sphincsplus_param_t *ctx, const uint8_t *sig, size_t siglen,
                        const uint8_t *m, size_t mlen, const uint8_t *pk);
 
 #endif

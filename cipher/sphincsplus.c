@@ -9,6 +9,7 @@
 #include "cipher.h"
 #include "pubkey-internal.h"
 #include "sphincs-context.h"
+#include "sphincs-api.h"
 
 static unsigned int
 /* TODOMTG nbits not meaningful for sphincsplus */
@@ -69,7 +70,7 @@ static gcry_err_code_t paramset_from_hash_and_variant(sphincs_paramset *paramset
     }
     else
     {
-      return 1;
+      return 1; /* TODO: correct error code */
     }
   }
   else if(strcmp(hash, "SHAKE") == 0)
@@ -100,7 +101,7 @@ static gcry_err_code_t paramset_from_hash_and_variant(sphincs_paramset *paramset
     }
     else
     {
-      return 1;
+      return 1; /* TODO: correct error code */
     }
   }
   else {
@@ -110,6 +111,13 @@ static gcry_err_code_t paramset_from_hash_and_variant(sphincs_paramset *paramset
   return 0;
 }
 
+static void gcry_sphincsplus_param_destroy(_gcry_sphincsplus_param_t *param)
+{
+  xfree(param->pub_seed);
+  xfree(param->sk_seed);
+  xfree(param->state_seeded);
+  xfree(param->state_seeded_512);
+}
 
 static gcry_err_code_t gcry_sphincsplus_get_param_from_paramset_id(_gcry_sphincsplus_param_t *param, sphincs_paramset paramset)
 {
@@ -223,15 +231,23 @@ static gcry_err_code_t gcry_sphincsplus_get_param_from_paramset_id(_gcry_sphincs
     param->do_use_sha512 = 0;
     param->is_sha2 = 0;
     break;
-  default: return 1;
+  default: return 1; /* TODO: correct error code */
   }
 
   /* allocate buffers */
-  /* TODO: unallocate */
-  param->pub_seed = malloc(param->n);
-  param->sk_seed = malloc(param->n);
-  param->state_seeded = malloc(40);
-  param->state_seeded_512 = malloc(72);
+  param->pub_seed = NULL;
+  param->sk_seed = NULL;
+  param->state_seeded = NULL;
+  param->state_seeded_512 = NULL;
+  param->pub_seed = xtrymalloc(param->n);
+  param->sk_seed = xtrymalloc_secure(param->n);
+  param->state_seeded = xtrymalloc_secure(40);
+  param->state_seeded_512 = xtrymalloc_secure(72);
+  if(!param->pub_seed || !param->sk_seed || !param->state_seeded || !param->state_seeded_512)
+  {
+      return gpg_err_code_from_syserror();
+      gcry_sphincsplus_param_destroy(param);
+  }
 
   /* derived and fix params */
   param->addr_bytes = 32;
@@ -455,11 +471,14 @@ sphincsplus_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   unsigned char *pk = NULL;
   unsigned char * sk = NULL;
   unsigned int nbits;
-  _gcry_sphincsplus_param_t param;
+  _gcry_sphincsplus_param_t param = {0};
   sphincs_paramset paramset;
 
   const char *hash_alg;
   const char *variant;
+
+  gcry_mpi_t sk_mpi = NULL;
+  gcry_mpi_t pk_mpi = NULL;
 
   ec = _gcry_pk_util_get_nbits (genparms, &nbits);
   if (ec)
@@ -479,8 +498,6 @@ sphincsplus_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   }
   _gcry_sphincsplus_keypair(&param, pk, sk);
 
-  gcry_mpi_t sk_mpi = NULL;
-  gcry_mpi_t pk_mpi = NULL;
   sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
   pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
 
@@ -513,6 +530,7 @@ sphincsplus_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
 leave:
   _gcry_mpi_release(sk_mpi);
   _gcry_mpi_release(pk_mpi);
+  gcry_sphincsplus_param_destroy(&param);
   xfree(sk);
   xfree(pk);
   return ec;
@@ -523,6 +541,10 @@ static gcry_err_code_t
 sphincsplus_check_secret_key (gcry_sexp_t keyparms)
 {
   gpg_err_code_t ec = 0;
+
+  /* TODO implement */
+  (void) keyparms;
+
   return ec;
 }
 
@@ -538,15 +560,15 @@ sphincsplus_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   struct pk_encoding_ctx ctx;
 
   //gcry_mpi_t sk = NULL;
-  gcry_mpi_t sig = NULL;
   gcry_mpi_t data = NULL;
   size_t nwritten = 0;
 
   unsigned int nbits = sphincsplus_get_nbits (keyparms);
-  _gcry_sphincsplus_param_t param;
+  _gcry_sphincsplus_param_t param = {0};
   sphincs_paramset paramset;
   const char *hash_alg;
   const char *variant;
+  size_t sig_buf_len;
 
   if ((ec = sphincsplus_get_hash_alg_and_variant_from_sexp(keyparms, &hash_alg, &variant)))
     return ec;
@@ -593,7 +615,6 @@ sphincsplus_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
     goto leave;
   }
 
-  size_t sig_buf_len;
   if(0 != _gcry_sphincsplus_signature(&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
   {
     printf("sign operation failed\n");
@@ -616,6 +637,7 @@ leave:
   xfree(sk_buf);
   xfree(sig_buf);
   xfree(data_buf);
+  gcry_sphincsplus_param_destroy(&param);
   _gcry_mpi_release(data);
   if (DBG_CIPHER)
     log_debug ("sphincsplus_sign    => %s\n", gpg_strerror (ec));
@@ -637,7 +659,7 @@ sphincsplus_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparm
   gcry_mpi_t sig = NULL;
   gcry_mpi_t data = NULL;
   size_t nwritten = 0;
-  _gcry_sphincsplus_param_t param;
+  _gcry_sphincsplus_param_t param = {0};
   sphincs_paramset paramset;
   const char *hash_alg;
   const char *variant;
@@ -678,7 +700,8 @@ sphincsplus_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparm
   }
 
   /* extract pk */
-  if (ec = public_key_from_sexp(s_keyparms, param, &pk_buf))
+  ec = public_key_from_sexp(s_keyparms, param, &pk_buf);
+  if (ec)
   {
     printf("failed to parse public key\n");
     goto leave;
@@ -719,6 +742,7 @@ leave:
   xfree(pk_buf);
   xfree(data_buf);
   xfree(sig_buf);
+  gcry_sphincsplus_param_destroy(&param);
   _gcry_mpi_release(data);
   _gcry_mpi_release(sig);
   sexp_release (l1);
@@ -730,7 +754,10 @@ leave:
 static gpg_err_code_t
 selftests_sphincsplus (selftest_report_func_t report, int extended)
 {
-  return GPG_ERR_NO_ERROR; // TODO
+  (void) report;
+  (void) extended;
+
+  return GPG_ERR_NO_ERROR; // TODO implement
 }
 
 /* Run a full self-test for ALGO and return 0 on success.  */
@@ -757,6 +784,12 @@ static gpg_err_code_t
 compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparam)
 {
   gpg_err_code_t ec = 0;
+
+  (void) md;
+  (void) keyparam;
+
+  /* TODO: implement */
+
   return ec;
 }
 

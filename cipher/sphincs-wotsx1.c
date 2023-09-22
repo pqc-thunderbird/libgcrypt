@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <stdint.h>
 #include <string.h>
 
@@ -9,21 +11,33 @@
 #include "sphincs-address.h"
 #include "sphincs-params.h"
 
+#include "g10lib.h"
+
 /*
  * This generates a WOTS public key
  * It also generates the WOTS signature if leaf_info indicates
  * that we're signing with this WOTS key
  */
-void wots_gen_leafx1(unsigned char *dest,
+gcry_err_code_t _gcry_sphincsplus_wots_gen_leafx1(unsigned char *dest,
                    const _gcry_sphincsplus_param_t *ctx,
                    uint32_t leaf_idx, void *v_info) {
-    struct leaf_info_x1 *info = v_info;
+    gcry_err_code_t ec = 0;
+
+    struct _gcry_sphincsplus_leaf_info_x1_t *info = v_info;
     uint32_t *leaf_addr = info->leaf_addr;
     uint32_t *pk_addr = info->pk_addr;
     unsigned int i, k;
-    unsigned char pk_buffer[ctx->WOTS_bytes];
+    //unsigned char pk_buffer[ctx->WOTS_bytes];
+    unsigned char *pk_buffer = NULL;
     unsigned char *buffer;
     uint32_t wots_k_mask;
+
+    pk_buffer = xtrymalloc_secure(ctx->WOTS_bytes);
+    if (!pk_buffer)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
     if (leaf_idx == info->wots_sign_leaf) {
         /* We're traversing the leaf that's signing; generate the WOTS */
@@ -70,4 +84,8 @@ void wots_gen_leafx1(unsigned char *dest,
 
     /* Do the final _gcry_sphincsplus_thash to generate the public keys */
     _gcry_sphincsplus_thash(dest, pk_buffer, ctx->WOTS_len, ctx, pk_addr);
+
+leave:
+    xfree(pk_buffer);
+	return ec;
 }

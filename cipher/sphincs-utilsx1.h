@@ -1,9 +1,13 @@
 #ifndef SPX_UTILSX4_H
 #define SPX_UTILSX4_H
 
+#include "config.h"
+
 #include <stdint.h>
 #include "sphincs-params.h"
 #include "sphincs-context.h"
+
+#include "g10lib.h"
 
 /**
  * For a given leaf index, computes the authentication path and the resulting
@@ -13,10 +17,11 @@
  * Applies the offset idx_offset to indices before building addresses, so that
  * it is possible to continue counting indices across trees.
  */
-void treehashx1(unsigned char *root, unsigned char *auth_path,
+gcry_err_code_t
+treehashx1(unsigned char *root, unsigned char *auth_path,
                 const _gcry_sphincsplus_param_t* ctx,
                 uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,
-                void (*gen_leaf)(
+                gcry_err_code_t (*gen_leaf)(
                    unsigned char* /* Where to write the leaf */,
                    const _gcry_sphincsplus_param_t* /* ctx */,
                    uint32_t addr_idx, void *info),

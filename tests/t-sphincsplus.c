@@ -294,6 +294,7 @@ static int check_sphincsplus_roundtrip(size_t n_tests)
     gcry_sexp_t s_data_wrong = NULL;
 
     unsigned char *msg = NULL;
+    unsigned msg_len;
 
     if (verbose)
       info ("creating %s-%s key\n", hashalg, variant);
@@ -325,7 +326,6 @@ static int check_sphincsplus_roundtrip(size_t n_tests)
       die("private part missing in return value\n");
 
     /* sign random message of length 1..16384 */
-    unsigned msg_len;
     gcry_randomize(&msg_len, sizeof(unsigned), GCRY_WEAK_RANDOM);
     msg_len = 1 + (msg_len % 16384);
     msg = xmalloc(msg_len);
@@ -347,7 +347,7 @@ static int check_sphincsplus_roundtrip(size_t n_tests)
     if(rc)
       die("sign failed\n");
 
-    printf("verifying correct %s-%s-signature, iteration %d/%d\n", hashalg, variant, iteration+1, n_tests);
+    printf("verifying correct %s-%s-signature, iteration %ld/%ld\n", hashalg, variant, iteration+1, n_tests);
     rc = gcry_pk_verify (r_sig, s_data, pkey);
     if(rc)
       die("verify failed\n");
@@ -404,6 +404,7 @@ static void
 parse_annotation (char **hashalg, char **variant, const char *line, int lineno)
 {
   const char *s;
+  size_t hashalg_size;
 
   xfree (*hashalg);
   *hashalg = NULL;
@@ -418,7 +419,7 @@ parse_annotation (char **hashalg, char **variant, const char *line, int lineno)
       return;
     }
 
-  size_t hashalg_size = s - line - 1;
+  hashalg_size = s - line - 1;
   *hashalg = xmalloc (hashalg_size+1);
   (*hashalg)[hashalg_size] = '\0';
   memcpy(*hashalg, line+1, hashalg_size);
@@ -427,6 +428,8 @@ parse_annotation (char **hashalg, char **variant, const char *line, int lineno)
   (*variant)[strlen (*variant) - 1] = 0; /* Remove ']'.  */
 
 }
+
+int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, unsigned m_len, unsigned char *sig, unsigned sig_len, const char* hashalg, const char* variant);
 
 static void check_sphincsplus_kat(const char *fname)
 {
@@ -487,10 +490,6 @@ static void check_sphincsplus_kat(const char *fname)
                                         0,
                                     }};
   size_t test_count              = 0;
-  gcry_sexp_t public_key_sx = NULL, private_key_sx = NULL,
-              signature_sx = NULL,
-              msg_sx = NULL;
-
 
   info("Checking Kyber KAT.\n");
 
@@ -501,12 +500,18 @@ static void check_sphincsplus_kat(const char *fname)
   while ((line = read_textline(fp, &lineno))
          && !(nb_kat_tests && nb_kat_tests <= test_count))
     {
-      gcry_sexp_t l;
-      int have_flags;
+      // gcry_sexp_t l;
+      // int have_flags;
       int rc;
       int is_complete = 1;
-      gcry_error_t err;
+      // gcry_error_t err;
       unsigned i;
+      unsigned random;
+
+      unsigned char *sig;
+      unsigned sig_len;
+      test_vec_desc_entry *pk;
+      test_vec_desc_entry *msg;
 
       /* read in test vec */
       for (i = 0; i < sizeof(test_vec) / sizeof(test_vec[0]); i++)
@@ -559,16 +564,15 @@ static void check_sphincsplus_kat(const char *fname)
       test_count++;
 
       // NOTE: sm = (sig | m) since the reference implementation uses the "signed-message" interface -> we extract only the signature
-      unsigned char *sig = test_vec[4].result_buf;
-      unsigned sig_len = test_vec[4].result_buf_len - test_vec[1].result_buf_len;
-      test_vec_desc_entry *pk = &test_vec[2];
-      test_vec_desc_entry *msg = &test_vec[1];
+      sig = test_vec[4].result_buf;
+      sig_len = test_vec[4].result_buf_len - test_vec[1].result_buf_len;
+      pk = &test_vec[2];
+      msg = &test_vec[1];
       rc = check_test_vec_verify(pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if(rc)
         die("Failed to verify KAT test vector");
 
       /* check that changing m, sig, or pk results in failure*/
-      unsigned random;
       gcry_randomize(&random, sizeof(unsigned), GCRY_WEAK_RANDOM);
 
       pk->result_buf[random % pk->result_buf_len]--;
@@ -621,7 +625,7 @@ static void check_sphincsplus_kat(const char *fname)
           e->result_buf_len = 0;
         }
 
-        printf("Test vector %d successfully verified\n", test_count);
+        printf("Test vector %ld successfully verified\n", test_count);
     }
 
   printf("\n");
@@ -674,7 +678,6 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
 
   err = gcry_pk_verify (signature_sx, data_sx, public_key_sx);
 
-leave:
   gcry_sexp_release(public_key_sx);
   gcry_sexp_release(signature_sx);
   gcry_sexp_release(data_sx);
@@ -689,7 +692,6 @@ main (int argc, char **argv)
 
 int last_argc = -1;
   char *fname   = NULL;
-  unsigned i;
   if (argc)
     {
       argc--;

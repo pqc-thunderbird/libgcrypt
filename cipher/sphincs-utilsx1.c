@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <string.h>
 
 #include "sphincs-utils.h"
@@ -5,6 +7,8 @@
 #include "sphincs-params.h"
 #include "sphincs-thash.h"
 #include "sphincs-address.h"
+
+#include "g10lib.h"
 
 /*
  * Generate the entire Merkle tree, computing the authentication path for
@@ -20,42 +24,54 @@
  *
  * This works by using the standard Merkle tree building algorithm,
  */
-void treehashx1(unsigned char *root, unsigned char *auth_path,
+gcry_err_code_t treehashx1(unsigned char *root, unsigned char *auth_path,
                 const _gcry_sphincsplus_param_t* ctx,
                 uint32_t leaf_idx, uint32_t idx_offset,
                 uint32_t tree_height,
-                void (*gen_leaf)(
+                gcry_err_code_t (*gen_leaf)(
                    unsigned char* /* Where to write the leaves */,
                    const _gcry_sphincsplus_param_t* /* ctx */,
                    uint32_t idx, void *info),
                 uint32_t tree_addr[8],
                 void *info)
 {
-    /* This is where we keep the intermediate nodes */
-    SPX_VLA(uint8_t, stack, tree_height*ctx->n);
-
+    gcry_err_code_t ec = 0;
     uint32_t idx;
     uint32_t max_idx = (uint32_t)((1 << tree_height) - 1);
+
+    /* This is where we keep the intermediate nodes */
+    // SPX_VLA(uint8_t, stack, tree_height*ctx->n);
+    uint8_t *stack = NULL;
+
+    stack = xtrymalloc_secure(tree_height*ctx->n);
+    if (!stack)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+
     for (idx = 0;; idx++) {
+        uint32_t internal_idx_offset = idx_offset;
+        uint32_t internal_idx = idx;
+        uint32_t internal_leaf = leaf_idx;
+        uint32_t h;     /* The height we are in the Merkle tree */
         unsigned char current[2*ctx->n];   /* Current logical node is at */
             /* index[ctx->n].  We do this to minimize the number of copies */
             /* needed during a _gcry_sphincsplus_thash */
+        /* TODO check error code */
         gen_leaf( &current[ctx->n], ctx, idx + idx_offset,
                     info );
 
         /* Now combine the freshly generated right node with previously */
         /* generated left ones */
-        uint32_t internal_idx_offset = idx_offset;
-        uint32_t internal_idx = idx;
-        uint32_t internal_leaf = leaf_idx;
-        uint32_t h;     /* The height we are in the Merkle tree */
         for (h=0;; h++, internal_idx >>= 1, internal_leaf >>= 1) {
+            unsigned char *left;
 
             /* Check if we hit the top of the tree */
             if (h == tree_height) {
                 /* We hit the root; return it */
                 memcpy( root, &current[ctx->n], ctx->n );
-                return;
+                goto leave;
             }
 
             /*
@@ -86,7 +102,7 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
             _gcry_sphincsplus_set_tree_height(ctx, tree_addr, h + 1);
             _gcry_sphincsplus_set_tree_index(ctx, tree_addr, internal_idx/2 + internal_idx_offset );
 
-            unsigned char *left = &stack[h * ctx->n];
+            left = &stack[h * ctx->n];
             memcpy( &current[0], left, ctx->n );
             _gcry_sphincsplus_thash( &current[1 * ctx->n],
                    &current[0 * ctx->n],
@@ -97,4 +113,8 @@ void treehashx1(unsigned char *root, unsigned char *auth_path,
         /* corresponding right right */
         memcpy( &stack[h * ctx->n], &current[ctx->n], ctx->n);
     }
+
+leave:
+    xfree(stack);
+	return ec;
 }

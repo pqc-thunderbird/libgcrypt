@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -8,6 +10,8 @@
 #include "sphincs-hash.h"
 #include "sphincs-thash.h"
 #include "sphincs-address.h"
+
+#include "g10lib.h"
 
 static void fors_gen_sk(unsigned char *sk, const _gcry_sphincsplus_param_t *ctx,
                         uint32_t fors_leaf_addr[8])
@@ -26,7 +30,7 @@ struct fors_gen_leaf_info {
     uint32_t leaf_addrx[8];
 };
 
-static void fors_gen_leafx1(unsigned char *leaf,
+static gcry_err_code_t fors_gen_leafx1(unsigned char *leaf,
                             const _gcry_sphincsplus_param_t *ctx,
                             uint32_t addr_idx, void *info)
 {
@@ -41,6 +45,8 @@ static void fors_gen_leafx1(unsigned char *leaf,
     _gcry_sphincsplus_set_type(ctx, fors_leaf_addr, SPX_ADDR_TYPE_FORSTREE);
     fors_sk_to_leaf(leaf, leaf,
                     ctx, fors_leaf_addr);
+
+    return 0; /* TODO check return codes in calls */
 }
 
 /**
@@ -66,19 +72,35 @@ static void message_to_indices(const _gcry_sphincsplus_param_t *ctx, uint32_t *i
  * Signs a message m, deriving the secret key from sk_seed and the FTS address.
  * Assumes m contains at least ctx->FORS_height * ctx->FORS_trees bits.
  */
-void _gcry_sphincsplus_fors_sign(unsigned char *sig, unsigned char *pk,
+gcry_err_code_t _gcry_sphincsplus_fors_sign(unsigned char *sig, unsigned char *pk,
                const unsigned char *m,
                const _gcry_sphincsplus_param_t *ctx,
                const uint32_t fors_addr[8])
 {
-    uint32_t indices[ctx->FORS_trees];
-    unsigned char roots[ctx->FORS_trees * ctx->n];
+    gcry_err_code_t ec = 0;
+    // uint32_t indices[ctx->FORS_trees];
+    uint32_t *indices = NULL;
+    // unsigned char roots[ctx->FORS_trees * ctx->n];
+    unsigned char *roots = NULL;
     uint32_t fors_tree_addr[8] = {0};
     struct fors_gen_leaf_info fors_info = {0};
     uint32_t *fors_leaf_addr = fors_info.leaf_addrx;
     uint32_t fors_pk_addr[8] = {0};
     uint32_t idx_offset;
     unsigned int i;
+
+    roots = xtrymalloc_secure(ctx->FORS_trees * ctx->n);
+    if (!roots)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+    indices = xtrymalloc_secure(sizeof(uint32_t) * ctx->FORS_trees);
+    if (!indices)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
     _gcry_sphincsplus_copy_keypair_addr(ctx, fors_tree_addr, fors_addr);
     _gcry_sphincsplus_copy_keypair_addr(ctx, fors_leaf_addr, fors_addr);
@@ -110,6 +132,11 @@ void _gcry_sphincsplus_fors_sign(unsigned char *sig, unsigned char *pk,
 
     /* Hash horizontally across all tree roots to derive the public key. */
     _gcry_sphincsplus_thash(pk, roots, ctx->FORS_trees, ctx, fors_pk_addr);
+
+leave:
+    xfree(roots);
+    xfree(indices);
+	return ec;
 }
 
 /**
@@ -119,18 +146,41 @@ void _gcry_sphincsplus_fors_sign(unsigned char *sig, unsigned char *pk,
  * typical use-case when used as an FTS below an OTS in a hypertree.
  * Assumes m contains at least ctx->FORS_height * ctx->FORS_trees bits.
  */
-void _gcry_sphincsplus_fors_pk_from_sig(unsigned char *pk,
+gcry_err_code_t _gcry_sphincsplus_fors_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *m,
                       const _gcry_sphincsplus_param_t* ctx,
                       const uint32_t fors_addr[8])
 {
-    uint32_t indices[ctx->FORS_trees];
-    unsigned char roots[ctx->FORS_trees * ctx->n];
-    unsigned char leaf[ctx->n];
+    gcry_err_code_t ec = 0;
+    // uint32_t indices[ctx->FORS_trees];
+    // unsigned char roots[ctx->FORS_trees * ctx->n];
+    // unsigned char leaf[ctx->n];
+    uint32_t *indices = NULL;
+    unsigned char *roots = NULL;
+    unsigned char *leaf = NULL;
     uint32_t fors_tree_addr[8] = {0};
     uint32_t fors_pk_addr[8] = {0};
     uint32_t idx_offset;
     unsigned int i;
+
+    indices = xtrymalloc_secure(sizeof(uint32_t) * ctx->FORS_trees);
+    if (!indices)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+    roots = xtrymalloc_secure(ctx->FORS_trees * ctx->n);
+    if (!roots)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+    leaf = xtrymalloc_secure(ctx->n);
+    if (!leaf)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
     _gcry_sphincsplus_copy_keypair_addr(ctx, fors_tree_addr, fors_addr);
     _gcry_sphincsplus_copy_keypair_addr(ctx, fors_pk_addr, fors_addr);
@@ -158,4 +208,10 @@ void _gcry_sphincsplus_fors_pk_from_sig(unsigned char *pk,
 
     /* Hash horizontally across all tree roots to derive the public key. */
     _gcry_sphincsplus_thash(pk, roots, ctx->FORS_trees, ctx, fors_pk_addr);
+
+leave:
+    xfree(indices);
+    xfree(roots);
+    xfree(leaf);
+	return ec;
 }

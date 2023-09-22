@@ -20,7 +20,7 @@
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [PUB_SEED || root]
  */
-int _gcry_sphincsplus_seed_keypair(const _gcry_sphincsplus_param_t *ctx, unsigned char *pk, unsigned char *sk,
+int _gcry_sphincsplus_seed_keypair(_gcry_sphincsplus_param_t *ctx, unsigned char *pk, unsigned char *sk,
                              const unsigned char *seed)
 {
     /* Initialize SK_SEED, SK_PRF and PUB_SEED from seed. */
@@ -48,7 +48,7 @@ int _gcry_sphincsplus_seed_keypair(const _gcry_sphincsplus_param_t *ctx, unsigne
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [PUB_SEED || root]
  */
-int _gcry_sphincsplus_keypair(const _gcry_sphincsplus_param_t *ctx, unsigned char *pk, unsigned char *sk)
+int _gcry_sphincsplus_keypair(_gcry_sphincsplus_param_t *ctx, unsigned char *pk, unsigned char *sk)
 {
   unsigned char seed[ctx->seed_bytes];
   _gcry_randomize(seed, ctx->seed_bytes, GCRY_VERY_STRONG_RANDOM);
@@ -60,20 +60,42 @@ int _gcry_sphincsplus_keypair(const _gcry_sphincsplus_param_t *ctx, unsigned cha
 /**
  * Returns an array containing a detached signature.
  */
-int _gcry_sphincsplus_signature(const _gcry_sphincsplus_param_t *ctx, uint8_t *sig, size_t *siglen,
+int _gcry_sphincsplus_signature(_gcry_sphincsplus_param_t *ctx, uint8_t *sig, size_t *siglen,
                           const uint8_t *m, size_t mlen, const uint8_t *sk)
 {
+    gcry_err_code_t ec = 0;
+
     const unsigned char *sk_prf = sk + ctx->n;
     const unsigned char *pk = sk + 2*ctx->n;
 
-    unsigned char optrand[ctx->n];
-    unsigned char mhash[ctx->FORS_msg_bytes];
-    unsigned char root[ctx->n];
     uint32_t i;
     uint64_t tree;
     uint32_t idx_leaf;
     uint32_t wots_addr[8] = {0};
     uint32_t tree_addr[8] = {0};
+
+    unsigned char *optrand = NULL;
+    unsigned char *mhash = NULL;
+    unsigned char *root = NULL;
+
+    optrand = xtrymalloc_secure(ctx->n);
+    if (!optrand)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+    mhash = xtrymalloc_secure(ctx->FORS_msg_bytes);
+    if (!mhash)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+    root = xtrymalloc_secure(ctx->n);
+    if (!root)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
     memcpy(ctx->sk_seed, sk, ctx->n);
     memcpy(ctx->pub_seed, pk, ctx->n);
@@ -120,20 +142,25 @@ int _gcry_sphincsplus_signature(const _gcry_sphincsplus_param_t *ctx, uint8_t *s
 
     *siglen = ctx->signature_bytes;
 
-    return 0;
+leave:
+    xfree(optrand);
+    xfree(mhash);
+    xfree(root);
+    return ec;
 }
 
 /**
  * Verifies a detached signature and message under a given public key.
  */
-int _gcry_sphincsplus_verify(const _gcry_sphincsplus_param_t *ctx, const uint8_t *sig, size_t siglen,
+int _gcry_sphincsplus_verify(_gcry_sphincsplus_param_t *ctx, const uint8_t *sig, size_t siglen,
                        const uint8_t *m, size_t mlen, const uint8_t *pk)
 {
+    gcry_err_code_t ec = 0;
     const unsigned char *pub_root = pk + ctx->n;
-    unsigned char mhash[ctx->FORS_msg_bytes];
-    unsigned char wots_pk[ctx->WOTS_bytes];
-    unsigned char root[ctx->n];
-    unsigned char leaf[ctx->n];
+    unsigned char *mhash = NULL;
+    unsigned char *wots_pk = NULL;
+    unsigned char *root = NULL;
+    unsigned char *leaf = NULL;
     unsigned int i;
     uint64_t tree;
     uint32_t idx_leaf;
@@ -142,7 +169,33 @@ int _gcry_sphincsplus_verify(const _gcry_sphincsplus_param_t *ctx, const uint8_t
     uint32_t wots_pk_addr[8] = {0};
 
     if (siglen != ctx->signature_bytes) {
-        return -1;
+        ec = GPG_ERR_BAD_SIGNATURE;
+        goto leave;
+    }
+
+    mhash = xtrymalloc_secure(ctx->FORS_msg_bytes);
+    if (!mhash)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+    wots_pk = xtrymalloc_secure(ctx->WOTS_bytes);
+    if (!wots_pk)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+    root = xtrymalloc_secure(ctx->n);
+    if (!root)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+    leaf = xtrymalloc_secure(ctx->n);
+    if (!leaf)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
     }
 
     memcpy(ctx->pub_seed, pk, ctx->n);
@@ -198,8 +251,14 @@ int _gcry_sphincsplus_verify(const _gcry_sphincsplus_param_t *ctx, const uint8_t
 
     /* Check if the root node equals the root node in the public key. */
     if (memcmp(root, pub_root, ctx->n)) {
-        return -1;
+        ec = GPG_ERR_BAD_SIGNATURE;
+        goto leave;
     }
 
-    return 0;
+leave:
+    xfree(mhash);
+    xfree(wots_pk);
+    xfree(root);
+    xfree(leaf);
+    return ec;
 }

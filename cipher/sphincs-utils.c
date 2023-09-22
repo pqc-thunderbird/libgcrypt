@@ -1,9 +1,13 @@
+#include "config.h"
+
 #include <string.h>
 
 #include "sphincs-utils.h"
 #include "sphincs-hash.h"
 #include "sphincs-thash.h"
 #include "sphincs-address.h"
+
+#include "g10lib.h"
 
 /**
  * Converts the value of 'in' to 'outlen' bytes in big-endian byte order.
@@ -46,13 +50,22 @@ unsigned long long _gcry_sphincsplus_bytes_to_ull(const unsigned char *in, unsig
  * Computes a root node given a leaf and an auth path.
  * Expects address to be complete other than the tree_height and tree_index.
  */
-void _gcry_sphincsplus_compute_root(unsigned char *root, const unsigned char *leaf,
+gcry_err_code_t _gcry_sphincsplus_compute_root(unsigned char *root, const unsigned char *leaf,
                   uint32_t leaf_idx, uint32_t idx_offset,
                   const unsigned char *auth_path, uint32_t tree_height,
                   const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 {
+    gcry_err_code_t ec = 0;
     uint32_t i;
-    unsigned char buffer[2 * ctx->n];
+    //unsigned char buffer[2 * ctx->n];
+    unsigned char *buffer = NULL;
+
+    buffer = xtrymalloc_secure(2 * ctx->n);
+    if (!buffer)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
     /* If leaf_idx is odd (last bit = 1), current path element is a right child
        and auth_path has to go left. Otherwise it is the other way around. */
@@ -91,6 +104,10 @@ void _gcry_sphincsplus_compute_root(unsigned char *root, const unsigned char *le
     _gcry_sphincsplus_set_tree_height(ctx, addr, tree_height);
     _gcry_sphincsplus_set_tree_index(ctx, addr, leaf_idx + idx_offset);
     _gcry_sphincsplus_thash(root, buffer, 2, ctx, addr);
+
+leave:
+    xfree(buffer);
+	return ec;
 }
 
 /**
