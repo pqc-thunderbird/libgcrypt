@@ -1,6 +1,6 @@
-/* kyber-cbd.h - centered binomial distribution functions for Kyber
+/* mlkem-cbd.h - centered binomial distribution functions for ML-KEM
  * Copyright (C) 2023 MTG AG
- * The code was created based on the reference implementation that is part of the Kyber NIST submission.
+ * The code was created based on the reference implementation that is part of the ML-KEM NIST submission.
  *
  * This file is part of Libgcrypt.
  *
@@ -18,21 +18,21 @@
  * License along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GCRYPT_KYBER_CBD_H
-#define GCRYPT_KYBER_CBD_H
+#ifndef GCRYPT_MLKEM_CBD_H
+#define GCRYPT_MLKEM_CBD_H
 
 #include <stdint.h>
-#include "kyber-params.h"
-#include "kyber-poly.h"
+#include "mlkem-params.h"
+#include "mlkem-poly.h"
 
 /**
- * buf has length KYBER_ETA1*GCRY_KYBER_N/4
+ * buf has length MLKEM_ETA1*GCRY_MLKEM_N/4
  */
-void _gcry_kyber_poly_cbd_eta1 (gcry_kyber_poly *r,
+void _gcry_mlkem_poly_cbd_eta1 (gcry_mlkem_poly *r,
                                 const uint8_t *buf,
-                                gcry_kyber_param_t const *param);
+                                gcry_mlkem_param_t const *param);
 
-void _gcry_kyber_poly_cbd_eta2 (
-    gcry_kyber_poly *r, const uint8_t buf[GCRY_KYBER_ETA2 * GCRY_KYBER_N / 4]);
+void _gcry_mlkem_poly_cbd_eta2 (
+    gcry_mlkem_poly *r, const uint8_t buf[GCRY_MLKEM_ETA2 * GCRY_MLKEM_N / 4]);
 
-#endif /* GCRYPT_KYBER_CBD_H */
+#endif /* GCRYPT_MLKEM_CBD_H */

@@ -1,6 +1,6 @@
-/* kyber-ntt.c - number-theoretic transform functions for Kyber
+/* mlkem-ntt.c - number-theoretic transform functions for ML-KEM
  * Copyright (C) 2023 MTG AG
- * The code was created based on the reference implementation that is part of the Kyber NIST submission.
+ * The code was created based on the reference implementation that is part of the ML-KEM NIST submission.
  *
  * This file is part of Libgcrypt.
  *
@@ -19,13 +19,13 @@
  */
 
 #include <stdint.h>
-#include "kyber-params.h"
-#include "kyber-ntt.h"
-#include "kyber-aux.h"
+#include "mlkem-params.h"
+#include "mlkem-ntt.h"
+#include "mlkem-aux.h"
 
 /* For reference: code to generate zetas and zetas_inv used in the number-theoretic transform:
 
-#define KYBER_ROOT_OF_UNITY 17
+#define MLKEM_ROOT_OF_UNITY 17
 
 static const uint8_t tree[128] = {
   0, 64, 32, 96, 16, 80, 48, 112, 8, 72, 40, 104, 24, 88, 56, 120,
@@ -44,14 +44,14 @@ void init_ntt() {
 
   tmp[0] = MONT;
   for(i=1;i<128;i++)
-    tmp[i] = fqmul(tmp[i-1],MONT*KYBER_ROOT_OF_UNITY % GCRY_KYBER_Q);
+    tmp[i] = fqmul(tmp[i-1],MONT*MLKEM_ROOT_OF_UNITY % GCRY_MLKEM_Q);
 
   for(i=0;i<128;i++) {
     zetas[i] = tmp[tree[i]];
-    if(zetas[i] > GCRY_KYBER_Q/2)
-      zetas[i] -= GCRY_KYBER_Q;
-    if(zetas[i] < -GCRY_KYBER_Q/2)
-      zetas[i] += GCRY_KYBER_Q;
+    if(zetas[i] > GCRY_MLKEM_Q/2)
+      zetas[i] -= GCRY_MLKEM_Q;
+    if(zetas[i] < -GCRY_MLKEM_Q/2)
+      zetas[i] += GCRY_MLKEM_Q;
   }
 }
 */
@@ -83,7 +83,7 @@ static const int16_t zetas[128] = {
 static int16_t
 fqmul (int16_t a, int16_t b)
 {
-  return _gcry_kyber_montgomery_reduce ((int32_t)a * b);
+  return _gcry_mlkem_montgomery_reduce ((int32_t)a * b);
 }
 
 /*************************************************
@@ -96,7 +96,7 @@ fqmul (int16_t a, int16_t b)
  *Zq
  **************************************************/
 void
-_gcry_kyber_ntt (int16_t r[256])
+_gcry_mlkem_ntt (int16_t r[256])
 {
   unsigned int len, start, j, k;
   int16_t t, zeta;
@@ -127,7 +127,7 @@ _gcry_kyber_ntt (int16_t r[256])
  * Arguments:   - int16_t r[256]: pointer to input/output vector of elements of Zq
  **************************************************/
 void
-_gcry_kyber_invntt (int16_t r[256])
+_gcry_mlkem_invntt (int16_t r[256])
 {
   unsigned int start, len, j, k;
   int16_t t, zeta;
@@ -142,7 +142,7 @@ _gcry_kyber_invntt (int16_t r[256])
           for (j = start; j < start + len; j++)
             {
               t          = r[j];
-              r[j]       = _gcry_kyber_barrett_reduce (t + r[j + len]);
+              r[j]       = _gcry_mlkem_barrett_reduce (t + r[j + len]);
               r[j + len] = r[j + len] - t;
               r[j + len] = fqmul (zeta, r[j + len]);
             }
@@ -166,7 +166,7 @@ _gcry_kyber_invntt (int16_t r[256])
  *              - int sign: sign to apply to the zeta value
  **************************************************/
 void
-_gcry_kyber_basemul (int16_t r[2],
+_gcry_mlkem_basemul (int16_t r[2],
                      const int16_t a[2],
                      const int16_t b[2],
                      int zeta_offs,

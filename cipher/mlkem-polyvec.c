@@ -1,6 +1,6 @@
-/* kyber-polyvec.c - functions related to vectors of polynomials for Kyber
+/* mlkem-polyvec.c - functions related to vectors of polynomials for ML-KEM
  * Copyright (C) 2023 MTG AG
- * The code was created based on the reference implementation that is part of the Kyber NIST submission.
+ * The code was created based on the reference implementation that is part of the ML-KEM NIST submission.
  *
  * This file is part of Libgcrypt.
  *
@@ -19,13 +19,13 @@
  */
 
 #include <stdint.h>
-#include "kyber-params.h"
-#include "kyber-poly.h"
-#include "kyber-polyvec.h"
+#include "mlkem-params.h"
+#include "mlkem-poly.h"
+#include "mlkem-polyvec.h"
 
 gcry_error_t
-_gcry_kyber_polymatrix_create (gcry_kyber_polyvec **polymat,
-                               gcry_kyber_param_t const *param)
+_gcry_mlkem_polymatrix_create (gcry_mlkem_polyvec **polymat,
+                               gcry_mlkem_param_t const *param)
 {
   gcry_error_t ec = 0;
   unsigned i;
@@ -39,7 +39,7 @@ _gcry_kyber_polymatrix_create (gcry_kyber_polyvec **polymat,
 
   for (i = 0; i < param->k; i++)
     {
-      ec = _gcry_kyber_polyvec_create (&(*polymat)[i], param);
+      ec = _gcry_mlkem_polyvec_create (&(*polymat)[i], param);
       if (ec)
         {
           goto leave;
@@ -51,8 +51,8 @@ leave:
 
 
 void
-_gcry_kyber_polymatrix_destroy (gcry_kyber_polyvec **polymat,
-                                gcry_kyber_param_t const *param)
+_gcry_mlkem_polymatrix_destroy (gcry_mlkem_polyvec **polymat,
+                                gcry_mlkem_param_t const *param)
 {
   unsigned i;
   if (polymat == NULL)
@@ -61,15 +61,15 @@ _gcry_kyber_polymatrix_destroy (gcry_kyber_polyvec **polymat,
     }
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_polyvec_destroy (&(*polymat)[i]);
+      _gcry_mlkem_polyvec_destroy (&(*polymat)[i]);
     }
   xfree (*polymat);
   *polymat = NULL;
 }
 
 gcry_error_t
-_gcry_kyber_polyvec_create (gcry_kyber_polyvec *polyvec,
-                            gcry_kyber_param_t const *param)
+_gcry_mlkem_polyvec_create (gcry_mlkem_polyvec *polyvec,
+                            gcry_mlkem_param_t const *param)
 {
   if (!(polyvec->vec = xtrymalloc_secure (sizeof (*polyvec->vec) * param->k)))
     {
@@ -79,42 +79,42 @@ _gcry_kyber_polyvec_create (gcry_kyber_polyvec *polyvec,
 }
 
 void
-_gcry_kyber_polyvec_destroy (gcry_kyber_polyvec *polyvec)
+_gcry_mlkem_polyvec_destroy (gcry_mlkem_polyvec *polyvec)
 {
   xfree (polyvec->vec);
 }
 
 /*************************************************
- * Name:        gcry_kyber_polyvec_compress
+ * Name:        gcry_mlkem_polyvec_compress
  *
  * Description: Compress and serialize vector of polynomials
  *
  * Arguments:   - uint8_t *r: pointer to output byte array
- *                            (needs space for KYBER_POLYVECCOMPRESSEDBYTES)
- *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials
- *              - gcry_kyber_param_t const *param: kyber parameters
+ *                            (needs space for MLKEM_POLYVECCOMPRESSEDBYTES)
+ *              - const gcry_mlkem_polyvec *a: pointer to input vector of polynomials
+ *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_compress (uint8_t *r,
-                              const gcry_kyber_polyvec *a,
-                              gcry_kyber_param_t const *param)
+_gcry_mlkem_polyvec_compress (uint8_t *r,
+                              const gcry_mlkem_polyvec *a,
+                              gcry_mlkem_param_t const *param)
 {
   unsigned int i, j, k;
   switch (param->id)
     {
-    case GCRY_KYBER_1024:
+    case GCRY_MLKEM_1024:
       {
         uint16_t t[8];
         for (i = 0; i < param->k; i++)
           {
-            for (j = 0; j < GCRY_KYBER_N / 8; j++)
+            for (j = 0; j < GCRY_MLKEM_N / 8; j++)
               {
                 for (k = 0; k < 8; k++)
                   {
                     t[k] = a->vec[i].coeffs[8 * j + k];
-                    t[k] += ((int16_t)t[k] >> 15) & GCRY_KYBER_Q;
-                    t[k] = ((((uint32_t)t[k] << 11) + GCRY_KYBER_Q / 2)
-                            / GCRY_KYBER_Q)
+                    t[k] += ((int16_t)t[k] >> 15) & GCRY_MLKEM_Q;
+                    t[k] = ((((uint32_t)t[k] << 11) + GCRY_MLKEM_Q / 2)
+                            / GCRY_MLKEM_Q)
                            & 0x7ff;
                   }
 
@@ -134,21 +134,21 @@ _gcry_kyber_polyvec_compress (uint8_t *r,
           }
         break;
       }
-    case GCRY_KYBER_512:
-    case GCRY_KYBER_768:
+    case GCRY_MLKEM_512:
+    case GCRY_MLKEM_768:
       {
 
         uint16_t t[4];
         for (i = 0; i < param->k; i++)
           {
-            for (j = 0; j < GCRY_KYBER_N / 4; j++)
+            for (j = 0; j < GCRY_MLKEM_N / 4; j++)
               {
                 for (k = 0; k < 4; k++)
                   {
                     t[k] = a->vec[i].coeffs[4 * j + k];
-                    t[k] += ((int16_t)t[k] >> 15) & GCRY_KYBER_Q;
-                    t[k] = ((((uint32_t)t[k] << 10) + GCRY_KYBER_Q / 2)
-                            / GCRY_KYBER_Q)
+                    t[k] += ((int16_t)t[k] >> 15) & GCRY_MLKEM_Q;
+                    t[k] = ((((uint32_t)t[k] << 10) + GCRY_MLKEM_Q / 2)
+                            / GCRY_MLKEM_Q)
                            & 0x3ff;
                   }
 
@@ -166,31 +166,31 @@ _gcry_kyber_polyvec_compress (uint8_t *r,
 }
 
 /*************************************************
- * Name:        gcry_kyber_polyvec_decompress
+ * Name:        gcry_mlkem_polyvec_decompress
  *
  * Description: De-serialize and decompress vector of polynomials;
- *              approximate inverse of gcry_kyber_polyvec_compress
+ *              approximate inverse of gcry_mlkem_polyvec_compress
  *
- * Arguments:   - gcry_kyber_polyvec *r:       pointer to output vector of
+ * Arguments:   - gcry_mlkem_polyvec *r:       pointer to output vector of
  *polynomials
  *              - const uint8_t *a: pointer to input byte array
- *                                  (of length KYBER_POLYVECCOMPRESSEDBYTES)
- *              - gcry_kyber_param_t const *param: kyber parameters
+ *                                  (of length MLKEM_POLYVECCOMPRESSEDBYTES)
+ *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_decompress (gcry_kyber_polyvec *r,
+_gcry_mlkem_polyvec_decompress (gcry_mlkem_polyvec *r,
                                 const uint8_t *a,
-                                gcry_kyber_param_t const *param)
+                                gcry_mlkem_param_t const *param)
 {
   unsigned int i, j, k;
   switch (param->id)
     {
-    case GCRY_KYBER_1024:
+    case GCRY_MLKEM_1024:
       {
         uint16_t t[8];
         for (i = 0; i < param->k; i++)
           {
-            for (j = 0; j < GCRY_KYBER_N / 8; j++)
+            for (j = 0; j < GCRY_MLKEM_N / 8; j++)
               {
                 t[0] = (a[0] >> 0) | ((uint16_t)a[1] << 8);
                 t[1] = (a[1] >> 3) | ((uint16_t)a[2] << 5);
@@ -206,18 +206,18 @@ _gcry_kyber_polyvec_decompress (gcry_kyber_polyvec *r,
 
                 for (k = 0; k < 8; k++)
                   r->vec[i].coeffs[8 * j + k]
-                      = ((uint32_t)(t[k] & 0x7FF) * GCRY_KYBER_Q + 1024) >> 11;
+                      = ((uint32_t)(t[k] & 0x7FF) * GCRY_MLKEM_Q + 1024) >> 11;
               }
           }
         break;
       }
-    case GCRY_KYBER_768:
-    case GCRY_KYBER_512:
+    case GCRY_MLKEM_768:
+    case GCRY_MLKEM_512:
       {
         uint16_t t[4];
         for (i = 0; i < param->k; i++)
           {
-            for (j = 0; j < GCRY_KYBER_N / 4; j++)
+            for (j = 0; j < GCRY_MLKEM_N / 4; j++)
               {
                 t[0] = (a[0] >> 0) | ((uint16_t)a[1] << 8);
                 t[1] = (a[1] >> 2) | ((uint16_t)a[2] << 6);
@@ -228,7 +228,7 @@ _gcry_kyber_polyvec_decompress (gcry_kyber_polyvec *r,
                 for (k = 0; k < 4; k++)
                   {
                     r->vec[i].coeffs[4 * j + k]
-                        = ((uint32_t)(t[k] & 0x3FF) * GCRY_KYBER_Q + 512)
+                        = ((uint32_t)(t[k] & 0x3FF) * GCRY_MLKEM_Q + 512)
                           >> 10;
                   }
               }
@@ -239,109 +239,109 @@ _gcry_kyber_polyvec_decompress (gcry_kyber_polyvec *r,
 }
 
 /*************************************************
- * Name:        gcry_kyber_polyvec_tobytes
+ * Name:        gcry_mlkem_polyvec_tobytes
  *
  * Description: Serialize vector of polynomials
  *
  * Arguments:   - uint8_t *r: pointer to output byte array
- *                            (needs space for GCRY_KYBER_POLYVECBYTES)
- *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials
- *              - gcry_kyber_param_t const *param: kyber parameters
+ *                            (needs space for GCRY_MLKEM_POLYVECBYTES)
+ *              - const gcry_mlkem_polyvec *a: pointer to input vector of polynomials
+ *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_tobytes (uint8_t *r,
-                             const gcry_kyber_polyvec *a,
-                             gcry_kyber_param_t const *param)
+_gcry_mlkem_polyvec_tobytes (uint8_t *r,
+                             const gcry_mlkem_polyvec *a,
+                             gcry_mlkem_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_tobytes (r + i * GCRY_KYBER_POLYBYTES, &a->vec[i]);
+      _gcry_mlkem_poly_tobytes (r + i * GCRY_MLKEM_POLYBYTES, &a->vec[i]);
     }
 }
 
 /*************************************************
- * Name:        gcry_kyber_polyvec_frombytes
+ * Name:        gcry_mlkem_polyvec_frombytes
  *
  * Description: De-serialize vector of polynomials;
- *              inverse of gcry_kyber_polyvec_tobytes
+ *              inverse of gcry_mlkem_polyvec_tobytes
  *
  * Arguments:   - uint8_t *r:       pointer to output byte array
- *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials (of length GCRY_KYBER_POLYVECBYTES)
- *              - gcry_kyber_param_t const *param: kyber parameters
+ *              - const gcry_mlkem_polyvec *a: pointer to input vector of polynomials (of length GCRY_MLKEM_POLYVECBYTES)
+ *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_frombytes (gcry_kyber_polyvec *r,
+_gcry_mlkem_polyvec_frombytes (gcry_mlkem_polyvec *r,
                                const uint8_t *a,
-                               gcry_kyber_param_t const *param)
+                               gcry_mlkem_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_frombytes (&r->vec[i], a + i * GCRY_KYBER_POLYBYTES);
+      _gcry_mlkem_poly_frombytes (&r->vec[i], a + i * GCRY_MLKEM_POLYBYTES);
     }
 }
 
 /*************************************************
- * Name:        gcry_kyber_polyvec_ntt
+ * Name:        gcry_mlkem_polyvec_ntt
  *
  * Description: Apply forward NTT to all elements of a vector of polynomials
  *
- * Arguments:   - gcry_kyber_polyvec *r: pointer to in/output vector of polynomials
- *              - gcry_kyber_param_t const *param: kyber parameters
+ * Arguments:   - gcry_mlkem_polyvec *r: pointer to in/output vector of polynomials
+ *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_ntt (gcry_kyber_polyvec *r,
-                         gcry_kyber_param_t const *param)
+_gcry_mlkem_polyvec_ntt (gcry_mlkem_polyvec *r,
+                         gcry_mlkem_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_ntt (&r->vec[i]);
+      _gcry_mlkem_poly_ntt (&r->vec[i]);
     }
 }
 
 /*************************************************
- * Name:        gcry_kyber_polyvec_invntt_tomont
+ * Name:        gcry_mlkem_polyvec_invntt_tomont
  *
  * Description: Apply inverse NTT to all elements of a vector of polynomials
  *              and multiply by Montgomery factor 2^16
  *
- * Arguments:   - gcry_kyber_polyvec *r: pointer to in/output vector of polynomials
- *              - gcry_kyber_param_t const *param: kyber parameters
+ * Arguments:   - gcry_mlkem_polyvec *r: pointer to in/output vector of polynomials
+ *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_invntt_tomont (gcry_kyber_polyvec *r,
-                                   gcry_kyber_param_t const *param)
+_gcry_mlkem_polyvec_invntt_tomont (gcry_mlkem_polyvec *r,
+                                   gcry_mlkem_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_invntt_tomont (&r->vec[i]);
+      _gcry_mlkem_poly_invntt_tomont (&r->vec[i]);
     }
 }
 
 /*************************************************
- * Name:        gcry_kyber_polyvec_basemul_acc_montgomery
+ * Name:        gcry_mlkem_polyvec_basemul_acc_montgomery
  *
  * Description: Multiply elements of a and b in NTT domain, accumulate into r,
  *              and multiply by 2^-16.
  *
  * Arguments: - poly *r: pointer to output polynomial
- *            - const gcry_kyber_polyvec *a: pointer to first input vector of polynomials
- *            - const gcry_kyber_polyvec *b: pointer to second input vector of polynomials
- *            - gcry_kyber_param_t const *param: kyber parameters
+ *            - const gcry_mlkem_polyvec *a: pointer to first input vector of polynomials
+ *            - const gcry_mlkem_polyvec *b: pointer to second input vector of polynomials
+ *            - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 gcry_err_code_t
-_gcry_kyber_polyvec_basemul_acc_montgomery (gcry_kyber_poly *r,
-                                            const gcry_kyber_polyvec *a,
-                                            const gcry_kyber_polyvec *b,
-                                            gcry_kyber_param_t const *param)
+_gcry_mlkem_polyvec_basemul_acc_montgomery (gcry_mlkem_poly *r,
+                                            const gcry_mlkem_polyvec *a,
+                                            const gcry_mlkem_polyvec *b,
+                                            gcry_mlkem_param_t const *param)
 {
   gcry_err_code_t ec = 0;
   unsigned int i;
-  gcry_kyber_poly *t = NULL;
-  t                  = (gcry_kyber_poly *)xtrymalloc_secure (sizeof (*t));
+  gcry_mlkem_poly *t = NULL;
+  t                  = (gcry_mlkem_poly *)xtrymalloc_secure (sizeof (*t));
   if (!t)
     {
       ec = gpg_err_code_from_syserror ();
@@ -349,59 +349,59 @@ _gcry_kyber_polyvec_basemul_acc_montgomery (gcry_kyber_poly *r,
     }
 
 
-  _gcry_kyber_poly_basemul_montgomery (r, &a->vec[0], &b->vec[0]);
+  _gcry_mlkem_poly_basemul_montgomery (r, &a->vec[0], &b->vec[0]);
   for (i = 1; i < param->k; i++)
     {
-      _gcry_kyber_poly_basemul_montgomery (t, &a->vec[i], &b->vec[i]);
-      _gcry_kyber_poly_add (r, r, t);
+      _gcry_mlkem_poly_basemul_montgomery (t, &a->vec[i], &b->vec[i]);
+      _gcry_mlkem_poly_add (r, r, t);
     }
 
-  _gcry_kyber_poly_reduce (r);
+  _gcry_mlkem_poly_reduce (r);
 leave:
   xfree (t);
   return ec;
 }
 
 /*************************************************
- * Name:        gcry_kyber_polyvec_reduce
+ * Name:        gcry_mlkem_polyvec_reduce
  *
  * Description: Applies Barrett reduction to each coefficient
  *              of each element of a vector of polynomials;
  *              for details of the Barrett reduction see comments in reduce.c
  *
- * Arguments:   - gcry_kyber_polyvec *r: pointer to input/output polynomial
- *              - gcry_kyber_param_t const *param: kyber parameters
+ * Arguments:   - gcry_mlkem_polyvec *r: pointer to input/output polynomial
+ *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_reduce (gcry_kyber_polyvec *r,
-                            gcry_kyber_param_t const *param)
+_gcry_mlkem_polyvec_reduce (gcry_mlkem_polyvec *r,
+                            gcry_mlkem_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_reduce (&r->vec[i]);
+      _gcry_mlkem_poly_reduce (&r->vec[i]);
     }
 }
 
 /*************************************************
- * Name:        gcry_kyber_polyvec_add
+ * Name:        gcry_mlkem_polyvec_add
  *
  * Description: Add vectors of polynomials
  *
- * Arguments: - gcry_kyber_polyvec *r: pointer to output vector of polynomials
- *            - const gcry_kyber_polyvec *a: pointer to first input vector of polynomials
- *            - const gcry_kyber_polyvec *b: pointer to second input vector of polynomials
- *            - gcry_kyber_param_t const *param: kyber parameters
+ * Arguments: - gcry_mlkem_polyvec *r: pointer to output vector of polynomials
+ *            - const gcry_mlkem_polyvec *a: pointer to first input vector of polynomials
+ *            - const gcry_mlkem_polyvec *b: pointer to second input vector of polynomials
+ *            - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_add (gcry_kyber_polyvec *r,
-                         const gcry_kyber_polyvec *a,
-                         const gcry_kyber_polyvec *b,
-                         gcry_kyber_param_t const *param)
+_gcry_mlkem_polyvec_add (gcry_mlkem_polyvec *r,
+                         const gcry_mlkem_polyvec *a,
+                         const gcry_mlkem_polyvec *b,
+                         gcry_mlkem_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_add (&r->vec[i], &a->vec[i], &b->vec[i]);
+      _gcry_mlkem_poly_add (&r->vec[i], &a->vec[i], &b->vec[i]);
     }
 }

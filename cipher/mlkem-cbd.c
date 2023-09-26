@@ -1,6 +1,6 @@
-/* kyber-cbd.c - centered binomial distribution functions for Kyber
+/* mlkem-cbd.c - centered binomial distribution functions for ML-KEM
  * Copyright (C) 2023 MTG AG
- * The code was created based on the reference implementation that is part of the Kyber NIST submission.
+ * The code was created based on the reference implementation that is part of the ML-KEM NIST submission.
  *
  * This file is part of Libgcrypt.
  *
@@ -19,8 +19,8 @@
  */
 
 #include <stdint.h>
-#include "kyber-params.h"
-#include "kyber-cbd.h"
+#include "mlkem-params.h"
+#include "mlkem-cbd.h"
 
 /*************************************************
  * Name:        load32_littleendian
@@ -48,7 +48,7 @@ load32_littleendian (const uint8_t x[4])
  *
  * Description: load 3 bytes into a 32-bit integer
  *              in little-endian order.
- *              This function is only needed for Kyber-512
+ *              This function is only needed for ML-KEM-512
  *
  * Arguments:   - const uint8_t *x: pointer to input byte array
  *
@@ -72,17 +72,17 @@ load24_littleendian (const uint8_t x[3])
  *              polynomial with coefficients distributed according to
  *              a centered binomial distribution with parameter eta=2
  *
- * Arguments:   - gcry_kyber_poly *r: pointer to output polynomial
+ * Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
  *              - const uint8_t *buf: pointer to input byte array
  **************************************************/
 static void
-cbd2 (gcry_kyber_poly *r, const uint8_t buf[2 * GCRY_KYBER_N / 4])
+cbd2 (gcry_mlkem_poly *r, const uint8_t buf[2 * GCRY_MLKEM_N / 4])
 {
   unsigned int i, j;
   uint32_t t, d;
   int16_t a, b;
 
-  for (i = 0; i < GCRY_KYBER_N / 8; i++)
+  for (i = 0; i < GCRY_MLKEM_N / 8; i++)
     {
       t = load32_littleendian (buf + 4 * i);
       d = t & 0x55555555;
@@ -103,19 +103,19 @@ cbd2 (gcry_kyber_poly *r, const uint8_t buf[2 * GCRY_KYBER_N / 4])
  * Description: Given an array of uniformly random bytes, compute
  *              polynomial with coefficients distributed according to
  *              a centered binomial distribution with parameter eta=3.
- *              This function is only needed for Kyber-512
+ *              This function is only needed for ML-KEM-512
  *
- * Arguments:   - gcry_kyber_poly *r: pointer to output polynomial
+ * Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
  *              - const uint8_t *buf: pointer to input byte array
  **************************************************/
 static void
-cbd3 (gcry_kyber_poly *r, const uint8_t buf[3 * GCRY_KYBER_N / 4])
+cbd3 (gcry_mlkem_poly *r, const uint8_t buf[3 * GCRY_MLKEM_N / 4])
 {
   unsigned int i, j;
   uint32_t t, d;
   int16_t a, b;
 
-  for (i = 0; i < GCRY_KYBER_N / 4; i++)
+  for (i = 0; i < GCRY_MLKEM_N / 4; i++)
     {
       t = load24_littleendian (buf + 3 * i);
       d = t & 0x00249249;
@@ -132,9 +132,9 @@ cbd3 (gcry_kyber_poly *r, const uint8_t buf[3 * GCRY_KYBER_N / 4])
 }
 
 void
-_gcry_kyber_poly_cbd_eta1 (gcry_kyber_poly *r,
+_gcry_mlkem_poly_cbd_eta1 (gcry_mlkem_poly *r,
                            const uint8_t *buf,
-                           gcry_kyber_param_t const *param)
+                           gcry_mlkem_param_t const *param)
 {
   if (param->eta1 == 2)
     {
@@ -147,8 +147,8 @@ _gcry_kyber_poly_cbd_eta1 (gcry_kyber_poly *r,
 }
 
 void
-_gcry_kyber_poly_cbd_eta2 (
-    gcry_kyber_poly *r, const uint8_t buf[GCRY_KYBER_ETA2 * GCRY_KYBER_N / 4])
+_gcry_mlkem_poly_cbd_eta2 (
+    gcry_mlkem_poly *r, const uint8_t buf[GCRY_MLKEM_ETA2 * GCRY_MLKEM_N / 4])
 {
   cbd2 (r, buf);
 }

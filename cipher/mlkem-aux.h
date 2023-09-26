@@ -1,6 +1,6 @@
-/* kyber-aux.h - Auxiliary functions for Kyber
+/* mlkem-aux.h - Auxiliary functions for ML-KEM
  * Copyright (C) 2023 MTG AG
- * The code was created based on the reference implementation that is part of the Kyber NIST submission.
+ * The code was created based on the reference implementation that is part of the ML-KEM NIST submission.
  *
  * This file is part of Libgcrypt.
  *
@@ -18,17 +18,17 @@
  * License along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GCRYPT_KYBER_AUX_H
-#define GCRYPT_KYBER_AUX_H
+#ifndef GCRYPT_MLKEM_AUX_H
+#define GCRYPT_MLKEM_AUX_H
 
 #include <stddef.h>
 #include <stdint.h>
-#include "kyber-params.h"
+#include "mlkem-params.h"
 
-int16_t _gcry_kyber_montgomery_reduce (int32_t a);
+int16_t _gcry_mlkem_montgomery_reduce (int32_t a);
 
-int16_t _gcry_kyber_barrett_reduce (int16_t a);
+int16_t _gcry_mlkem_barrett_reduce (int16_t a);
 
 typedef void *(*try_alloc_func_t) (size_t);
 
-#endif /* GCRYPT_KYBER_AUX_H */
+#endif /* GCRYPT_MLKEM_AUX_H */

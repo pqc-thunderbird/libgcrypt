@@ -1,6 +1,6 @@
-/* kyber-aux.c - Auxiliary functions for Kyber
+/* mlkem-aux.c - Auxiliary functions for ML-KEM
  * Copyright (C) 2023 MTG AG
- * The code was created based on the reference implementation that is part of the Kyber NIST submission.
+ * The code was created based on the reference implementation that is part of the ML-KEM NIST submission.
  *
  * This file is part of Libgcrypt.
  *
@@ -20,8 +20,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "kyber-aux.h"
-#include "kyber-params.h"
+#include "mlkem-aux.h"
+#include "mlkem-params.h"
 
 
 #define MONT -1044 // 2^16 mod q
@@ -29,7 +29,7 @@
 
 
 /*************************************************
- * Name:        _gcry_kyber_montgomery_reduce
+ * Name:        _gcry_mlkem_montgomery_reduce
  *
  * Description: Montgomery reduction; given a 32-bit integer a, computes
  *              16-bit integer congruent to a * R^-1 mod q, where R=2^16
@@ -40,12 +40,12 @@
  * Returns:     integer in {-q+1,...,q-1} congruent to a * R^-1 modulo q.
  **************************************************/
 int16_t
-_gcry_kyber_montgomery_reduce (int32_t a)
+_gcry_mlkem_montgomery_reduce (int32_t a)
 {
   int16_t t;
 
   t = (int16_t)a * QINV;
-  t = (a - (int32_t)t * GCRY_KYBER_Q) >> 16;
+  t = (a - (int32_t)t * GCRY_MLKEM_Q) >> 16;
   return t;
 }
 
@@ -61,12 +61,12 @@ _gcry_kyber_montgomery_reduce (int32_t a)
  * Returns:     integer in {-(q-1)/2,...,(q-1)/2} congruent to a modulo q.
  **************************************************/
 int16_t
-_gcry_kyber_barrett_reduce (int16_t a)
+_gcry_mlkem_barrett_reduce (int16_t a)
 {
   int16_t t;
-  const int16_t v = ((1 << 26) + GCRY_KYBER_Q / 2) / GCRY_KYBER_Q;
+  const int16_t v = ((1 << 26) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q;
 
   t = ((int32_t)v * a + (1 << 25)) >> 26;
-  t *= GCRY_KYBER_Q;
+  t *= GCRY_MLKEM_Q;
   return a - t;
 }

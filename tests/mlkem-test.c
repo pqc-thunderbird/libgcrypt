@@ -1,4 +1,5 @@
-/* kyber-test.c - Test the Crystals-Kyber KEM algorithm
+/* mlkem-test.c - Test for the ML-KEM algorithm (Crystals-Kyber)
+ * Copyright (C) 2023 MTG AG
  * Copyright (C) 2011 Free Software Foundation, Inc.
  *
  * This file is part of Libgcrypt.
@@ -36,11 +37,11 @@
 #endif
 
 
-#define PGM "kyber-test"
+#define PGM "mlkem-test"
 #include "t-common.h"
 #define N_GEN_ENC_DEC_TESTS 250
 // #define N_GEN_ENC_DEC_TESTS 3 // two tests running, starting from 3 with
-// newly added call to kyber_check_secret_key it fails.
+// newly added call to mlkem_check_secret_key it fails.
 
 // test-utils.h must be included after t-common.h
 #include "test-utils.h"
@@ -59,11 +60,11 @@ static void test_hex_decoding(void)
           = fill_bin_buf_from_hex_line(&bin_len, '=', hex_arr[i], 0);
       if (bin_len != sizeof(exp_result) || memcmp(exp_result, buffer, bin_len))
         {
-          fail("error with kyber hex decoding test");
+          fail("error with mlkem hex decoding test");
         }
       xfree(buffer);
     }
-  info("success: kyber hex decoding test\n");
+  info("success: mlkem hex decoding test\n");
 }
 
 typedef struct
@@ -92,7 +93,7 @@ show_sexp (const char *prefix, gcry_sexp_t a)
 }
 #endif
 
-static int check_kyber_gen_enc_dec(unsigned kyber_bits,
+static int check_mlkem_gen_enc_dec(unsigned mlkem_bits,
                                    int do_print_secmem_peak_usages)
 {
 
@@ -104,15 +105,15 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
   int rc;
 
   if (verbose > 1)
-    info("creating Kyber %u key\n", kyber_bits);
+    info("creating ML-KEM %u key\n", mlkem_bits);
 
   rc = gcry_sexp_build(&keyparm,
                        NULL,
                        "(genkey\n"
-                       " (kyber\n"
+                       " (mlkem\n"
                        "  (nbits%u)\n"
                        " ))",
-                       kyber_bits,
+                       mlkem_bits,
                        NULL);
   if (rc)
     die("error creating S-expression: %s\n", gpg_strerror(rc));
@@ -129,12 +130,12 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
   rc = gcry_pk_genkey(&key, keyparm);
   if(do_print_secmem_peak_usages)
   {
-      printf("\nsecmem stats for kyber %u key generation:\n", kyber_bits);
+      printf("\nsecmem stats for mlkem %u key generation:\n", mlkem_bits);
       gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
   }
 
   if (rc)
-    die("error generating Kyber key: %s\n", gpg_strerror(rc));
+    die("error generating ML-KEM key: %s\n", gpg_strerror(rc));
 
 
   pkey = gcry_sexp_find_token(key, "public-key", 0);
@@ -160,7 +161,7 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
 
   if(do_print_secmem_peak_usages)
   {
-      printf("secmem stats for kyber %u encapsulation:\n", kyber_bits);
+      printf("secmem stats for mlkem %u encapsulation:\n", mlkem_bits);
       gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
   }
   if(do_print_secmem_peak_usages)
@@ -170,7 +171,7 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
   rc = gcry_pk_decrypt(&shared_secret2, ct, skey);
   if(do_print_secmem_peak_usages)
   {
-      printf("secmem stats for kyber %u decapsulation:\n", kyber_bits);
+      printf("secmem stats for mlkem %u decapsulation:\n", mlkem_bits);
       gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
   }
   if (rc)
@@ -207,7 +208,7 @@ static int check_kyber_gen_enc_dec(unsigned kyber_bits,
   if (gcry_mpi_cmp(ss, ss2))
     {
       printf("decryption result incorrect\n");
-      die("check_kyber_gen_enc_dec test: error with decryption result\n");
+      die("check_mlkem_gen_enc_dec test: error with decryption result\n");
     }
   gcry_mpi_release(ss);
   gcry_mpi_release(ss2);
@@ -229,7 +230,7 @@ leave:
       gcry_control(GCRYCTL_DUMP_SECMEM_STATS);
   }
 }
-static void check_kyber_kat(const char *fname, unsigned kyber_bits)
+static void check_mlkem_kat(const char *fname, unsigned mlkem_bits)
 {
   const size_t nb_kat_tests = 0; /* zero means all */
   FILE *fp;
@@ -270,7 +271,7 @@ static void check_kyber_kat(const char *fname, unsigned kyber_bits)
               shared_secret_sx = NULL;
 
 
-  info("Checking Kyber KAT.\n");
+  info("Checking ML-KEM KAT.\n");
 
   fp = fopen(fname, "r");
   if (!fp)
@@ -305,7 +306,7 @@ static void check_kyber_kat(const char *fname, unsigned kyber_bits)
             {
               continue;
             }
-          /* may not fail here because kyber test vectors as generated
+          /* may not fail here because mlkem test vectors as generated
             by reference implementation contain random seeds without prefix */
         }
 
@@ -322,10 +323,10 @@ static void check_kyber_kat(const char *fname, unsigned kyber_bits)
       test_count++;
       err = gcry_sexp_build(&private_key_sx,
                             NULL,
-                            "(private-key (kyber (s %b) (nbits%u) ))",
+                            "(private-key (mlkem (s %b) (nbits%u) ))",
                             (int)test_vec[privat_key_idx].result_buf_len,
                             test_vec[privat_key_idx].result_buf,
-                            kyber_bits,
+                            mlkem_bits,
                             NULL);
       if (err)
         {
@@ -361,7 +362,7 @@ static void check_kyber_kat(const char *fname, unsigned kyber_bits)
 
       err = gcry_sexp_build(&ciphertext_sx,
                             NULL,
-                            "(ciphertext (kyber(c %b)))",
+                            "(ciphertext (mlkem(c %b)))",
                             (int)test_vec[ciphertext_idx].result_buf_len,
                             test_vec[ciphertext_idx].result_buf);
       if (err)
@@ -460,7 +461,7 @@ int main(int argc, char **argv)
   char *fname   = NULL;
   unsigned i;
   int run_kat_tests      = 1;
-  unsigned kyber_bits[3] = {128, 192, 256};
+  unsigned mlkem_bits[3] = {128, 192, 256};
   if (argc)
     {
       argc--;
@@ -529,9 +530,9 @@ int main(int argc, char **argv)
   printf("starting generate/encrypt/decrypt test\n");
   for (i = 0; i < N_GEN_ENC_DEC_TESTS; i++)
     {
-      if (check_kyber_gen_enc_dec(kyber_bits[i % 3], (i < 3) && verbose))
+      if (check_mlkem_gen_enc_dec(mlkem_bits[i % 3], (i < 3) && verbose))
         {
-          fail("check_kyber_gen_enc_dec() yielded an error, aborting");
+          fail("check_mlkem_gen_enc_dec() yielded an error, aborting");
         }
       printf(".");
     }
@@ -543,14 +544,14 @@ int main(int argc, char **argv)
     }
   if (!fname)
     {
-      const char *kyber_kat_files[]
-          = {"kyber512_ref.inp", "kyber768_ref.inp", "kyber1024_ref.inp"};
+      const char *mlkem_kat_files[]
+          = {"mlkem-512_ref.inp", "mlkem-768_ref.inp", "mlkem-1024_ref.inp"};
 
-      for (i = 0; i < sizeof(kyber_kat_files) / sizeof(kyber_kat_files[0]);
+      for (i = 0; i < sizeof(mlkem_kat_files) / sizeof(mlkem_kat_files[0]);
            i++)
         {
-          printf("starting KAT tests for Kyber with bit strength %u ", kyber_bits[i]);
-          check_kyber_kat(kyber_kat_files[i], kyber_bits[i]);
+          printf("starting KAT tests for ML-KEM with bit strength %u ", mlkem_bits[i]);
+          check_mlkem_kat(mlkem_kat_files[i], mlkem_bits[i]);
           printf("\n");
         }
     }
