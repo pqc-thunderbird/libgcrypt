@@ -13,7 +13,7 @@
  * Returns 32-bit unsigned integer loaded from x
  **************************************************/
 static uint32_t
-load32_littleendian(const uint8_t x[4])
+load32_littleendian (const uint8_t x[4])
 {
   uint32_t r;
   r = (uint32_t)x[0];
@@ -35,7 +35,7 @@ load32_littleendian(const uint8_t x[4])
  * Returns 32-bit unsigned integer loaded from x (most significant byte is zero)
  **************************************************/
 static uint32_t
-load24_littleendian(const uint8_t x[3])
+load24_littleendian (const uint8_t x[3])
 {
   uint32_t r;
   r = (uint32_t)x[0];
@@ -56,7 +56,7 @@ load24_littleendian(const uint8_t x[3])
  *              - const uint8_t *buf: pointer to input byte array
  **************************************************/
 static void
-cbd2(gcry_kyber_poly *r, const uint8_t buf[2 * GCRY_KYBER_N / 4])
+cbd2 (gcry_kyber_poly *r, const uint8_t buf[2 * GCRY_KYBER_N / 4])
 {
   unsigned int i, j;
   uint32_t t, d;
@@ -64,7 +64,7 @@ cbd2(gcry_kyber_poly *r, const uint8_t buf[2 * GCRY_KYBER_N / 4])
 
   for (i = 0; i < GCRY_KYBER_N / 8; i++)
     {
-      t = load32_littleendian(buf + 4 * i);
+      t = load32_littleendian (buf + 4 * i);
       d = t & 0x55555555;
       d += (t >> 1) & 0x55555555;
 
@@ -89,7 +89,7 @@ cbd2(gcry_kyber_poly *r, const uint8_t buf[2 * GCRY_KYBER_N / 4])
  *              - const uint8_t *buf: pointer to input byte array
  **************************************************/
 static void
-cbd3(gcry_kyber_poly *r, const uint8_t buf[3 * GCRY_KYBER_N / 4])
+cbd3 (gcry_kyber_poly *r, const uint8_t buf[3 * GCRY_KYBER_N / 4])
 {
   unsigned int i, j;
   uint32_t t, d;
@@ -97,7 +97,7 @@ cbd3(gcry_kyber_poly *r, const uint8_t buf[3 * GCRY_KYBER_N / 4])
 
   for (i = 0; i < GCRY_KYBER_N / 4; i++)
     {
-      t = load24_littleendian(buf + 3 * i);
+      t = load24_littleendian (buf + 3 * i);
       d = t & 0x00249249;
       d += (t >> 1) & 0x00249249;
       d += (t >> 2) & 0x00249249;
@@ -112,23 +112,23 @@ cbd3(gcry_kyber_poly *r, const uint8_t buf[3 * GCRY_KYBER_N / 4])
 }
 
 void
-_gcry_kyber_poly_cbd_eta1(gcry_kyber_poly *r,
-                          const uint8_t *buf,
-                          gcry_kyber_param_t const *param)
+_gcry_kyber_poly_cbd_eta1 (gcry_kyber_poly *r,
+                           const uint8_t *buf,
+                           gcry_kyber_param_t const *param)
 {
   if (param->eta1 == 2)
     {
-      cbd2(r, buf);
+      cbd2 (r, buf);
     }
   else // eta1 = 3
     {
-      cbd3(r, buf);
+      cbd3 (r, buf);
     }
 }
 
 void
-_gcry_kyber_poly_cbd_eta2(
+_gcry_kyber_poly_cbd_eta2 (
     gcry_kyber_poly *r, const uint8_t buf[GCRY_KYBER_ETA2 * GCRY_KYBER_N / 4])
 {
-  cbd2(r, buf);
+  cbd2 (r, buf);
 }

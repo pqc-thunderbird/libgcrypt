@@ -17,9 +17,9 @@
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_poly_compress(unsigned char *r,
-                          const gcry_kyber_poly *a,
-                          gcry_kyber_param_t const *param)
+_gcry_kyber_poly_compress (unsigned char *r,
+                           const gcry_kyber_poly *a,
+                           gcry_kyber_param_t const *param)
 {
   unsigned int i, j;
   int16_t u;
@@ -80,9 +80,9 @@ _gcry_kyber_poly_compress(unsigned char *r,
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_poly_decompress(gcry_kyber_poly *r,
-                            const unsigned char *a,
-                            gcry_kyber_param_t const *param)
+_gcry_kyber_poly_decompress (gcry_kyber_poly *r,
+                             const unsigned char *a,
+                             gcry_kyber_param_t const *param)
 {
   unsigned int i;
 
@@ -132,8 +132,8 @@ _gcry_kyber_poly_decompress(gcry_kyber_poly *r,
  *              - const gcry_kyber_poly *a: pointer to input polynomial
  **************************************************/
 void
-_gcry_kyber_poly_tobytes(unsigned char r[GCRY_KYBER_POLYBYTES],
-                         const gcry_kyber_poly *a)
+_gcry_kyber_poly_tobytes (unsigned char r[GCRY_KYBER_POLYBYTES],
+                          const gcry_kyber_poly *a)
 {
   unsigned int i;
   uint16_t t0, t1;
@@ -162,8 +162,8 @@ _gcry_kyber_poly_tobytes(unsigned char r[GCRY_KYBER_POLYBYTES],
  *                                  (of GCRY_KYBER_POLYBYTES bytes)
  **************************************************/
 void
-_gcry_kyber_poly_frombytes(gcry_kyber_poly *r,
-                           const unsigned char a[GCRY_KYBER_POLYBYTES])
+_gcry_kyber_poly_frombytes (gcry_kyber_poly *r,
+                            const unsigned char a[GCRY_KYBER_POLYBYTES])
 {
   unsigned int i;
   for (i = 0; i < GCRY_KYBER_N / 2; i++)
@@ -184,8 +184,8 @@ _gcry_kyber_poly_frombytes(gcry_kyber_poly *r,
  *              - const unsigned char *msg: pointer to input message
  **************************************************/
 void
-_gcry_kyber_poly_frommsg(gcry_kyber_poly *r,
-                         const unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES])
+_gcry_kyber_poly_frommsg (gcry_kyber_poly *r,
+                          const unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES])
 {
   unsigned int i, j;
   int16_t mask;
@@ -210,8 +210,8 @@ _gcry_kyber_poly_frommsg(gcry_kyber_poly *r,
  *              - const gcry_kyber_poly *a: pointer to input polynomial
  **************************************************/
 void
-_gcry_kyber_poly_tomsg(unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES],
-                       const gcry_kyber_poly *a)
+_gcry_kyber_poly_tomsg (unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES],
+                        const gcry_kyber_poly *a)
 {
   unsigned int i, j;
   uint16_t t;
@@ -243,14 +243,14 @@ _gcry_kyber_poly_tomsg(unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES],
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_poly_getnoise_eta1(gcry_kyber_poly *r,
-                               const unsigned char seed[GCRY_KYBER_SYMBYTES],
-                               unsigned char nonce,
-                               gcry_kyber_param_t const *param)
+_gcry_kyber_poly_getnoise_eta1 (gcry_kyber_poly *r,
+                                const unsigned char seed[GCRY_KYBER_SYMBYTES],
+                                unsigned char nonce,
+                                gcry_kyber_param_t const *param)
 {
   unsigned char buf[GCRY_KYBER_ETA1_MAX * GCRY_KYBER_N / 4];
-  _gcry_kyber_prf(buf, sizeof(buf), seed, nonce);
-  _gcry_kyber_poly_cbd_eta1(r, buf, param);
+  _gcry_kyber_prf (buf, sizeof (buf), seed, nonce);
+  _gcry_kyber_poly_cbd_eta1 (r, buf, param);
 }
 
 /*************************************************
@@ -266,13 +266,13 @@ _gcry_kyber_poly_getnoise_eta1(gcry_kyber_poly *r,
  *              - unsigned char nonce: one-byte input nonce
  **************************************************/
 void
-_gcry_kyber_poly_getnoise_eta2(gcry_kyber_poly *r,
-                               const unsigned char seed[GCRY_KYBER_SYMBYTES],
-                               unsigned char nonce)
+_gcry_kyber_poly_getnoise_eta2 (gcry_kyber_poly *r,
+                                const unsigned char seed[GCRY_KYBER_SYMBYTES],
+                                unsigned char nonce)
 {
   unsigned char buf[GCRY_KYBER_ETA2 * GCRY_KYBER_N / 4];
-  _gcry_kyber_prf(buf, sizeof(buf), seed, nonce);
-  _gcry_kyber_poly_cbd_eta2(r, buf);
+  _gcry_kyber_prf (buf, sizeof (buf), seed, nonce);
+  _gcry_kyber_poly_cbd_eta2 (r, buf);
 }
 
 
@@ -287,10 +287,10 @@ _gcry_kyber_poly_getnoise_eta2(gcry_kyber_poly *r,
  * Arguments:   - uint16_t *r: pointer to in/output polynomial
  **************************************************/
 void
-_gcry_kyber_poly_ntt(gcry_kyber_poly *r)
+_gcry_kyber_poly_ntt (gcry_kyber_poly *r)
 {
-  _gcry_kyber_ntt(r->coeffs);
-  _gcry_kyber_poly_reduce(r);
+  _gcry_kyber_ntt (r->coeffs);
+  _gcry_kyber_poly_reduce (r);
 }
 
 /*************************************************
@@ -304,9 +304,9 @@ _gcry_kyber_poly_ntt(gcry_kyber_poly *r)
  * Arguments:   - uint16_t *a: pointer to in/output polynomial
  **************************************************/
 void
-_gcry_kyber_poly_invntt_tomont(gcry_kyber_poly *r)
+_gcry_kyber_poly_invntt_tomont (gcry_kyber_poly *r)
 {
-  _gcry_kyber_invntt(r->coeffs);
+  _gcry_kyber_invntt (r->coeffs);
 }
 
 /*************************************************
@@ -319,20 +319,20 @@ _gcry_kyber_poly_invntt_tomont(gcry_kyber_poly *r)
  *              - const gcry_kyber_poly *b: pointer to second input polynomial
  **************************************************/
 void
-_gcry_kyber_poly_basemul_montgomery(gcry_kyber_poly *r,
-                                    const gcry_kyber_poly *a,
-                                    const gcry_kyber_poly *b)
+_gcry_kyber_poly_basemul_montgomery (gcry_kyber_poly *r,
+                                     const gcry_kyber_poly *a,
+                                     const gcry_kyber_poly *b)
 {
   unsigned int i;
   for (i = 0; i < GCRY_KYBER_N / 4; i++)
     {
-      _gcry_kyber_basemul(
+      _gcry_kyber_basemul (
           &r->coeffs[4 * i], &a->coeffs[4 * i], &b->coeffs[4 * i], 64 + i, 1);
-      _gcry_kyber_basemul(&r->coeffs[4 * i + 2],
-                          &a->coeffs[4 * i + 2],
-                          &b->coeffs[4 * i + 2],
-                          64 + i,
-                          -1);
+      _gcry_kyber_basemul (&r->coeffs[4 * i + 2],
+                           &a->coeffs[4 * i + 2],
+                           &b->coeffs[4 * i + 2],
+                           64 + i,
+                           -1);
     }
 }
 
@@ -345,13 +345,13 @@ _gcry_kyber_poly_basemul_montgomery(gcry_kyber_poly *r,
  * Arguments:   - gcry_kyber_poly *r: pointer to input/output polynomial
  **************************************************/
 void
-_gcry_kyber_poly_tomont(gcry_kyber_poly *r)
+_gcry_kyber_poly_tomont (gcry_kyber_poly *r)
 {
   unsigned int i;
   const int16_t f = (1ULL << 32) % GCRY_KYBER_Q;
   for (i = 0; i < GCRY_KYBER_N; i++)
     {
-      r->coeffs[i] = _gcry_kyber_montgomery_reduce((int32_t)r->coeffs[i] * f);
+      r->coeffs[i] = _gcry_kyber_montgomery_reduce ((int32_t)r->coeffs[i] * f);
     }
 }
 
@@ -364,12 +364,12 @@ _gcry_kyber_poly_tomont(gcry_kyber_poly *r)
  * Arguments:   - gcry_kyber_poly *r: pointer to input/output polynomial
  **************************************************/
 void
-_gcry_kyber_poly_reduce(gcry_kyber_poly *r)
+_gcry_kyber_poly_reduce (gcry_kyber_poly *r)
 {
   unsigned int i;
   for (i = 0; i < GCRY_KYBER_N; i++)
     {
-      r->coeffs[i] = _gcry_kyber_barrett_reduce(r->coeffs[i]);
+      r->coeffs[i] = _gcry_kyber_barrett_reduce (r->coeffs[i]);
     }
 }
 
@@ -383,9 +383,9 @@ _gcry_kyber_poly_reduce(gcry_kyber_poly *r)
  *            - const gcry_kyber_poly *b: pointer to second input polynomial
  **************************************************/
 void
-_gcry_kyber_poly_add(gcry_kyber_poly *r,
-                     const gcry_kyber_poly *a,
-                     const gcry_kyber_poly *b)
+_gcry_kyber_poly_add (gcry_kyber_poly *r,
+                      const gcry_kyber_poly *a,
+                      const gcry_kyber_poly *b)
 {
   unsigned int i;
   for (i = 0; i < GCRY_KYBER_N; i++)
@@ -404,9 +404,9 @@ _gcry_kyber_poly_add(gcry_kyber_poly *r,
  *            - const gcry_kyber_poly *b: pointer to second input polynomial
  **************************************************/
 void
-_gcry_kyber_poly_sub(gcry_kyber_poly *r,
-                     const gcry_kyber_poly *a,
-                     const gcry_kyber_poly *b)
+_gcry_kyber_poly_sub (gcry_kyber_poly *r,
+                      const gcry_kyber_poly *a,
+                      const gcry_kyber_poly *b)
 {
   unsigned int i;
   for (i = 0; i < GCRY_KYBER_N; i++)

@@ -20,7 +20,7 @@
  * Returns:     integer in {-q+1,...,q-1} congruent to a * R^-1 modulo q.
  **************************************************/
 int16_t
-_gcry_kyber_montgomery_reduce(int32_t a)
+_gcry_kyber_montgomery_reduce (int32_t a)
 {
   int16_t t;
 
@@ -41,7 +41,7 @@ _gcry_kyber_montgomery_reduce(int32_t a)
  * Returns:     integer in {-(q-1)/2,...,(q-1)/2} congruent to a modulo q.
  **************************************************/
 int16_t
-_gcry_kyber_barrett_reduce(int16_t a)
+_gcry_kyber_barrett_reduce (int16_t a)
 {
   int16_t t;
   const int16_t v = ((1 << 26) + GCRY_KYBER_Q / 2) / GCRY_KYBER_Q;

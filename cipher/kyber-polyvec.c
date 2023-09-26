@@ -6,22 +6,22 @@
 #include "kyber-polyvec.h"
 
 gcry_error_t
-_gcry_kyber_polymatrix_create(gcry_kyber_polyvec **polymat,
-                              gcry_kyber_param_t const *param)
+_gcry_kyber_polymatrix_create (gcry_kyber_polyvec **polymat,
+                               gcry_kyber_param_t const *param)
 {
   gcry_error_t ec = 0;
   unsigned i;
-  *polymat = xtrymalloc(sizeof(**polymat) * param->k);
+  *polymat = xtrymalloc (sizeof (**polymat) * param->k);
   if (!polymat)
     {
-      ec = gpg_error_from_syserror();
+      ec = gpg_error_from_syserror ();
       goto leave;
     }
-  memset((polymat)[0], 0, sizeof(**polymat) * param->k);
+  memset ((polymat)[0], 0, sizeof (**polymat) * param->k);
 
   for (i = 0; i < param->k; i++)
     {
-      ec = _gcry_kyber_polyvec_create(&(*polymat)[i], param);
+      ec = _gcry_kyber_polyvec_create (&(*polymat)[i], param);
       if (ec)
         {
           goto leave;
@@ -33,8 +33,8 @@ leave:
 
 
 void
-_gcry_kyber_polymatrix_destroy(gcry_kyber_polyvec **polymat,
-                               gcry_kyber_param_t const *param)
+_gcry_kyber_polymatrix_destroy (gcry_kyber_polyvec **polymat,
+                                gcry_kyber_param_t const *param)
 {
   unsigned i;
   if (polymat == NULL)
@@ -43,27 +43,27 @@ _gcry_kyber_polymatrix_destroy(gcry_kyber_polyvec **polymat,
     }
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_polyvec_destroy(&(*polymat)[i]);
+      _gcry_kyber_polyvec_destroy (&(*polymat)[i]);
     }
-  xfree(*polymat);
+  xfree (*polymat);
   *polymat = NULL;
 }
 
 gcry_error_t
-_gcry_kyber_polyvec_create(gcry_kyber_polyvec *polyvec,
-                           gcry_kyber_param_t const *param)
+_gcry_kyber_polyvec_create (gcry_kyber_polyvec *polyvec,
+                            gcry_kyber_param_t const *param)
 {
-  if (!(polyvec->vec = xtrymalloc_secure(sizeof(*polyvec->vec) * param->k)))
+  if (!(polyvec->vec = xtrymalloc_secure (sizeof (*polyvec->vec) * param->k)))
     {
-      return gpg_err_code_from_syserror();
+      return gpg_err_code_from_syserror ();
     }
   return 0;
 }
 
 void
-_gcry_kyber_polyvec_destroy(gcry_kyber_polyvec *polyvec)
+_gcry_kyber_polyvec_destroy (gcry_kyber_polyvec *polyvec)
 {
-  xfree(polyvec->vec);
+  xfree (polyvec->vec);
 }
 
 /*************************************************
@@ -77,9 +77,9 @@ _gcry_kyber_polyvec_destroy(gcry_kyber_polyvec *polyvec)
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_compress(uint8_t *r,
-                             const gcry_kyber_polyvec *a,
-                             gcry_kyber_param_t const *param)
+_gcry_kyber_polyvec_compress (uint8_t *r,
+                              const gcry_kyber_polyvec *a,
+                              gcry_kyber_param_t const *param)
 {
   unsigned int i, j, k;
   switch (param->id)
@@ -160,9 +160,9 @@ _gcry_kyber_polyvec_compress(uint8_t *r,
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r,
-                               const uint8_t *a,
-                               gcry_kyber_param_t const *param)
+_gcry_kyber_polyvec_decompress (gcry_kyber_polyvec *r,
+                                const uint8_t *a,
+                                gcry_kyber_param_t const *param)
 {
   unsigned int i, j, k;
   switch (param->id)
@@ -231,14 +231,14 @@ _gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r,
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_tobytes(uint8_t *r,
-                            const gcry_kyber_polyvec *a,
-                            gcry_kyber_param_t const *param)
+_gcry_kyber_polyvec_tobytes (uint8_t *r,
+                             const gcry_kyber_polyvec *a,
+                             gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_tobytes(r + i * GCRY_KYBER_POLYBYTES, &a->vec[i]);
+      _gcry_kyber_poly_tobytes (r + i * GCRY_KYBER_POLYBYTES, &a->vec[i]);
     }
 }
 
@@ -253,14 +253,14 @@ _gcry_kyber_polyvec_tobytes(uint8_t *r,
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_frombytes(gcry_kyber_polyvec *r,
-                              const uint8_t *a,
-                              gcry_kyber_param_t const *param)
+_gcry_kyber_polyvec_frombytes (gcry_kyber_polyvec *r,
+                               const uint8_t *a,
+                               gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_frombytes(&r->vec[i], a + i * GCRY_KYBER_POLYBYTES);
+      _gcry_kyber_poly_frombytes (&r->vec[i], a + i * GCRY_KYBER_POLYBYTES);
     }
 }
 
@@ -273,12 +273,13 @@ _gcry_kyber_polyvec_frombytes(gcry_kyber_polyvec *r,
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_ntt(gcry_kyber_polyvec *r, gcry_kyber_param_t const *param)
+_gcry_kyber_polyvec_ntt (gcry_kyber_polyvec *r,
+                         gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_ntt(&r->vec[i]);
+      _gcry_kyber_poly_ntt (&r->vec[i]);
     }
 }
 
@@ -292,13 +293,13 @@ _gcry_kyber_polyvec_ntt(gcry_kyber_polyvec *r, gcry_kyber_param_t const *param)
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_invntt_tomont(gcry_kyber_polyvec *r,
-                                  gcry_kyber_param_t const *param)
+_gcry_kyber_polyvec_invntt_tomont (gcry_kyber_polyvec *r,
+                                   gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_invntt_tomont(&r->vec[i]);
+      _gcry_kyber_poly_invntt_tomont (&r->vec[i]);
     }
 }
 
@@ -314,32 +315,32 @@ _gcry_kyber_polyvec_invntt_tomont(gcry_kyber_polyvec *r,
  *            - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 gcry_err_code_t
-_gcry_kyber_polyvec_basemul_acc_montgomery(gcry_kyber_poly *r,
-                                           const gcry_kyber_polyvec *a,
-                                           const gcry_kyber_polyvec *b,
-                                           gcry_kyber_param_t const *param)
+_gcry_kyber_polyvec_basemul_acc_montgomery (gcry_kyber_poly *r,
+                                            const gcry_kyber_polyvec *a,
+                                            const gcry_kyber_polyvec *b,
+                                            gcry_kyber_param_t const *param)
 {
   gcry_err_code_t ec = 0;
   unsigned int i;
   gcry_kyber_poly *t = NULL;
-  t                  = (gcry_kyber_poly *)xtrymalloc_secure(sizeof(*t));
+  t                  = (gcry_kyber_poly *)xtrymalloc_secure (sizeof (*t));
   if (!t)
     {
-      ec = gpg_err_code_from_syserror();
+      ec = gpg_err_code_from_syserror ();
       goto leave;
     }
 
 
-  _gcry_kyber_poly_basemul_montgomery(r, &a->vec[0], &b->vec[0]);
+  _gcry_kyber_poly_basemul_montgomery (r, &a->vec[0], &b->vec[0]);
   for (i = 1; i < param->k; i++)
     {
-      _gcry_kyber_poly_basemul_montgomery(t, &a->vec[i], &b->vec[i]);
-      _gcry_kyber_poly_add(r, r, t);
+      _gcry_kyber_poly_basemul_montgomery (t, &a->vec[i], &b->vec[i]);
+      _gcry_kyber_poly_add (r, r, t);
     }
 
-  _gcry_kyber_poly_reduce(r);
+  _gcry_kyber_poly_reduce (r);
 leave:
-  xfree(t);
+  xfree (t);
   return ec;
 }
 
@@ -354,13 +355,13 @@ leave:
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_reduce(gcry_kyber_polyvec *r,
-                           gcry_kyber_param_t const *param)
+_gcry_kyber_polyvec_reduce (gcry_kyber_polyvec *r,
+                            gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_reduce(&r->vec[i]);
+      _gcry_kyber_poly_reduce (&r->vec[i]);
     }
 }
 
@@ -375,14 +376,14 @@ _gcry_kyber_polyvec_reduce(gcry_kyber_polyvec *r,
  *            - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void
-_gcry_kyber_polyvec_add(gcry_kyber_polyvec *r,
-                        const gcry_kyber_polyvec *a,
-                        const gcry_kyber_polyvec *b,
-                        gcry_kyber_param_t const *param)
+_gcry_kyber_polyvec_add (gcry_kyber_polyvec *r,
+                         const gcry_kyber_polyvec *a,
+                         const gcry_kyber_polyvec *b,
+                         gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
     {
-      _gcry_kyber_poly_add(&r->vec[i], &a->vec[i], &b->vec[i]);
+      _gcry_kyber_poly_add (&r->vec[i], &a->vec[i], &b->vec[i]);
     }
 }

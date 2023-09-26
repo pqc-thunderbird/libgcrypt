@@ -61,9 +61,9 @@ static const int16_t zetas[128] = {
  * Returns 16-bit integer congruent to a*b*R^{-1} mod q
  **************************************************/
 static int16_t
-fqmul(int16_t a, int16_t b)
+fqmul (int16_t a, int16_t b)
 {
-  return _gcry_kyber_montgomery_reduce((int32_t)a * b);
+  return _gcry_kyber_montgomery_reduce ((int32_t)a * b);
 }
 
 /*************************************************
@@ -76,7 +76,7 @@ fqmul(int16_t a, int16_t b)
  *Zq
  **************************************************/
 void
-_gcry_kyber_ntt(int16_t r[256])
+_gcry_kyber_ntt (int16_t r[256])
 {
   unsigned int len, start, j, k;
   int16_t t, zeta;
@@ -89,7 +89,7 @@ _gcry_kyber_ntt(int16_t r[256])
           zeta = zetas[k++];
           for (j = start; j < start + len; j++)
             {
-              t          = fqmul(zeta, r[j + len]);
+              t          = fqmul (zeta, r[j + len]);
               r[j + len] = r[j] - t;
               r[j]       = r[j] + t;
             }
@@ -107,7 +107,7 @@ _gcry_kyber_ntt(int16_t r[256])
  * Arguments:   - int16_t r[256]: pointer to input/output vector of elements of Zq
  **************************************************/
 void
-_gcry_kyber_invntt(int16_t r[256])
+_gcry_kyber_invntt (int16_t r[256])
 {
   unsigned int start, len, j, k;
   int16_t t, zeta;
@@ -122,15 +122,15 @@ _gcry_kyber_invntt(int16_t r[256])
           for (j = start; j < start + len; j++)
             {
               t          = r[j];
-              r[j]       = _gcry_kyber_barrett_reduce(t + r[j + len]);
+              r[j]       = _gcry_kyber_barrett_reduce (t + r[j + len]);
               r[j + len] = r[j + len] - t;
-              r[j + len] = fqmul(zeta, r[j + len]);
+              r[j + len] = fqmul (zeta, r[j + len]);
             }
         }
     }
 
   for (j = 0; j < 256; j++)
-    r[j] = fqmul(r[j], f);
+    r[j] = fqmul (r[j], f);
 }
 
 /*************************************************
@@ -146,16 +146,16 @@ _gcry_kyber_invntt(int16_t r[256])
  *              - int sign: sign to apply to the zeta value
  **************************************************/
 void
-_gcry_kyber_basemul(int16_t r[2],
-                    const int16_t a[2],
-                    const int16_t b[2],
-                    int zeta_offs,
-                    int sign)
+_gcry_kyber_basemul (int16_t r[2],
+                     const int16_t a[2],
+                     const int16_t b[2],
+                     int zeta_offs,
+                     int sign)
 {
   uint16_t zeta = zetas[zeta_offs] * sign;
-  r[0]          = fqmul(a[1], b[1]);
-  r[0]          = fqmul(r[0], zeta);
-  r[0] += fqmul(a[0], b[0]);
-  r[1] = fqmul(a[0], b[1]);
-  r[1] += fqmul(a[1], b[0]);
+  r[0]          = fqmul (a[1], b[1]);
+  r[0]          = fqmul (r[0], zeta);
+  r[0] += fqmul (a[0], b[0]);
+  r[1] = fqmul (a[0], b[1]);
+  r[1] += fqmul (a[1], b[0]);
 }
