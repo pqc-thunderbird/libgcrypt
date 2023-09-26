@@ -305,11 +305,8 @@ static void check_kyber_kat(const char *fname, unsigned kyber_bits)
             {
               continue;
             }
-          /*else // may not fail here because kyber test vectors as generated
-            by reference implementation contain random seeds without prefix
-            {
-            fail ("unknown tag at input line %d", lineno);
-            }*/
+          /* may not fail here because kyber test vectors as generated
+            by reference implementation contain random seeds without prefix */
         }
 
       // check if we completed one test vector:
@@ -319,13 +316,8 @@ static void check_kyber_kat(const char *fname, unsigned kyber_bits)
         }
       if (!is_complete)
         {
-          // printf("line '%s' does NOT complete a test vector\n", line);
           xfree(line);
           continue;
-        }
-      else
-        {
-          // printf("line '%s' COMPLETES a test vector\n", line);
         }
       test_count++;
       err = gcry_sexp_build(&private_key_sx,
@@ -385,8 +377,6 @@ static void check_kyber_kat(const char *fname, unsigned kyber_bits)
       gcry_sexp_release(l);
 
 
-      // l = gcry_sexp_find_token (ciphertext_sx, "flags", 0); // why no leak
-      // when this was in?
       rc = gcry_pk_decrypt(&shared_secret_sx, ciphertext_sx, private_key_sx);
       if (rc)
         {
@@ -492,7 +482,6 @@ int main(int argc, char **argv)
                 "Options:\n"
                 "  --verbose            print timings etc.\n"
                 "  --debug              flyswatter\n"
-                "  --data FNAME         take test data from file FNAME\n"
                 "  --no-kat-tests       do not run the KAT tests\n",
                 stdout);
           exit(0);

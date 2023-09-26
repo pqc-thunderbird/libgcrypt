@@ -286,25 +286,21 @@ static gcry_error_t _gcry_kyber_indcpa_keypair(uint8_t *pk,
   ec = _gcry_kyber_polymatrix_create(&a, param);
   if (ec)
     {
-      ec = gpg_err_code_from_syserror();
       goto leave;
     }
   ec = _gcry_kyber_polyvec_create(&e, param);
   if (ec)
     {
-      ec = gpg_err_code_from_syserror();
       goto leave;
     }
   ec = _gcry_kyber_polyvec_create(&pkpv, param);
   if (ec)
     {
-      ec = gpg_err_code_from_syserror();
       goto leave;
     }
   ec = _gcry_kyber_polyvec_create(&skpv, param);
   if (ec)
     {
-      ec = gpg_err_code_from_syserror();
       goto leave;
     }
 
