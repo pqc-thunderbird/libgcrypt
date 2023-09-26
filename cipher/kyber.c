@@ -386,7 +386,7 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
       goto leave;
     }
 
-  // ========== perform the decryption ===============
+  /* perform the decryption */
   ec = _gcry_kyber_kem_dec(shared_secret, ciphertext, private_key, &param);
   if (ec)
     {

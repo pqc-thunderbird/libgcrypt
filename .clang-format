@@ -16,3 +16,6 @@ SpaceBeforeCpp11BracedList: 'true'
 UseTab: Never
 PointerAlignment: Right
 ColumnLimit: 79
+ReflowComments: true
+# prevent breaking of source code comments (problem for header doc from ref. impl. in the current form):
+PenaltyBreakComment: 1000000000

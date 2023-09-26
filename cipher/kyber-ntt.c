@@ -102,8 +102,7 @@ void _gcry_kyber_ntt(int16_t r[256])
  *              multiplication by Montgomery factor 2^16.
  *              Input is in bitreversed order, output is in standard order
  *
- * Arguments:   - int16_t r[256]: pointer to input/output vector of elements of
- *Zq
+ * Arguments:   - int16_t r[256]: pointer to input/output vector of elements of Zq
  **************************************************/
 void _gcry_kyber_invntt(int16_t r[256])
 {

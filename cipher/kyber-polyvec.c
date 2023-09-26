@@ -69,8 +69,8 @@ void _gcry_kyber_polyvec_destroy(gcry_kyber_polyvec *polyvec)
  *
  * Arguments:   - uint8_t *r: pointer to output byte array
  *                            (needs space for KYBER_POLYVECCOMPRESSEDBYTES)
- *              - const gcry_kyber_polyvec *a: pointer to input vector of
- *polynomials
+ *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_polyvec_compress(uint8_t *r,
                                   const gcry_kyber_polyvec *a,
@@ -147,6 +147,7 @@ void _gcry_kyber_polyvec_compress(uint8_t *r,
  *polynomials
  *              - const uint8_t *a: pointer to input byte array
  *                                  (of length KYBER_POLYVECCOMPRESSEDBYTES)
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r,
                                     const uint8_t *a,
@@ -209,8 +210,8 @@ void _gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r,
  *
  * Arguments:   - uint8_t *r: pointer to output byte array
  *                            (needs space for GCRY_KYBER_POLYVECBYTES)
- *              - const gcry_kyber_polyvec *a: pointer to input vector of
- *polynomials
+ *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_polyvec_tobytes(uint8_t *r,
                                  const gcry_kyber_polyvec *a,
@@ -230,8 +231,8 @@ void _gcry_kyber_polyvec_tobytes(uint8_t *r,
  *              inverse of gcry_kyber_polyvec_tobytes
  *
  * Arguments:   - uint8_t *r:       pointer to output byte array
- *              - const gcry_kyber_polyvec *a: pointer to input vector of
- *polynomials (of length GCRY_KYBER_POLYVECBYTES)
+ *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials (of length GCRY_KYBER_POLYVECBYTES)
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_polyvec_frombytes(gcry_kyber_polyvec *r,
                                    const uint8_t *a,
@@ -249,8 +250,8 @@ void _gcry_kyber_polyvec_frombytes(gcry_kyber_polyvec *r,
  *
  * Description: Apply forward NTT to all elements of a vector of polynomials
  *
- * Arguments:   - gcry_kyber_polyvec *r: pointer to in/output vector of
- *polynomials
+ * Arguments:   - gcry_kyber_polyvec *r: pointer to in/output vector of polynomials
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_polyvec_ntt(gcry_kyber_polyvec *r,
                              gcry_kyber_param_t const *param)
@@ -268,8 +269,8 @@ void _gcry_kyber_polyvec_ntt(gcry_kyber_polyvec *r,
  * Description: Apply inverse NTT to all elements of a vector of polynomials
  *              and multiply by Montgomery factor 2^16
  *
- * Arguments:   - gcry_kyber_polyvec *r: pointer to in/output vector of
- *polynomials
+ * Arguments:   - gcry_kyber_polyvec *r: pointer to in/output vector of polynomials
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_polyvec_invntt_tomont(gcry_kyber_polyvec *r,
                                        gcry_kyber_param_t const *param)
@@ -288,10 +289,9 @@ void _gcry_kyber_polyvec_invntt_tomont(gcry_kyber_polyvec *r,
  *              and multiply by 2^-16.
  *
  * Arguments: - poly *r: pointer to output polynomial
- *            - const gcry_kyber_polyvec *a: pointer to first input vector of
- *polynomials
- *            - const gcry_kyber_polyvec *b: pointer to second input vector of
- *polynomials
+ *            - const gcry_kyber_polyvec *a: pointer to first input vector of polynomials
+ *            - const gcry_kyber_polyvec *b: pointer to second input vector of polynomials
+ *            - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 gcry_err_code_t _gcry_kyber_polyvec_basemul_acc_montgomery(
     gcry_kyber_poly *r,
@@ -331,6 +331,7 @@ leave:
  *              for details of the Barrett reduction see comments in reduce.c
  *
  * Arguments:   - gcry_kyber_polyvec *r: pointer to input/output polynomial
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_polyvec_reduce(gcry_kyber_polyvec *r,
                                 gcry_kyber_param_t const *param)
@@ -348,10 +349,9 @@ void _gcry_kyber_polyvec_reduce(gcry_kyber_polyvec *r,
  * Description: Add vectors of polynomials
  *
  * Arguments: - gcry_kyber_polyvec *r: pointer to output vector of polynomials
- *            - const gcry_kyber_polyvec *a: pointer to first input vector of
- *polynomials
- *            - const gcry_kyber_polyvec *b: pointer to second input vector of
- *polynomials
+ *            - const gcry_kyber_polyvec *a: pointer to first input vector of polynomials
+ *            - const gcry_kyber_polyvec *b: pointer to second input vector of polynomials
+ *            - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_polyvec_add(gcry_kyber_polyvec *r,
                              const gcry_kyber_polyvec *a,
