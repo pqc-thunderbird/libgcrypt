@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
-#include "kyber_aux.h"
-#include "kyber_params.h"
+#include "kyber-aux.h"
+#include "kyber-params.h"
 
 
 #define MONT -1044 // 2^16 mod q

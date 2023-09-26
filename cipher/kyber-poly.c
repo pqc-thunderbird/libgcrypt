@@ -1,10 +1,10 @@
 #include <stdint.h>
-#include "kyber_params.h"
-#include "kyber_poly.h"
-#include "kyber_ntt.h"
-#include "kyber_aux.h"
-#include "kyber_cbd.h"
-#include "kyber_symmetric.h"
+#include "kyber-params.h"
+#include "kyber-poly.h"
+#include "kyber-ntt.h"
+#include "kyber-aux.h"
+#include "kyber-cbd.h"
+#include "kyber-symmetric.h"
 
 /*************************************************
  * Name:        poly_compress

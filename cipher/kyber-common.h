@@ -5,7 +5,7 @@
 
 
 #include <stdint.h>
-#include "kyber_params.h"
+#include "kyber-params.h"
 
 #include <config.h>
 #include "g10lib.h"

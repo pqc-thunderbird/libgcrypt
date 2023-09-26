@@ -9,7 +9,7 @@
 
 #include "cipher.h"
 #include "pubkey-internal.h"
-#include "kyber_aux.h"
+#include "kyber-aux.h"
 
 
 static gcry_err_code_t _gcry_kyber_get_param_from_bit_size(
@@ -354,6 +354,7 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
                                      gcry_sexp_t s_data,
                                      gcry_sexp_t keyparms)
 {
+  gcry_kyber_param_t param;
   gpg_err_code_t ec          = 0;
   unsigned char *private_key = NULL, *ciphertext = NULL, *shared_secret = NULL;
 
@@ -365,7 +366,6 @@ static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
       goto leave;
     }
 
-  gcry_kyber_param_t param;
   ec = kyber_params_from_key_param(keyparms, &param, NULL);
   if (ec)
     {

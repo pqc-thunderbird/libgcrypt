@@ -3,8 +3,8 @@
 
 #include <config.h>
 #include <stdint.h>
-#include "kyber_params.h"
-#include "kyber_poly.h"
+#include "kyber-params.h"
+#include "kyber-poly.h"
 #include "g10lib.h"
 
 typedef struct{
