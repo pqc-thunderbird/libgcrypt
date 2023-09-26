@@ -2897,13 +2897,13 @@ at the address of R_CIPH.  The caller is responsible to release these
 values using 'gcry_sexp_release'. In case of an error, an error code
 is returned and R_CIPH and R_SHARED_KEY will be set to 'NULL'.
 
-The returned S-expression for the ciphertext has this format when used with KYBER:
+The returned S-expression for the ciphertext has this format when used with ML-KEM:
 @example
   (value @var{mpi}))
 @end example
 
 
-The returned S-expression for the shared key has this format when used with KYBER:
+The returned S-expression for the shared key has this format when used with ML-KEM:
 @example
   (value @var{mpi}))
 @end example

@@ -1,6 +1,6 @@
-/* kyber.c - API functions for Kyber
+/* mlkem.c - API functions for ML-KEM
  * Copyright (C) 2023 MTG AG
- * The code was created based on the reference implementation that is part of the Kyber NIST submission.
+ * The code was created based on the reference implementation that is part of the ML-KEM NIST submission.
  *
  * This file is part of Libgcrypt.
  *
@@ -22,36 +22,36 @@
 #include <stdio.h>
 
 
-#include "kyber-common.h"
+#include "mlkem-common.h"
 
 #include "g10lib.h"
 
 #include "cipher.h"
 #include "pubkey-internal.h"
-#include "kyber-aux.h"
+#include "mlkem-aux.h"
 
 
 static gcry_err_code_t
-_gcry_kyber_get_param_from_bit_size (size_t nbits, gcry_kyber_param_t *param)
+_gcry_mlkem_get_param_from_bit_size (size_t nbits, gcry_mlkem_param_t *param)
 {
   switch (nbits)
     {
     case 128:
-      param->id                       = GCRY_KYBER_512;
+      param->id                       = GCRY_MLKEM_512;
       param->k                        = 2;
       param->eta1                     = 3;
       param->poly_compressed_bytes    = 128;
       param->polyvec_compressed_bytes = param->k * 320;
       break;
     case 192:
-      param->id                       = GCRY_KYBER_768;
+      param->id                       = GCRY_MLKEM_768;
       param->k                        = 3;
       param->eta1                     = 2;
       param->poly_compressed_bytes    = 128;
       param->polyvec_compressed_bytes = param->k * 320;
       break;
     case 256:
-      param->id                       = GCRY_KYBER_1024;
+      param->id                       = GCRY_MLKEM_1024;
       param->k                        = 4;
       param->eta1                     = 2;
       param->poly_compressed_bytes    = 160;
@@ -61,21 +61,21 @@ _gcry_kyber_get_param_from_bit_size (size_t nbits, gcry_kyber_param_t *param)
       return GPG_ERR_INV_ARG;
     }
 
-  param->polyvec_bytes           = param->k * GCRY_KYBER_POLYBYTES;
-  param->public_key_bytes        = param->polyvec_bytes + GCRY_KYBER_SYMBYTES;
+  param->polyvec_bytes           = param->k * GCRY_MLKEM_POLYBYTES;
+  param->public_key_bytes        = param->polyvec_bytes + GCRY_MLKEM_SYMBYTES;
   param->indcpa_secret_key_bytes = param->polyvec_bytes;
   param->ciphertext_bytes
       = param->poly_compressed_bytes + param->polyvec_compressed_bytes;
   param->secret_key_bytes = param->indcpa_secret_key_bytes
                             + param->public_key_bytes
-                            + 2 * GCRY_KYBER_SYMBYTES;
+                            + 2 * GCRY_MLKEM_SYMBYTES;
 
   return 0;
 }
 
 static gcry_err_code_t
-kyber_params_from_key_param (const gcry_sexp_t keyparms,
-                             gcry_kyber_param_t *param,
+mlkem_params_from_key_param (const gcry_sexp_t keyparms,
+                             gcry_mlkem_param_t *param,
                              unsigned int *nbits_p)
 {
   gpg_err_code_t ec = 0;
@@ -86,7 +86,7 @@ kyber_params_from_key_param (const gcry_sexp_t keyparms,
     {
       return ec;
     }
-  ec = _gcry_kyber_get_param_from_bit_size (nbits, param);
+  ec = _gcry_mlkem_get_param_from_bit_size (nbits, param);
   if (ec)
     {
       return ec;
@@ -95,17 +95,17 @@ kyber_params_from_key_param (const gcry_sexp_t keyparms,
     {
       switch (param->id)
         {
-        case GCRY_KYBER_512:
+        case GCRY_MLKEM_512:
           {
             *nbits_p = 128;
             break;
           }
-        case GCRY_KYBER_768:
+        case GCRY_MLKEM_768:
           {
             *nbits_p = 192;
             break;
           }
-        case GCRY_KYBER_1024:
+        case GCRY_MLKEM_1024:
           {
             *nbits_p = 256;
             break;
@@ -175,7 +175,7 @@ leave:
 
 static gcry_err_code_t
 private_key_from_sexp (const gcry_sexp_t keyparms,
-                       const gcry_kyber_param_t param,
+                       const gcry_mlkem_param_t param,
                        unsigned char **sk_p)
 {
   return extract_opaque_mpi_from_sexp (
@@ -185,7 +185,7 @@ private_key_from_sexp (const gcry_sexp_t keyparms,
 
 static gcry_err_code_t
 ciphertext_from_sexp (const gcry_sexp_t keyparms,
-                      const gcry_kyber_param_t param,
+                      const gcry_mlkem_param_t param,
                       unsigned char **ct_p)
 {
   return extract_opaque_mpi_from_sexp (
@@ -195,7 +195,7 @@ ciphertext_from_sexp (const gcry_sexp_t keyparms,
 
 static gcry_err_code_t
 public_key_from_sexp (const gcry_sexp_t keyparms,
-                      const gcry_kyber_param_t param,
+                      const gcry_mlkem_param_t param,
                       unsigned char **pk_p)
 {
   return extract_opaque_mpi_from_sexp (
@@ -204,17 +204,17 @@ public_key_from_sexp (const gcry_sexp_t keyparms,
 
 
 static gcry_err_code_t
-kyber_check_secret_key (gcry_sexp_t keyparms)
+mlkem_check_secret_key (gcry_sexp_t keyparms)
 {
 
   gpg_err_code_t ec = 0;
-  unsigned char shared_secret_1[GCRY_KYBER_SSBYTES],
-      shared_secret_2[GCRY_KYBER_SSBYTES];
+  unsigned char shared_secret_1[GCRY_MLKEM_SSBYTES],
+      shared_secret_2[GCRY_MLKEM_SSBYTES];
   unsigned char *private_key = NULL, *ciphertext = NULL;
   unsigned char *public_key = NULL;
 
-  gcry_kyber_param_t param;
-  ec = kyber_params_from_key_param (keyparms, &param, NULL);
+  gcry_mlkem_param_t param;
+  ec = mlkem_params_from_key_param (keyparms, &param, NULL);
   if (ec)
     {
       goto leave;
@@ -236,12 +236,12 @@ kyber_check_secret_key (gcry_sexp_t keyparms)
   public_key
       = private_key
         + param.indcpa_secret_key_bytes; // offset of public key in private key
-  ec = _gcry_kyber_kem_enc (ciphertext, shared_secret_1, public_key, &param);
+  ec = _gcry_mlkem_kem_enc (ciphertext, shared_secret_1, public_key, &param);
   if (ec)
     {
       goto leave;
     }
-  ec = _gcry_kyber_kem_dec (shared_secret_2, ciphertext, private_key, &param);
+  ec = _gcry_mlkem_kem_dec (shared_secret_2, ciphertext, private_key, &param);
   if (ec)
     {
       goto leave;
@@ -262,16 +262,16 @@ leave:
 
 
 static gcry_err_code_t
-kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
+mlkem_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
 {
   gpg_err_code_t ec = 0;
 
   uint8_t *pk = 0, *sk = 0;
   unsigned int nbits;
-  gcry_kyber_param_t param;
+  gcry_mlkem_param_t param;
   gcry_mpi_t sk_mpi = NULL, pk_mpi = NULL;
 
-  ec = kyber_params_from_key_param (genparms, &param, &nbits);
+  ec = mlkem_params_from_key_param (genparms, &param, &nbits);
   if (ec)
     {
       goto leave;
@@ -283,7 +283,7 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
       ec = gpg_err_code_from_syserror ();
       goto leave;
     }
-  _gcry_kyber_kem_keypair (pk, sk, &param);
+  _gcry_mlkem_kem_keypair (pk, sk, &param);
 
   sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
   pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
@@ -294,9 +294,9 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
                        NULL,
                        "(key-data"
                        " (public-key"
-                       "  (kyber(p%m) (nbits%u)))"
+                       "  (mlkem(p%m) (nbits%u)))"
                        " (private-key"
-                       "  (kyber(s%m) (nbits%u))))",
+                       "  (mlkem(s%m) (nbits%u))))",
                        pk_mpi,
                        nbits,
                        sk_mpi,
@@ -304,7 +304,7 @@ kyber_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
                        NULL);
     }
   /* call the key check function for now so that we know that it is working: */
-  ec = kyber_check_secret_key (*r_skey);
+  ec = mlkem_check_secret_key (*r_skey);
   if (ec)
     {
       goto leave;
@@ -319,7 +319,7 @@ leave:
 
 
 static gcry_err_code_t
-kyber_encap (gcry_sexp_t *r_ciph,
+mlkem_encap (gcry_sexp_t *r_ciph,
              gcry_sexp_t *r_shared_key,
              gcry_sexp_t keyparms)
 {
@@ -327,16 +327,16 @@ kyber_encap (gcry_sexp_t *r_ciph,
   gpg_err_code_t ec         = 0;
   unsigned char *ciphertext = NULL, *public_key = NULL, *shared_secret = NULL;
 
-  gcry_kyber_param_t param;
+  gcry_mlkem_param_t param;
 
-  shared_secret = xtrymalloc_secure (GCRY_KYBER_SSBYTES);
+  shared_secret = xtrymalloc_secure (GCRY_MLKEM_SSBYTES);
 
   if (!shared_secret)
     {
       ec = gpg_err_code_from_syserror ();
       goto leave;
     }
-  ec = kyber_params_from_key_param (keyparms, &param, NULL);
+  ec = mlkem_params_from_key_param (keyparms, &param, NULL);
   if (ec)
     {
       goto leave;
@@ -350,7 +350,7 @@ kyber_encap (gcry_sexp_t *r_ciph,
     {
       goto leave;
     }
-  ec = _gcry_kyber_kem_enc (ciphertext, shared_secret, public_key, &param);
+  ec = _gcry_mlkem_kem_enc (ciphertext, shared_secret, public_key, &param);
   if (ec)
     {
       goto leave;
@@ -360,7 +360,7 @@ kyber_encap (gcry_sexp_t *r_ciph,
   ec = sexp_build (r_shared_key,
                    NULL,
                    "(value %b)",
-                   (int)GCRY_KYBER_SSBYTES,
+                   (int)GCRY_MLKEM_SSBYTES,
                    shared_secret);
   if (ec)
     {
@@ -369,7 +369,7 @@ kyber_encap (gcry_sexp_t *r_ciph,
 
   ec = sexp_build (r_ciph,
                    NULL,
-                   "(ciphertext (kyber(c %b)))",
+                   "(ciphertext (mlkem(c %b)))",
                    (int)param.ciphertext_bytes,
                    ciphertext);
 
@@ -382,13 +382,13 @@ leave:
 
 
 static gcry_err_code_t
-kyber_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
+mlkem_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 {
-  gcry_kyber_param_t param;
+  gcry_mlkem_param_t param;
   gpg_err_code_t ec          = 0;
   unsigned char *private_key = NULL, *ciphertext = NULL, *shared_secret = NULL;
 
-  shared_secret = xtrymalloc_secure (GCRY_KYBER_SSBYTES);
+  shared_secret = xtrymalloc_secure (GCRY_MLKEM_SSBYTES);
 
   if (!shared_secret)
     {
@@ -396,7 +396,7 @@ kyber_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
       goto leave;
     }
 
-  ec = kyber_params_from_key_param (keyparms, &param, NULL);
+  ec = mlkem_params_from_key_param (keyparms, &param, NULL);
   if (ec)
     {
       goto leave;
@@ -417,14 +417,14 @@ kyber_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
     }
 
   /* perform the decryption */
-  ec = _gcry_kyber_kem_dec (shared_secret, ciphertext, private_key, &param);
+  ec = _gcry_mlkem_kem_dec (shared_secret, ciphertext, private_key, &param);
   if (ec)
     {
       goto leave;
     }
 
   ec = sexp_build (
-      r_plain, NULL, "(value %b)", (int)GCRY_KYBER_SSBYTES, shared_secret);
+      r_plain, NULL, "(value %b)", (int)GCRY_MLKEM_SSBYTES, shared_secret);
 leave:
   xfree (shared_secret);
   xfree (ciphertext);
@@ -434,7 +434,7 @@ leave:
 
 
 static unsigned int
-kyber_get_nbits (gcry_sexp_t parms)
+mlkem_get_nbits (gcry_sexp_t parms)
 {
   gpg_err_code_t ec;
   unsigned int nbits;
@@ -447,31 +447,31 @@ kyber_get_nbits (gcry_sexp_t parms)
 }
 
 
-static const char *kyber_names[] = {
-    "kyber",
-    "openpgp-kyber", // ? leave?
+static const char *mlkem_names[] = {
+    "mlkem",
+    "openpgp-mlkem", // ? leave?
     NULL,
 };
 
-gcry_pk_spec_t _gcry_pubkey_spec_kyber = {
-    GCRY_PK_KYBER,
+gcry_pk_spec_t _gcry_pubkey_spec_mlkem = {
+    GCRY_PK_MLKEM,
     {0, 1},
     (GCRY_PK_USAGE_ENCAP),
-    "Kyber",
-    kyber_names,
+    "ML-KEM",
+    mlkem_names,
     "p",
     "s",
     "a",
     "",
     "", // elements of pub-key, sec-key, ciphertext, signature, key-grip
-    kyber_generate,
-    kyber_check_secret_key,
+    mlkem_generate,
+    mlkem_check_secret_key,
     NULL, // encrypt
-    kyber_encap,
-    kyber_decrypt,
+    mlkem_encap,
+    mlkem_decrypt,
     NULL, // sign
     NULL, // verify
-    kyber_get_nbits,
+    mlkem_get_nbits,
     NULL, // run_selftests
     NULL, // compute_keygrip
     NULL, // get_curve

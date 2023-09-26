@@ -156,10 +156,10 @@ EXTRA_libcipher_la_SOURCES = \
 	blake2.c \
 	blake2b-amd64-avx2.S blake2b-amd64-avx512.S \
 	blake2s-amd64-avx.S blake2s-amd64-avx512.S \
-	kyber.c kyber-common.c \
-	kyber.h kyber-common.h \
-	kyber-ntt.c kyber-poly.c kyber-polyvec.c kyber-randombytes.c kyber-symmetric.c \
-	kyber-ntt.h kyber-poly.h kyber-polyvec.h kyber-randombytes.h kyber-symmetric.h
+	mlkem.c mlkem-common.c \
+	mlkem.h mlkem-common.h \
+	mlkem-ntt.c mlkem-poly.c mlkem-polyvec.c mlkem-randombytes.c mlkem-symmetric.c \
+	mlkem-ntt.h mlkem-poly.h mlkem-polyvec.h mlkem-randombytes.h mlkem-symmetric.h
 
 gost28147.lo: gost-sb.h
 gost-sb.h: gost-s-box$(EXEEXT_FOR_BUILD)

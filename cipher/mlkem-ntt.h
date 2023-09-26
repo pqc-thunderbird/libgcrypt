@@ -1,6 +1,6 @@
-/* kyber-ntt.h - number-theoretic transform functions for Kyber
+/* mlkem-ntt.h - number-theoretic transform functions for ML-KEM
  * Copyright (C) 2023 MTG AG
- * The code was created based on the reference implementation that is part of the Kyber NIST submission.
+ * The code was created based on the reference implementation that is part of the ML-KEM NIST submission.
  *
  * This file is part of Libgcrypt.
  *
@@ -18,18 +18,18 @@
  * License along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GCRYPT_KYBER_NTT_H
-#define GCRYPT_KYBER_NTT_H
+#ifndef GCRYPT_MLKEM_NTT_H
+#define GCRYPT_MLKEM_NTT_H
 
 #include <stdint.h>
-#include "kyber-params.h"
+#include "mlkem-params.h"
 
 
-void _gcry_kyber_ntt (int16_t poly[256]);
+void _gcry_mlkem_ntt (int16_t poly[256]);
 
-void _gcry_kyber_invntt (int16_t poly[256]);
+void _gcry_mlkem_invntt (int16_t poly[256]);
 
-void _gcry_kyber_basemul (
+void _gcry_mlkem_basemul (
     int16_t r[2], const int16_t a[2], const int16_t b[2], int zeta, int sign);
 
-#endif /* GCRYPT_KYBER_NTT_H */
+#endif /* GCRYPT_MLKEM_NTT_H */
