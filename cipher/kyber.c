@@ -73,21 +73,27 @@ static gcry_err_code_t kyber_params_from_key_param(const gcry_sexp_t keyparms,
     }
   if (nbits_p != NULL)
     {
-      if (param->id == GCRY_KYBER_512)
+      switch (param->id)
         {
-          *nbits_p = 128;
-        }
-      else if (param->id == GCRY_KYBER_768)
-        {
-          *nbits_p = 192;
-        }
-      else if (param->id == GCRY_KYBER_1024)
-        {
-          *nbits_p = 256;
-        }
-      else
-        {
-          ec = GPG_ERR_INV_ARG;
+        case GCRY_KYBER_512:
+          {
+            *nbits_p = 128;
+            break;
+          }
+        case GCRY_KYBER_768:
+          {
+            *nbits_p = 192;
+            break;
+          }
+        case GCRY_KYBER_1024:
+          {
+            *nbits_p = 256;
+            break;
+          }
+        default:
+          {
+            ec = GPG_ERR_INV_ARG;
+          }
         }
     }
 
