@@ -12,8 +12,8 @@
 #include "kyber-aux.h"
 
 
-static gcry_err_code_t _gcry_kyber_get_param_from_bit_size(
-    size_t nbits, gcry_kyber_param_t *param)
+static gcry_err_code_t
+_gcry_kyber_get_param_from_bit_size(size_t nbits, gcry_kyber_param_t *param)
 {
   switch (nbits)
     {
@@ -54,9 +54,10 @@ static gcry_err_code_t _gcry_kyber_get_param_from_bit_size(
   return 0;
 }
 
-static gcry_err_code_t kyber_params_from_key_param(const gcry_sexp_t keyparms,
-                                                   gcry_kyber_param_t *param,
-                                                   unsigned int *nbits_p)
+static gcry_err_code_t
+kyber_params_from_key_param(const gcry_sexp_t keyparms,
+                            gcry_kyber_param_t *param,
+                            unsigned int *nbits_p)
 {
   gpg_err_code_t ec = 0;
 
@@ -100,12 +101,12 @@ static gcry_err_code_t kyber_params_from_key_param(const gcry_sexp_t keyparms,
   return ec;
 }
 
-static gcry_err_code_t extract_opaque_mpi_from_sexp(
-    const gcry_sexp_t keyparms,
-    const char *label,
-    unsigned char **data_p,
-    size_t exp_len,
-    try_alloc_func_t alloc_func)
+static gcry_err_code_t
+extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
+                             const char *label,
+                             unsigned char **data_p,
+                             size_t exp_len,
+                             try_alloc_func_t alloc_func)
 {
   gcry_mpi_t sk     = NULL;
   gpg_err_code_t ec = 0;
@@ -153,34 +154,38 @@ leave:
 }
 
 
-static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
-                                             const gcry_kyber_param_t param,
-                                             unsigned char **sk_p)
+static gcry_err_code_t
+private_key_from_sexp(const gcry_sexp_t keyparms,
+                      const gcry_kyber_param_t param,
+                      unsigned char **sk_p)
 {
   return extract_opaque_mpi_from_sexp(
       keyparms, "/s", sk_p, param.secret_key_bytes, _gcry_malloc_secure);
 }
 
 
-static gcry_err_code_t ciphertext_from_sexp(const gcry_sexp_t keyparms,
-                                            const gcry_kyber_param_t param,
-                                            unsigned char **ct_p)
+static gcry_err_code_t
+ciphertext_from_sexp(const gcry_sexp_t keyparms,
+                     const gcry_kyber_param_t param,
+                     unsigned char **ct_p)
 {
   return extract_opaque_mpi_from_sexp(
       keyparms, "/c", ct_p, param.ciphertext_bytes, _gcry_malloc);
 }
 
 
-static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms,
-                                            const gcry_kyber_param_t param,
-                                            unsigned char **pk_p)
+static gcry_err_code_t
+public_key_from_sexp(const gcry_sexp_t keyparms,
+                     const gcry_kyber_param_t param,
+                     unsigned char **pk_p)
 {
   return extract_opaque_mpi_from_sexp(
       keyparms, "/p", pk_p, param.public_key_bytes, _gcry_malloc);
 }
 
 
-static gcry_err_code_t kyber_check_secret_key(gcry_sexp_t keyparms)
+static gcry_err_code_t
+kyber_check_secret_key(gcry_sexp_t keyparms)
 {
 
   gpg_err_code_t ec = 0;
@@ -237,8 +242,8 @@ leave:
 }
 
 
-static gcry_err_code_t kyber_generate(const gcry_sexp_t genparms,
-                                      gcry_sexp_t *r_skey)
+static gcry_err_code_t
+kyber_generate(const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
 {
   gpg_err_code_t ec = 0;
 
@@ -294,9 +299,10 @@ leave:
 }
 
 
-static gcry_err_code_t kyber_encap(gcry_sexp_t *r_ciph,
-                                   gcry_sexp_t *r_shared_key,
-                                   gcry_sexp_t keyparms)
+static gcry_err_code_t
+kyber_encap(gcry_sexp_t *r_ciph,
+            gcry_sexp_t *r_shared_key,
+            gcry_sexp_t keyparms)
 {
 
   gpg_err_code_t ec         = 0;
@@ -356,9 +362,8 @@ leave:
 }
 
 
-static gcry_err_code_t kyber_decrypt(gcry_sexp_t *r_plain,
-                                     gcry_sexp_t s_data,
-                                     gcry_sexp_t keyparms)
+static gcry_err_code_t
+kyber_decrypt(gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 {
   gcry_kyber_param_t param;
   gpg_err_code_t ec          = 0;
@@ -409,7 +414,8 @@ leave:
 }
 
 
-static unsigned int kyber_get_nbits(gcry_sexp_t parms)
+static unsigned int
+kyber_get_nbits(gcry_sexp_t parms)
 {
   gpg_err_code_t ec;
   unsigned int nbits;

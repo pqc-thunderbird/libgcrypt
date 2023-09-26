@@ -5,8 +5,9 @@
 #include "kyber-poly.h"
 #include "kyber-polyvec.h"
 
-gcry_error_t _gcry_kyber_polymatrix_create(gcry_kyber_polyvec **polymat,
-                                           gcry_kyber_param_t const *param)
+gcry_error_t
+_gcry_kyber_polymatrix_create(gcry_kyber_polyvec **polymat,
+                              gcry_kyber_param_t const *param)
 {
   gcry_error_t ec = 0;
   unsigned i;
@@ -31,8 +32,9 @@ leave:
 }
 
 
-void _gcry_kyber_polymatrix_destroy(gcry_kyber_polyvec **polymat,
-                                    gcry_kyber_param_t const *param)
+void
+_gcry_kyber_polymatrix_destroy(gcry_kyber_polyvec **polymat,
+                               gcry_kyber_param_t const *param)
 {
   unsigned i;
   if (polymat == NULL)
@@ -47,8 +49,9 @@ void _gcry_kyber_polymatrix_destroy(gcry_kyber_polyvec **polymat,
   *polymat = NULL;
 }
 
-gcry_error_t _gcry_kyber_polyvec_create(gcry_kyber_polyvec *polyvec,
-                                        gcry_kyber_param_t const *param)
+gcry_error_t
+_gcry_kyber_polyvec_create(gcry_kyber_polyvec *polyvec,
+                           gcry_kyber_param_t const *param)
 {
   if (!(polyvec->vec = xtrymalloc_secure(sizeof(*polyvec->vec) * param->k)))
     {
@@ -57,7 +60,8 @@ gcry_error_t _gcry_kyber_polyvec_create(gcry_kyber_polyvec *polyvec,
   return 0;
 }
 
-void _gcry_kyber_polyvec_destroy(gcry_kyber_polyvec *polyvec)
+void
+_gcry_kyber_polyvec_destroy(gcry_kyber_polyvec *polyvec)
 {
   xfree(polyvec->vec);
 }
@@ -72,9 +76,10 @@ void _gcry_kyber_polyvec_destroy(gcry_kyber_polyvec *polyvec)
  *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
-void _gcry_kyber_polyvec_compress(uint8_t *r,
-                                  const gcry_kyber_polyvec *a,
-                                  gcry_kyber_param_t const *param)
+void
+_gcry_kyber_polyvec_compress(uint8_t *r,
+                             const gcry_kyber_polyvec *a,
+                             gcry_kyber_param_t const *param)
 {
   unsigned int i, j, k;
   switch (param->id)
@@ -154,9 +159,10 @@ void _gcry_kyber_polyvec_compress(uint8_t *r,
  *                                  (of length KYBER_POLYVECCOMPRESSEDBYTES)
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
-void _gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r,
-                                    const uint8_t *a,
-                                    gcry_kyber_param_t const *param)
+void
+_gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r,
+                               const uint8_t *a,
+                               gcry_kyber_param_t const *param)
 {
   unsigned int i, j, k;
   switch (param->id)
@@ -224,9 +230,10 @@ void _gcry_kyber_polyvec_decompress(gcry_kyber_polyvec *r,
  *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
-void _gcry_kyber_polyvec_tobytes(uint8_t *r,
-                                 const gcry_kyber_polyvec *a,
-                                 gcry_kyber_param_t const *param)
+void
+_gcry_kyber_polyvec_tobytes(uint8_t *r,
+                            const gcry_kyber_polyvec *a,
+                            gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
@@ -245,9 +252,10 @@ void _gcry_kyber_polyvec_tobytes(uint8_t *r,
  *              - const gcry_kyber_polyvec *a: pointer to input vector of polynomials (of length GCRY_KYBER_POLYVECBYTES)
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
-void _gcry_kyber_polyvec_frombytes(gcry_kyber_polyvec *r,
-                                   const uint8_t *a,
-                                   gcry_kyber_param_t const *param)
+void
+_gcry_kyber_polyvec_frombytes(gcry_kyber_polyvec *r,
+                              const uint8_t *a,
+                              gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
@@ -264,8 +272,8 @@ void _gcry_kyber_polyvec_frombytes(gcry_kyber_polyvec *r,
  * Arguments:   - gcry_kyber_polyvec *r: pointer to in/output vector of polynomials
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
-void _gcry_kyber_polyvec_ntt(gcry_kyber_polyvec *r,
-                             gcry_kyber_param_t const *param)
+void
+_gcry_kyber_polyvec_ntt(gcry_kyber_polyvec *r, gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
@@ -283,8 +291,9 @@ void _gcry_kyber_polyvec_ntt(gcry_kyber_polyvec *r,
  * Arguments:   - gcry_kyber_polyvec *r: pointer to in/output vector of polynomials
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
-void _gcry_kyber_polyvec_invntt_tomont(gcry_kyber_polyvec *r,
-                                       gcry_kyber_param_t const *param)
+void
+_gcry_kyber_polyvec_invntt_tomont(gcry_kyber_polyvec *r,
+                                  gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
@@ -304,11 +313,11 @@ void _gcry_kyber_polyvec_invntt_tomont(gcry_kyber_polyvec *r,
  *            - const gcry_kyber_polyvec *b: pointer to second input vector of polynomials
  *            - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
-gcry_err_code_t _gcry_kyber_polyvec_basemul_acc_montgomery(
-    gcry_kyber_poly *r,
-    const gcry_kyber_polyvec *a,
-    const gcry_kyber_polyvec *b,
-    gcry_kyber_param_t const *param)
+gcry_err_code_t
+_gcry_kyber_polyvec_basemul_acc_montgomery(gcry_kyber_poly *r,
+                                           const gcry_kyber_polyvec *a,
+                                           const gcry_kyber_polyvec *b,
+                                           gcry_kyber_param_t const *param)
 {
   gcry_err_code_t ec = 0;
   unsigned int i;
@@ -344,8 +353,9 @@ leave:
  * Arguments:   - gcry_kyber_polyvec *r: pointer to input/output polynomial
  *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
-void _gcry_kyber_polyvec_reduce(gcry_kyber_polyvec *r,
-                                gcry_kyber_param_t const *param)
+void
+_gcry_kyber_polyvec_reduce(gcry_kyber_polyvec *r,
+                           gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)
@@ -364,10 +374,11 @@ void _gcry_kyber_polyvec_reduce(gcry_kyber_polyvec *r,
  *            - const gcry_kyber_polyvec *b: pointer to second input vector of polynomials
  *            - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
-void _gcry_kyber_polyvec_add(gcry_kyber_polyvec *r,
-                             const gcry_kyber_polyvec *a,
-                             const gcry_kyber_polyvec *b,
-                             gcry_kyber_param_t const *param)
+void
+_gcry_kyber_polyvec_add(gcry_kyber_polyvec *r,
+                        const gcry_kyber_polyvec *a,
+                        const gcry_kyber_polyvec *b,
+                        gcry_kyber_param_t const *param)
 {
   unsigned int i;
   for (i = 0; i < param->k; i++)

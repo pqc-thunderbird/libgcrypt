@@ -7,10 +7,11 @@
 #include "gcrypt.h"
 
 
-void _gcry_kyber_shake128_absorb(gcry_md_hd_t h,
-                                 const unsigned char seed[GCRY_KYBER_SYMBYTES],
-                                 unsigned char x,
-                                 unsigned char y)
+void
+_gcry_kyber_shake128_absorb(gcry_md_hd_t h,
+                            const unsigned char seed[GCRY_KYBER_SYMBYTES],
+                            unsigned char x,
+                            unsigned char y)
 {
   unsigned char extseed[GCRY_KYBER_SYMBYTES + 2];
 
@@ -22,19 +23,20 @@ void _gcry_kyber_shake128_absorb(gcry_md_hd_t h,
 }
 
 
-gcry_err_code_t _gcry_kyber_shake128_squeezeblocks(gcry_md_hd_t h,
-                                                   uint8_t *out,
-                                                   size_t nblocks)
+gcry_err_code_t
+_gcry_kyber_shake128_squeezeblocks(gcry_md_hd_t h,
+                                   uint8_t *out,
+                                   size_t nblocks)
 {
   return _gcry_md_extract(
       h, GCRY_MD_SHAKE128, out, GCRY_SHAKE128_RATE * nblocks);
 }
 
-gcry_err_code_t _gcry_kyber_shake256_prf(
-    unsigned char *out,
-    size_t outlen,
-    const unsigned char key[GCRY_KYBER_SYMBYTES],
-    unsigned char nonce)
+gcry_err_code_t
+_gcry_kyber_shake256_prf(unsigned char *out,
+                         size_t outlen,
+                         const unsigned char key[GCRY_KYBER_SYMBYTES],
+                         unsigned char nonce)
 {
   unsigned char extkey[GCRY_KYBER_SYMBYTES + 1];
   gcry_err_code_t ec = 0;
@@ -53,10 +55,11 @@ gcry_err_code_t _gcry_kyber_shake256_prf(
   return ec;
 }
 
-gcry_err_code_t _gcry_kyber_prf(unsigned char *out,
-                                size_t outlen,
-                                const unsigned char key[GCRY_KYBER_SYMBYTES],
-                                unsigned char nonce)
+gcry_err_code_t
+_gcry_kyber_prf(unsigned char *out,
+                size_t outlen,
+                const unsigned char key[GCRY_KYBER_SYMBYTES],
+                unsigned char nonce)
 {
   return _gcry_kyber_shake256_prf(out, outlen, key, nonce);
 }
