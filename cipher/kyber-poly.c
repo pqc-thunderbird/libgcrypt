@@ -14,6 +14,7 @@
  * Arguments:   - unsigned char *r: pointer to output byte array
  *                            (of length KYBER_POLYCOMPRESSEDBYTES)
  *              - const poly *a: pointer to input polynomial
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_poly_compress(unsigned char *r,
                                const gcry_kyber_poly *a,
@@ -75,6 +76,7 @@ void _gcry_kyber_poly_compress(unsigned char *r,
  * Arguments:   - gcry_kyber_poly *r: pointer to output gcry_kyber_polynomial
  *              - const unsigned char *a: pointer to input byte array
  *                                  (of length KYBER_POLYCOMPRESSEDBYTES bytes)
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_poly_decompress(gcry_kyber_poly *r,
                                  const unsigned char *a,
@@ -232,6 +234,7 @@ void _gcry_kyber_poly_tomsg(unsigned char msg[GCRY_KYBER_INDCPA_MSGBYTES],
  *              - const unsigned char *seed: pointer to input seed
  *                                     (of length GCRY_KYBER_SYMBYTES bytes)
  *              - unsigned char nonce: one-byte input nonce
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 void _gcry_kyber_poly_getnoise_eta1(
     gcry_kyber_poly *r,

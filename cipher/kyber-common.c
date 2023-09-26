@@ -14,6 +14,11 @@
 
 #include "g10lib.h"
 
+#define GEN_MATRIX_NBLOCKS                                                    \
+  ((12 * GCRY_KYBER_N / 8 * (1 << 12) / GCRY_KYBER_Q                          \
+    + GCRY_KYBER_XOF_BLOCKBYTES)                                              \
+   / GCRY_KYBER_XOF_BLOCKBYTES)
+
 
 /*************************************************
  * Name:        _gcry_kyber_pack_pk
@@ -24,7 +29,9 @@
  *
  * Arguments:   uint8_t *r: pointer to the output serialized public key
  *              gcry_kyber_polyvec *pk: pointer to the input public-key
- *gcry_kyber_polyvec const uint8_t *seed: pointer to the input public seed
+ *              gcry_kyber_polyvec const uint8_t *seed: pointer to the input
+ *public seed gcry_kyber_param_t const *param: kyber parameters
+ *
  **************************************************/
 static void _gcry_kyber_pack_pk(uint8_t *r,
                                 gcry_kyber_polyvec *pk,
@@ -45,6 +52,7 @@ static void _gcry_kyber_pack_pk(uint8_t *r,
  *polynomial vector
  *              - uint8_t *seed: pointer to output seed to generate matrix A
  *              - const uint8_t *packedpk: pointer to input serialized public
+ *              - gcry_kyber_param_t const *param: kyber parameters
  *key
  **************************************************/
 static void _gcry_kyber_unpack_pk(gcry_kyber_polyvec *pk,
@@ -63,6 +71,7 @@ static void _gcry_kyber_unpack_pk(gcry_kyber_polyvec *pk,
  *
  * Arguments:   - uint8_t *r: pointer to output serialized secret key
  *              - gcry_kyber_polyvec *sk: pointer to input vector of
+ *              - gcry_kyber_param_t const *param: kyber parameters
  *polynomials (secret key)
  **************************************************/
 static void _gcry_kyber_pack_sk(uint8_t *r,
@@ -80,6 +89,7 @@ static void _gcry_kyber_pack_sk(uint8_t *r,
  * Arguments:   - gcry_kyber_polyvec *sk: pointer to output vector of
  *polynomials (secret key)
  *              - const uint8_t *packedsk: pointer to input serialized secret
+ *              - gcry_kyber_param_t const *param: kyber parameters
  *key
  **************************************************/
 static void _gcry_kyber_unpack_sk(gcry_kyber_polyvec *sk,
@@ -99,6 +109,7 @@ static void _gcry_kyber_unpack_sk(gcry_kyber_polyvec *sk,
  * Arguments:   uint8_t *r: pointer to the output serialized ciphertext
  *              poly *pk: pointer to the input vector of polynomials b
  *              poly *v: pointer to the input polynomial v
+ *              gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 static void _gcry_kyber_pack_ciphertext(uint8_t *r,
                                         gcry_kyber_polyvec *b,
@@ -119,6 +130,7 @@ static void _gcry_kyber_pack_ciphertext(uint8_t *r,
  *polynomials b
  *              - poly *v: pointer to the output polynomial v
  *              - const uint8_t *c: pointer to the input serialized ciphertext
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 static void _gcry_kyber_unpack_ciphertext(gcry_kyber_polyvec *b,
                                           gcry_kyber_poly *v,
@@ -172,8 +184,6 @@ static unsigned int _gcry_kyber_rej_uniform(int16_t *r,
   return ctr;
 }
 
-#define gen_a(A, B, param) _gcry_kyber_gen_matrix(A, B, 0, param)
-#define gen_at(A, B, param) _gcry_kyber_gen_matrix(A, B, 1, param)
 
 /*************************************************
  * Name:        gen_matrix
@@ -186,13 +196,9 @@ static unsigned int _gcry_kyber_rej_uniform(int16_t *r,
  * Arguments:   - gcry_kyber_polyvec *a: pointer to ouptput matrix A
  *              - const uint8_t *seed: pointer to input seed
  *              - int transposed: boolean deciding whether A or A^T is
+ *              - gcry_kyber_param_t const *param: kyber parameters
  *generated
  **************************************************/
-#define GEN_MATRIX_NBLOCKS                                                    \
-  ((12 * GCRY_KYBER_N / 8 * (1 << 12) / GCRY_KYBER_Q                          \
-    + GCRY_KYBER_XOF_BLOCKBYTES)                                              \
-   / GCRY_KYBER_XOF_BLOCKBYTES)
-
 static gcry_err_code_t _gcry_kyber_gen_matrix(
     gcry_kyber_polyvec *a,
     const uint8_t seed[GCRY_KYBER_SYMBYTES],
@@ -249,19 +255,20 @@ static gcry_err_code_t _gcry_kyber_gen_matrix(
     }
   return 0;
 }
-#undef GEN_MATRIX_NBLOCKS
 
 /*************************************************
-* Name:        indcpa_keypair
-*
-* Description: Generates public and private key for the CPA-secure
-*              public-key encryption scheme underlying Kyber
-*
-* Arguments:   - uint8_t *pk: pointer to output public key
-*                             (of length KYBER_INDCPA_PUBLICKEYBYTES bytes)
-*              - uint8_t *sk: pointer to output private key
-                              (of length KYBER_INDCPA_SECRETKEYBYTES bytes)
-**************************************************/
+ * Name:        indcpa_keypair
+ *
+ * Description: Generates public and private key for the CPA-secure
+ *              public-key encryption scheme underlying Kyber
+ *
+ * Arguments:   - uint8_t *pk: pointer to output public key
+ *                             (of length KYBER_INDCPA_PUBLICKEYBYTES bytes)
+ *              - uint8_t *sk: pointer to output private key
+ *                             (of length KYBER_INDCPA_SECRETKEYBYTES bytes)
+ *              - gcry_kyber_param_t const *param: kyber parameters
+ *              - uint8_t *coins: random bytes of length GCRY_KYBER_SYMBYTES
+ **************************************************/
 static gcry_error_t _gcry_kyber_indcpa_keypair(uint8_t *pk,
                                                uint8_t *sk,
                                                gcry_kyber_param_t const *param,
@@ -303,8 +310,8 @@ static gcry_error_t _gcry_kyber_indcpa_keypair(uint8_t *pk,
 
 
   _gcry_md_hash_buffer(GCRY_MD_SHA3_512, buf, coins, GCRY_KYBER_SYMBYTES);
-
-  if ((ec = gen_a(a, publicseed, param)))
+  ec = _gcry_kyber_gen_matrix(a, publicseed, 0, param);
+  if (ec)
     {
       goto leave;
     }
@@ -371,95 +378,96 @@ static gcry_error_t _gcry_kyber_indcpa_enc(
     const uint8_t coins[GCRY_KYBER_SYMBYTES],
     gcry_kyber_param_t const *param)
 {
-    unsigned int i;
-    uint8_t seed[GCRY_KYBER_SYMBYTES];
-    uint8_t nonce         = 0;
-    gcry_kyber_polyvec sp = {.vec = NULL}, pkpv = {.vec = NULL},
-                       ep = {.vec = NULL}, *at = NULL, b = {.vec = NULL};
-    gcry_error_t ec = 0;
-    gcry_kyber_poly v, k, epp;
+  unsigned int i;
+  uint8_t seed[GCRY_KYBER_SYMBYTES];
+  uint8_t nonce         = 0;
+  gcry_kyber_polyvec sp = {.vec = NULL}, pkpv = {.vec = NULL},
+                     ep = {.vec = NULL}, *at = NULL, b = {.vec = NULL};
+  gcry_error_t ec = 0;
+  gcry_kyber_poly v, k, epp;
 
-    ec = _gcry_kyber_polyvec_create(&sp, param);
-    if (ec)
+  ec = _gcry_kyber_polyvec_create(&sp, param);
+  if (ec)
     {
-        goto leave;
+      goto leave;
     }
-    ec = _gcry_kyber_polyvec_create(&pkpv, param);
-    if (ec)
+  ec = _gcry_kyber_polyvec_create(&pkpv, param);
+  if (ec)
     {
-        goto leave;
+      goto leave;
     }
-    ec = _gcry_kyber_polyvec_create(&ep, param);
-    if (ec)
+  ec = _gcry_kyber_polyvec_create(&ep, param);
+  if (ec)
     {
-        goto leave;
+      goto leave;
     }
-    ec = _gcry_kyber_polyvec_create(&b, param);
-    if (ec)
+  ec = _gcry_kyber_polyvec_create(&b, param);
+  if (ec)
     {
-        goto leave;
+      goto leave;
     }
-    ec = _gcry_kyber_polymatrix_create(&at, param);
-    if (ec)
+  ec = _gcry_kyber_polymatrix_create(&at, param);
+  if (ec)
     {
-        goto leave;
-    }
-
-    _gcry_kyber_unpack_pk(&pkpv, seed, pk, param);
-    _gcry_kyber_poly_frommsg(&k, m);
-    if ((ec = gen_at(at, seed, param)))
-    {
-        goto leave;
+      goto leave;
     }
 
-    for (i = 0; i < param->k; i++)
+  _gcry_kyber_unpack_pk(&pkpv, seed, pk, param);
+  _gcry_kyber_poly_frommsg(&k, m);
+  ec = _gcry_kyber_gen_matrix(at, seed, 1, param);
+  if (ec)
     {
-        _gcry_kyber_poly_getnoise_eta1(sp.vec + i, coins, nonce++, param);
+      goto leave;
     }
-    for (i = 0; i < param->k; i++)
+
+  for (i = 0; i < param->k; i++)
     {
-        _gcry_kyber_poly_getnoise_eta2(ep.vec + i, coins, nonce++);
+      _gcry_kyber_poly_getnoise_eta1(sp.vec + i, coins, nonce++, param);
     }
-    _gcry_kyber_poly_getnoise_eta2(&epp, coins, nonce++);
-
-    _gcry_kyber_polyvec_ntt(&sp, param);
-
-    // matrix-vector multiplication
-    for (i = 0; i < param->k; i++)
+  for (i = 0; i < param->k; i++)
     {
-        ec = _gcry_kyber_polyvec_basemul_acc_montgomery(
-                &b.vec[i], &at[i], &sp, param);
-        if (ec)
+      _gcry_kyber_poly_getnoise_eta2(ep.vec + i, coins, nonce++);
+    }
+  _gcry_kyber_poly_getnoise_eta2(&epp, coins, nonce++);
+
+  _gcry_kyber_polyvec_ntt(&sp, param);
+
+  // matrix-vector multiplication
+  for (i = 0; i < param->k; i++)
+    {
+      ec = _gcry_kyber_polyvec_basemul_acc_montgomery(
+          &b.vec[i], &at[i], &sp, param);
+      if (ec)
         {
-            goto leave;
+          goto leave;
         }
     }
 
-    ec = _gcry_kyber_polyvec_basemul_acc_montgomery(&v, &pkpv, &sp, param);
-    if(ec)
+  ec = _gcry_kyber_polyvec_basemul_acc_montgomery(&v, &pkpv, &sp, param);
+  if (ec)
     {
-        goto leave;
+      goto leave;
     }
 
-    _gcry_kyber_polyvec_invntt_tomont(&b, param);
-    _gcry_kyber_poly_invntt_tomont(&v);
+  _gcry_kyber_polyvec_invntt_tomont(&b, param);
+  _gcry_kyber_poly_invntt_tomont(&v);
 
-    _gcry_kyber_polyvec_add(&b, &b, &ep, param);
-    _gcry_kyber_poly_add(&v, &v, &epp);
-    _gcry_kyber_poly_add(&v, &v, &k);
-    _gcry_kyber_polyvec_reduce(&b, param);
-    _gcry_kyber_poly_reduce(&v);
+  _gcry_kyber_polyvec_add(&b, &b, &ep, param);
+  _gcry_kyber_poly_add(&v, &v, &epp);
+  _gcry_kyber_poly_add(&v, &v, &k);
+  _gcry_kyber_polyvec_reduce(&b, param);
+  _gcry_kyber_poly_reduce(&v);
 
-    _gcry_kyber_pack_ciphertext(c, &b, &v, param);
+  _gcry_kyber_pack_ciphertext(c, &b, &v, param);
 leave:
 
-    _gcry_kyber_polyvec_destroy(&sp);
-    _gcry_kyber_polyvec_destroy(&pkpv);
-    _gcry_kyber_polyvec_destroy(&ep);
-    _gcry_kyber_polyvec_destroy(&b);
-    _gcry_kyber_polymatrix_destroy(&at, param);
+  _gcry_kyber_polyvec_destroy(&sp);
+  _gcry_kyber_polyvec_destroy(&pkpv);
+  _gcry_kyber_polyvec_destroy(&ep);
+  _gcry_kyber_polyvec_destroy(&b);
+  _gcry_kyber_polymatrix_destroy(&at, param);
 
-    return ec;
+  return ec;
 }
 
 /*************************************************
@@ -474,6 +482,7 @@ leave:
  *                                  (of length KYBER_INDCPA_BYTES)
  *              - const uint8_t *sk: pointer to input secret key
  *                                   (of length KYBER_INDCPA_SECRETKEYBYTES)
+ *              - gcry_kyber_param_t const *param: kyber parameters
  **************************************************/
 static gcry_error_t _gcry_kyber_indcpa_dec(uint8_t *m,
                                            const uint8_t *c,
@@ -502,10 +511,10 @@ static gcry_error_t _gcry_kyber_indcpa_dec(uint8_t *m,
 
   _gcry_kyber_polyvec_ntt(&b, param);
   ec = _gcry_kyber_polyvec_basemul_acc_montgomery(&mp, &skpv, &b, param);
-  if(ec)
-  {
+  if (ec)
+    {
       goto leave;
-  }
+    }
   _gcry_kyber_poly_invntt_tomont(&mp);
 
   _gcry_kyber_poly_sub(&mp, &v, &mp);
@@ -525,7 +534,8 @@ gcry_err_code_t _gcry_kyber_kem_keypair_derand(uint8_t *pk,
                                                uint8_t *coins)
 {
   gpg_err_code_t ec = 0;
-  if ((ec = _gcry_kyber_indcpa_keypair(pk, sk, param, coins)))
+  ec                = _gcry_kyber_indcpa_keypair(pk, sk, param, coins);
+  if (ec)
     {
       return ec;
     }
@@ -549,7 +559,8 @@ static gcry_err_code_t _gcry_kyber_kyber_shake256_rkprf(
 {
   gcry_md_hd_t h;
   gcry_err_code_t ec = 0;
-  if ((ec = _gcry_md_open(&h, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE)))
+  ec = _gcry_md_open(&h, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  if (ec)
     {
       return ec;
     }
