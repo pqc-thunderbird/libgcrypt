@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "kyber_params.h"
-#include "kyber_cbd.h"
+#include "kyber-params.h"
+#include "kyber-cbd.h"
 
 /*************************************************
 * Name:        load32_littleendian

@@ -2,8 +2,8 @@
 #define GCRYPT_KYBER_CBD_H
 
 #include <stdint.h>
-#include "kyber_params.h"
-#include "kyber_poly.h"
+#include "kyber-params.h"
+#include "kyber-poly.h"
 
 /**
  * buf has length KYBER_ETA1*GCRY_KYBER_N/4

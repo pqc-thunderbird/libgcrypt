@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "kyber_params.h"
+#include "kyber-params.h"
 
 int16_t _gcry_kyber_montgomery_reduce(int32_t a);
 

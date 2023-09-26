@@ -2,7 +2,7 @@
 #define GCRYPT_KYBER_NTT_H
 
 #include <stdint.h>
-#include "kyber_params.h"
+#include "kyber-params.h"
 
 
 void _gcry_kyber_ntt(int16_t poly[256]);

@@ -1,8 +1,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include "kyber_params.h"
-#include "kyber_symmetric.h"
+#include "kyber-params.h"
+#include "kyber-symmetric.h"
 
 #include "gcrypt.h"
 

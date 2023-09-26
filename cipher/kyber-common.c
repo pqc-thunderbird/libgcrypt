@@ -3,13 +3,13 @@
 #include <stdint.h>
 // #include <config.h>
 #include "kyber-common.h"
-#include "kyber_params.h"
-#include "kyber_polyvec.h"
-#include "kyber_poly.h"
-#include "kyber_ntt.h"
-#include "kyber_aux.h"
+#include "kyber-params.h"
+#include "kyber-polyvec.h"
+#include "kyber-poly.h"
+#include "kyber-ntt.h"
+#include "kyber-aux.h"
 #include "consttime.h"
-#include "kyber_symmetric.h"
+#include "kyber-symmetric.h"
 #include "gcrypt.h"
 
 #include "g10lib.h"

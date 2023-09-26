@@ -1,9 +1,9 @@
 
 
 #include <stdint.h>
-#include "kyber_params.h"
-#include "kyber_poly.h"
-#include "kyber_polyvec.h"
+#include "kyber-params.h"
+#include "kyber-poly.h"
+#include "kyber-polyvec.h"
 
 gcry_error_t _gcry_kyber_polymatrix_create(gcry_kyber_polyvec **polymat,
                                            gcry_kyber_param_t const *param)
