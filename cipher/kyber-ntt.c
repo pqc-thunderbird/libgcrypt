@@ -60,7 +60,8 @@ static const int16_t zetas[128] = {
  *
  * Returns 16-bit integer congruent to a*b*R^{-1} mod q
  **************************************************/
-static int16_t fqmul(int16_t a, int16_t b)
+static int16_t
+fqmul(int16_t a, int16_t b)
 {
   return _gcry_kyber_montgomery_reduce((int32_t)a * b);
 }
@@ -74,7 +75,8 @@ static int16_t fqmul(int16_t a, int16_t b)
  * Arguments:   - int16_t r[256]: pointer to input/output vector of elements of
  *Zq
  **************************************************/
-void _gcry_kyber_ntt(int16_t r[256])
+void
+_gcry_kyber_ntt(int16_t r[256])
 {
   unsigned int len, start, j, k;
   int16_t t, zeta;
@@ -104,7 +106,8 @@ void _gcry_kyber_ntt(int16_t r[256])
  *
  * Arguments:   - int16_t r[256]: pointer to input/output vector of elements of Zq
  **************************************************/
-void _gcry_kyber_invntt(int16_t r[256])
+void
+_gcry_kyber_invntt(int16_t r[256])
 {
   unsigned int start, len, j, k;
   int16_t t, zeta;
@@ -142,15 +145,16 @@ void _gcry_kyber_invntt(int16_t r[256])
  *              - int zeta: integer defining the reduction polynomial as an offset into the zeta table
  *              - int sign: sign to apply to the zeta value
  **************************************************/
-void _gcry_kyber_basemul(int16_t r[2],
-             const int16_t a[2],
-             const int16_t b[2],
-             int zeta_offs,
-             int sign)
+void
+_gcry_kyber_basemul(int16_t r[2],
+                    const int16_t a[2],
+                    const int16_t b[2],
+                    int zeta_offs,
+                    int sign)
 {
   uint16_t zeta = zetas[zeta_offs] * sign;
-  r[0] = fqmul(a[1], b[1]);
-  r[0] = fqmul(r[0], zeta);
+  r[0]          = fqmul(a[1], b[1]);
+  r[0]          = fqmul(r[0], zeta);
   r[0] += fqmul(a[0], b[0]);
   r[1] = fqmul(a[0], b[1]);
   r[1] += fqmul(a[1], b[0]);
