@@ -71,7 +71,9 @@ gcry_error_t
 _gcry_mlkem_polyvec_create (gcry_mlkem_polyvec *polyvec,
                             gcry_mlkem_param_t const *param)
 {
-  if (!(polyvec->vec = xtrymalloc_secure (sizeof (*polyvec->vec) * param->k)))
+
+  polyvec->vec = xtrymalloc_secure (sizeof (*polyvec->vec) * param->k);
+  if (polyvec->vec == NULL)
     {
       return gpg_err_code_from_syserror ();
     }

@@ -125,7 +125,7 @@ extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
                               const char *label,
                               unsigned char **data_p,
                               size_t exp_len,
-                              try_alloc_func_t alloc_func)
+                              xtry_alloc_func_t alloc_func)
 {
   gcry_mpi_t sk     = NULL;
   gpg_err_code_t ec = 0;
@@ -145,8 +145,8 @@ extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
       ec = GPG_ERR_INV_ARG;
       goto leave;
     }
-
-  if (!(*data_p = alloc_func (exp_len)))
+  *data_p = alloc_func (exp_len);
+  if (*data_p == NULL)
     {
       ec = gpg_err_code_from_syserror ();
       goto leave;

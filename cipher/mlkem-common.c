@@ -600,9 +600,19 @@ _gcry_mlkem_mlkem_shake256_rkprf (uint8_t out[GCRY_MLKEM_SSBYTES],
 gcry_err_code_t
 _gcry_mlkem_kem_keypair (uint8_t *pk, uint8_t *sk, gcry_mlkem_param_t *param)
 {
-  uint8_t coins[2 * GCRY_MLKEM_SYMBYTES];
-  _gcry_randomize (coins, 2 * GCRY_MLKEM_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
-  return _gcry_mlkem_kem_keypair_derand (pk, sk, param, coins);
+  gcry_err_code_t ec = 0;
+  uint8_t *coins     = NULL;
+  coins              = xtrymalloc_secure (GCRY_MLKEM_COINS_SIZE);
+  if (!coins)
+    {
+      ec = gpg_err_code_from_syserror ();
+      goto leave;
+    }
+  _gcry_randomize (coins, GCRY_MLKEM_COINS_SIZE, GCRY_VERY_STRONG_RANDOM);
+  ec = _gcry_mlkem_kem_keypair_derand (pk, sk, param, coins);
+leave:
+  xfree (coins);
+  return ec;
 }
 
 gcry_err_code_t

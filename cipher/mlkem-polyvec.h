@@ -26,6 +26,7 @@
 #include "mlkem-params.h"
 #include "mlkem-poly.h"
 #include "g10lib.h"
+#include "mlkem-aux.h"
 
 typedef struct
 {
@@ -35,30 +36,34 @@ typedef struct
 
 gcry_error_t _gcry_mlkem_polymatrix_create (gcry_mlkem_polyvec **polymat,
                                             gcry_mlkem_param_t const *param);
+
 void _gcry_mlkem_polymatrix_destroy (gcry_mlkem_polyvec **polymat,
                                      gcry_mlkem_param_t const *param);
 
 gcry_error_t _gcry_mlkem_polyvec_create (gcry_mlkem_polyvec *polyvec,
                                          gcry_mlkem_param_t const *param);
+
 void _gcry_mlkem_polyvec_destroy (gcry_mlkem_polyvec *polyvec);
 
 void _gcry_mlkem_polyvec_compress (uint8_t *r,
                                    const gcry_mlkem_polyvec *a,
                                    gcry_mlkem_param_t const *param);
+
 void _gcry_mlkem_polyvec_decompress (gcry_mlkem_polyvec *r,
                                      const uint8_t *a,
                                      gcry_mlkem_param_t const *param);
 
-
 void _gcry_mlkem_polyvec_tobytes (uint8_t *r,
                                   const gcry_mlkem_polyvec *a,
                                   gcry_mlkem_param_t const *param);
+
 void _gcry_mlkem_polyvec_frombytes (gcry_mlkem_polyvec *r,
                                     const uint8_t *a,
                                     gcry_mlkem_param_t const *param);
 
 void _gcry_mlkem_polyvec_ntt (gcry_mlkem_polyvec *r,
                               gcry_mlkem_param_t const *param);
+
 void _gcry_mlkem_polyvec_invntt_tomont (gcry_mlkem_polyvec *r,
                                         gcry_mlkem_param_t const *param);
 
