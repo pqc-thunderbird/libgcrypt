@@ -30,6 +30,7 @@
 #include <stddef.h>
 #include "cshake-common.h"
 #include "bufhelp.h"
+#include "keccak.h"
 
 static void
 write_encoded_key (gcry_mac_hd_t h, const unsigned char *key, size_t keylen)
@@ -169,7 +170,7 @@ kmac_setkey (gcry_mac_hd_t h, const unsigned char *key, size_t keylen)
 
   /* catch overly large size of key early that would cause problem in
    * subseuqently invoked conversion routines */
-  if (((size_t)keylen * 8) < keylen || keylen > 0xFFFFFFFF)
+  if (DOES_MULT_OVERFL_SIZE_T (8, keylen) || keylen > 0xFFFFFFFF)
     {
       return GPG_ERR_TOO_LARGE;
     }
@@ -200,12 +201,10 @@ kmac_setiv (gcry_mac_hd_t h, const unsigned char *iv, size_t ivlen)
 
   /* catch overly large size of IV early that would cause problem in
    * subseuqently invoked conversion routines */
-  if (((size_t)ivlen * 8) < ivlen || ivlen > 0xFFFFFFFF)
+  if (DOES_MULT_OVERFL_SIZE_T (8, ivlen) || ivlen > 0xFFFFFFFF)
     {
       return GPG_ERR_TOO_LARGE;
     }
-  /* if key is stored in context already, then write it after having set
-   * S in cshake and free the buffer */
   if (h->u.kmac.s_set)
     {
       return GPG_ERR_INV_STATE;
@@ -217,21 +216,12 @@ kmac_setiv (gcry_mac_hd_t h, const unsigned char *iv, size_t ivlen)
       return err;
     }
   h->u.kmac.s_set = 1;
+  /* if key is stored in context already, then write it after having set
+   * S in cshake and free the buffer */
   if (h->u.kmac.buffered_key != NULL)
     {
-      /* The potential error here causes that this function does not
-       * offer strong exception guarantee. But the only reason to fail is an
-       * exorbitant key size that cannot be encoded in a size_t in bits. Thus
-       * it is better to catch this condition earlier when actually providing
-       * the key to the API and then let write_encoded_key() have return type
-       * void.
-       */
       write_encoded_key (
           h, h->u.kmac.buffered_key, h->u.kmac.buffered_key_len);
-      if (err)
-        {
-          return err;
-        }
       xfree (h->u.kmac.buffered_key);
       h->u.kmac.buffered_key     = NULL;
       h->u.kmac.buffered_key_len = 0;
@@ -276,12 +266,12 @@ static gcry_err_code_t
 kmac_read (gcry_mac_hd_t h, unsigned char *outbuf, size_t *outlen_ptr)
 {
 
-  /* Both read and verify may be called in any order. Thus the KMAC context
-   * hold the computed in a buffer. */
   if (outlen_ptr && *outlen_ptr > h->u.kmac.output_byte_len)
     {
       *outlen_ptr = h->u.kmac.output_byte_len;
     }
+  /* Both read and verify may be called in any order. Thus the KMAC context
+   * holds the computed MAC in a buffer. */
   if (!h->u.kmac.have_computed_mac)
     {
       gpg_err_code_t err = GPG_ERR_NO_ERROR;
@@ -363,18 +353,28 @@ kmac_get_keylen (int algo)
     case GCRY_MAC_KMAC256_256:
       return 256 / 8;
     default:
-      return 0;
+      /* return the minimum reasonable value */
+      return 128;
     }
 }
 
 static const gcry_mac_spec_ops_t kmac_ops = {
-  kmac_open,       kmac_close,      kmac_setkey, kmac_setiv,
-  kmac_reset,      kmac_write,      kmac_read,   kmac_verify,
-  kmac_get_maclen, kmac_get_keylen, NULL,        NULL /* no kmac_selftest */
+    kmac_open,
+    kmac_close,
+    kmac_setkey,
+    kmac_setiv,
+    kmac_reset,
+    kmac_write,
+    kmac_read,
+    kmac_verify,
+    kmac_get_maclen,
+    kmac_get_keylen,
+    NULL,
+    NULL /* no kmac_selftest */
 };
 
 const gcry_mac_spec_t _gcry_mac_type_spec_kmac128_128
-    = { GCRY_MAC_KMAC128_128, { 0, 0 }, "KMAC128(128)", &kmac_ops };
+    = {GCRY_MAC_KMAC128_128, {0, 0}, "KMAC128(128)", &kmac_ops};
 
 const gcry_mac_spec_t _gcry_mac_type_spec_kmac256_256
-    = { GCRY_MAC_KMAC256_256, { 0, 0 }, "KMAC256(256)", &kmac_ops };
+    = {GCRY_MAC_KMAC256_256, {0, 0}, "KMAC256(256)", &kmac_ops};

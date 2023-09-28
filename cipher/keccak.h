@@ -1,7 +1,4 @@
-/* md.c  -  message digest dispatcher
- * Copyright (C) 1998, 1999, 2002, 2003, 2006,
- *               2008 Free Software Foundation, Inc.
- * Copyright (C) 2013, 2014 g10 Code GmbH
+/* keccak.h  -  internal keccak-related functionality
  * Copyright (C) 2023 MTG AG
  *
  * This file is part of Libgcrypt.
@@ -30,6 +27,8 @@
 #include "cipher.h"
 #include "gcrypt.h"
 
+
+#define DOES_MULT_OVERFL_SIZE_T(a, b) (a != 0 && ((size_t) (a*b))/a != b)
 
 gpg_err_code_t _gcry_cshake_add_input(void* context,
                         enum gcry_ctl_cmds addin_type,

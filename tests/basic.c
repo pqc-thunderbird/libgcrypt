@@ -16176,7 +16176,7 @@ check_one_mac (int algo, const char *data, int datalen,
       clutter_vector_registers();
       err = gcry_mac_setiv (hd, iv, ivlen);
       if (err)
-        fail("algo %d, mac gcry_mac_ivkey failed: %s\n", algo,
+        fail("algo %d, mac gcry_mac_setiv failed: %s\n", algo,
              gpg_strerror (err));
       if (err)
         goto out;
@@ -16203,7 +16203,7 @@ check_one_mac (int algo, const char *data, int datalen,
       clutter_vector_registers();
       err = gcry_mac_setiv (hd, iv, ivlen);
       if (err)
-        fail("algo %d, mac gcry_mac_ivkey failed: %s\n", algo,
+        fail("algo %d, mac gcry_mac_setiv failed: %s\n", algo,
              gpg_strerror (err));
       if (err)
         goto out;
