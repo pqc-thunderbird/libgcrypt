@@ -72,7 +72,6 @@ static gcry_err_code_t wots_checksum(const _gcry_sphincsplus_param_t *ctx, unsig
 {
     gcry_err_code_t ec = 0;
     unsigned int csum = 0;
-    // unsigned char csum_bytes[(ctx->WOTS_len2 * ctx->WOTS_logw + 7) / 8];
     size_t csum_bytes_len = (ctx->WOTS_len2 * ctx->WOTS_logw + 7) / 8;
     unsigned char *csum_bytes = NULL;
     unsigned int i;
@@ -118,7 +117,6 @@ _gcry_sphincsplus_wots_pk_from_sig(unsigned char *pk,
                       const _gcry_sphincsplus_param_t *ctx, uint32_t addr[8])
 {
     gcry_err_code_t ec = 0;
-    // unsigned int lengths[ctx->WOTS_len];
     unsigned int *lengths = NULL;
     uint32_t i;
 

@@ -27,7 +27,6 @@ gcry_err_code_t _gcry_sphincsplus_wots_gen_leafx1(unsigned char *dest,
     uint32_t *leaf_addr = info->leaf_addr;
     uint32_t *pk_addr = info->pk_addr;
     unsigned int i, k;
-    //unsigned char pk_buffer[ctx->WOTS_bytes];
     unsigned char *pk_buffer = NULL;
     unsigned char *buffer;
     uint32_t wots_k_mask;

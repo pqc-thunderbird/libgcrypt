@@ -218,9 +218,6 @@ static gcry_err_code_t hash_message_sha2(unsigned char *digest, uint64_t *tree, 
     unsigned char *seed = NULL;
     unsigned char *inbuf = NULL;
     unsigned char *buf = NULL;
-    // unsigned char inbuf[SPX_INBLOCKS * shax_block_bytes];
-    // unsigned char buf[SPX_DGST_BYTES];
-    // unsigned char seed[2*ctx->n + shax_output_bytes];
     unsigned char *bufp;
 
     if(ctx->do_use_sha512)
@@ -326,7 +323,6 @@ static gcry_err_code_t prf_addr_shake(unsigned char *out, const _gcry_sphincsplu
               const uint32_t addr[8])
 {
     gcry_err_code_t ec = 0;
-    // unsigned char buf[2*ctx->n + ctx->addr_bytes];
     unsigned char *buf = NULL;
     gcry_md_hd_t hd;
 
@@ -391,7 +387,6 @@ static gcry_err_code_t hash_message_shake(unsigned char *digest, uint64_t *tree,
     size_t SPX_LEAF_BYTES = (SPX_LEAF_BITS + 7) / 8;
     size_t SPX_DGST_BYTES = ctx->FORS_msg_bytes + SPX_TREE_BYTES + SPX_LEAF_BYTES;
 
-    // unsigned char buf[SPX_DGST_BYTES];
     unsigned char *buf = NULL;
     unsigned char *bufp;
 

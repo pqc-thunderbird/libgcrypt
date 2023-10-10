@@ -50,11 +50,21 @@ int _gcry_sphincsplus_seed_keypair(_gcry_sphincsplus_param_t *ctx, unsigned char
  */
 int _gcry_sphincsplus_keypair(_gcry_sphincsplus_param_t *ctx, unsigned char *pk, unsigned char *sk)
 {
-  unsigned char seed[ctx->seed_bytes];
-  _gcry_randomize(seed, ctx->seed_bytes, GCRY_VERY_STRONG_RANDOM);
-  _gcry_sphincsplus_seed_keypair(ctx, pk, sk, seed);
+  gcry_err_code_t ec = 0;
+  unsigned char *seed = NULL;
 
-  return 0;
+  seed = xtrymalloc_secure(ctx->seed_bytes);
+  if (!seed)
+  {
+    ec = gpg_err_code_from_syserror();
+    goto leave;
+  }
+
+  _gcry_randomize(seed, ctx->seed_bytes, GCRY_VERY_STRONG_RANDOM);
+  ec = _gcry_sphincsplus_seed_keypair(ctx, pk, sk, seed);
+
+leave:
+  return ec;
 }
 
 /**

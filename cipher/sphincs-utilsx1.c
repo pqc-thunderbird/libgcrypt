@@ -40,8 +40,8 @@ gcry_err_code_t treehashx1(unsigned char *root, unsigned char *auth_path,
     uint32_t max_idx = (uint32_t)((1 << tree_height) - 1);
 
     /* This is where we keep the intermediate nodes */
-    // SPX_VLA(uint8_t, stack, tree_height*ctx->n);
     uint8_t *stack = NULL;
+    unsigned char *current = NULL;
 
     stack = xtrymalloc_secure(tree_height*ctx->n);
     if (!stack)
@@ -55,9 +55,18 @@ gcry_err_code_t treehashx1(unsigned char *root, unsigned char *auth_path,
         uint32_t internal_idx = idx;
         uint32_t internal_leaf = leaf_idx;
         uint32_t h;     /* The height we are in the Merkle tree */
-        unsigned char current[2*ctx->n];   /* Current logical node is at */
+        /* variable current: Current logical node is at */
             /* index[ctx->n].  We do this to minimize the number of copies */
             /* needed during a _gcry_sphincsplus_thash */
+
+        xfree(current); /* free for previous loop iteration */
+        current = xtrymalloc_secure(2*ctx->n);
+        if (!current)
+        {
+            ec = gpg_err_code_from_syserror();
+            goto leave;
+        }
+
         /* TODO check error code */
         gen_leaf( &current[ctx->n], ctx, idx + idx_offset,
                     info );
@@ -116,5 +125,6 @@ gcry_err_code_t treehashx1(unsigned char *root, unsigned char *auth_path,
 
 leave:
     xfree(stack);
+    xfree(current);
 	return ec;
 }

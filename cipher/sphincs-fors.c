@@ -78,9 +78,7 @@ gcry_err_code_t _gcry_sphincsplus_fors_sign(unsigned char *sig, unsigned char *p
                const uint32_t fors_addr[8])
 {
     gcry_err_code_t ec = 0;
-    // uint32_t indices[ctx->FORS_trees];
     uint32_t *indices = NULL;
-    // unsigned char roots[ctx->FORS_trees * ctx->n];
     unsigned char *roots = NULL;
     uint32_t fors_tree_addr[8] = {0};
     struct fors_gen_leaf_info fors_info = {0};
@@ -152,9 +150,6 @@ gcry_err_code_t _gcry_sphincsplus_fors_pk_from_sig(unsigned char *pk,
                       const uint32_t fors_addr[8])
 {
     gcry_err_code_t ec = 0;
-    // uint32_t indices[ctx->FORS_trees];
-    // unsigned char roots[ctx->FORS_trees * ctx->n];
-    // unsigned char leaf[ctx->n];
     uint32_t *indices = NULL;
     unsigned char *roots = NULL;
     unsigned char *leaf = NULL;

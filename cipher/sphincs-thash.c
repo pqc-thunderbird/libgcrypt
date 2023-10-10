@@ -21,7 +21,6 @@ thash_shake_simple(unsigned char *out, const unsigned char *in, unsigned int inb
 {
     gcry_err_code_t ec = 0;
     gcry_md_hd_t hd;
-    // SPX_VLA(uint8_t, buf, ctx->n + ctx->addr_bytes + inblocks*ctx->n);
     uint8_t *buf = NULL;
 
     buf = xtrymalloc_secure(ctx->n + ctx->addr_bytes + inblocks*ctx->n);

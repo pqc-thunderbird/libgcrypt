@@ -26,7 +26,6 @@ gcry_err_code_t _gcry_sphincsplus_merkle_sign(uint8_t *sig, unsigned char *root,
     gcry_err_code_t ec = 0;
     unsigned char *auth_path = sig + ctx->WOTS_bytes;
     struct _gcry_sphincsplus_leaf_info_x1_t info = { 0 };
-    // unsigned steps[ ctx->WOTS_len ];
     unsigned *steps = NULL;
 
     steps = xtrymalloc_secure(sizeof(unsigned) * ctx->WOTS_len);
@@ -64,7 +63,6 @@ gcry_err_code_t _gcry_sphincsplus_merkle_gen_root(unsigned char *root, const _gc
     /* We do not need the auth path in key generation, but it simplifies the
        code to have just one _gcry_sphincsplus_treehash routine that computes both root and path
        in one function. */
-    // unsigned char auth_path[ctx->tree_height * ctx->n + ctx->WOTS_bytes];
     gcry_err_code_t ec = 0;
 
     unsigned char *auth_path = NULL;

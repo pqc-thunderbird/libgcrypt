@@ -57,7 +57,6 @@ gcry_err_code_t _gcry_sphincsplus_compute_root(unsigned char *root, const unsign
 {
     gcry_err_code_t ec = 0;
     uint32_t i;
-    //unsigned char buffer[2 * ctx->n];
     unsigned char *buffer = NULL;
 
     buffer = xtrymalloc_secure(2 * ctx->n);
@@ -118,7 +117,7 @@ leave:
  * Applies the offset idx_offset to indices before building addresses, so that
  * it is possible to continue counting indices across trees.
  */
-void _gcry_sphincsplus_treehash(unsigned char *root, unsigned char *auth_path, const _gcry_sphincsplus_param_t* ctx,
+gcry_err_code_t _gcry_sphincsplus_treehash(unsigned char *root, unsigned char *auth_path, const _gcry_sphincsplus_param_t* ctx,
               uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,
               void (*gen_leaf)(
                  unsigned char* /* leaf */,
@@ -126,11 +125,25 @@ void _gcry_sphincsplus_treehash(unsigned char *root, unsigned char *auth_path, c
                  uint32_t /* addr_idx */, const uint32_t[8] /* tree_addr */),
               uint32_t tree_addr[8])
 {
-    SPX_VLA(uint8_t, stack, (tree_height+1)*ctx->n);
-    SPX_VLA(unsigned int, heights, tree_height+1);
+    gcry_err_code_t ec = 0;
+    unsigned char *stack = NULL;
+    unsigned char *heights = NULL;
     unsigned int offset = 0;
     uint32_t idx;
     uint32_t tree_idx;
+
+    stack = xtrymalloc_secure((tree_height+1)*ctx->n);
+    if (!stack)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+    heights = xtrymalloc_secure(tree_height+1);
+    if (!heights)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
     for (idx = 0; idx < (uint32_t)(1 << tree_height); idx++) {
         /* Add the next leaf node to the stack. */
@@ -167,4 +180,8 @@ void _gcry_sphincsplus_treehash(unsigned char *root, unsigned char *auth_path, c
         }
     }
     memcpy(root, stack, ctx->n);
+leave:
+    xfree(stack);
+    xfree(heights);
+    return ec;
 }
