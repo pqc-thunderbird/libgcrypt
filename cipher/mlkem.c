@@ -29,6 +29,7 @@
 #include "cipher.h"
 #include "pubkey-internal.h"
 #include "mlkem-aux.h"
+#include "bufhelp.h"
 
 
 static gcry_err_code_t
@@ -247,7 +248,7 @@ mlkem_check_secret_key (gcry_sexp_t keyparms)
       goto leave;
     }
 
-  if (memcmp (shared_secret_1, shared_secret_2, sizeof (shared_secret_1)))
+  if (!buf_eq_const (shared_secret_1, shared_secret_2, sizeof (shared_secret_1)))
     {
       ec = GPG_ERR_BAD_SECKEY;
       goto leave;
