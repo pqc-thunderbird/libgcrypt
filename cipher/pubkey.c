@@ -342,25 +342,6 @@ _gcry_pk_encrypt (gcry_sexp_t *r_ciph, gcry_sexp_t s_data, gcry_sexp_t s_pkey)
 }
 
 
-/*
-   Do a PK encapsulate operation
-
-     The function returns a sexp which may be
-   passed to to pk_decrypt.
-
-   Returns: 0 or an errorcode.
-
-// TODOMTG:
-   s_data = See comment for _gcry_pk_util_data_to_mpi
-   s_pkey = <key-as-defined-in-sexp_to_key>
-   r_ciph = (enc-val
-               (<algo>
-                 (<param_name1> <mpi>)
-                 ...
-                 (<param_namen> <mpi>)
-               ))
-
-*/
 gcry_err_code_t
 _gcry_pk_encap(gcry_sexp_t *r_ciph, gcry_sexp_t* r_shared_key, gcry_sexp_t s_pkey)
 {
