@@ -22,26 +22,8 @@
 #include "mlkem-params.h"
 #include "mlkem-cbd.h"
 
-/*************************************************
- * Name:        load32_littleendian
- *
- * Description: load 4 bytes into a 32-bit integer
- *              in little-endian order
- *
- * Arguments:   - const uint8_t *x: pointer to input byte array
- *
- * Returns 32-bit unsigned integer loaded from x
- **************************************************/
-static uint32_t
-load32_littleendian (const uint8_t x[4])
-{
-  uint32_t r;
-  r = (uint32_t)x[0];
-  r |= (uint32_t)x[1] << 8;
-  r |= (uint32_t)x[2] << 16;
-  r |= (uint32_t)x[3] << 24;
-  return r;
-}
+#include <config.h>
+#include "bufhelp.h"
 
 /*************************************************
  * Name:        load24_littleendian
@@ -84,7 +66,7 @@ cbd2 (gcry_mlkem_poly *r, const uint8_t buf[2 * GCRY_MLKEM_N / 4])
 
   for (i = 0; i < GCRY_MLKEM_N / 8; i++)
     {
-      t = load32_littleendian (buf + 4 * i);
+      t = buf_get_le32(buf + 4 * i);
       d = t & 0x55555555;
       d += (t >> 1) & 0x55555555;
 
