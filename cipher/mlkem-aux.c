@@ -24,8 +24,8 @@
 #include "mlkem-params.h"
 
 
-#define MONT -1044 // 2^16 mod q
-#define QINV -3327 // q^-1 mod 2^16
+#define MONT -1044 /* 2^16 mod q */
+#define QINV -3327 /* q^-1 mod 2^16 */
 
 
 /*************************************************

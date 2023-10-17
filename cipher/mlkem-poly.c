@@ -51,7 +51,7 @@ _gcry_mlkem_poly_compress (unsigned char *r,
         {
           for (j = 0; j < 8; j++)
             {
-              // map to positive standard representatives
+              /* map to positive standard representatives */
               u = a->coeffs[8 * i + j];
               u += (u >> 15) & GCRY_MLKEM_Q;
               t[j] = ((((uint16_t)u << 4) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q)
@@ -71,7 +71,7 @@ _gcry_mlkem_poly_compress (unsigned char *r,
         {
           for (j = 0; j < 8; j++)
             {
-              // map to positive standard representatives
+              /* map to positive standard representatives */
               u = a->coeffs[8 * i + j];
               u += (u >> 15) & GCRY_MLKEM_Q;
               t[j] = ((((uint32_t)u << 5) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q)
@@ -160,7 +160,7 @@ _gcry_mlkem_poly_tobytes (unsigned char r[GCRY_MLKEM_POLYBYTES],
 
   for (i = 0; i < GCRY_MLKEM_N / 2; i++)
     {
-      // map to positive standard representatives
+      /* map to positive standard representatives */
       t0 = a->coeffs[2 * i];
       t0 += ((int16_t)t0 >> 15) & GCRY_MLKEM_Q;
       t1 = a->coeffs[2 * i + 1];

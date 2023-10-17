@@ -20,7 +20,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-// #include <config.h>
 #include "mlkem-common.h"
 #include "mlkem-params.h"
 #include "mlkem-polyvec.h"
@@ -351,7 +350,7 @@ _gcry_mlkem_indcpa_keypair (uint8_t *pk,
   _gcry_mlkem_polyvec_ntt (&skpv, param);
   _gcry_mlkem_polyvec_ntt (&e, param);
 
-  // matrix-vector multiplication
+  /* matrix-vector multiplication */
   for (i = 0; i < param->k; i++)
     {
       ec = _gcry_mlkem_polyvec_basemul_acc_montgomery (
@@ -455,7 +454,7 @@ _gcry_mlkem_indcpa_enc (uint8_t *c,
 
   _gcry_mlkem_polyvec_ntt (&sp, param);
 
-  // matrix-vector multiplication
+  /* matrix-vector multiplication */
   for (i = 0; i < param->k; i++)
     {
       ec = _gcry_mlkem_polyvec_basemul_acc_montgomery (

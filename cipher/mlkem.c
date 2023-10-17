@@ -235,7 +235,7 @@ mlkem_check_secret_key (gcry_sexp_t keyparms)
     }
   public_key
       = private_key
-        + param.indcpa_secret_key_bytes; // offset of public key in private key
+        + param.indcpa_secret_key_bytes; /* offset of public key in private key */
   ec = _gcry_mlkem_kem_enc (ciphertext, shared_secret_1, public_key, &param);
   if (ec)
     {
@@ -449,7 +449,7 @@ mlkem_get_nbits (gcry_sexp_t parms)
 
 static const char *mlkem_names[] = {
     "mlkem",
-    "openpgp-mlkem", // ? leave?
+    "openpgp-mlkem", /* ? leave? */
     NULL,
 };
 
@@ -463,17 +463,17 @@ gcry_pk_spec_t _gcry_pubkey_spec_mlkem = {
     "s",
     "a",
     "",
-    "", // elements of pub-key, sec-key, ciphertext, signature, key-grip
+    "", /* elements of pub-key, sec-key, ciphertext, signature, key-grip */
     mlkem_generate,
     mlkem_check_secret_key,
-    NULL, // encrypt
+    NULL, /* encrypt */
     mlkem_encap,
     mlkem_decrypt,
-    NULL, // sign
-    NULL, // verify
+    NULL, /* sign */
+    NULL, /* verify */
     mlkem_get_nbits,
-    NULL, // run_selftests
-    NULL, // compute_keygrip
-    NULL, // get_curve
-    NULL  // get_curve_param
+    NULL, /* run_selftests */
+    NULL, /* compute_keygrip */
+    NULL, /* get_curve */
+    NULL  /* get_curve_param */
 };

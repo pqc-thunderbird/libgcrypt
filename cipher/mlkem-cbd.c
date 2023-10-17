@@ -140,7 +140,7 @@ _gcry_mlkem_poly_cbd_eta1 (gcry_mlkem_poly *r,
     {
       cbd2 (r, buf);
     }
-  else // eta1 = 3
+  else /* eta1 = 3 */
     {
       cbd3 (r, buf);
     }
