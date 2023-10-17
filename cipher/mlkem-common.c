@@ -29,6 +29,7 @@
 #include "consttime.h"
 #include "mlkem-symmetric.h"
 #include "gcrypt.h"
+#include "bufhelp.h"
 
 #include "g10lib.h"
 
@@ -656,7 +657,7 @@ _gcry_mlkem_kem_dec (uint8_t *ss,
       goto end;
     }
 
-  fail = _gcry_consttime_bytes_differ (ct, cmp, param->ciphertext_bytes);
+  fail = !buf_eq_const(ct, cmp, param->ciphertext_bytes);
 
   ec = _gcry_mlkem_mlkem_shake256_rkprf (ss,
                                          sk + param->secret_key_bytes
