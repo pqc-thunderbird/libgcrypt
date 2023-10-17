@@ -36,9 +36,6 @@
 /* In this case, uintptr_t is provided by config.h. */
 #endif
 
-// #include "../src/gcrypt-int.h"
-// #include "../src/gcrypt-testapi.h"
-
 #define PGM "cSHAKE"
 #include "t-common.h"
 #include "gcrypt.h"

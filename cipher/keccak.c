@@ -1468,7 +1468,7 @@ static gpg_err_code_t
 _gcry_cshake_input_n (CSHAKE_CONTEXT *cshake_ctx, const void *n, size_t n_len)
 {
 
-  // KECCAK[512](bytepad(encode_string(N)
+  /* KECCAK[512](bytepad(encode_string(N) */
   size_t bit_len;
   unsigned char array[20];
   int err_flag      = 0;
@@ -1503,8 +1503,8 @@ static void
 _gcry_cshake_input_s (CSHAKE_CONTEXT *cshake_ctx, const void *s, size_t s_len)
 {
 
-  // KECCAK[(256 or 512)](bytepad(encode_string(N)
-  // KECCAK[(256 or 512)](bytepad(...<already fed> || encode_string(S), w = (168 or 136))
+  /* KECCAK[(256 or 512)](bytepad(encode_string(N) */
+  /* KECCAK[(256 or 512)](bytepad(...<already fed> || encode_string(S), w = (168 or 136)) */
   size_t bit_len;
   unsigned char array[20];
   size_t rem;

@@ -65,7 +65,7 @@ left_or_right_encode (size_t s,
 {
   int i;
   size_t bytes_appended = 0;
-  // determine number of octets needed to encode s
+  /* determine number of octets needed to encode s */
   for (i = sizeof (s); i > 0; i--)
     {
       unsigned char t = (s >> ((i - 1) * 8) & (size_t)0xFF);
@@ -87,7 +87,7 @@ left_or_right_encode (size_t s,
         }
       bytes_appended++;
     }
-  // big endian encoding of s
+  /* big endian encoding of s */
   for (int j = i; j > 0; j--)
     {
       if (append_byte_to_buffer (output_buffer,
