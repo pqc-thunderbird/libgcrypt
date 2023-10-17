@@ -4,18 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/*************************************************
- * Name:        _gcry_constime_bytes_differ
- *
- * Description: Compare two arrays for equality in constant time.
- *
- * Arguments:   const uint8_t *a: pointer to first byte array
- *              const uint8_t *b: pointer to second byte array
- *              size_t len:       length of the byte arrays
- *
- * Returns 0 if the byte arrays are equal, 1 otherwise
- **************************************************/
-int _gcry_consttime_bytes_differ(const uint8_t *a, const uint8_t *b, size_t len);
 
 /*************************************************
  * Name:        _gcry_consttime_cmov
