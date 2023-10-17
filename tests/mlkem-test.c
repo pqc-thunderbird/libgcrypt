@@ -562,4 +562,5 @@ int main(int argc, char **argv)
   printf("\nAll tests passed.\n");
 leave:
   xfree(fname);
+  xgcry_control ((GCRYCTL_CLOSE_RANDOM_DEVICE, 0));
 }

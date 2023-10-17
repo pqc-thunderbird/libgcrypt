@@ -277,6 +277,7 @@ check_mlkem_keys (void)
   if (rc)
     die ("error generating ML-KEM key: %s\n", gpg_strerror (rc));
 
+  gcry_sexp_release (key);
 #endif /* USE_MLKEM */
 }
 
