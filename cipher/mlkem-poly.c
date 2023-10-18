@@ -25,6 +25,7 @@
 #include "mlkem-aux.h"
 #include "mlkem-cbd.h"
 #include "mlkem-symmetric.h"
+#include "g10lib.h"
 
 /*************************************************
  * Name:        poly_compress
@@ -39,11 +40,12 @@
 void
 _gcry_mlkem_poly_compress (unsigned char *r,
                            const gcry_mlkem_poly *a,
-                           gcry_mlkem_param_t const *param)
+                           gcry_mlkem_param_t const *param,
+                           uint16_t *workspace_8_uint16)
 {
   unsigned int i, j;
   int16_t u;
-  unsigned char t[8];
+  unsigned char* t = (unsigned char*)  workspace_8_uint16; /* need 8 uint8_t */
 
   if (param->id != GCRY_MLKEM_1024)
     {

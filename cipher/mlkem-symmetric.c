@@ -33,13 +33,9 @@ _gcry_mlkem_shake128_absorb (gcry_md_hd_t h,
                              unsigned char x,
                              unsigned char y)
 {
-  unsigned char extseed[GCRY_MLKEM_SYMBYTES + 2];
-
-  memcpy (extseed, seed, GCRY_MLKEM_SYMBYTES);
-  extseed[GCRY_MLKEM_SYMBYTES + 0] = x;
-  extseed[GCRY_MLKEM_SYMBYTES + 1] = y;
-
-  _gcry_md_write (h, extseed, sizeof (extseed));
+  _gcry_md_write (h, seed, GCRY_MLKEM_SYMBYTES);
+  _gcry_md_write(h, &x, 1);
+  _gcry_md_write(h, &y, 1);
 }
 
 
@@ -58,18 +54,16 @@ _gcry_mlkem_shake256_prf (unsigned char *out,
                           const unsigned char key[GCRY_MLKEM_SYMBYTES],
                           unsigned char nonce)
 {
-  unsigned char extkey[GCRY_MLKEM_SYMBYTES + 1];
   gcry_err_code_t ec = 0;
   gcry_md_hd_t h;
 
-  memcpy (extkey, key, GCRY_MLKEM_SYMBYTES);
-  extkey[GCRY_MLKEM_SYMBYTES] = nonce;
   ec = _gcry_md_open (&h, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
   if (ec)
     {
       return ec;
     }
-  _gcry_md_write (h, extkey, sizeof (extkey));
+  _gcry_md_write (h, key, GCRY_MLKEM_SYMBYTES);
+    _gcry_md_write (h, &nonce, 1);
   ec = _gcry_md_extract (h, GCRY_MD_SHAKE256, out, outlen);
   _gcry_md_close (h);
   return ec;

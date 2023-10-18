@@ -99,14 +99,15 @@ _gcry_mlkem_polyvec_destroy (gcry_mlkem_polyvec *polyvec)
 void
 _gcry_mlkem_polyvec_compress (uint8_t *r,
                               const gcry_mlkem_polyvec *a,
-                              gcry_mlkem_param_t const *param)
+                              gcry_mlkem_param_t const *param,
+                              uint16_t *workspace_8_uint16)
 {
   unsigned int i, j, k;
   switch (param->id)
     {
     case GCRY_MLKEM_1024:
       {
-        uint16_t t[8];
+        uint16_t* t = workspace_8_uint16; /* needs 8 uint16_t */
         for (i = 0; i < param->k; i++)
           {
             for (j = 0; j < GCRY_MLKEM_N / 8; j++)
@@ -140,7 +141,7 @@ _gcry_mlkem_polyvec_compress (uint8_t *r,
     case GCRY_MLKEM_768:
       {
 
-        uint16_t t[4];
+        uint16_t *t = workspace_8_uint16; /* needs 4 uint16_t */
         for (i = 0; i < param->k; i++)
           {
             for (j = 0; j < GCRY_MLKEM_N / 4; j++)
