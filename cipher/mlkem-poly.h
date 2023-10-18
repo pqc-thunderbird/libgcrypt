@@ -36,7 +36,8 @@ typedef struct
 
 void _gcry_mlkem_poly_compress (unsigned char *r,
                                 const gcry_mlkem_poly *a,
-                                gcry_mlkem_param_t const *param);
+                                gcry_mlkem_param_t const *param,
+                                uint16_t *workspace_8_uint16);
 
 void _gcry_mlkem_poly_decompress (gcry_mlkem_poly *r,
                                   const unsigned char *a,

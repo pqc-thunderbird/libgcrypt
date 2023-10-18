@@ -138,10 +138,12 @@ static void
 _gcry_mlkem_pack_ciphertext (uint8_t *r,
                              gcry_mlkem_polyvec *b,
                              gcry_mlkem_poly *v,
-                             gcry_mlkem_param_t const *param)
+                             gcry_mlkem_param_t const *param,
+                             uint16_t *workspace_8_uint16)
 {
-  _gcry_mlkem_polyvec_compress (r, b, param);
-  _gcry_mlkem_poly_compress (r + param->polyvec_compressed_bytes, v, param);
+  _gcry_mlkem_polyvec_compress (r, b, param, workspace_8_uint16);
+  _gcry_mlkem_poly_compress (
+      r + param->polyvec_compressed_bytes, v, param, workspace_8_uint16);
 }
 
 /*************************************************
@@ -233,9 +235,15 @@ _gcry_mlkem_gen_matrix (gcry_mlkem_polyvec *a,
 {
   unsigned int ctr, i, j, k;
   unsigned int buflen, off;
-  uint8_t buf[GEN_MATRIX_NBLOCKS * GCRY_MLKEM_XOF_BLOCKBYTES + 2];
+  unsigned char *buf = NULL;
   gcry_err_code_t ec = 0;
 
+  buf = xtrymalloc_secure (GEN_MATRIX_NBLOCKS * GCRY_MLKEM_XOF_BLOCKBYTES + 2);
+  if (!buf)
+    {
+      ec = gpg_err_code_from_syserror ();
+      goto leave;
+    }
   for (i = 0; i < param->k; i++)
     {
       for (j = 0; j < param->k; j++)
@@ -245,7 +253,7 @@ _gcry_mlkem_gen_matrix (gcry_mlkem_polyvec *a,
           ec = _gcry_md_open (&h, GCRY_MD_SHAKE128, GCRY_MD_FLAG_SECURE);
           if (ec)
             {
-              return ec;
+              goto leave;
             }
           if (transposed)
             {
@@ -279,7 +287,9 @@ _gcry_mlkem_gen_matrix (gcry_mlkem_polyvec *a,
           _gcry_md_close (h);
         }
     }
-  return 0;
+leave:
+  xfree (buf);
+  return ec;
 }
 
 /*************************************************
@@ -302,13 +312,22 @@ _gcry_mlkem_indcpa_keypair (uint8_t *pk,
                             uint8_t *coins)
 {
   unsigned int i;
-  uint8_t buf[2 * GCRY_MLKEM_SYMBYTES];
-  const uint8_t *publicseed = buf;
-  const uint8_t *noiseseed  = buf + GCRY_MLKEM_SYMBYTES;
+  unsigned char *buf        = NULL;
+  const uint8_t *publicseed = NULL;
+  const uint8_t *noiseseed  = NULL;
   uint8_t nonce             = 0;
   gcry_mlkem_polyvec *a = NULL, e = {.vec = NULL}, pkpv = {.vec = NULL},
                      skpv = {.vec = NULL};
   gcry_error_t ec         = 0;
+  buf                     = xtrymalloc_secure (2 * GCRY_MLKEM_SYMBYTES);
+  if (!buf)
+    {
+      ec = gpg_error_from_syserror ();
+      goto leave;
+    }
+
+  publicseed = buf;
+  noiseseed  = buf + GCRY_MLKEM_SYMBYTES;
 
   ec = _gcry_mlkem_polymatrix_create (&a, param);
   if (ec)
@@ -330,7 +349,6 @@ _gcry_mlkem_indcpa_keypair (uint8_t *pk,
     {
       goto leave;
     }
-
 
   _gcry_md_hash_buffer (GCRY_MD_SHA3_512, buf, coins, GCRY_MLKEM_SYMBYTES);
   ec = _gcry_mlkem_gen_matrix (a, publicseed, 0, param);
@@ -373,6 +391,7 @@ leave:
   _gcry_mlkem_polyvec_destroy (&e);
   _gcry_mlkem_polyvec_destroy (&pkpv);
   _gcry_mlkem_polyvec_destroy (&skpv);
+  xfree (buf);
 
   return ec;
 }
@@ -402,12 +421,14 @@ _gcry_mlkem_indcpa_enc (uint8_t *c,
                         gcry_mlkem_param_t const *param)
 {
   unsigned int i;
-  uint8_t seed[GCRY_MLKEM_SYMBYTES];
-  uint8_t nonce         = 0;
+  unsigned char *seed          = NULL;
+  uint16_t *workspace_8_uint16 = NULL;
+  uint8_t nonce                = 0;
   gcry_mlkem_polyvec sp = {.vec = NULL}, pkpv = {.vec = NULL},
                      ep = {.vec = NULL}, *at = NULL, b = {.vec = NULL};
   gcry_error_t ec = 0;
   gcry_mlkem_poly v, k, epp;
+
 
   ec = _gcry_mlkem_polyvec_create (&sp, param);
   if (ec)
@@ -435,9 +456,17 @@ _gcry_mlkem_indcpa_enc (uint8_t *c,
       goto leave;
     }
 
+  seed = xtrymalloc_secure (GCRY_MLKEM_SYMBYTES);
+  if (!seed)
+    {
+      ec = gpg_err_code_from_syserror ();
+      goto leave;
+    }
   _gcry_mlkem_unpack_pk (&pkpv, seed, pk, param);
   _gcry_mlkem_poly_frommsg (&k, m);
   ec = _gcry_mlkem_gen_matrix (at, seed, 1, param);
+  xfree(seed);
+  seed = NULL;
   if (ec)
     {
       goto leave;
@@ -481,7 +510,14 @@ _gcry_mlkem_indcpa_enc (uint8_t *c,
   _gcry_mlkem_polyvec_reduce (&b, param);
   _gcry_mlkem_poly_reduce (&v);
 
-  _gcry_mlkem_pack_ciphertext (c, &b, &v, param);
+  workspace_8_uint16= xtrymalloc_secure (16);
+  if (!workspace_8_uint16)
+    {
+      ec = gpg_error_from_syserror ();
+      goto leave;
+    }
+
+  _gcry_mlkem_pack_ciphertext (c, &b, &v, param, workspace_8_uint16);
 leave:
 
   _gcry_mlkem_polyvec_destroy (&sp);
@@ -489,6 +525,8 @@ leave:
   _gcry_mlkem_polyvec_destroy (&ep);
   _gcry_mlkem_polyvec_destroy (&b);
   _gcry_mlkem_polymatrix_destroy (&at, param);
+  xfree (seed);
+  xfree (workspace_8_uint16);
 
   return ec;
 }
@@ -657,7 +695,7 @@ _gcry_mlkem_kem_dec (uint8_t *ss,
       goto end;
     }
 
-  fail = !buf_eq_const(ct, cmp, param->ciphertext_bytes);
+  fail = !buf_eq_const (ct, cmp, param->ciphertext_bytes);
 
   ec = _gcry_mlkem_mlkem_shake256_rkprf (ss,
                                          sk + param->secret_key_bytes
@@ -684,9 +722,23 @@ _gcry_mlkem_kem_enc (uint8_t *ct,
                      const uint8_t *pk,
                      gcry_mlkem_param_t *param)
 {
-  uint8_t coins[GCRY_MLKEM_SYMBYTES];
+  gcry_error_t ec      = 0;
+  unsigned char *coins = NULL;
+  coins                = xtrymalloc_secure (GCRY_MLKEM_SYMBYTES);
+  if (!coins)
+    {
+      return gpg_error_from_syserror ();
+    }
+
   _gcry_randomize (coins, GCRY_MLKEM_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
-  return _gcry_mlkem_kem_enc_derand (ct, ss, pk, param, coins);
+  ec = _gcry_mlkem_kem_enc_derand (ct, ss, pk, param, coins);
+  if (ec)
+    {
+      goto leave;
+    }
+leave:
+  xfree (coins);
+  return ec;
 }
 
 gcry_err_code_t
@@ -696,10 +748,24 @@ _gcry_mlkem_kem_enc_derand (uint8_t *ct,
                             gcry_mlkem_param_t *param,
                             uint8_t *coins)
 {
-  gpg_err_code_t ec = 0;
-  uint8_t buf[2 * GCRY_MLKEM_SYMBYTES];
+  gpg_err_code_t ec  = 0;
+  unsigned char *buf = NULL;
   /* Will contain key, coins */
-  uint8_t kr[2 * GCRY_MLKEM_SYMBYTES];
+
+  unsigned char *kr = NULL;
+  //
+  buf = xtrymalloc_secure (2 * GCRY_MLKEM_SYMBYTES);
+  if (!buf)
+    {
+      ec = gpg_error_from_syserror ();
+      goto leave;
+    }
+  kr = xtrymalloc_secure (2 * GCRY_MLKEM_SYMBYTES);
+  if (!kr)
+    {
+      ec = gpg_error_from_syserror ();
+      goto leave;
+    }
 
   /* Don't release system RNG output */
   _gcry_md_hash_buffer (GCRY_MD_SHA3_256, buf, coins, GCRY_MLKEM_SYMBYTES);
@@ -717,11 +783,13 @@ _gcry_mlkem_kem_enc_derand (uint8_t *ct,
   ec = _gcry_mlkem_indcpa_enc (ct, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
   if (ec)
     {
-      goto end;
+      goto leave;
     }
 
 
   memcpy (ss, kr, GCRY_MLKEM_SYMBYTES);
-end:
+leave:
+  xfree (buf);
+  xfree (kr);
   return ec;
 }

@@ -47,7 +47,8 @@ void _gcry_mlkem_polyvec_destroy (gcry_mlkem_polyvec *polyvec);
 
 void _gcry_mlkem_polyvec_compress (uint8_t *r,
                                    const gcry_mlkem_polyvec *a,
-                                   gcry_mlkem_param_t const *param);
+                                   gcry_mlkem_param_t const *param,
+                                   uint16_t *workspace_8_uint16);
 
 void _gcry_mlkem_polyvec_decompress (gcry_mlkem_polyvec *r,
                                      const uint8_t *a,
