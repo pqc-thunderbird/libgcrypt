@@ -25,6 +25,8 @@
 #include "mlkem-symmetric.h"
 
 #include "gcrypt.h"
+#include "config.h"
+#include "types.h"
 
 
 void
@@ -34,15 +36,13 @@ _gcry_mlkem_shake128_absorb (gcry_md_hd_t h,
                              unsigned char y)
 {
   _gcry_md_write (h, seed, GCRY_MLKEM_SYMBYTES);
-  _gcry_md_write(h, &x, 1);
-  _gcry_md_write(h, &y, 1);
+  _gcry_md_write (h, &x, 1);
+  _gcry_md_write (h, &y, 1);
 }
 
 
 gcry_err_code_t
-_gcry_mlkem_shake128_squeezeblocks (gcry_md_hd_t h,
-                                    uint8_t *out,
-                                    size_t nblocks)
+_gcry_mlkem_shake128_squeezeblocks (gcry_md_hd_t h, byte *out, size_t nblocks)
 {
   return _gcry_md_extract (
       h, GCRY_MD_SHAKE128, out, GCRY_SHAKE128_RATE * nblocks);
@@ -63,7 +63,7 @@ _gcry_mlkem_shake256_prf (unsigned char *out,
       return ec;
     }
   _gcry_md_write (h, key, GCRY_MLKEM_SYMBYTES);
-    _gcry_md_write (h, &nonce, 1);
+  _gcry_md_write (h, &nonce, 1);
   ec = _gcry_md_extract (h, GCRY_MD_SHAKE256, out, outlen);
   _gcry_md_close (h);
   return ec;

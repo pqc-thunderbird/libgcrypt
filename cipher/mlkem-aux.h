@@ -24,10 +24,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "mlkem-params.h"
+#include "config.h"
+#include "types.h"
 
-int16_t _gcry_mlkem_montgomery_reduce (int32_t a);
+s16 _gcry_mlkem_montgomery_reduce (s32 a);
 
-int16_t _gcry_mlkem_barrett_reduce (int16_t a);
+s16 _gcry_mlkem_barrett_reduce (s16 a);
 
 typedef void *(*xtry_alloc_func_t) (size_t);
 

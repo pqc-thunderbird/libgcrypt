@@ -230,8 +230,8 @@ static void
 check_mlkem_kat (const char *fname, unsigned mlkem_bits)
 {
   const size_t nb_kat_tests = 0; /* zero means all */
-  FILE *fp;
-  int lineno = 0;
+  FILE *fp                  = NULL;
+  int lineno                = 0;
   char *line;
 
   enum
@@ -444,6 +444,10 @@ check_mlkem_kat (const char *fname, unsigned mlkem_bits)
   xfree (line);
 leave:
   line = line;
+  if (fp)
+    {
+      fclose (fp);
+    }
 }
 
 int

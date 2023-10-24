@@ -22,6 +22,8 @@
 #define GCRYPT_MLKEM_PARAMS_H
 
 #include <stdint.h>
+#include "config.h"
+#include "types.h"
 
 typedef enum
 {
@@ -33,15 +35,15 @@ typedef enum
 typedef struct
 {
   gcry_mlkem_param_id id;
-  uint8_t k;
-  uint8_t eta1;
-  uint16_t polyvec_bytes;
-  uint8_t poly_compressed_bytes;
-  uint16_t polyvec_compressed_bytes;
-  uint16_t public_key_bytes;
-  uint16_t indcpa_secret_key_bytes;
-  uint16_t secret_key_bytes;
-  uint16_t ciphertext_bytes;
+  byte k;
+  byte eta1;
+  u16 polyvec_bytes;
+  byte poly_compressed_bytes;
+  u16 polyvec_compressed_bytes;
+  u16 public_key_bytes;
+  u16 indcpa_secret_key_bytes;
+  u16 secret_key_bytes;
+  u16 ciphertext_bytes;
 
 } gcry_mlkem_param_t;
 

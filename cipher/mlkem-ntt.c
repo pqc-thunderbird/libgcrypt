@@ -27,7 +27,7 @@
 
 #define MLKEM_ROOT_OF_UNITY 17
 
-static const uint8_t tree[128] = {
+static const byte tree[128] = {
   0, 64, 32, 96, 16, 80, 48, 112, 8, 72, 40, 104, 24, 88, 56, 120,
   4, 68, 36, 100, 20, 84, 52, 116, 12, 76, 44, 108, 28, 92, 60, 124,
   2, 66, 34, 98, 18, 82, 50, 114, 10, 74, 42, 106, 26, 90, 58, 122,
@@ -40,7 +40,7 @@ static const uint8_t tree[128] = {
 
 void init_ntt() {
   unsigned int i;
-  int16_t tmp[128];
+  s16 tmp[128];
 
   tmp[0] = MONT;
   for(i=1;i<128;i++)
@@ -56,7 +56,7 @@ void init_ntt() {
 }
 */
 
-static const int16_t zetas[128] = {
+static const s16 zetas[128] = {
     -1044, -758,  -359,  -1517, 1493,  1422,  287,   202,  -171,  622,   1577,
     182,   962,   -1202, -1474, 1468,  573,   -1325, 264,  383,   -829,  1458,
     -1602, -130,  -681,  1017,  732,   608,   -1542, 411,  -205,  -1571, 1223,
@@ -75,13 +75,13 @@ static const int16_t zetas[128] = {
  *
  * Description: Multiplication followed by Montgomery reduction
  *
- * Arguments:   - int16_t a: first factor
- *              - int16_t b: second factor
+ * Arguments:   - s16 a: first factor
+ *              - s16 b: second factor
  *
  * Returns 16-bit integer congruent to a*b*R^{-1} mod q
  **************************************************/
-static int16_t
-fqmul (int16_t a, int16_t b)
+static s16
+fqmul (s16 a, s16 b)
 {
   return _gcry_mlkem_montgomery_reduce ((int32_t)a * b);
 }
@@ -92,14 +92,14 @@ fqmul (int16_t a, int16_t b)
  * Description: Inplace number-theoretic transform (NTT) in Rq.
  *              input is in standard order, output is in bitreversed order
  *
- * Arguments:   - int16_t r[256]: pointer to input/output vector of elements of
+ * Arguments:   - s16 r[256]: pointer to input/output vector of elements of
  *Zq
  **************************************************/
 void
-_gcry_mlkem_ntt (int16_t r[256])
+_gcry_mlkem_ntt (s16 r[256])
 {
   unsigned int len, start, j, k;
-  int16_t t, zeta;
+  s16 t, zeta;
 
   k = 1;
   for (len = 128; len >= 2; len >>= 1)
@@ -124,14 +124,14 @@ _gcry_mlkem_ntt (int16_t r[256])
  *              multiplication by Montgomery factor 2^16.
  *              Input is in bitreversed order, output is in standard order
  *
- * Arguments:   - int16_t r[256]: pointer to input/output vector of elements of Zq
+ * Arguments:   - s16 r[256]: pointer to input/output vector of elements of Zq
  **************************************************/
 void
-_gcry_mlkem_invntt (int16_t r[256])
+_gcry_mlkem_invntt (s16 r[256])
 {
   unsigned int start, len, j, k;
-  int16_t t, zeta;
-  const int16_t f = 1441; /* mont^2/128 */
+  s16 t, zeta;
+  const s16 f = 1441; /* mont^2/128 */
 
   k = 127;
   for (len = 2; len <= 128; len <<= 1)
@@ -159,22 +159,19 @@ _gcry_mlkem_invntt (int16_t r[256])
  * Description: Multiplication of polynomials in Zq[X]/(X^2-zeta)
  *              used for multiplication of elements in Rq in NTT domain
  *
- * Arguments:   - int16_t r[2]: pointer to the output polynomial
- *              - const int16_t a[2]: pointer to the first factor
- *              - const int16_t b[2]: pointer to the second factor
+ * Arguments:   - s16 r[2]: pointer to the output polynomial
+ *              - const s16 a[2]: pointer to the first factor
+ *              - const s16 b[2]: pointer to the second factor
  *              - int zeta: integer defining the reduction polynomial as an offset into the zeta table
  *              - int sign: sign to apply to the zeta value
  **************************************************/
 void
-_gcry_mlkem_basemul (int16_t r[2],
-                     const int16_t a[2],
-                     const int16_t b[2],
-                     int zeta_offs,
-                     int sign)
+_gcry_mlkem_basemul (
+    s16 r[2], const s16 a[2], const s16 b[2], int zeta_offs, int sign)
 {
-  uint16_t zeta = zetas[zeta_offs] * sign;
-  r[0]          = fqmul (a[1], b[1]);
-  r[0]          = fqmul (r[0], zeta);
+  u16 zeta = zetas[zeta_offs] * sign;
+  r[0]     = fqmul (a[1], b[1]);
+  r[0]     = fqmul (r[0], zeta);
   r[0] += fqmul (a[0], b[0]);
   r[1] = fqmul (a[0], b[1]);
   r[1] += fqmul (a[1], b[0]);

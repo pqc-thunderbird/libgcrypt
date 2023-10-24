@@ -41,11 +41,11 @@ void
 _gcry_mlkem_poly_compress (unsigned char *r,
                            const gcry_mlkem_poly *a,
                            gcry_mlkem_param_t const *param,
-                           uint16_t *workspace_8_uint16)
+                           u16 *workspace_8_uint16)
 {
   unsigned int i, j;
-  int16_t u;
-  unsigned char* t = (unsigned char*)  workspace_8_uint16; /* need 8 uint8_t */
+  s16 u;
+  unsigned char *t = (unsigned char *)workspace_8_uint16; /* need 8 byte */
 
   if (param->id != GCRY_MLKEM_1024)
     {
@@ -56,8 +56,7 @@ _gcry_mlkem_poly_compress (unsigned char *r,
               /* map to positive standard representatives */
               u = a->coeffs[8 * i + j];
               u += (u >> 15) & GCRY_MLKEM_Q;
-              t[j] = ((((uint16_t)u << 4) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q)
-                     & 15;
+              t[j] = ((((u16)u << 4) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q) & 15;
             }
 
           r[0] = t[0] | (t[1] << 4);
@@ -112,10 +111,8 @@ _gcry_mlkem_poly_decompress (gcry_mlkem_poly *r,
     {
       for (i = 0; i < GCRY_MLKEM_N / 2; i++)
         {
-          r->coeffs[2 * i + 0]
-              = (((uint16_t)(a[0] & 15) * GCRY_MLKEM_Q) + 8) >> 4;
-          r->coeffs[2 * i + 1]
-              = (((uint16_t)(a[0] >> 4) * GCRY_MLKEM_Q) + 8) >> 4;
+          r->coeffs[2 * i + 0] = (((u16)(a[0] & 15) * GCRY_MLKEM_Q) + 8) >> 4;
+          r->coeffs[2 * i + 1] = (((u16)(a[0] >> 4) * GCRY_MLKEM_Q) + 8) >> 4;
           a += 1;
         }
     }
@@ -158,15 +155,15 @@ _gcry_mlkem_poly_tobytes (unsigned char r[GCRY_MLKEM_POLYBYTES],
                           const gcry_mlkem_poly *a)
 {
   unsigned int i;
-  uint16_t t0, t1;
+  u16 t0, t1;
 
   for (i = 0; i < GCRY_MLKEM_N / 2; i++)
     {
       /* map to positive standard representatives */
       t0 = a->coeffs[2 * i];
-      t0 += ((int16_t)t0 >> 15) & GCRY_MLKEM_Q;
+      t0 += ((s16)t0 >> 15) & GCRY_MLKEM_Q;
       t1 = a->coeffs[2 * i + 1];
-      t1 += ((int16_t)t1 >> 15) & GCRY_MLKEM_Q;
+      t1 += ((s16)t1 >> 15) & GCRY_MLKEM_Q;
       r[3 * i + 0] = (t0 >> 0);
       r[3 * i + 1] = (t0 >> 8) | (t1 << 4);
       r[3 * i + 2] = (t1 >> 4);
@@ -191,9 +188,9 @@ _gcry_mlkem_poly_frombytes (gcry_mlkem_poly *r,
   for (i = 0; i < GCRY_MLKEM_N / 2; i++)
     {
       r->coeffs[2 * i]
-          = ((a[3 * i + 0] >> 0) | ((uint16_t)a[3 * i + 1] << 8)) & 0xFFF;
+          = ((a[3 * i + 0] >> 0) | ((u16)a[3 * i + 1] << 8)) & 0xFFF;
       r->coeffs[2 * i + 1]
-          = ((a[3 * i + 1] >> 4) | ((uint16_t)a[3 * i + 2] << 4)) & 0xFFF;
+          = ((a[3 * i + 1] >> 4) | ((u16)a[3 * i + 2] << 4)) & 0xFFF;
     }
 }
 
@@ -210,14 +207,14 @@ _gcry_mlkem_poly_frommsg (gcry_mlkem_poly *r,
                           const unsigned char msg[GCRY_MLKEM_INDCPA_MSGBYTES])
 {
   unsigned int i, j;
-  int16_t mask;
+  s16 mask;
 
 
   for (i = 0; i < GCRY_MLKEM_N / 8; i++)
     {
       for (j = 0; j < 8; j++)
         {
-          mask                 = -(int16_t)((msg[i] >> j) & 1);
+          mask                 = -(s16)((msg[i] >> j) & 1);
           r->coeffs[8 * i + j] = mask & ((GCRY_MLKEM_Q + 1) / 2);
         }
     }
@@ -236,7 +233,7 @@ _gcry_mlkem_poly_tomsg (unsigned char msg[GCRY_MLKEM_INDCPA_MSGBYTES],
                         const gcry_mlkem_poly *a)
 {
   unsigned int i, j;
-  uint16_t t;
+  u16 t;
 
   for (i = 0; i < GCRY_MLKEM_N / 8; i++)
     {
@@ -244,7 +241,7 @@ _gcry_mlkem_poly_tomsg (unsigned char msg[GCRY_MLKEM_INDCPA_MSGBYTES],
       for (j = 0; j < 8; j++)
         {
           t = a->coeffs[8 * i + j];
-          t += ((int16_t)t >> 15) & GCRY_MLKEM_Q;
+          t += ((s16)t >> 15) & GCRY_MLKEM_Q;
           t = (((t << 1) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q) & 1;
           msg[i] |= t << j;
         }
@@ -306,7 +303,7 @@ _gcry_mlkem_poly_getnoise_eta2 (gcry_mlkem_poly *r,
  *              inputs assumed to be in normal order, output in bitreversed
  *order
  *
- * Arguments:   - uint16_t *r: pointer to in/output polynomial
+ * Arguments:   - u16 *r: pointer to in/output polynomial
  **************************************************/
 void
 _gcry_mlkem_poly_ntt (gcry_mlkem_poly *r)
@@ -323,7 +320,7 @@ _gcry_mlkem_poly_ntt (gcry_mlkem_poly *r)
  *              inputs assumed to be in bitreversed order, output in normal
  *order
  *
- * Arguments:   - uint16_t *a: pointer to in/output polynomial
+ * Arguments:   - u16 *a: pointer to in/output polynomial
  **************************************************/
 void
 _gcry_mlkem_poly_invntt_tomont (gcry_mlkem_poly *r)
@@ -370,7 +367,7 @@ void
 _gcry_mlkem_poly_tomont (gcry_mlkem_poly *r)
 {
   unsigned int i;
-  const int16_t f = (1ULL << 32) % GCRY_MLKEM_Q;
+  const s16 f = (1ULL << 32) % GCRY_MLKEM_Q;
   for (i = 0; i < GCRY_MLKEM_N; i++)
     {
       r->coeffs[i] = _gcry_mlkem_montgomery_reduce ((int32_t)r->coeffs[i] * f);

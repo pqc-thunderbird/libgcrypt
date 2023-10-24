@@ -46,16 +46,16 @@
  *              serialized vector of polynomials pk
  *              and the public seed used to generate the matrix A.
  *
- * Arguments:   uint8_t *r: pointer to the output serialized public key
+ * Arguments:   byte *r: pointer to the output serialized public key
  *              gcry_mlkem_polyvec *pk: pointer to the input public-key
- *              gcry_mlkem_polyvec const uint8_t *seed: pointer to the input
+ *              gcry_mlkem_polyvec const byte *seed: pointer to the input
  *public seed gcry_mlkem_param_t const *param: mlkem parameters
  *
  **************************************************/
 static void
-_gcry_mlkem_pack_pk (uint8_t *r,
+_gcry_mlkem_pack_pk (byte *r,
                      gcry_mlkem_polyvec *pk,
-                     const uint8_t seed[GCRY_MLKEM_SYMBYTES],
+                     const byte seed[GCRY_MLKEM_SYMBYTES],
                      gcry_mlkem_param_t const *param)
 {
   _gcry_mlkem_polyvec_tobytes (r, pk, param);
@@ -70,15 +70,15 @@ _gcry_mlkem_pack_pk (uint8_t *r,
  *
  * Arguments:   - gcry_mlkem_polyvec *pk: pointer to output public-key
  *polynomial vector
- *              - uint8_t *seed: pointer to output seed to generate matrix A
- *              - const uint8_t *packedpk: pointer to input serialized public
+ *              - byte *seed: pointer to output seed to generate matrix A
+ *              - const byte *packedpk: pointer to input serialized public
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  *key
  **************************************************/
 static void
 _gcry_mlkem_unpack_pk (gcry_mlkem_polyvec *pk,
-                       uint8_t seed[GCRY_MLKEM_SYMBYTES],
-                       const uint8_t *packedpk,
+                       byte seed[GCRY_MLKEM_SYMBYTES],
+                       const byte *packedpk,
                        gcry_mlkem_param_t const *param)
 {
   _gcry_mlkem_polyvec_frombytes (pk, packedpk, param);
@@ -90,13 +90,13 @@ _gcry_mlkem_unpack_pk (gcry_mlkem_polyvec *pk,
  *
  * Description: Serialize the secret key
  *
- * Arguments:   - uint8_t *r: pointer to output serialized secret key
+ * Arguments:   - byte *r: pointer to output serialized secret key
  *              - gcry_mlkem_polyvec *sk: pointer to input vector of
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  *polynomials (secret key)
  **************************************************/
 static void
-_gcry_mlkem_pack_sk (uint8_t *r,
+_gcry_mlkem_pack_sk (byte *r,
                      gcry_mlkem_polyvec *sk,
                      gcry_mlkem_param_t const *param)
 {
@@ -110,13 +110,13 @@ _gcry_mlkem_pack_sk (uint8_t *r,
  *
  * Arguments:   - gcry_mlkem_polyvec *sk: pointer to output vector of
  *polynomials (secret key)
- *              - const uint8_t *packedsk: pointer to input serialized secret
+ *              - const byte *packedsk: pointer to input serialized secret
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  *key
  **************************************************/
 static void
 _gcry_mlkem_unpack_sk (gcry_mlkem_polyvec *sk,
-                       const uint8_t *packedsk,
+                       const byte *packedsk,
                        gcry_mlkem_param_t const *param)
 {
   _gcry_mlkem_polyvec_frombytes (sk, packedsk, param);
@@ -129,17 +129,17 @@ _gcry_mlkem_unpack_sk (gcry_mlkem_polyvec *sk,
  *              compressed and serialized vector of polynomials b
  *              and the compressed and serialized polynomial v
  *
- * Arguments:   uint8_t *r: pointer to the output serialized ciphertext
+ * Arguments:   byte *r: pointer to the output serialized ciphertext
  *              poly *pk: pointer to the input vector of polynomials b
  *              poly *v: pointer to the input polynomial v
  *              gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 static void
-_gcry_mlkem_pack_ciphertext (uint8_t *r,
+_gcry_mlkem_pack_ciphertext (byte *r,
                              gcry_mlkem_polyvec *b,
                              gcry_mlkem_poly *v,
                              gcry_mlkem_param_t const *param,
-                             uint16_t *workspace_8_uint16)
+                             u16 *workspace_8_uint16)
 {
   _gcry_mlkem_polyvec_compress (r, b, param, workspace_8_uint16);
   _gcry_mlkem_poly_compress (
@@ -155,13 +155,13 @@ _gcry_mlkem_pack_ciphertext (uint8_t *r,
  * Arguments:   - gcry_mlkem_polyvec *b: pointer to the output vector of
  *polynomials b
  *              - poly *v: pointer to the output polynomial v
- *              - const uint8_t *c: pointer to the input serialized ciphertext
+ *              - const byte *c: pointer to the input serialized ciphertext
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 static void
 _gcry_mlkem_unpack_ciphertext (gcry_mlkem_polyvec *b,
                                gcry_mlkem_poly *v,
-                               const uint8_t *c,
+                               const byte *c,
                                gcry_mlkem_param_t const *param)
 {
   _gcry_mlkem_polyvec_decompress (b, c, param);
@@ -174,29 +174,29 @@ _gcry_mlkem_unpack_ciphertext (gcry_mlkem_polyvec *b,
  * Description: Run rejection sampling on uniform random bytes to generate
  *              uniform random integers mod q
  *
- * Arguments:   - int16_t *r: pointer to output buffer
+ * Arguments:   - s16 *r: pointer to output buffer
  *              - unsigned int len: requested number of 16-bit integers
  *(uniform mod q)
- *              - const uint8_t *buf: pointer to input buffer (assumed to be
+ *              - const byte *buf: pointer to input buffer (assumed to be
  *uniformly random bytes)
  *              - unsigned int buflen: length of input buffer in bytes
  *
  * Returns number of sampled 16-bit integers (at most len)
  **************************************************/
 static unsigned int
-_gcry_mlkem_rej_uniform (int16_t *r,
+_gcry_mlkem_rej_uniform (s16 *r,
                          unsigned int len,
-                         const uint8_t *buf,
+                         const byte *buf,
                          unsigned int buflen)
 {
   unsigned int ctr, pos;
-  uint16_t val0, val1;
+  u16 val0, val1;
 
   ctr = pos = 0;
   while (ctr < len && pos + 3 <= buflen)
     {
-      val0 = ((buf[pos + 0] >> 0) | ((uint16_t)buf[pos + 1] << 8)) & 0xFFF;
-      val1 = ((buf[pos + 1] >> 4) | ((uint16_t)buf[pos + 2] << 4)) & 0xFFF;
+      val0 = ((buf[pos + 0] >> 0) | ((u16)buf[pos + 1] << 8)) & 0xFFF;
+      val1 = ((buf[pos + 1] >> 4) | ((u16)buf[pos + 2] << 4)) & 0xFFF;
       pos += 3;
 
       if (val0 < GCRY_MLKEM_Q)
@@ -222,14 +222,14 @@ _gcry_mlkem_rej_uniform (int16_t *r,
  *              a XOF
  *
  * Arguments:   - gcry_mlkem_polyvec *a: pointer to ouptput matrix A
- *              - const uint8_t *seed: pointer to input seed
+ *              - const byte *seed: pointer to input seed
  *              - int transposed: boolean deciding whether A or A^T is
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  *generated
  **************************************************/
 static gcry_err_code_t
 _gcry_mlkem_gen_matrix (gcry_mlkem_polyvec *a,
-                        const uint8_t seed[GCRY_MLKEM_SYMBYTES],
+                        const byte seed[GCRY_MLKEM_SYMBYTES],
                         int transposed,
                         gcry_mlkem_param_t const *param)
 {
@@ -298,24 +298,24 @@ leave:
  * Description: Generates public and private key for the CPA-secure
  *              public-key encryption scheme underlying ML-KEM
  *
- * Arguments:   - uint8_t *pk: pointer to output public key
+ * Arguments:   - byte *pk: pointer to output public key
  *                             (of length MLKEM_INDCPA_PUBLICKEYBYTES bytes)
- *              - uint8_t *sk: pointer to output private key
+ *              - byte *sk: pointer to output private key
  *                             (of length MLKEM_INDCPA_SECRETKEYBYTES bytes)
  *              - gcry_mlkem_param_t const *param: mlkem parameters
- *              - uint8_t *coins: random bytes of length GCRY_MLKEM_SYMBYTES
+ *              - byte *coins: random bytes of length GCRY_MLKEM_SYMBYTES
  **************************************************/
 static gcry_error_t
-_gcry_mlkem_indcpa_keypair (uint8_t *pk,
-                            uint8_t *sk,
+_gcry_mlkem_indcpa_keypair (byte *pk,
+                            byte *sk,
                             gcry_mlkem_param_t const *param,
-                            uint8_t *coins)
+                            byte *coins)
 {
   unsigned int i;
-  unsigned char *buf        = NULL;
-  const uint8_t *publicseed = NULL;
-  const uint8_t *noiseseed  = NULL;
-  uint8_t nonce             = 0;
+  unsigned char *buf     = NULL;
+  const byte *publicseed = NULL;
+  const byte *noiseseed  = NULL;
+  byte nonce             = 0;
   gcry_mlkem_polyvec *a = NULL, e = {.vec = NULL}, pkpv = {.vec = NULL},
                      skpv = {.vec = NULL};
   gcry_error_t ec         = 0;
@@ -402,28 +402,28 @@ leave:
  * Description: Encryption function of the CPA-secure
  *              public-key encryption scheme underlying ML-KEM.
  *
- * Arguments:   - uint8_t *c: pointer to output ciphertext
+ * Arguments:   - byte *c: pointer to output ciphertext
  *                            (of length MLKEM_INDCPA_BYTES bytes)
- *              - const uint8_t *m: pointer to input message
+ *              - const byte *m: pointer to input message
  *                                  (of length GCRY_MLKEM_INDCPA_MSGBYTES
  *bytes)
- *              - const uint8_t *pk: pointer to input public key
+ *              - const byte *pk: pointer to input public key
  *                                   (of length MLKEM_INDCPA_PUBLICKEYBYTES)
- *              - const uint8_t *coins: pointer to input random coins used as
+ *              - const byte *coins: pointer to input random coins used as
  *seed (of length GCRY_MLKEM_SYMBYTES) to deterministically generate all
  *randomness
  **************************************************/
 static gcry_error_t
-_gcry_mlkem_indcpa_enc (uint8_t *c,
-                        const uint8_t *m,
-                        const uint8_t *pk,
-                        const uint8_t coins[GCRY_MLKEM_SYMBYTES],
+_gcry_mlkem_indcpa_enc (byte *c,
+                        const byte *m,
+                        const byte *pk,
+                        const byte coins[GCRY_MLKEM_SYMBYTES],
                         gcry_mlkem_param_t const *param)
 {
   unsigned int i;
-  unsigned char *seed          = NULL;
-  uint16_t *workspace_8_uint16 = NULL;
-  uint8_t nonce                = 0;
+  unsigned char *seed     = NULL;
+  u16 *workspace_8_uint16 = NULL;
+  byte nonce              = 0;
   gcry_mlkem_polyvec sp = {.vec = NULL}, pkpv = {.vec = NULL},
                      ep = {.vec = NULL}, *at = NULL, b = {.vec = NULL};
   gcry_error_t ec = 0;
@@ -465,7 +465,7 @@ _gcry_mlkem_indcpa_enc (uint8_t *c,
   _gcry_mlkem_unpack_pk (&pkpv, seed, pk, param);
   _gcry_mlkem_poly_frommsg (&k, m);
   ec = _gcry_mlkem_gen_matrix (at, seed, 1, param);
-  xfree(seed);
+  xfree (seed);
   seed = NULL;
   if (ec)
     {
@@ -510,7 +510,7 @@ _gcry_mlkem_indcpa_enc (uint8_t *c,
   _gcry_mlkem_polyvec_reduce (&b, param);
   _gcry_mlkem_poly_reduce (&v);
 
-  workspace_8_uint16= xtrymalloc_secure (16);
+  workspace_8_uint16 = xtrymalloc_secure (16);
   if (!workspace_8_uint16)
     {
       ec = gpg_error_from_syserror ();
@@ -537,18 +537,18 @@ leave:
  * Description: Decryption function of the CPA-secure
  *              public-key encryption scheme underlying ML-KEM.
  *
- * Arguments:   - uint8_t *m: pointer to output decrypted message
+ * Arguments:   - byte *m: pointer to output decrypted message
  *                            (of length GCRY_MLKEM_INDCPA_MSGBYTES)
- *              - const uint8_t *c: pointer to input ciphertext
+ *              - const byte *c: pointer to input ciphertext
  *                                  (of length MLKEM_INDCPA_BYTES)
- *              - const uint8_t *sk: pointer to input secret key
+ *              - const byte *sk: pointer to input secret key
  *                                   (of length MLKEM_INDCPA_SECRETKEYBYTES)
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 static gcry_error_t
-_gcry_mlkem_indcpa_dec (uint8_t *m,
-                        const uint8_t *c,
-                        const uint8_t *sk,
+_gcry_mlkem_indcpa_dec (byte *m,
+                        const byte *c,
+                        const byte *sk,
                         gcry_mlkem_param_t const *param)
 {
   gcry_mlkem_polyvec b = {.vec = NULL}, skpv = {.vec = NULL};
@@ -591,10 +591,10 @@ leave:
 
 
 gcry_err_code_t
-_gcry_mlkem_kem_keypair_derand (uint8_t *pk,
-                                uint8_t *sk,
+_gcry_mlkem_kem_keypair_derand (byte *pk,
+                                byte *sk,
                                 gcry_mlkem_param_t *param,
-                                uint8_t *coins)
+                                byte *coins)
 {
   gpg_err_code_t ec = 0;
   ec                = _gcry_mlkem_indcpa_keypair (pk, sk, param, coins);
@@ -615,9 +615,9 @@ _gcry_mlkem_kem_keypair_derand (uint8_t *pk,
 }
 
 static gcry_err_code_t
-_gcry_mlkem_mlkem_shake256_rkprf (uint8_t out[GCRY_MLKEM_SSBYTES],
-                                  const uint8_t key[GCRY_MLKEM_SYMBYTES],
-                                  const uint8_t *input,
+_gcry_mlkem_mlkem_shake256_rkprf (byte out[GCRY_MLKEM_SSBYTES],
+                                  const byte key[GCRY_MLKEM_SYMBYTES],
+                                  const byte *input,
                                   size_t input_length)
 {
   gcry_md_hd_t h;
@@ -636,10 +636,10 @@ _gcry_mlkem_mlkem_shake256_rkprf (uint8_t out[GCRY_MLKEM_SSBYTES],
 
 
 gcry_err_code_t
-_gcry_mlkem_kem_keypair (uint8_t *pk, uint8_t *sk, gcry_mlkem_param_t *param)
+_gcry_mlkem_kem_keypair (byte *pk, byte *sk, gcry_mlkem_param_t *param)
 {
   gcry_err_code_t ec = 0;
-  uint8_t *coins     = NULL;
+  byte *coins        = NULL;
   coins              = xtrymalloc_secure (GCRY_MLKEM_COINS_SIZE);
   if (!coins)
     {
@@ -654,20 +654,20 @@ leave:
 }
 
 gcry_err_code_t
-_gcry_mlkem_kem_dec (uint8_t *ss,
-                     const uint8_t *ct,
-                     const uint8_t *sk,
+_gcry_mlkem_kem_dec (byte *ss,
+                     const byte *ct,
+                     const byte *sk,
                      gcry_mlkem_param_t *param)
 {
   gcry_err_code_t ec = 0;
   int fail;
-  uint8_t buf[2 * GCRY_MLKEM_SYMBYTES];
+  byte buf[2 * GCRY_MLKEM_SYMBYTES];
   /* Will contain key, coins */
-  uint8_t kr[2 * GCRY_MLKEM_SYMBYTES];
+  byte kr[2 * GCRY_MLKEM_SYMBYTES];
 
-  uint8_t *cmp = NULL;
+  byte *cmp = NULL;
 
-  const uint8_t *pk = sk + param->indcpa_secret_key_bytes;
+  const byte *pk = sk + param->indcpa_secret_key_bytes;
 
   ec = _gcry_mlkem_indcpa_dec (buf, ct, sk, param);
   if (ec)
@@ -717,9 +717,9 @@ end:
 }
 
 gcry_err_code_t
-_gcry_mlkem_kem_enc (uint8_t *ct,
-                     uint8_t *ss,
-                     const uint8_t *pk,
+_gcry_mlkem_kem_enc (byte *ct,
+                     byte *ss,
+                     const byte *pk,
                      gcry_mlkem_param_t *param)
 {
   gcry_error_t ec      = 0;
@@ -742,11 +742,8 @@ leave:
 }
 
 gcry_err_code_t
-_gcry_mlkem_kem_enc_derand (uint8_t *ct,
-                            uint8_t *ss,
-                            const uint8_t *pk,
-                            gcry_mlkem_param_t *param,
-                            uint8_t *coins)
+_gcry_mlkem_kem_enc_derand (
+    byte *ct, byte *ss, const byte *pk, gcry_mlkem_param_t *param, byte *coins)
 {
   gpg_err_code_t ec  = 0;
   unsigned char *buf = NULL;

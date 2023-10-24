@@ -39,12 +39,12 @@
  *
  * Returns:     integer in {-q+1,...,q-1} congruent to a * R^-1 modulo q.
  **************************************************/
-int16_t
+s16
 _gcry_mlkem_montgomery_reduce (int32_t a)
 {
-  int16_t t;
+  s16 t;
 
-  t = (int16_t)a * QINV;
+  t = (s16)a * QINV;
   t = (a - (int32_t)t * GCRY_MLKEM_Q) >> 16;
   return t;
 }
@@ -56,15 +56,15 @@ _gcry_mlkem_montgomery_reduce (int32_t a)
  *              centered representative congruent to a mod q in
  *{-(q-1)/2,...,(q-1)/2}
  *
- * Arguments:   - int16_t a: input integer to be reduced
+ * Arguments:   - s16 a: input integer to be reduced
  *
  * Returns:     integer in {-(q-1)/2,...,(q-1)/2} congruent to a modulo q.
  **************************************************/
-int16_t
-_gcry_mlkem_barrett_reduce (int16_t a)
+s16
+_gcry_mlkem_barrett_reduce (s16 a)
 {
-  int16_t t;
-  const int16_t v = ((1 << 26) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q;
+  s16 t;
+  const s16 v = ((1 << 26) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q;
 
   t = ((int32_t)v * a + (1 << 25)) >> 26;
   t *= GCRY_MLKEM_Q;
