@@ -22,6 +22,8 @@
 #define GCRYPT_MLKEM_CBD_H
 
 #include <stdint.h>
+#include "config.h"
+#include "types.h"
 #include "mlkem-params.h"
 #include "mlkem-poly.h"
 
@@ -29,10 +31,10 @@
  * buf has length MLKEM_ETA1*GCRY_MLKEM_N/4
  */
 void _gcry_mlkem_poly_cbd_eta1 (gcry_mlkem_poly *r,
-                                const uint8_t *buf,
+                                const byte *buf,
                                 gcry_mlkem_param_t const *param);
 
 void _gcry_mlkem_poly_cbd_eta2 (
-    gcry_mlkem_poly *r, const uint8_t buf[GCRY_MLKEM_ETA2 * GCRY_MLKEM_N / 4]);
+    gcry_mlkem_poly *r, const byte buf[GCRY_MLKEM_ETA2 * GCRY_MLKEM_N / 4]);
 
 #endif /* GCRYPT_MLKEM_CBD_H */

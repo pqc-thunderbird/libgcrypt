@@ -27,33 +27,34 @@
 
 #include <config.h>
 #include "g10lib.h"
+#include "types.h"
 
 
-gcry_err_code_t _gcry_mlkem_kem_keypair_derand (uint8_t *pk,
-                                                uint8_t *sk,
+gcry_err_code_t _gcry_mlkem_kem_keypair_derand (byte *pk,
+                                                byte *sk,
                                                 gcry_mlkem_param_t *param,
-                                                uint8_t *coins);
+                                                byte *coins);
 
 
-gcry_err_code_t _gcry_mlkem_kem_keypair (uint8_t *pk,
-                                         uint8_t *sk,
+gcry_err_code_t _gcry_mlkem_kem_keypair (byte *pk,
+                                         byte *sk,
                                          gcry_mlkem_param_t *param);
 
 
-gcry_err_code_t _gcry_mlkem_kem_enc_derand (uint8_t *ct,
-                                            uint8_t *ss,
-                                            const uint8_t *pk,
+gcry_err_code_t _gcry_mlkem_kem_enc_derand (byte *ct,
+                                            byte *ss,
+                                            const byte *pk,
                                             gcry_mlkem_param_t *param,
-                                            uint8_t *coins);
+                                            byte *coins);
 
-gcry_err_code_t _gcry_mlkem_kem_enc (uint8_t *ct,
-                                     uint8_t *ss,
-                                     const uint8_t *pk,
+gcry_err_code_t _gcry_mlkem_kem_enc (byte *ct,
+                                     byte *ss,
+                                     const byte *pk,
                                      gcry_mlkem_param_t *param);
 
-gcry_err_code_t _gcry_mlkem_kem_dec (uint8_t *ss,
-                                     const uint8_t *ct,
-                                     const uint8_t *sk,
+gcry_err_code_t _gcry_mlkem_kem_dec (byte *ss,
+                                     const byte *ct,
+                                     const byte *sk,
                                      gcry_mlkem_param_t *param);
 
 

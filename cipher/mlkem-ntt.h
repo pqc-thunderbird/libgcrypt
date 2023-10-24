@@ -23,13 +23,15 @@
 
 #include <stdint.h>
 #include "mlkem-params.h"
+#include "config.h"
+#include "types.h"
 
 
-void _gcry_mlkem_ntt (int16_t poly[256]);
+void _gcry_mlkem_ntt (s16 poly[256]);
 
-void _gcry_mlkem_invntt (int16_t poly[256]);
+void _gcry_mlkem_invntt (s16 poly[256]);
 
 void _gcry_mlkem_basemul (
-    int16_t r[2], const int16_t a[2], const int16_t b[2], int zeta, int sign);
+    s16 r[2], const s16 a[2], const s16 b[2], int zeta, int sign);
 
 #endif /* GCRYPT_MLKEM_NTT_H */

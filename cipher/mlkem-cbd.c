@@ -24,6 +24,7 @@
 
 #include <config.h>
 #include "bufhelp.h"
+#include "types.h"
 
 /*************************************************
  * Name:        load24_littleendian
@@ -32,12 +33,12 @@
  *              in little-endian order.
  *              This function is only needed for ML-KEM-512
  *
- * Arguments:   - const uint8_t *x: pointer to input byte array
+ * Arguments:   - const byte *x: pointer to input byte array
  *
  * Returns 32-bit unsigned integer loaded from x (most significant byte is zero)
  **************************************************/
 static uint32_t
-load24_littleendian (const uint8_t x[3])
+load24_littleendian (const byte x[3])
 {
   uint32_t r;
   r = (uint32_t)x[0];
@@ -55,18 +56,18 @@ load24_littleendian (const uint8_t x[3])
  *              a centered binomial distribution with parameter eta=2
  *
  * Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
- *              - const uint8_t *buf: pointer to input byte array
+ *              - const byte *buf: pointer to input byte array
  **************************************************/
 static void
-cbd2 (gcry_mlkem_poly *r, const uint8_t buf[2 * GCRY_MLKEM_N / 4])
+cbd2 (gcry_mlkem_poly *r, const byte buf[2 * GCRY_MLKEM_N / 4])
 {
   unsigned int i, j;
   uint32_t t, d;
-  int16_t a, b;
+  s16 a, b;
 
   for (i = 0; i < GCRY_MLKEM_N / 8; i++)
     {
-      t = buf_get_le32(buf + 4 * i);
+      t = buf_get_le32 (buf + 4 * i);
       d = t & 0x55555555;
       d += (t >> 1) & 0x55555555;
 
@@ -88,14 +89,14 @@ cbd2 (gcry_mlkem_poly *r, const uint8_t buf[2 * GCRY_MLKEM_N / 4])
  *              This function is only needed for ML-KEM-512
  *
  * Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
- *              - const uint8_t *buf: pointer to input byte array
+ *              - const byte *buf: pointer to input byte array
  **************************************************/
 static void
-cbd3 (gcry_mlkem_poly *r, const uint8_t buf[3 * GCRY_MLKEM_N / 4])
+cbd3 (gcry_mlkem_poly *r, const byte buf[3 * GCRY_MLKEM_N / 4])
 {
   unsigned int i, j;
   uint32_t t, d;
-  int16_t a, b;
+  s16 a, b;
 
   for (i = 0; i < GCRY_MLKEM_N / 4; i++)
     {
@@ -115,7 +116,7 @@ cbd3 (gcry_mlkem_poly *r, const uint8_t buf[3 * GCRY_MLKEM_N / 4])
 
 void
 _gcry_mlkem_poly_cbd_eta1 (gcry_mlkem_poly *r,
-                           const uint8_t *buf,
+                           const byte *buf,
                            gcry_mlkem_param_t const *param)
 {
   if (param->eta1 == 2)
@@ -129,8 +130,8 @@ _gcry_mlkem_poly_cbd_eta1 (gcry_mlkem_poly *r,
 }
 
 void
-_gcry_mlkem_poly_cbd_eta2 (
-    gcry_mlkem_poly *r, const uint8_t buf[GCRY_MLKEM_ETA2 * GCRY_MLKEM_N / 4])
+_gcry_mlkem_poly_cbd_eta2 (gcry_mlkem_poly *r,
+                           const byte buf[GCRY_MLKEM_ETA2 * GCRY_MLKEM_N / 4])
 {
   cbd2 (r, buf);
 }

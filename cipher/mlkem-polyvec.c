@@ -22,6 +22,8 @@
 #include "mlkem-params.h"
 #include "mlkem-poly.h"
 #include "mlkem-polyvec.h"
+#include "config.h"
+#include "types.h"
 
 gcry_error_t
 _gcry_mlkem_polymatrix_create (gcry_mlkem_polyvec **polymat,
@@ -91,23 +93,23 @@ _gcry_mlkem_polyvec_destroy (gcry_mlkem_polyvec *polyvec)
  *
  * Description: Compress and serialize vector of polynomials
  *
- * Arguments:   - uint8_t *r: pointer to output byte array
+ * Arguments:   - byte *r: pointer to output byte array
  *                            (needs space for MLKEM_POLYVECCOMPRESSEDBYTES)
  *              - const gcry_mlkem_polyvec *a: pointer to input vector of polynomials
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
-_gcry_mlkem_polyvec_compress (uint8_t *r,
+_gcry_mlkem_polyvec_compress (byte *r,
                               const gcry_mlkem_polyvec *a,
                               gcry_mlkem_param_t const *param,
-                              uint16_t *workspace_8_uint16)
+                              u16 *workspace_8_uint16)
 {
   unsigned int i, j, k;
   switch (param->id)
     {
     case GCRY_MLKEM_1024:
       {
-        uint16_t* t = workspace_8_uint16; /* needs 8 uint16_t */
+        u16 *t = workspace_8_uint16; /* needs 8 u16 */
         for (i = 0; i < param->k; i++)
           {
             for (j = 0; j < GCRY_MLKEM_N / 8; j++)
@@ -115,7 +117,7 @@ _gcry_mlkem_polyvec_compress (uint8_t *r,
                 for (k = 0; k < 8; k++)
                   {
                     t[k] = a->vec[i].coeffs[8 * j + k];
-                    t[k] += ((int16_t)t[k] >> 15) & GCRY_MLKEM_Q;
+                    t[k] += ((s16)t[k] >> 15) & GCRY_MLKEM_Q;
                     t[k] = ((((uint32_t)t[k] << 11) + GCRY_MLKEM_Q / 2)
                             / GCRY_MLKEM_Q)
                            & 0x7ff;
@@ -141,7 +143,7 @@ _gcry_mlkem_polyvec_compress (uint8_t *r,
     case GCRY_MLKEM_768:
       {
 
-        uint16_t *t = workspace_8_uint16; /* needs 4 uint16_t */
+        u16 *t = workspace_8_uint16; /* needs 4 u16 */
         for (i = 0; i < param->k; i++)
           {
             for (j = 0; j < GCRY_MLKEM_N / 4; j++)
@@ -149,7 +151,7 @@ _gcry_mlkem_polyvec_compress (uint8_t *r,
                 for (k = 0; k < 4; k++)
                   {
                     t[k] = a->vec[i].coeffs[4 * j + k];
-                    t[k] += ((int16_t)t[k] >> 15) & GCRY_MLKEM_Q;
+                    t[k] += ((s16)t[k] >> 15) & GCRY_MLKEM_Q;
                     t[k] = ((((uint32_t)t[k] << 10) + GCRY_MLKEM_Q / 2)
                             / GCRY_MLKEM_Q)
                            & 0x3ff;
@@ -176,13 +178,13 @@ _gcry_mlkem_polyvec_compress (uint8_t *r,
  *
  * Arguments:   - gcry_mlkem_polyvec *r:       pointer to output vector of
  *polynomials
- *              - const uint8_t *a: pointer to input byte array
+ *              - const byte *a: pointer to input byte array
  *                                  (of length MLKEM_POLYVECCOMPRESSEDBYTES)
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
 _gcry_mlkem_polyvec_decompress (gcry_mlkem_polyvec *r,
-                                const uint8_t *a,
+                                const byte *a,
                                 gcry_mlkem_param_t const *param)
 {
   unsigned int i, j, k;
@@ -190,21 +192,19 @@ _gcry_mlkem_polyvec_decompress (gcry_mlkem_polyvec *r,
     {
     case GCRY_MLKEM_1024:
       {
-        uint16_t t[8];
+        u16 t[8];
         for (i = 0; i < param->k; i++)
           {
             for (j = 0; j < GCRY_MLKEM_N / 8; j++)
               {
-                t[0] = (a[0] >> 0) | ((uint16_t)a[1] << 8);
-                t[1] = (a[1] >> 3) | ((uint16_t)a[2] << 5);
-                t[2] = (a[2] >> 6) | ((uint16_t)a[3] << 2)
-                       | ((uint16_t)a[4] << 10);
-                t[3] = (a[4] >> 1) | ((uint16_t)a[5] << 7);
-                t[4] = (a[5] >> 4) | ((uint16_t)a[6] << 4);
-                t[5] = (a[6] >> 7) | ((uint16_t)a[7] << 1)
-                       | ((uint16_t)a[8] << 9);
-                t[6] = (a[8] >> 2) | ((uint16_t)a[9] << 6);
-                t[7] = (a[9] >> 5) | ((uint16_t)a[10] << 3);
+                t[0] = (a[0] >> 0) | ((u16)a[1] << 8);
+                t[1] = (a[1] >> 3) | ((u16)a[2] << 5);
+                t[2] = (a[2] >> 6) | ((u16)a[3] << 2) | ((u16)a[4] << 10);
+                t[3] = (a[4] >> 1) | ((u16)a[5] << 7);
+                t[4] = (a[5] >> 4) | ((u16)a[6] << 4);
+                t[5] = (a[6] >> 7) | ((u16)a[7] << 1) | ((u16)a[8] << 9);
+                t[6] = (a[8] >> 2) | ((u16)a[9] << 6);
+                t[7] = (a[9] >> 5) | ((u16)a[10] << 3);
                 a += 11;
 
                 for (k = 0; k < 8; k++)
@@ -217,15 +217,15 @@ _gcry_mlkem_polyvec_decompress (gcry_mlkem_polyvec *r,
     case GCRY_MLKEM_768:
     case GCRY_MLKEM_512:
       {
-        uint16_t t[4];
+        u16 t[4];
         for (i = 0; i < param->k; i++)
           {
             for (j = 0; j < GCRY_MLKEM_N / 4; j++)
               {
-                t[0] = (a[0] >> 0) | ((uint16_t)a[1] << 8);
-                t[1] = (a[1] >> 2) | ((uint16_t)a[2] << 6);
-                t[2] = (a[2] >> 4) | ((uint16_t)a[3] << 4);
-                t[3] = (a[3] >> 6) | ((uint16_t)a[4] << 2);
+                t[0] = (a[0] >> 0) | ((u16)a[1] << 8);
+                t[1] = (a[1] >> 2) | ((u16)a[2] << 6);
+                t[2] = (a[2] >> 4) | ((u16)a[3] << 4);
+                t[3] = (a[3] >> 6) | ((u16)a[4] << 2);
                 a += 5;
 
                 for (k = 0; k < 4; k++)
@@ -246,13 +246,13 @@ _gcry_mlkem_polyvec_decompress (gcry_mlkem_polyvec *r,
  *
  * Description: Serialize vector of polynomials
  *
- * Arguments:   - uint8_t *r: pointer to output byte array
+ * Arguments:   - byte *r: pointer to output byte array
  *                            (needs space for GCRY_MLKEM_POLYVECBYTES)
  *              - const gcry_mlkem_polyvec *a: pointer to input vector of polynomials
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
-_gcry_mlkem_polyvec_tobytes (uint8_t *r,
+_gcry_mlkem_polyvec_tobytes (byte *r,
                              const gcry_mlkem_polyvec *a,
                              gcry_mlkem_param_t const *param)
 {
@@ -269,13 +269,13 @@ _gcry_mlkem_polyvec_tobytes (uint8_t *r,
  * Description: De-serialize vector of polynomials;
  *              inverse of gcry_mlkem_polyvec_tobytes
  *
- * Arguments:   - uint8_t *r:       pointer to output byte array
+ * Arguments:   - byte *r:       pointer to output byte array
  *              - const gcry_mlkem_polyvec *a: pointer to input vector of polynomials (of length GCRY_MLKEM_POLYVECBYTES)
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
 _gcry_mlkem_polyvec_frombytes (gcry_mlkem_polyvec *r,
-                               const uint8_t *a,
+                               const byte *a,
                                gcry_mlkem_param_t const *param)
 {
   unsigned int i;

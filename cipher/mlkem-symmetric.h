@@ -47,20 +47,19 @@ void _gcry_mlkem_shake128_absorb (
  *              - const unsigned char *key: pointer to the key (of length GCRY_MLKEM_SYMBYTES)
  *              - unsigned char nonce: single-byte nonce (public PRF input)
  **************************************************/
-gcry_err_code_t _gcry_mlkem_shake256_prf (
-    uint8_t *out,
-    size_t outlen,
-    const uint8_t key[GCRY_MLKEM_SYMBYTES],
-    uint8_t nonce);
+gcry_err_code_t _gcry_mlkem_shake256_prf (byte *out,
+                                          size_t outlen,
+                                          const byte key[GCRY_MLKEM_SYMBYTES],
+                                          byte nonce);
 
 gcry_err_code_t _gcry_mlkem_shake128_squeezeblocks (gcry_md_hd_t h,
-                                                    uint8_t *out,
+                                                    byte *out,
                                                     size_t nblocks);
 
-gcry_err_code_t _gcry_mlkem_prf (uint8_t *out,
+gcry_err_code_t _gcry_mlkem_prf (byte *out,
                                  size_t outlen,
-                                 const uint8_t key[GCRY_MLKEM_SYMBYTES],
-                                 uint8_t nonce);
+                                 const byte key[GCRY_MLKEM_SYMBYTES],
+                                 byte nonce);
 
 
 #endif /* GCRYPT_MLKEM_SYMMETRIC_H */

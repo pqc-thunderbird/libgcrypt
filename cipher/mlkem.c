@@ -236,7 +236,8 @@ mlkem_check_secret_key (gcry_sexp_t keyparms)
     }
   public_key
       = private_key
-        + param.indcpa_secret_key_bytes; /* offset of public key in private key */
+        + param
+              .indcpa_secret_key_bytes; /* offset of public key in private key */
   ec = _gcry_mlkem_kem_enc (ciphertext, shared_secret_1, public_key, &param);
   if (ec)
     {
@@ -248,7 +249,8 @@ mlkem_check_secret_key (gcry_sexp_t keyparms)
       goto leave;
     }
 
-  if (!buf_eq_const (shared_secret_1, shared_secret_2, sizeof (shared_secret_1)))
+  if (!buf_eq_const (
+          shared_secret_1, shared_secret_2, sizeof (shared_secret_1)))
     {
       ec = GPG_ERR_BAD_SECKEY;
       goto leave;
@@ -267,7 +269,7 @@ mlkem_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
 {
   gpg_err_code_t ec = 0;
 
-  uint8_t *pk = 0, *sk = 0;
+  byte *pk = 0, *sk = 0;
   unsigned int nbits;
   gcry_mlkem_param_t param;
   gcry_mpi_t sk_mpi = NULL, pk_mpi = NULL;
@@ -458,7 +460,7 @@ gcry_pk_spec_t _gcry_pubkey_spec_mlkem = {
     GCRY_PK_MLKEM,
     {0, 1},
     (GCRY_PK_USAGE_ENCAP),
-    "ML-KEM",
+    "ML-KEM-ipd", /* following the naming scheme given at https://github.com/ietf-wg-pquip/state-of-protocols-and-pqc#user-content-algorithm-names */
     mlkem_names,
     "p",
     "s",
