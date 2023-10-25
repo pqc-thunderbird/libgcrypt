@@ -83,7 +83,7 @@
 #endif
 
 #ifndef HAVE_S16
-# undef i16	/* In case there is a macro with that name.  */
+# undef s16	/* In case there is a macro with that name.  */
 # if SIZEOF_UNSIGNED_INT == 2
    typedef int   s16;
 # elif SIZEOF_UNSIGNED_SHORT == 2
@@ -107,7 +107,7 @@
 #endif
 
 #ifndef HAVE_S32
-# undef u32	/* In case there is a macro with that name.  */
+# undef s32	/* In case there is a macro with that name.  */
 # if SIZEOF_UNSIGNED_INT == 4
    typedef int  s32;
 # elif SIZEOF_UNSIGNED_LONG == 4
