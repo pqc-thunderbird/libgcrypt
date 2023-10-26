@@ -22,18 +22,21 @@
 #include <stdio.h>
 
 
+// #include "gcrypt.h"
 #include "mlkem-common.h"
 
 #include "g10lib.h"
 
 #include "cipher.h"
+#include "mlkem-params.h"
 #include "pubkey-internal.h"
 #include "mlkem-aux.h"
 #include "bufhelp.h"
 
 
 static gcry_err_code_t
-_gcry_mlkem_get_param_from_bit_size (size_t nbits, gcry_mlkem_param_t *param)
+_gcry_mlkem_get_param_from_bitstrength (size_t nbits,
+                                        gcry_mlkem_param_t *param)
 {
   switch (nbits)
     {
@@ -74,6 +77,103 @@ _gcry_mlkem_get_param_from_bit_size (size_t nbits, gcry_mlkem_param_t *param)
   return 0;
 }
 
+/**
+ * return the bit strength (128, 192, 256) roughly associated with the given ML-KEM parameter set based on the private key size in bytes.
+ */
+static unsigned
+bitstrength_from_private_size_bytes (size_t private_key_size_bytes)
+{
+  unsigned bit_strengths[] = {128, 192, 256};
+  for (unsigned i = 0; i < 3; i++)
+    {
+      gpg_error_t ec;
+      unsigned b = bit_strengths[i];
+      gcry_mlkem_param_t p;
+      ec = _gcry_mlkem_get_param_from_bitstrength (b, &p);
+      if (ec)
+        {
+          return 0;
+        }
+      if (p.secret_key_bytes == private_key_size_bytes)
+        {
+          return b;
+        }
+    }
+  return 0;
+}
+
+
+/**
+ * return the bit strength (128, 192, 256) roughly associated with the given ML-KEM parameter set based on the public key size in bytes.
+ */
+static unsigned
+bitstrength_from_public_size_bytes (size_t public_key_size_bytes)
+{
+  unsigned bit_strengths[] = {128, 192, 256};
+  for (unsigned i = 0; i < 3; i++)
+    {
+      gpg_error_t ec;
+      unsigned b = bit_strengths[i];
+      gcry_mlkem_param_t p;
+      ec = _gcry_mlkem_get_param_from_bitstrength (b, &p);
+      if (ec)
+        {
+          return 0;
+        }
+      if (p.public_key_bytes == public_key_size_bytes)
+        {
+          return b;
+        }
+    }
+  return 0;
+}
+
+static gcry_err_code_t
+mlkem_params_from_private_key_size (size_t private_key_size,
+                                    gcry_mlkem_param_t *param,
+                                    unsigned int *nbits_p)
+{
+  gpg_err_code_t ec = 0;
+
+  unsigned int bit_strength;
+  bit_strength = bitstrength_from_private_size_bytes (private_key_size);
+  if (!bit_strength)
+    {
+      return GPG_ERR_INV_PARAMETER;
+    }
+  ec = _gcry_mlkem_get_param_from_bitstrength (bit_strength, param);
+  if (ec)
+    {
+      return ec;
+    }
+  if (nbits_p != NULL)
+    {
+      switch (param->id)
+        {
+        case GCRY_MLKEM_512:
+          {
+            *nbits_p = 128;
+            break;
+          }
+        case GCRY_MLKEM_768:
+          {
+            *nbits_p = 192;
+            break;
+          }
+        case GCRY_MLKEM_1024:
+          {
+            *nbits_p = 256;
+            break;
+          }
+        default:
+          {
+            ec = GPG_ERR_INV_ARG;
+          }
+        }
+    }
+
+  return ec;
+}
 static gcry_err_code_t
 mlkem_params_from_key_param (const gcry_sexp_t keyparms,
                              gcry_mlkem_param_t *param,
@@ -87,7 +187,7 @@ mlkem_params_from_key_param (const gcry_sexp_t keyparms,
     {
       return ec;
     }
-  ec = _gcry_mlkem_get_param_from_bit_size (nbits, param);
+  ec = _gcry_mlkem_get_param_from_bitstrength (nbits, param);
   if (ec)
     {
       return ec;
@@ -125,7 +225,8 @@ static gcry_err_code_t
 extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
                               const char *label,
                               unsigned char **data_p,
-                              size_t exp_len,
+                              size_t *data_len_p,
+                              const u16 * expected_size_bytes_opt,
                               xtry_alloc_func_t alloc_func)
 {
   gcry_mpi_t sk     = NULL;
@@ -134,6 +235,7 @@ extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
 
   *data_p = 0;
 
+  size_t data_len = 0;
 
   ec = sexp_extract_param (keyparms, NULL, label, &sk, NULL);
   if (ec)
@@ -141,23 +243,34 @@ extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
       printf ("error from sexp_extract_param (keyparms)\n");
       goto leave;
     }
-  if (mpi_get_nbits (sk) != exp_len * 8)
+  data_len = mpi_get_nbits (sk);
+  if(data_len % 8)
+  {
+      return GPG_ERR_INV_PARAMETER;
+  }
+  data_len /= 8;
+  if (expected_size_bytes_opt
+      && mpi_get_nbits (sk) != *expected_size_bytes_opt * 8)
     {
       ec = GPG_ERR_INV_ARG;
       goto leave;
     }
-  *data_p = alloc_func (exp_len);
+  *data_p = alloc_func (data_len);
   if (*data_p == NULL)
     {
       ec = gpg_err_code_from_syserror ();
       goto leave;
     }
-  _gcry_mpi_print (GCRYMPI_FMT_USG, *data_p, exp_len, &nwritten, sk);
+  _gcry_mpi_print (GCRYMPI_FMT_USG, *data_p, data_len, &nwritten, sk);
 
-  if (exp_len != nwritten)
+  if (data_len != nwritten)
     {
       ec = GPG_ERR_INV_ARG;
       goto leave;
+    }
+  if (data_len_p)
+    {
+      *data_len_p = data_len;
     }
 
 leave:
@@ -173,34 +286,50 @@ leave:
   return ec;
 }
 
-
+/**
+ * get the private key binary value from an s-expression. if sk_len_p is non-null, the variable it points to receives the size of the private key. If param is non-null, the variable pointed to by it is used to verify the length of the
+ * private key against the expected length based on the parameters.
+ */
 static gcry_err_code_t
 private_key_from_sexp (const gcry_sexp_t keyparms,
-                       const gcry_mlkem_param_t param,
-                       unsigned char **sk_p)
+                       unsigned char **sk_p,
+                       size_t *sk_len_p,
+                       const gcry_mlkem_param_t *param)
 {
   return extract_opaque_mpi_from_sexp (
-      keyparms, "/s", sk_p, param.secret_key_bytes, _gcry_malloc_secure);
+      keyparms, "/s", sk_p, sk_len_p, param != NULL ? &param->secret_key_bytes: (u16*) NULL, _gcry_malloc_secure);
 }
 
 
+/**
+ * get the ciphertext binary value from an s-expression. if ct_len_p is non-null, the variable it points to receives the size of the ciphertext. If param is non-null, the variable pointed to by it is used to verify the length of the
+ * ciphertext against the expected length based on the parameters.
+ */
 static gcry_err_code_t
 ciphertext_from_sexp (const gcry_sexp_t keyparms,
-                      const gcry_mlkem_param_t param,
-                      unsigned char **ct_p)
+                      unsigned char **ct_p,
+                      size_t *ct_len_p,
+                      const gcry_mlkem_param_t *param)
 {
+
   return extract_opaque_mpi_from_sexp (
-      keyparms, "/c", ct_p, param.ciphertext_bytes, _gcry_malloc);
+      keyparms, "/c", ct_p, ct_len_p, param != NULL ? &param->ciphertext_bytes: (u16*) NULL, _gcry_malloc);
 }
 
 
+/**
+ * get the public key binary value from an s-expression. if pk_len_p is non-null, the variable it points to receives the size of the public key. If param is non-null, the variable pointed to by it is used to verify the length of the
+ * public key against the expected length based on the parameters.
+ */
 static gcry_err_code_t
 public_key_from_sexp (const gcry_sexp_t keyparms,
-                      const gcry_mlkem_param_t param,
-                      unsigned char **pk_p)
+                      unsigned char **pk_p,
+                      size_t *pk_len_p,
+                      const gcry_mlkem_param_t *param)
 {
+
   return extract_opaque_mpi_from_sexp (
-      keyparms, "/p", pk_p, param.public_key_bytes, _gcry_malloc);
+      keyparms, "/p", pk_p, pk_len_p, param != NULL ? &param->public_key_bytes : (u16*) NULL, _gcry_malloc);
 }
 
 
@@ -212,10 +341,20 @@ mlkem_check_secret_key (gcry_sexp_t keyparms)
   unsigned char shared_secret_1[GCRY_MLKEM_SSBYTES],
       shared_secret_2[GCRY_MLKEM_SSBYTES];
   unsigned char *private_key = NULL, *ciphertext = NULL;
-  unsigned char *public_key = NULL;
+  unsigned char *public_key     = NULL;
+  size_t private_key_size_bytes = 0, public_key_size_bytes = 0,
+         ciphertext_size_bytes = 0;
 
   gcry_mlkem_param_t param;
-  ec = mlkem_params_from_key_param (keyparms, &param, NULL);
+
+  /* Extract the key MPI from the SEXP.  */
+  ec = private_key_from_sexp (keyparms, &private_key, &private_key_size_bytes, NULL);
+  if (ec)
+    {
+      goto leave;
+    }
+  ec = mlkem_params_from_private_key_size (
+      private_key_size_bytes, &param, NULL);
   if (ec)
     {
       goto leave;
@@ -228,12 +367,6 @@ mlkem_check_secret_key (gcry_sexp_t keyparms)
       goto leave;
     }
 
-  /* Extract the key MPI from the SEXP.  */
-  ec = private_key_from_sexp (keyparms, param, &private_key);
-  if (ec)
-    {
-      goto leave;
-    }
   public_key
       = private_key
         + param
@@ -297,13 +430,11 @@ mlkem_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
                        NULL,
                        "(key-data"
                        " (public-key"
-                       "  (mlkem(p%m) (nbits%u)))"
+                       "  (mlkem(p%m) ))"
                        " (private-key"
-                       "  (mlkem(s%m) (nbits%u))))",
+                       "  (mlkem(s%m) )))",
                        pk_mpi,
-                       nbits,
                        sk_mpi,
-                       nbits,
                        NULL);
     }
   /* call the key check function for now so that we know that it is working: */
@@ -329,8 +460,30 @@ mlkem_encap (gcry_sexp_t *r_ciph,
 
   gpg_err_code_t ec         = 0;
   unsigned char *ciphertext = NULL, *public_key = NULL, *shared_secret = NULL;
-
+    size_t public_key_size_bytes;
+    size_t bit_strength;
   gcry_mlkem_param_t param;
+
+
+  /* Extract the public key MPI from the SEXP.  */
+  ec = public_key_from_sexp (keyparms, &public_key, &public_key_size_bytes, NULL);
+  if (ec)
+    {
+      goto leave;
+    }
+  bit_strength = bitstrength_from_public_size_bytes(public_key_size_bytes);
+  if(!bit_strength)
+  {
+     ec = GPG_ERR_INV_PARAMETER;
+     goto leave;
+  }
+
+  ec = _gcry_mlkem_get_param_from_bitstrength(bit_strength, &param);
+  if (ec)
+    {
+      goto leave;
+    }
+
 
   shared_secret = xtrymalloc_secure (GCRY_MLKEM_SSBYTES);
 
@@ -339,20 +492,9 @@ mlkem_encap (gcry_sexp_t *r_ciph,
       ec = gpg_err_code_from_syserror ();
       goto leave;
     }
-  ec = mlkem_params_from_key_param (keyparms, &param, NULL);
-  if (ec)
-    {
-      goto leave;
-    }
 
   ciphertext = xtrymalloc (param.ciphertext_bytes);
 
-  /* Extract the public key MPI from the SEXP.  */
-  ec = public_key_from_sexp (keyparms, param, &public_key);
-  if (ec)
-    {
-      goto leave;
-    }
   ec = _gcry_mlkem_kem_enc (ciphertext, shared_secret, public_key, &param);
   if (ec)
     {
@@ -390,6 +532,8 @@ mlkem_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   gcry_mlkem_param_t param;
   gpg_err_code_t ec          = 0;
   unsigned char *private_key = NULL, *ciphertext = NULL, *shared_secret = NULL;
+  size_t private_key_size_bytes;
+  unsigned bit_strength;
 
   shared_secret = xtrymalloc_secure (GCRY_MLKEM_SSBYTES);
 
@@ -399,21 +543,30 @@ mlkem_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
       goto leave;
     }
 
-  ec = mlkem_params_from_key_param (keyparms, &param, NULL);
-  if (ec)
-    {
-      goto leave;
-    }
 
   /* Extract the key MPI from the SEXP.  */
-  ec = private_key_from_sexp (keyparms, param, &private_key);
+  ec = private_key_from_sexp (keyparms, &private_key, &private_key_size_bytes, NULL);
   if (ec)
     {
       goto leave;
     }
 
+  bit_strength = bitstrength_from_private_size_bytes(private_key_size_bytes);
+  if(!bit_strength)
+  {
+      ec = GPG_ERR_INV_PARAMETER;
+      goto leave;
+  }
+
+  ec = _gcry_mlkem_get_param_from_bitstrength(bit_strength, &param);
+  if (ec)
+    {
+      goto leave;
+    }
+
+
   /* Extract the key Ciphertext from the SEXP.  */
-  ec = ciphertext_from_sexp (s_data, param, &ciphertext);
+  ec = ciphertext_from_sexp (s_data, &ciphertext, NULL, &param);
   if (ec)
     {
       goto leave;
