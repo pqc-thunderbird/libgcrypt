@@ -152,9 +152,9 @@ EXTRA_libcipher_la_SOURCES = \
 	blake2.c \
 	blake2b-amd64-avx2.S blake2b-amd64-avx512.S \
 	blake2s-amd64-avx.S blake2s-amd64-avx512.S \
-	dilithium.c dilithium.h \
-	dilithium-ntt.c dilithium-packing.c dilithium-poly.c dilithium-polyvec.c dilithium-reduce.c dilithium-rounding.c dilithium-sign.c dilithium-symmetric.c \
-	dilithium-api.h dilithium-config.h dilithium-ntt.h dilithium-packing.h dilithium-params.h dilithium-poly.h dilithium-polyvec.h dilithium-reduce.h dilithium-rounding.h dilithium-sign.h dilithium-symmetric.h
+	mldsa.c mldsa.h \
+	mldsa-ntt.c mldsa-packing.c mldsa-poly.c mldsa-polyvec.c mldsa-reduce.c mldsa-rounding.c mldsa-sign.c mldsa-symmetric.c \
+	mldsa-api.h mldsa-config.h mldsa-ntt.h mldsa-packing.h mldsa-params.h mldsa-poly.h mldsa-polyvec.h mldsa-reduce.h mldsa-rounding.h mldsa-sign.h mldsa-symmetric.h
 
 gost28147.lo: gost-sb.h
 gost-sb.h: gost-s-box$(EXEEXT_FOR_BUILD)

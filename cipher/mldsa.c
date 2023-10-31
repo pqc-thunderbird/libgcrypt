@@ -3,8 +3,8 @@
 #include <stdio.h>
 
 //#include "gcrypt.h"
-#include "dilithium-sign.h"
-#include "dilithium-params.h"
+#include "mldsa-sign.h"
+#include "mldsa-params.h"
 
 #include "g10lib.h"
 #include "mpi.h"
@@ -13,8 +13,8 @@
 
 
 static unsigned int
-/* TODOMTG nbits not meaningful for dilithium */
-dilithium_get_nbits (gcry_sexp_t parms)
+/* TODOMTG nbits not meaningful for mldsa */
+mldsa_get_nbits (gcry_sexp_t parms)
 {
   gpg_err_code_t ec;
   unsigned int nbits;
@@ -26,50 +26,50 @@ dilithium_get_nbits (gcry_sexp_t parms)
   return nbits;
 }
 
-static const char *dilithium_names[] = {
-  "dilithium",
-  "openpgp-dilithium",              // ? leave?
+static const char *mldsa_names[] = {
+  "mldsa",
+  "openpgp-mldsa",              // ? leave?
   NULL,
 };
 
 
-static gcry_err_code_t gcry_dilithium_get_param_from_bit_size(size_t nbits,
-                                                    gcry_dilithium_param_t *param)
+static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits,
+                                                    gcry_mldsa_param_t *param)
 {
-  // nbits: dilithium pubkey byte size * 8
+  // nbits: mldsa pubkey byte size * 8
   switch (nbits)
   {
-    case GCRY_DILITHIUM2_NBITS:
-      param->id = GCRY_DILITHIUM2;
+    case GCRY_MLDSA2_NBITS:
+      param->id = GCRY_MLDSA2;
       param->k = 4;
       param->l = 4;
       param->eta = 2;
       param->tau = 39;
       param->beta = 78;
       param->gamma1 = 1 << 17;
-      param->gamma2 = (GCRY_DILITHIUM_Q-1)/88;
+      param->gamma2 = (GCRY_MLDSA_Q-1)/88;
       param->omega = 80;
       break;
-    case GCRY_DILITHIUM3_NBITS:
-      param->id = GCRY_DILITHIUM3;
+    case GCRY_MLDSA3_NBITS:
+      param->id = GCRY_MLDSA3;
       param->k = 6;
       param->l = 5;
       param->eta = 4;
       param->tau = 49;
       param->beta = 196;
       param->gamma1 = 1 << 19;
-      param->gamma2 = (GCRY_DILITHIUM_Q-1)/32;
+      param->gamma2 = (GCRY_MLDSA_Q-1)/32;
       param->omega = 55;
       break;
-    case GCRY_DILITHIUM5_NBITS:
-      param->id = GCRY_DILITHIUM5;
+    case GCRY_MLDSA5_NBITS:
+      param->id = GCRY_MLDSA5;
       param->k = 8;
       param->l = 7;
       param->eta = 2;
       param->tau = 60;
       param->beta = 120;
       param->gamma1 = 1 << 19;
-      param->gamma2 = (GCRY_DILITHIUM_Q-1)/32;
+      param->gamma2 = (GCRY_MLDSA_Q-1)/32;
       param->omega = 75;
       break;
     default:
@@ -93,11 +93,11 @@ static gcry_err_code_t gcry_dilithium_get_param_from_bit_size(size_t nbits,
     }
 
 
-    if(param->gamma2 == (GCRY_DILITHIUM_Q-1)/88)
+    if(param->gamma2 == (GCRY_MLDSA_Q-1)/88)
     {
       param->polyw1_packedbytes = 192;
     }
-    else if(param->gamma2 == (GCRY_DILITHIUM_Q-1)/32)
+    else if(param->gamma2 == (GCRY_MLDSA_Q-1)/32)
     {
       param->polyw1_packedbytes = 128;
     }
@@ -121,12 +121,12 @@ static gcry_err_code_t gcry_dilithium_get_param_from_bit_size(size_t nbits,
       return GPG_ERR_GENERAL; // TODOMTG better errcode?
     }
 
-    param->public_key_bytes = GCRY_DILITHIUM_SEEDBYTES + param->k * GCRY_DILITHIUM_POLYT1_PACKEDBYTES;
-    param->secret_key_bytes = 3 * GCRY_DILITHIUM_SEEDBYTES
+    param->public_key_bytes = GCRY_MLDSA_SEEDBYTES + param->k * GCRY_MLDSA_POLYT1_PACKEDBYTES;
+    param->secret_key_bytes = 3 * GCRY_MLDSA_SEEDBYTES
                               + param->l * param->polyeta_packedbytes
                               + param->k * param->polyeta_packedbytes
-                              + param->k * GCRY_DILITHIUM_POLYT0_PACKEDBYTES;
-    param->signature_bytes = GCRY_DILITHIUM_SEEDBYTES + param->l * param->polyz_packedbytes + param->polyvech_packedbytes;
+                              + param->k * GCRY_MLDSA_POLYT0_PACKEDBYTES;
+    param->signature_bytes = GCRY_MLDSA_SEEDBYTES + param->l * param->polyz_packedbytes + param->polyvech_packedbytes;
 
   return 0;
 }
@@ -182,7 +182,7 @@ leave:
 
 
 static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
-                                             const gcry_dilithium_param_t param,
+                                             const gcry_mldsa_param_t param,
                                              unsigned char **sk_p)
 {
   return extract_opaque_mpi_from_sexp(
@@ -190,7 +190,7 @@ static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
 }
 
 static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms,
-                                            const gcry_dilithium_param_t param,
+                                            const gcry_mldsa_param_t param,
                                             unsigned char **pk_p)
 {
   return extract_opaque_mpi_from_sexp(
@@ -199,21 +199,21 @@ static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms,
 
 
 static gcry_err_code_t
-dilithium_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
+mldsa_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
 {
   gpg_err_code_t ec = 0;
 
   unsigned char *pk = NULL;
   unsigned char * sk = NULL;
   unsigned int nbits;
-  gcry_dilithium_param_t param;
+  gcry_mldsa_param_t param;
   gcry_mpi_t sk_mpi = NULL;
   gcry_mpi_t pk_mpi = NULL;
 
   ec = _gcry_pk_util_get_nbits (genparms, &nbits);
   if (ec)
     return ec;
-  if ((ec = gcry_dilithium_get_param_from_bit_size(nbits, &param)))
+  if ((ec = gcry_mldsa_get_param_from_bit_size(nbits, &param)))
     return ec;
 
   if (!(sk = xtrymalloc_secure(param.secret_key_bytes))
@@ -222,7 +222,7 @@ dilithium_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
     ec = gpg_err_code_from_syserror();
     goto leave;
   }
-  _gcry_dilithium_keypair(&param, pk, sk);
+  _gcry_mldsa_keypair(&param, pk, sk);
 
   sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
   pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
@@ -240,9 +240,9 @@ dilithium_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
                       NULL,
                       "(key-data"
                       " (public-key"
-                      "  (dilithium(p%m) (nbits%u)))"
+                      "  (mldsa(p%m) (nbits%u)))"
                       " (private-key"
-                      "  (dilithium(s%m) (nbits%u))))",
+                      "  (mldsa(s%m) (nbits%u))))",
                       pk_mpi,
                       nbits,
                       sk_mpi,
@@ -261,14 +261,14 @@ leave:
 
 
 static gcry_err_code_t
-dilithium_check_secret_key (gcry_sexp_t keyparms)
+mldsa_check_secret_key (gcry_sexp_t keyparms)
 {
   gpg_err_code_t ec = 0;
   return ec;
 }
 
 static gcry_err_code_t
-dilithium_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
+mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 {
   gpg_err_code_t ec = 0;
   unsigned char *sig_buf = NULL;
@@ -282,11 +282,11 @@ dilithium_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   gcry_mpi_t data = NULL;
   size_t nwritten = 0;
 
-  unsigned int nbits = dilithium_get_nbits (keyparms);
-  gcry_dilithium_param_t param;
+  unsigned int nbits = mldsa_get_nbits (keyparms);
+  gcry_mldsa_param_t param;
   size_t sig_buf_len = 0;
 
-  if ((ec = gcry_dilithium_get_param_from_bit_size(nbits, &param)))
+  if ((ec = gcry_mldsa_get_param_from_bit_size(nbits, &param)))
     return ec;
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_SIGN, nbits);
 
@@ -296,7 +296,7 @@ dilithium_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
     goto leave;
   if (!mpi_is_opaque(data))
   {
-    printf("dilithium only works with opaque mpis!\n");
+    printf("mldsa only works with opaque mpis!\n");
     ec = GPG_ERR_INV_ARG;
     goto leave;
   }
@@ -327,7 +327,7 @@ dilithium_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
     goto leave;
   }
 
-  if(0 != _gcry_dilithium_sign(&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
+  if(0 != _gcry_mldsa_sign(&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
   {
     printf("sign operation failed\n");
     ec = GPG_ERR_GENERAL;
@@ -340,7 +340,7 @@ dilithium_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
     goto leave;
   }
 
-  ec = sexp_build (r_sig, NULL, "(sig-val(dilithium(a%b)))", sig_buf_len, sig_buf);
+  ec = sexp_build (r_sig, NULL, "(sig-val(mldsa(a%b)))", sig_buf_len, sig_buf);
   if(ec)
     printf("sexp build failed\n");
 
@@ -351,13 +351,13 @@ leave:
   xfree(data_buf);
   _gcry_mpi_release(data);
   if (DBG_CIPHER)
-    log_debug ("dilithium_sign    => %s\n", gpg_strerror (ec));
+    log_debug ("mldsa_sign    => %s\n", gpg_strerror (ec));
   return ec;
 }
 
 
 static gcry_err_code_t
-dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
+mldsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
 {
   gpg_err_code_t ec = 0;
   unsigned char *sig_buf = NULL;
@@ -370,11 +370,11 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
   gcry_mpi_t sig = NULL;
   gcry_mpi_t data = NULL;
   size_t nwritten = 0;
-  gcry_dilithium_param_t param;
+  gcry_mldsa_param_t param;
   gcry_sexp_t l1 = NULL;
 
-  unsigned int nbits = dilithium_get_nbits (s_keyparms);
-  if ((ec = gcry_dilithium_get_param_from_bit_size(nbits, &param)))
+  unsigned int nbits = mldsa_get_nbits (s_keyparms);
+  if ((ec = gcry_mldsa_get_param_from_bit_size(nbits, &param)))
     return ec;
 
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_VERIFY, nbits);
@@ -384,7 +384,7 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
     goto leave;
   if (!mpi_is_opaque(data))
   {
-    printf("dilithium only works with opaque mpis!\n");
+    printf("mldsa only works with opaque mpis!\n");
     ec = GPG_ERR_INV_ARG;
     goto leave;
   }
@@ -411,14 +411,14 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
   }
 
   /* Extract the signature value.  */
-  ec = _gcry_pk_util_preparse_sigval (s_sig, dilithium_names, &l1, NULL);
+  ec = _gcry_pk_util_preparse_sigval (s_sig, mldsa_names, &l1, NULL);
   if (ec)
     goto leave;
   ec = sexp_extract_param (l1, NULL, "/a", &sig, NULL);
   if (ec)
     goto leave;
   if (DBG_CIPHER)
-    log_printmpi ("dilithium_verify  sig", sig);
+    log_printmpi ("mldsa_verify  sig", sig);
 
   /* extract sig from mpi */
   if (!(sig_buf = xtrymalloc(param.signature_bytes)))
@@ -434,7 +434,7 @@ dilithium_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
     goto leave;
   }
 
-  if(0 != _gcry_dilithium_verify(&param, sig_buf, param.signature_bytes, data_buf, data_buf_len, pk_buf))
+  if(0 != _gcry_mldsa_verify(&param, sig_buf, param.signature_bytes, data_buf, data_buf_len, pk_buf))
   {
     ec = GPG_ERR_GENERAL;
     goto leave;
@@ -449,12 +449,12 @@ leave:
   _gcry_mpi_release(sig);
   sexp_release (l1);
   if (DBG_CIPHER)
-    log_debug ("dilithium_verify    => %s\n", gpg_strerror (ec));
+    log_debug ("mldsa_verify    => %s\n", gpg_strerror (ec));
   return ec;
 }
 
 static gpg_err_code_t
-selftests_dilithium (selftest_report_func_t report, int extended)
+selftests_mldsa (selftest_report_func_t report, int extended)
 {
   return GPG_ERR_NO_ERROR; // TODO
 }
@@ -467,8 +467,8 @@ run_selftests (int algo, int extended, selftest_report_func_t report)
 
   switch (algo)
     {
-    case GCRY_PK_DILITHIUM:
-      ec = selftests_dilithium (report, extended);
+    case GCRY_PK_MLDSA:
+      ec = selftests_mldsa (report, extended);
       break;
     default:
       ec = GPG_ERR_PUBKEY_ALGO;
@@ -486,18 +486,18 @@ compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparam)
   return ec;
 }
 
-gcry_pk_spec_t _gcry_pubkey_spec_dilithium = {
-  GCRY_PK_DILITHIUM, {0, 1},
+gcry_pk_spec_t _gcry_pubkey_spec_mldsa = {
+  GCRY_PK_MLDSA, {0, 1},
   (GCRY_PK_USAGE_SIGN),
-  "Dilithium", dilithium_names,
+  "ML-DSA", mldsa_names,
   "p", "s", "", "a", "p",       // elements of pub-key, sec-key, ciphertext, signature, key-grip
-  dilithium_generate,
-  dilithium_check_secret_key,
+  mldsa_generate,
+  mldsa_check_secret_key,
   NULL,
   NULL,
-  dilithium_sign,
-  dilithium_verify,
-  dilithium_get_nbits,
+  mldsa_sign,
+  mldsa_verify,
+  mldsa_get_nbits,
   run_selftests,
   compute_keygrip
 };

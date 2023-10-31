@@ -31,8 +31,8 @@ if USE_RSA
 tests_bin += pkcs1v2 t-rsa-pss t-rsa-15 t-rsa-testparm
 endif
 
-if USE_DILITHIUM
-tests_bin += t-dilithium
+if USE_MLDSA
+tests_bin += t-mldsa
 endif
 
 if USE_DSA

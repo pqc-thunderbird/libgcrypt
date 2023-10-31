@@ -256,17 +256,17 @@ check_rsa_keys (void)
 }
 
 static void
-check_dilithium_keys (void)
+check_mldsa_keys (void)
 {
-#if USE_DILITHIUM
+#if USE_MLDSA
   gcry_sexp_t keyparm, key;
   int rc;
 
   if (verbose)
-    info ("creating Dilithium key\n");
+    info ("creating ML-DSA key\n");
   rc = gcry_sexp_new (&keyparm,
                       "(genkey\n"
-                      " (dilithium\n"
+                      " (mldsa\n"
                       "  (nbits 3:5)\n"
                       " ))", 0, 1);
   if (rc)
@@ -274,9 +274,9 @@ check_dilithium_keys (void)
   rc = gcry_pk_genkey (&key, keyparm);
   gcry_sexp_release (keyparm);
   if (rc)
-    die ("error generating Dilithium key: %s\n", gpg_strerror (rc));
+    die ("error generating ML-DSA key: %s\n", gpg_strerror (rc));
 
-#endif /* USE_DILITHIUM */
+#endif /* USE_MLDSA */
 }
 
 
@@ -808,7 +808,7 @@ main (int argc, char **argv)
       check_elg_keys ();
       check_dsa_keys ();
       check_ecc_keys ();
-      check_dilithium_keys ();
+      check_mldsa_keys ();
       check_nonce ();
     }
   else
@@ -822,8 +822,8 @@ main (int argc, char **argv)
           check_dsa_keys ();
         else if (!strcmp (*argv, "ecc"))
           check_ecc_keys ();
-        else if (!strcmp (*argv, "dilithium"))
-          check_dilithium_keys ();
+        else if (!strcmp (*argv, "mldsa"))
+          check_mldsa_keys ();
         else if (!strcmp (*argv, "nonce"))
           check_nonce ();
         else

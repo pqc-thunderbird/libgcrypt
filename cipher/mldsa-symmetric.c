@@ -1,31 +1,31 @@
 #include <config.h>
 #include <stdint.h>
-#include "dilithium-params.h"
-#include "dilithium-symmetric.h"
+#include "mldsa-params.h"
+#include "mldsa-symmetric.h"
 
-void _gcry_dilithium_shake128_stream_init(gcry_md_hd_t *md, const uint8_t seed[GCRY_DILITHIUM_SEEDBYTES], uint16_t nonce)
+void _gcry_mldsa_shake128_stream_init(gcry_md_hd_t *md, const uint8_t seed[GCRY_MLDSA_SEEDBYTES], uint16_t nonce)
 {
   uint8_t t[2];
   t[0] = nonce;
   t[1] = nonce >> 8;
 
   _gcry_md_open (md, GCRY_MD_SHAKE128, GCRY_MD_FLAG_SECURE);
-  _gcry_md_write(*md, seed, GCRY_DILITHIUM_SEEDBYTES);
+  _gcry_md_write(*md, seed, GCRY_MLDSA_SEEDBYTES);
   _gcry_md_write(*md, t, 2);
 }
 
-void _gcry_dilithium_shake256_stream_init(gcry_md_hd_t *md, const uint8_t seed[GCRY_DILITHIUM_CRHBYTES], uint16_t nonce)
+void _gcry_mldsa_shake256_stream_init(gcry_md_hd_t *md, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
 {
   uint8_t t[2];
   t[0] = nonce;
   t[1] = nonce >> 8;
 
   _gcry_md_open (md, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
-  _gcry_md_write(*md, seed, GCRY_DILITHIUM_CRHBYTES);
+  _gcry_md_write(*md, seed, GCRY_MLDSA_CRHBYTES);
   _gcry_md_write(*md, t, 2);
 }
 
-void _gcry_dilithium_shake128_squeeze_nblocks(gcry_md_hd_t md, unsigned n, unsigned char *out)
+void _gcry_mldsa_shake128_squeeze_nblocks(gcry_md_hd_t md, unsigned n, unsigned char *out)
 {
   for(unsigned i = 0; i < n; i++)
   {
@@ -33,7 +33,7 @@ void _gcry_dilithium_shake128_squeeze_nblocks(gcry_md_hd_t md, unsigned n, unsig
   }
 }
 
-void _gcry_dilithium_shake256_squeeze_nblocks(gcry_md_hd_t md, unsigned n, unsigned char *out)
+void _gcry_mldsa_shake256_squeeze_nblocks(gcry_md_hd_t md, unsigned n, unsigned char *out)
 {
   for(unsigned i = 0; i < n; i++)
   {
@@ -46,7 +46,7 @@ void _gcry_dilithium_shake256_squeeze_nblocks(gcry_md_hd_t md, unsigned n, unsig
  * takes the two buffers in_buf1, in_buf2 as inputs. The second one can be NULL.
  * The out buffer contains the output of out_len bytes.
  */
-void _gcry_dilithium_shake256(const unsigned char *in_buf1, unsigned in_buf1_len, const unsigned char *in_buf2, unsigned in_buf2_len, unsigned char *out, unsigned out_len)
+void _gcry_mldsa_shake256(const unsigned char *in_buf1, unsigned in_buf1_len, const unsigned char *in_buf2, unsigned in_buf2_len, unsigned char *out, unsigned out_len)
 {
   gcry_md_hd_t md;
   if(!in_buf1)

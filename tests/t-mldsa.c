@@ -1,4 +1,4 @@
-/* t-dilithium.c - Test the Crystals-Dilithium Signature algorithm
+/* t-mldsa.c - Test the Crystals-ML-DSA Signature algorithm
  * Copyright (C) 2011 Free Software Foundation, Inc.
  *
  * This file is part of Libgcrypt.
@@ -29,7 +29,7 @@
 #include <stdarg.h>
 
 
-#define PGM "t-dilithium"
+#define PGM "t-mldsa"
 #include "t-common.h"
 //#define N_TESTS 120
 
@@ -178,22 +178,22 @@ fill_bin_buf_from_hex_line(size_t* r_length, const char tag_char, const char *li
 */
 
 /* TODO: flags eddsa is unnatural, we should define our own flag or use another better matching flag that ensures opaque MPIs */
-const char DILITHIUM_MESSAGE_TMPL[] = "(data (flags eddsa) (value %b))";
+const char MLDSA_MESSAGE_TMPL[] = "(data (flags eddsa) (value %b))";
 
 
-#define GCRY_DILITHIUM2_NBITS (1312 * 8) 10496
-#define GCRY_DILITHIUM3_NBITS (1952 * 8) 15616
-#define GCRY_DILITHIUM5_NBITS (2592 * 8) 20736
+#define GCRY_MLDSA2_NBITS (1312 * 8) 10496
+#define GCRY_MLDSA3_NBITS (1952 * 8) 15616
+#define GCRY_MLDSA5_NBITS (2592 * 8) 20736
 
-static int check_dilithium_roundtrip(size_t n_tests)
+static int check_mldsa_roundtrip(size_t n_tests)
 {
-  const char *dilithium_name[] = {"Dilithium2", "Dilithium3", "Dilithium5"};
-  unsigned dilithium_nbits[] = {10496, 15616, 20736};
+  const char *mldsa_name[] = {"ML-DSA-44", "ML-DSA-65", "ML-DSA-87"};
+  unsigned mldsa_nbits[] = {10496, 15616, 20736};
 
   int rc;
 
   for(size_t iteration = 0; iteration < n_tests; iteration++)
-  for (int i = 0; i < sizeof(dilithium_name)/sizeof(dilithium_name[0]); i++)
+  for (int i = 0; i < sizeof(mldsa_name)/sizeof(mldsa_name[0]); i++)
   {
     gcry_sexp_t skey = NULL;
     gcry_sexp_t pkey = NULL;
@@ -209,12 +209,12 @@ static int check_dilithium_roundtrip(size_t n_tests)
     unsigned msg_len;
 
     if (verbose)
-      info ("creating %s key\n", dilithium_name[i]);
+      info ("creating %s key\n", mldsa_name[i]);
 
     rc = gcry_sexp_build(&keyparm,
                         NULL,
-                        "(genkey (dilithium (nbits%u)))",
-                        dilithium_nbits[i],
+                        "(genkey (mldsa (nbits%u)))",
+                        mldsa_nbits[i],
                         NULL);
 
     if (rc)
@@ -222,7 +222,7 @@ static int check_dilithium_roundtrip(size_t n_tests)
     rc = gcry_pk_genkey (&key, keyparm);
 
     if (rc)
-      die ("error generating Dilithium key: %s\n", gpg_strerror (rc));
+      die ("error generating ML-DSA key: %s\n", gpg_strerror (rc));
 
 
     pkey = gcry_sexp_find_token (key, "public-key", 0);
@@ -248,7 +248,7 @@ static int check_dilithium_roundtrip(size_t n_tests)
 
     rc = gcry_sexp_build (&s_data,
           NULL,
-          DILITHIUM_MESSAGE_TMPL, msg_len, msg, NULL);
+          MLDSA_MESSAGE_TMPL, msg_len, msg, NULL);
     if (rc)
     {
       die("error generating data sexp");
@@ -258,7 +258,7 @@ static int check_dilithium_roundtrip(size_t n_tests)
     if(rc)
       die("sign failed\n");
 
-    printf("verifying correct %s-signature, iteration %ld/%ld\n", dilithium_name[i], iteration+1, n_tests);
+    printf("verifying correct %s-signature, iteration %ld/%ld\n", mldsa_name[i], iteration+1, n_tests);
     rc = gcry_pk_verify (r_sig, s_data, pkey);
     if(rc)
       die("verify failed\n");
@@ -269,7 +269,7 @@ static int check_dilithium_roundtrip(size_t n_tests)
     printf("verifying wrong signature\n");
     rc = gcry_sexp_build (&s_data_wrong,
           NULL,
-          DILITHIUM_MESSAGE_TMPL, msg_len, msg, NULL);
+          MLDSA_MESSAGE_TMPL, msg_len, msg, NULL);
     if (rc)
     {
       die("error generating data sexp");
@@ -314,7 +314,7 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   // pk
   err = gcry_sexp_build(&public_key_sx,
                         NULL,
-                        "(public-key (dilithium (p %b) (nbits%u) ))",
+                        "(public-key (mldsa (p %b) (nbits%u) ))",
                         pk_len,
                         pk,
                         pk_len * 8,
@@ -328,7 +328,7 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   // data
   err = gcry_sexp_build (&data_sx,
         NULL,
-        DILITHIUM_MESSAGE_TMPL, m_len, m, NULL);
+        MLDSA_MESSAGE_TMPL, m_len, m, NULL);
 
   if (err)
   {
@@ -339,7 +339,7 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   // sig
   err = gcry_sexp_build (&signature_sx,
       NULL,
-      "(sig-val(dilithium(a %b)))", sig_len, sig, NULL);
+      "(sig-val(mldsa(a %b)))", sig_len, sig, NULL);
 
   if (err)
   {
@@ -358,7 +358,7 @@ leave:
   return 0;
 }
 
-static void check_dilithium_kat(const char *fname, unsigned dilithium_bits)
+static void check_mldsa_kat(const char *fname, unsigned mldsa_bits)
 {
   const size_t nb_kat_tests = 0; /* zero means all */
   FILE *fp;
@@ -608,14 +608,14 @@ int last_argc = -1;
 
     if(fname)
     {
-      check_dilithium_kat(fname, 10496);
+      check_mldsa_kat(fname, 10496);
       xfree(fname);
     }
     else
     {
-      if(check_dilithium_roundtrip(1000))
+      if(check_mldsa_roundtrip(1000))
       {
-          fail("check_dilithium_roundtrip() yielded an error, aborting");
+          fail("check_mldsa_roundtrip() yielded an error, aborting");
       }
     }
 
