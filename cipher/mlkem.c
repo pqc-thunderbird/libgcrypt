@@ -432,7 +432,8 @@ mlkem_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
                        " (public-key"
                        "  (mlkem(p%m) ))"
                        " (private-key"
-                       "  (mlkem(s%m) )))",
+                       "  (mlkem(p%m)(s%m) )))",
+                       pk_mpi,
                        pk_mpi,
                        sk_mpi,
                        NULL);
@@ -602,6 +603,31 @@ mlkem_get_nbits (gcry_sexp_t parms)
   return nbits;
 }
 
+static gpg_err_code_t
+compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparam)
+{
+  gcry_sexp_t l1;
+  const char *data;
+  size_t datalen;
+
+  l1 = sexp_find_token (keyparam, "p", 1);
+  if (!l1)
+    return GPG_ERR_NO_OBJ;
+
+  data = sexp_nth_data (l1, 1, &datalen);
+  if (!data)
+    {
+      sexp_release (l1);
+      return GPG_ERR_NO_OBJ;
+    }
+
+  _gcry_md_write (md, data, datalen);
+  sexp_release (l1);
+
+  return 0;
+}
+
+
 
 static const char *mlkem_names[] = {
     "mlkem",
@@ -629,7 +655,7 @@ gcry_pk_spec_t _gcry_pubkey_spec_mlkem = {
     NULL, /* verify */
     mlkem_get_nbits,
     NULL, /* run_selftests */
-    NULL, /* compute_keygrip */
+    compute_keygrip, /* compute_keygrip */
     NULL, /* get_curve */
     NULL  /* get_curve_param */
 };
