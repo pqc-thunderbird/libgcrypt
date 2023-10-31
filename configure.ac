@@ -216,7 +216,7 @@ available_ciphers="$available_ciphers sm4 aria"
 enabled_ciphers=""
 
 # Definitions for public-key ciphers.
-available_pubkey_ciphers="dsa elgamal rsa ecc sphincsplus"
+available_pubkey_ciphers="dsa elgamal rsa ecc slhdsa"
 enabled_pubkey_ciphers=""
 
 # Definitions for message digests.
@@ -3043,11 +3043,11 @@ if test "$found" = "1" ; then
    AC_DEFINE(USE_DSA, 1, [Defined if this module should be included])
 fi
 
-LIST_MEMBER(sphincsplus, $enabled_pubkey_ciphers)
-AM_CONDITIONAL(USE_SPHINCSPLUS, [test "$found" = "1"])
+LIST_MEMBER(slhdsa, $enabled_pubkey_ciphers)
+AM_CONDITIONAL(USE_SLHDSA, [test "$found" = "1"])
 if test "$found" = "1" ; then
-  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS sphincsplus.lo sphincs-sha2.lo sphincs-address.lo sphincs-merkle.lo sphincs-wots.lo sphincs-wotsx1.lo sphincs-utils.lo sphincs-utilsx1.lo sphincs-fors.lo sphincs-sign.lo sphincs-hash.lo sphincs-thash.lo"
-   AC_DEFINE(USE_SPHINCSPLUS, 1, [Defined if this module should be included])
+  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS slhdsa.lo slhdsa-sha2.lo slhdsa-address.lo slhdsa-merkle.lo slhdsa-wots.lo slhdsa-wotsx1.lo slhdsa-utils.lo slhdsa-utilsx1.lo slhdsa-fors.lo slhdsa-sign.lo slhdsa-hash.lo slhdsa-thash.lo"
+   AC_DEFINE(USE_SLHDSA, 1, [Defined if this module should be included])
 fi
 
 LIST_MEMBER(rsa, $enabled_pubkey_ciphers)

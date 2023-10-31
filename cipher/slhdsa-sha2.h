@@ -1,0 +1,13 @@
+#ifndef SLHDSA_SHA2_H
+#define SLHDSA_SHA2_H
+
+#define SLHDSA_SHA256_BLOCK_BYTES 64
+#define SLHDSA_SHA256_OUTPUT_BYTES 32  /* This does not necessarily equal SLHDSA_N */
+
+#define SLHDSA_SHA512_BLOCK_BYTES 128
+#define SLHDSA_SHA512_OUTPUT_BYTES 64
+
+
+#define SLHDSA_SHA256_ADDR_BYTES 22
+
+#endif

@@ -48,8 +48,8 @@ static gcry_pk_spec_t * const pubkey_list[] =
 #if USE_ELGAMAL
     &_gcry_pubkey_spec_elg,
 #endif
-#if USE_SPHINCSPLUS
-    &_gcry_pubkey_spec_sphincsplus,
+#if USE_SLHDSA
+    &_gcry_pubkey_spec_slhdsa,
 #endif
     NULL
   };

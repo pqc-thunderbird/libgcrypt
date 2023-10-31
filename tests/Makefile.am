@@ -31,8 +31,8 @@ if USE_RSA
 tests_bin += pkcs1v2 t-rsa-pss t-rsa-15 t-rsa-testparm
 endif
 
-if USE_SPHINCSPLUS
-tests_bin += t-sphincsplus
+if USE_SLHDSA
+tests_bin += t-slhdsa
 endif
 
 if USE_DSA

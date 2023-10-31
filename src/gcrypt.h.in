@@ -1148,7 +1148,7 @@ enum gcry_pk_algos
     GCRY_PK_ECDSA = 301,    /* (only for external use).  */
     GCRY_PK_ECDH  = 302,    /* (only for external use).  */
     GCRY_PK_EDDSA = 303,    /* (only for external use).  */
-    GCRY_PK_SPHINCSPLUS = 403 /* SPHINCS+ */
+    GCRY_PK_SLHDSA = 403 /* slhdsa */
   };
 
 /* Flags describing usage capabilities of a PK algorithm. */
