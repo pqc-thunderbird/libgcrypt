@@ -366,7 +366,7 @@ static gcry_err_code_t slhdsa_get_hash_alg_and_variant_from_sexp(gcry_sexp_t lis
 
 static const char *slhdsa_names[] = {
   "slhdsa-ipd",
-  "openpgp-slhdsa-ipd",              // ? leave?
+  "openpgp-slhdsa-ipd",              /* ? leave? */
   NULL,
 };
 
@@ -471,7 +471,6 @@ slhdsa_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
 
   if(!sk_mpi || !pk_mpi) {
-    // TODO: needed?
     printf("creating sk_mpi or pk_mpi failed!\n");
     ec = gpg_err_code_from_syserror();
     goto leave;
@@ -693,7 +692,6 @@ slhdsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
   _gcry_mpi_print(GCRYMPI_FMT_USG, sig_buf, param.signature_bytes, &nwritten, sig);
   if(nwritten != param.signature_bytes)
   {
-    // signature length invalid
     ec = GPG_ERR_BAD_SIGNATURE;
     goto leave;
   }
@@ -724,7 +722,7 @@ selftests_slhdsa (selftest_report_func_t report, int extended)
   (void) report;
   (void) extended;
 
-  return GPG_ERR_NO_ERROR; // TODO implement
+  return GPG_ERR_NO_ERROR; /* TODO implement */
 }
 
 /* Run a full self-test for ALGO and return 0 on success.  */
@@ -764,7 +762,7 @@ gcry_pk_spec_t _gcry_pubkey_spec_slhdsa = {
   GCRY_PK_SLHDSA, {0, 1},
   (GCRY_PK_USAGE_SIGN),
   "SLH-DSA-ipd", slhdsa_names,  /* following the naming scheme given at https://github.com/ietf-wg-pquip/state-of-protocols-and-pqc#user-content-algorithm-names */
-  "p", "s", "", "a", "p",       // elements of pub-key, sec-key, ciphertext, signature, key-grip
+  "p", "s", "", "a", "p",       /* elements of pub-key, sec-key, ciphertext, signature, key-grip */
   slhdsa_generate,
   slhdsa_check_secret_key,
   NULL,

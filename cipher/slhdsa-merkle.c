@@ -14,9 +14,7 @@
 
 /*
  * This generates a Merkle signature (WOTS signature followed by the Merkle
- * authentication path).  This is in this file because most of the complexity
- * is involved with the WOTS signature; the Merkle authentication path logic
- * is mostly hidden in treehashx4
+ * authentication path).
  */
 gcry_err_code_t _gcry_slhdsa_merkle_sign(byte *sig, unsigned char *root,
                  const _gcry_slhdsa_param_t *ctx,

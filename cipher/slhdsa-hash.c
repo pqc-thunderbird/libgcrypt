@@ -116,7 +116,7 @@ static gcry_err_code_t prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_para
 
     memset(sha256_pubseed_block, 0, SLHDSA_SHA256_BLOCK_BYTES);
     memcpy(sha256_pubseed_block, ctx->pub_seed, ctx->n);
-    /* TODO: md_open can give error code... */
+
     ec = _gcry_md_open (&hd, GCRY_MD_SHA256, GCRY_MD_FLAG_SECURE);
     if (ec)
         goto leave;
@@ -262,11 +262,10 @@ static gcry_err_code_t hash_message_sha2(unsigned char *digest, u64 *tree, u32 *
     bufp = buf;
 
 
-    // seed: SHA-X(R ‖ PK.seed ‖ PK.root ‖ M)
+    /* seed: SHA-X(R ‖ PK.seed ‖ PK.root ‖ M) */
     memcpy(inbuf, R, ctx->n);
     memcpy(inbuf + ctx->n, pk, ctx->public_key_bytes);
 
-    /* TODO: md_open can give error code... */
     ec = _gcry_md_open (&hd, hash_alg, GCRY_MD_FLAG_SECURE);
     if (ec)
         goto leave;
@@ -289,7 +288,7 @@ static gcry_err_code_t hash_message_sha2(unsigned char *digest, u64 *tree, u32 *
     }
     memcpy(seed + 2*ctx->n, _gcry_md_read(hd, hash_alg), shax_output_bytes);
 
-    // H_msg: MGF1-SHA-X(R ‖ PK.seed ‖ seed)
+    /* H_msg: MGF1-SHA-X(R ‖ PK.seed ‖ seed) */
     memcpy(seed, R, ctx->n);
     memcpy(seed + ctx->n, pk, ctx->n);
 
@@ -345,8 +344,6 @@ static gcry_err_code_t prf_addr_shake(unsigned char *out, const _gcry_slhdsa_par
     memcpy(buf, ctx->pub_seed, ctx->n);
     memcpy(buf + ctx->n, addr, ctx->addr_bytes);
     memcpy(buf + ctx->n + ctx->addr_bytes, ctx->sk_seed, ctx->n);
-
-    //shake256(out, ctx->n, buf, 2*ctx->n + ctx->addr_bytes);
 
     ec = _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
     if (ec)

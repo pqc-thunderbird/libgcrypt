@@ -326,7 +326,7 @@ static int check_slhdsa_roundtrip(size_t n_tests)
       die("verify failed\n");
     printf("... ok!\n");
 
-    // now verify against a wrong msg
+    /* now verify against a wrong msg */
     msg[0]--;
     printf("verifying wrong signature\n");
     rc = gcry_sexp_build (&s_data_wrong,
@@ -473,11 +473,8 @@ static void check_slhdsa_kat(const char *fname)
   while ((line = read_textline(fp, &lineno))
          && !(nb_kat_tests && nb_kat_tests <= test_count))
     {
-      // gcry_sexp_t l;
-      // int have_flags;
       int rc;
       int is_complete = 1;
-      // gcry_error_t err;
       unsigned i;
       unsigned random;
 
@@ -519,24 +516,22 @@ static void check_slhdsa_kat(const char *fname)
             }
         }
 
-      // check if we completed one test vector:
+      /* check if we completed one test vector: */
       for (i = 0; i < sizeof(test_vec) / sizeof(test_vec[0]); i++)
         {
           is_complete &= (test_vec[i].result_buf != NULL);
         }
       if (!is_complete)
         {
-          // printf("line '%s' does NOT complete a test vector\n", line);
           xfree(line);
           continue;
         }
       else
         {
-          // printf("line '%s' COMPLETES a test vector\n", line);
         }
       test_count++;
 
-      // NOTE: sm = (sig | m) since the reference implementation uses the "signed-message" interface -> we extract only the signature
+      /* NOTE: sm = (sig | m) since the reference implementation uses the "signed-message" interface -> we extract only the signature */
       sig = test_vec[4].result_buf;
       sig_len = test_vec[4].result_buf_len - test_vec[1].result_buf_len;
       pk = &test_vec[2];
@@ -585,7 +580,7 @@ static void check_slhdsa_kat(const char *fname)
       msg->result_buf_len++;
 
 
-      // free test vec
+      /* free test vec */
       xfree(line);
       for (i = 0; i < sizeof(test_vec) / sizeof(test_vec[0]); i++)
         {
@@ -615,7 +610,7 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   gcry_sexp_t signature_sx;
   gcry_sexp_t data_sx;
 
-  // pk
+  /* pk */
   err = gcry_sexp_build(&public_key_sx,
                         NULL,
                         "(public-key (slhdsa-ipd (p %b) (hash-alg%s) (variant%s) ))",
@@ -628,7 +623,7 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
     fail("error building public key SEXP: %s", gpg_strerror(err));
   }
 
-  // data
+  /* data */
   err = gcry_sexp_build (&data_sx,
         NULL,
         SLHDSA_MESSAGE_TMPL, m_len, m, NULL);
@@ -638,7 +633,7 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
     fail("error building msg SEXP: %s", gpg_strerror(err));
   }
 
-  // sig
+  /* sig */
   err = gcry_sexp_build (&signature_sx,
       NULL,
       "(sig-val(slhdsa-ipd(a %b)))", sig_len, sig, NULL);

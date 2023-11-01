@@ -13,10 +13,6 @@
 
 #include "g10lib.h"
 
-// TODO clarify address expectations, and make them more uniform.
-// TODO i.e. do we expect types to be set already?
-// TODO and do we expect modifications or copies?
-
 /**
  * Computes the chaining function.
  * out and in have to be n-byte arrays.

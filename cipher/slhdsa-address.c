@@ -18,10 +18,6 @@ void _gcry_slhdsa_set_layer_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u
  */
 void _gcry_slhdsa_set_tree_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u64 tree)
 {
-    /* TODO: assert? */
-//#if (SLHDSA_TREE_HEIGHT * (SLHDSA_D - 1)) > 64
-//    #error Subtree addressing is currently limited to at most 2^64 trees
-//#endif
     _gcry_slhdsa_ull_to_bytes(&((unsigned char *)addr)[ctx->offset_tree], 8, tree );
 }
 
