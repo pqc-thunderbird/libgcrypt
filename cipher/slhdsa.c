@@ -389,8 +389,8 @@ static gcry_err_code_t slhdsa_get_hash_alg_and_variant_from_sexp(gcry_sexp_t lis
 }
 
 static const char *slhdsa_names[] = {
-  "slhdsa",
-  "openpgp-slhdsa",              // ? leave?
+  "slhdsa-ipd",
+  "openpgp-slhdsa-ipd",              // ? leave?
   NULL,
 };
 
@@ -796,7 +796,7 @@ compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparam)
 gcry_pk_spec_t _gcry_pubkey_spec_slhdsa = {
   GCRY_PK_SLHDSA, {0, 1},
   (GCRY_PK_USAGE_SIGN),
-  "slhdsa", slhdsa_names,
+  "SLH-DSA-ipd", slhdsa_names,  /* following the naming scheme given at https://github.com/ietf-wg-pquip/state-of-protocols-and-pqc#user-content-algorithm-names */
   "p", "s", "", "a", "p",       // elements of pub-key, sec-key, ciphertext, signature, key-grip
   slhdsa_generate,
   slhdsa_check_secret_key,
