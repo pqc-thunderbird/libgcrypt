@@ -30,22 +30,4 @@ gcry_err_code_t _gcry_slhdsa_compute_root(unsigned char *root, const unsigned ch
                   const unsigned char *auth_path, u32 tree_height,
                   const _gcry_slhdsa_param_t *ctx, u32 addr[8]);
 
-/**
- * For a given leaf index, computes the authentication path and the resulting
- * root node using Merkle's _gcry_slhdsa_treehash algorithm.
- * Expects the layer and tree parts of the tree_addr to be set, as well as the
- * tree type (i.e. SLHDSA_ADDR_TYPE_HASHTREE or SLHDSA_ADDR_TYPE_FORSTREE).
- * Applies the offset idx_offset to indices before building addresses, so that
- * it is possible to continue counting indices across trees.
- */
-gcry_err_code_t _gcry_slhdsa_treehash(unsigned char *root, unsigned char *auth_path,
-              const _gcry_slhdsa_param_t* ctx,
-              u32 leaf_idx, u32 idx_offset, u32 tree_height,
-              gcry_err_code_t (*gen_leaf)(
-                 unsigned char* /* leaf */,
-                 const _gcry_slhdsa_param_t* ctx /* ctx */,
-                 u32 /* addr_idx */, const u32[8] /* tree_addr */),
-              u32 tree_addr[8]);
-
-
 #endif

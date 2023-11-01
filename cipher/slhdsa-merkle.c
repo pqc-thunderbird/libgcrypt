@@ -65,7 +65,7 @@ leave:
 gcry_err_code_t _gcry_slhdsa_merkle_gen_root(unsigned char *root, const _gcry_slhdsa_param_t *ctx)
 {
     /* We do not need the auth path in key generation, but it simplifies the
-       code to have just one _gcry_slhdsa_treehash routine that computes both root and path
+       code to have just one TreeHash routine that computes both root and path
        in one function. */
     gcry_err_code_t ec = 0;
     unsigned char *auth_path = NULL;

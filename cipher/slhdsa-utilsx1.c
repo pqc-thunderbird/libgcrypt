@@ -12,7 +12,7 @@
 
 /*
  * Generate the entire Merkle tree, computing the authentication path for
- * leaf_idx, and the resulting root node using Merkle's _gcry_slhdsa_treehash algorithm.
+ * leaf_idx, and the resulting root node using Merkle's TreeHash algorithm.
  * Expects the layer and tree parts of the tree_addr to be set, as well as the
  * tree type (i.e. SLHDSA_ADDR_TYPE_HASHTREE or SLHDSA_ADDR_TYPE_FORSTREE)
  *
