@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <stdint.h>
+#include "types.h"
 #include <string.h>
 
 #include "slhdsa-thash.h"
@@ -17,11 +17,11 @@
  */
 static gcry_err_code_t
 thash_shake_simple(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const _gcry_slhdsa_param_t *ctx, uint32_t addr[8])
+           const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
     gcry_err_code_t ec = 0;
     gcry_md_hd_t hd;
-    uint8_t *buf = NULL;
+    byte *buf = NULL;
 
     buf = xtrymalloc_secure(ctx->n + ctx->addr_bytes + inblocks*ctx->n);
     if (!buf)
@@ -46,14 +46,14 @@ leave:
 }
 
 static gcry_err_code_t thash_512_simple(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const _gcry_slhdsa_param_t *ctx, uint32_t addr[8]);
+           const _gcry_slhdsa_param_t *ctx, u32 addr[8]);
 
 /**
  * Takes an array of inblocks concatenated arrays of ctx->n bytes.
  */
 static gcry_err_code_t
 thash_sha2_simple(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const _gcry_slhdsa_param_t *ctx, uint32_t addr[8])
+           const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
     gcry_md_hd_t hd;
     unsigned char sha256_pubseed_block[SLHDSA_SHA256_BLOCK_BYTES];
@@ -70,7 +70,7 @@ thash_sha2_simple(unsigned char *out, const unsigned char *in, unsigned int inbl
     /* TODO: md_open can give error code... */
     _gcry_md_open (&hd, GCRY_MD_SHA256, GCRY_MD_FLAG_SECURE);
     _gcry_md_write(hd, sha256_pubseed_block, SLHDSA_SHA256_BLOCK_BYTES);
-    _gcry_md_write(hd, (uint8_t*)addr, SLHDSA_SHA256_ADDR_BYTES);
+    _gcry_md_write(hd, (byte*)addr, SLHDSA_SHA256_ADDR_BYTES);
     _gcry_md_write(hd, in, inblocks * ctx->n);
     memcpy(out, _gcry_md_read(hd, GCRY_MD_SHA256), ctx->n);
     _gcry_md_close(hd);
@@ -79,7 +79,7 @@ thash_sha2_simple(unsigned char *out, const unsigned char *in, unsigned int inbl
 }
 
 static gcry_err_code_t thash_512_simple(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const _gcry_slhdsa_param_t *ctx, uint32_t addr[8])
+           const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
     gcry_md_hd_t hd;
     unsigned char sha512_pubseed_block[SLHDSA_SHA512_BLOCK_BYTES];
@@ -88,7 +88,7 @@ static gcry_err_code_t thash_512_simple(unsigned char *out, const unsigned char 
     /* TODO: md_open can give error code... */
     _gcry_md_open (&hd, GCRY_MD_SHA512, GCRY_MD_FLAG_SECURE);
     _gcry_md_write(hd, sha512_pubseed_block, SLHDSA_SHA512_BLOCK_BYTES);
-    _gcry_md_write(hd, (uint8_t*)addr, SLHDSA_SHA256_ADDR_BYTES);
+    _gcry_md_write(hd, (byte*)addr, SLHDSA_SHA256_ADDR_BYTES);
     _gcry_md_write(hd, in, inblocks * ctx->n);
     memcpy(out, _gcry_md_read(hd, GCRY_MD_SHA512), ctx->n);
     _gcry_md_close(hd);
@@ -97,7 +97,7 @@ static gcry_err_code_t thash_512_simple(unsigned char *out, const unsigned char 
 }
 
 gcry_err_code_t _gcry_slhdsa_thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
-           const _gcry_slhdsa_param_t *ctx, uint32_t addr[8])
+           const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
     if(ctx->is_sha2)
     {

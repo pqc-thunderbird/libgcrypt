@@ -26,21 +26,21 @@
  */
 gcry_err_code_t treehashx1(unsigned char *root, unsigned char *auth_path,
                 const _gcry_slhdsa_param_t* ctx,
-                uint32_t leaf_idx, uint32_t idx_offset,
-                uint32_t tree_height,
+                u32 leaf_idx, u32 idx_offset,
+                u32 tree_height,
                 gcry_err_code_t (*gen_leaf)(
                    unsigned char* /* Where to write the leaves */,
                    const _gcry_slhdsa_param_t* /* ctx */,
-                   uint32_t idx, void *info),
-                uint32_t tree_addr[8],
+                   u32 idx, void *info),
+                u32 tree_addr[8],
                 void *info)
 {
     gcry_err_code_t ec = 0;
-    uint32_t idx;
-    uint32_t max_idx = (uint32_t)((1 << tree_height) - 1);
+    u32 idx;
+    u32 max_idx = (u32)((1 << tree_height) - 1);
 
     /* This is where we keep the intermediate nodes */
-    uint8_t *stack = NULL;
+    byte *stack = NULL;
     unsigned char *current = NULL;
 
     stack = xtrymalloc_secure(tree_height*ctx->n);
@@ -51,10 +51,10 @@ gcry_err_code_t treehashx1(unsigned char *root, unsigned char *auth_path,
     }
 
     for (idx = 0;; idx++) {
-        uint32_t internal_idx_offset = idx_offset;
-        uint32_t internal_idx = idx;
-        uint32_t internal_leaf = leaf_idx;
-        uint32_t h;     /* The height we are in the Merkle tree */
+        u32 internal_idx_offset = idx_offset;
+        u32 internal_idx = idx;
+        u32 internal_leaf = leaf_idx;
+        u32 h;     /* The height we are in the Merkle tree */
         /* variable current: Current logical node is at */
             /* index[ctx->n].  We do this to minimize the number of copies */
             /* needed during a _gcry_slhdsa_thash */

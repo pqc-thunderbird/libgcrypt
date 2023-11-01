@@ -1,65 +1,65 @@
 #ifndef SLHDSA_CONTEXT_H
 #define SLHDSA_CONTEXT_H
 
-#include <stdint.h>
+#include "types.h"
 
 #include "slhdsa-params.h"
 
 typedef struct {
-    uint8_t *pub_seed;
-    uint8_t *sk_seed;
+    byte *pub_seed;
+    byte *sk_seed;
 
     // sha256 state that absorbed pub_seed
-    uint8_t *state_seeded;
+    byte *state_seeded;
 
     // sha512 state that absorbed pub_seed
-    uint8_t *state_seeded_512;
+    byte *state_seeded_512;
 
-    uint8_t n; /* Hash output length in bytes */
-    uint8_t seed_bytes; /* seed length */
+    byte n; /* Hash output length in bytes */
+    byte seed_bytes; /* seed length */
 
     /* Hypertree */
-    uint8_t tree_height;
-    uint8_t full_height;
-    uint8_t d;
+    byte tree_height;
+    byte full_height;
+    byte d;
 
     /* FORS */
-    uint8_t FORS_height;
-    uint8_t FORS_trees;
-    uint16_t FORS_msg_bytes;
-    uint16_t FORS_bytes;
-    uint16_t FORS_pk_bytes;
+    byte FORS_height;
+    byte FORS_trees;
+    u16 FORS_msg_bytes;
+    u16 FORS_bytes;
+    u16 FORS_pk_bytes;
 
     /* Winternitz parameters */
-    uint8_t WOTS_w;
-    uint8_t WOTS_logw;
-    uint8_t WOTS_len1;
-    uint8_t WOTS_len2;
-    uint8_t WOTS_len;
-    uint16_t WOTS_bytes;
-    uint16_t WOTS_pk_bytes;
+    byte WOTS_w;
+    byte WOTS_logw;
+    byte WOTS_len1;
+    byte WOTS_len2;
+    byte WOTS_len;
+    u16 WOTS_bytes;
+    u16 WOTS_pk_bytes;
 
     /* misc */
-    uint8_t do_use_sha512; /* Boolean: If zero, use SHA-256 for all hashes */
-    uint8_t addr_bytes; /* Number of address bytes */
+    byte do_use_sha512; /* Boolean: If zero, use SHA-256 for all hashes */
+    byte addr_bytes; /* Number of address bytes */
 
     /* sig and key size */
-    uint16_t signature_bytes;
-    uint8_t public_key_bytes;
-    uint8_t secret_key_bytes;
+    u16 signature_bytes;
+    byte public_key_bytes;
+    byte secret_key_bytes;
 
     /* hash offsets */
-    uint8_t offset_layer;      /* The byte used to specify the Merkle tree layer */
-    uint8_t offset_tree;       /* The start of the 8 byte field used to specify the tree */
-    uint8_t offset_type;       /* The byte used to specify the hash type (reason) */
-    uint8_t offset_kp_addr2;   /* The high byte used to specify the key pair (which one-time signature) */
-    uint8_t offset_kp_addr1;   /* The low byte used to specify the key pair */
-    uint8_t offset_chain_addr; /* The byte used to specify the chain address (which Winternitz chain) */
-    uint8_t offset_hash_addr;  /* The byte used to specify the hash address (where in the Winternitz chain) */
-    uint8_t offset_tree_hgt;   /* The byte used to specify the height of this node in the FORS or Merkle tree */
-    uint8_t offset_tree_index; /* The start of the 4 byte field used to specify the node in the FORS or Merkle tree */
+    byte offset_layer;      /* The byte used to specify the Merkle tree layer */
+    byte offset_tree;       /* The start of the 8 byte field used to specify the tree */
+    byte offset_type;       /* The byte used to specify the hash type (reason) */
+    byte offset_kp_addr2;   /* The high byte used to specify the key pair (which one-time signature) */
+    byte offset_kp_addr1;   /* The low byte used to specify the key pair */
+    byte offset_chain_addr; /* The byte used to specify the chain address (which Winternitz chain) */
+    byte offset_hash_addr;  /* The byte used to specify the hash address (where in the Winternitz chain) */
+    byte offset_tree_hgt;   /* The byte used to specify the height of this node in the FORS or Merkle tree */
+    byte offset_tree_index; /* The start of the 4 byte field used to specify the node in the FORS or Merkle tree */
 
-    uint8_t is_sha2;  /* Boolean: is a SHA2 parameter set (SHAKE otherwise) */
+    byte is_sha2;  /* Boolean: is a SHA2 parameter set (SHAKE otherwise) */
 } _gcry_slhdsa_param_t;
 
 #endif

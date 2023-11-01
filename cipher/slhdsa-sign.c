@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <stdint.h>
+#include "types.h"
 
 #include "slhdsa-api.h"
 #include "slhdsa-wots.h"
@@ -70,19 +70,19 @@ leave:
 /**
  * Returns an array containing a detached signature.
  */
-int _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, uint8_t *sig, size_t *siglen,
-                          const uint8_t *m, size_t mlen, const uint8_t *sk)
+int _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, byte *sig, size_t *siglen,
+                          const byte *m, size_t mlen, const byte *sk)
 {
     gcry_err_code_t ec = 0;
 
     const unsigned char *sk_prf = sk + ctx->n;
     const unsigned char *pk = sk + 2*ctx->n;
 
-    uint32_t i;
-    uint64_t tree;
-    uint32_t idx_leaf;
-    uint32_t wots_addr[8] = {0};
-    uint32_t tree_addr[8] = {0};
+    u32 i;
+    u64 tree;
+    u32 idx_leaf;
+    u32 wots_addr[8] = {0};
+    u32 tree_addr[8] = {0};
 
     unsigned char *optrand = NULL;
     unsigned char *mhash = NULL;
@@ -162,8 +162,8 @@ leave:
 /**
  * Verifies a detached signature and message under a given public key.
  */
-int _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const uint8_t *sig, size_t siglen,
-                       const uint8_t *m, size_t mlen, const uint8_t *pk)
+int _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const byte *sig, size_t siglen,
+                       const byte *m, size_t mlen, const byte *pk)
 {
     gcry_err_code_t ec = 0;
     const unsigned char *pub_root = pk + ctx->n;
@@ -172,11 +172,11 @@ int _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const uint8_t *sig, size_t si
     unsigned char *root = NULL;
     unsigned char *leaf = NULL;
     unsigned int i;
-    uint64_t tree;
-    uint32_t idx_leaf;
-    uint32_t wots_addr[8] = {0};
-    uint32_t tree_addr[8] = {0};
-    uint32_t wots_pk_addr[8] = {0};
+    u64 tree;
+    u32 idx_leaf;
+    u32 wots_addr[8] = {0};
+    u32 tree_addr[8] = {0};
+    u32 wots_pk_addr[8] = {0};
 
     if (siglen != ctx->signature_bytes) {
         ec = GPG_ERR_BAD_SIGNATURE;

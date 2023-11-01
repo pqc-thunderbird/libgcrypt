@@ -3,7 +3,7 @@
  * by D. J. Bernstein */
 
 // #include <stddef.h>
-// #include <stdint.h>
+// #include "types.h"
 // #include <string.h>
 
 // #include "slhdsa-utils.h"
@@ -17,7 +17,7 @@
 //  * reused in _gcry_slhdsa_thash
 //  **/
 // void seed_state(_gcry_slhdsa_param_t *ctx) {
-//     uint8_t block[SLHDSA_SHA512_BLOCK_BYTES];
+//     byte block[SLHDSA_SHA512_BLOCK_BYTES];
 //     size_t i;
 
 //     for (i = 0; i < ctx->n; ++i) {

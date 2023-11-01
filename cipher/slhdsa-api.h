@@ -2,7 +2,7 @@
 #define SLHDSA_API_H
 
 #include <stddef.h>
-#include <stdint.h>
+#include "types.h"
 
 #include "slhdsa-context.h"
 
@@ -25,13 +25,13 @@ int _gcry_slhdsa_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsigned 
 /**
  * Returns an array containing a detached signature.
  */
-int _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, uint8_t *sig, size_t *siglen,
-                          const uint8_t *m, size_t mlen, const uint8_t *sk);
+int _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, byte *sig, size_t *siglen,
+                          const byte *m, size_t mlen, const byte *sk);
 
 /**
  * Verifies a detached signature and message under a given public key.
  */
-int _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const uint8_t *sig, size_t siglen,
-                       const uint8_t *m, size_t mlen, const uint8_t *pk);
+int _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const byte *sig, size_t siglen,
+                       const byte *m, size_t mlen, const byte *pk);
 
 #endif

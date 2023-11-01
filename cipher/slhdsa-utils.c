@@ -24,7 +24,7 @@ void _gcry_slhdsa_ull_to_bytes(unsigned char *out, unsigned int outlen,
     }
 }
 
-void _gcry_slhdsa_u32_to_bytes(unsigned char *out, uint32_t in)
+void _gcry_slhdsa_u32_to_bytes(unsigned char *out, u32 in)
 {
     out[0] = (unsigned char)(in >> 24);
     out[1] = (unsigned char)(in >> 16);
@@ -51,12 +51,12 @@ unsigned long long _gcry_slhdsa_bytes_to_ull(const unsigned char *in, unsigned i
  * Expects address to be complete other than the tree_height and tree_index.
  */
 gcry_err_code_t _gcry_slhdsa_compute_root(unsigned char *root, const unsigned char *leaf,
-                  uint32_t leaf_idx, uint32_t idx_offset,
-                  const unsigned char *auth_path, uint32_t tree_height,
-                  const _gcry_slhdsa_param_t *ctx, uint32_t addr[8])
+                  u32 leaf_idx, u32 idx_offset,
+                  const unsigned char *auth_path, u32 tree_height,
+                  const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
     gcry_err_code_t ec = 0;
-    uint32_t i;
+    u32 i;
     unsigned char *buffer = NULL;
 
     buffer = xtrymalloc_secure(2 * ctx->n);
@@ -118,19 +118,19 @@ leave:
  * it is possible to continue counting indices across trees.
  */
 gcry_err_code_t _gcry_slhdsa_treehash(unsigned char *root, unsigned char *auth_path, const _gcry_slhdsa_param_t* ctx,
-              uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,
+              u32 leaf_idx, u32 idx_offset, u32 tree_height,
               void (*gen_leaf)(
                  unsigned char* /* leaf */,
                  const _gcry_slhdsa_param_t* /* ctx */,
-                 uint32_t /* addr_idx */, const uint32_t[8] /* tree_addr */),
-              uint32_t tree_addr[8])
+                 u32 /* addr_idx */, const u32[8] /* tree_addr */),
+              u32 tree_addr[8])
 {
     gcry_err_code_t ec = 0;
     unsigned char *stack = NULL;
     unsigned char *heights = NULL;
     unsigned int offset = 0;
-    uint32_t idx;
-    uint32_t tree_idx;
+    u32 idx;
+    u32 tree_idx;
 
     stack = xtrymalloc_secure((tree_height+1)*ctx->n);
     if (!stack)
@@ -145,7 +145,7 @@ gcry_err_code_t _gcry_slhdsa_treehash(unsigned char *root, unsigned char *auth_p
       goto leave;
     }
 
-    for (idx = 0; idx < (uint32_t)(1 << tree_height); idx++) {
+    for (idx = 0; idx < (u32)(1 << tree_height); idx++) {
         /* Add the next leaf node to the stack. */
         gen_leaf(stack + offset*ctx->n, ctx, idx + idx_offset, tree_addr);
         offset++;

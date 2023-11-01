@@ -1,7 +1,7 @@
 #include "config.h"
 
 #include <stdlib.h>
-#include <stdint.h>
+#include "types.h"
 #include <string.h>
 
 #include "slhdsa-fors.h"
@@ -14,28 +14,28 @@
 #include "g10lib.h"
 
 static void fors_gen_sk(unsigned char *sk, const _gcry_slhdsa_param_t *ctx,
-                        uint32_t fors_leaf_addr[8])
+                        u32 fors_leaf_addr[8])
 {
     _gcry_slhdsa_prf_addr(sk, ctx, fors_leaf_addr);
 }
 
 static void fors_sk_to_leaf(unsigned char *leaf, const unsigned char *sk,
                             const _gcry_slhdsa_param_t *ctx,
-                            uint32_t fors_leaf_addr[8])
+                            u32 fors_leaf_addr[8])
 {
     _gcry_slhdsa_thash(leaf, sk, 1, ctx, fors_leaf_addr);
 }
 
 struct fors_gen_leaf_info {
-    uint32_t leaf_addrx[8];
+    u32 leaf_addrx[8];
 };
 
 static gcry_err_code_t fors_gen_leafx1(unsigned char *leaf,
                             const _gcry_slhdsa_param_t *ctx,
-                            uint32_t addr_idx, void *info)
+                            u32 addr_idx, void *info)
 {
     struct fors_gen_leaf_info *fors_info = info;
-    uint32_t *fors_leaf_addr = fors_info->leaf_addrx;
+    u32 *fors_leaf_addr = fors_info->leaf_addrx;
 
     /* Only set the parts that the caller doesn't set */
     _gcry_slhdsa_set_tree_index(ctx, fors_leaf_addr, addr_idx);
@@ -54,7 +54,7 @@ static gcry_err_code_t fors_gen_leafx1(unsigned char *leaf,
  * Assumes m contains at least ctx->FORS_height * ctx->FORS_trees bits.
  * Assumes indices has space for ctx->FORS_trees integers.
  */
-static void message_to_indices(const _gcry_slhdsa_param_t *ctx, uint32_t *indices, const unsigned char *m)
+static void message_to_indices(const _gcry_slhdsa_param_t *ctx, u32 *indices, const unsigned char *m)
 {
     unsigned int i, j;
     unsigned int offset = 0;
@@ -75,16 +75,16 @@ static void message_to_indices(const _gcry_slhdsa_param_t *ctx, uint32_t *indice
 gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig, unsigned char *pk,
                const unsigned char *m,
                const _gcry_slhdsa_param_t *ctx,
-               const uint32_t fors_addr[8])
+               const u32 fors_addr[8])
 {
     gcry_err_code_t ec = 0;
-    uint32_t *indices = NULL;
+    u32 *indices = NULL;
     unsigned char *roots = NULL;
-    uint32_t fors_tree_addr[8] = {0};
+    u32 fors_tree_addr[8] = {0};
     struct fors_gen_leaf_info fors_info = {0};
-    uint32_t *fors_leaf_addr = fors_info.leaf_addrx;
-    uint32_t fors_pk_addr[8] = {0};
-    uint32_t idx_offset;
+    u32 *fors_leaf_addr = fors_info.leaf_addrx;
+    u32 fors_pk_addr[8] = {0};
+    u32 idx_offset;
     unsigned int i;
 
     roots = xtrymalloc_secure(ctx->FORS_trees * ctx->n);
@@ -93,7 +93,7 @@ gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig, unsigned char *pk,
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-    indices = xtrymalloc_secure(sizeof(uint32_t) * ctx->FORS_trees);
+    indices = xtrymalloc_secure(sizeof(u32) * ctx->FORS_trees);
     if (!indices)
     {
       ec = gpg_err_code_from_syserror();
@@ -147,18 +147,18 @@ leave:
 gcry_err_code_t _gcry_slhdsa_fors_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *m,
                       const _gcry_slhdsa_param_t* ctx,
-                      const uint32_t fors_addr[8])
+                      const u32 fors_addr[8])
 {
     gcry_err_code_t ec = 0;
-    uint32_t *indices = NULL;
+    u32 *indices = NULL;
     unsigned char *roots = NULL;
     unsigned char *leaf = NULL;
-    uint32_t fors_tree_addr[8] = {0};
-    uint32_t fors_pk_addr[8] = {0};
-    uint32_t idx_offset;
+    u32 fors_tree_addr[8] = {0};
+    u32 fors_pk_addr[8] = {0};
+    u32 idx_offset;
     unsigned int i;
 
-    indices = xtrymalloc_secure(sizeof(uint32_t) * ctx->FORS_trees);
+    indices = xtrymalloc_secure(sizeof(u32) * ctx->FORS_trees);
     if (!indices)
     {
       ec = gpg_err_code_from_syserror();

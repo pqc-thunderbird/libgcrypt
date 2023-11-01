@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <stdint.h>
+#include "types.h"
 #include <string.h>
 
 #include "slhdsa-utils.h"
@@ -20,16 +20,16 @@
  */
 gcry_err_code_t _gcry_slhdsa_wots_gen_leafx1(unsigned char *dest,
                    const _gcry_slhdsa_param_t *ctx,
-                   uint32_t leaf_idx, void *v_info) {
+                   u32 leaf_idx, void *v_info) {
     gcry_err_code_t ec = 0;
 
     struct _gcry_slhdsa_leaf_info_x1_t *info = v_info;
-    uint32_t *leaf_addr = info->leaf_addr;
-    uint32_t *pk_addr = info->pk_addr;
+    u32 *leaf_addr = info->leaf_addr;
+    u32 *pk_addr = info->pk_addr;
     unsigned int i, k;
     unsigned char *pk_buffer = NULL;
     unsigned char *buffer;
-    uint32_t wots_k_mask;
+    u32 wots_k_mask;
 
     pk_buffer = xtrymalloc_secure(ctx->WOTS_bytes);
     if (!pk_buffer)
@@ -44,14 +44,14 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx1(unsigned char *dest,
         wots_k_mask = 0;
     } else {
         /* Nope, we're just generating pk's; turn off the signature logic */
-        wots_k_mask = (uint32_t)~0;
+        wots_k_mask = (u32)~0;
     }
 
     _gcry_slhdsa_set_keypair_addr(ctx, leaf_addr, leaf_idx );
     _gcry_slhdsa_set_keypair_addr(ctx, pk_addr, leaf_idx );
 
     for (i = 0, buffer = pk_buffer; i < ctx->WOTS_len; i++, buffer += ctx->n) {
-        uint32_t wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k to */
+        u32 wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k to */
             /* the step if we're generating a signature, ~0 if we're not */
 
         /* Start with the secret seed */

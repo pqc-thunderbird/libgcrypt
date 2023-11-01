@@ -1,6 +1,6 @@
 #include "config.h"
 
-#include <stdint.h>
+#include "types.h"
 #include <string.h>
 
 #include "slhdsa-utils.h"
@@ -26,9 +26,9 @@
  */
 static void gen_chain(unsigned char *out, const unsigned char *in,
                       unsigned int start, unsigned int steps,
-                      const _gcry_slhdsa_param_t *ctx, uint32_t addr[8])
+                      const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
-    uint32_t i;
+    u32 i;
 
     /* Initialize out with the value at position 'start'. */
     memcpy(out, in, ctx->n);
@@ -114,11 +114,11 @@ void _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx, unsigned int *l
 gcry_err_code_t
 _gcry_slhdsa_wots_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *msg,
-                      const _gcry_slhdsa_param_t *ctx, uint32_t addr[8])
+                      const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
     gcry_err_code_t ec = 0;
     unsigned int *lengths = NULL;
-    uint32_t i;
+    u32 i;
 
     lengths = xtrymalloc_secure(sizeof(unsigned int) * ctx->WOTS_len);
     if (!lengths)

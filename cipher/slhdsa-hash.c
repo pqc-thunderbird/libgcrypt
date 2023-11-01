@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <stdint.h>
+#include "types.h"
 #include <string.h>
 
 #include "slhdsa-address.h"
@@ -17,9 +17,9 @@
 static void initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx);
 static void initialize_hash_function_shake(_gcry_slhdsa_param_t *ctx);
 static void prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
-              const uint32_t addr[8]);
+              const u32 addr[8]);
 static gcry_err_code_t prf_addr_shake(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
-              const uint32_t addr[8]);
+              const u32 addr[8]);
 static gcry_err_code_t gen_message_random_sha2(unsigned char *R, const unsigned char *sk_prf,
         const unsigned char *optrand,
         const unsigned char *m, unsigned long long mlen,
@@ -28,11 +28,11 @@ static void gen_message_random_shake(unsigned char *R, const unsigned char *sk_p
         const unsigned char *optrand,
         const unsigned char *m, unsigned long long mlen,
         const _gcry_slhdsa_param_t *ctx);
-static gcry_err_code_t hash_message_sha2(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
+static gcry_err_code_t hash_message_sha2(unsigned char *digest, u64 *tree, u32 *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
                   const _gcry_slhdsa_param_t *ctx);
-static gcry_err_code_t hash_message_shake(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
+static gcry_err_code_t hash_message_shake(unsigned char *digest, u64 *tree, u32 *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
                   const _gcry_slhdsa_param_t *ctx);
@@ -51,7 +51,7 @@ void _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
 }
 
 void _gcry_slhdsa_prf_addr(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
-              const uint32_t addr[8])
+              const u32 addr[8])
 {
     if(ctx->is_sha2)
     {
@@ -79,7 +79,7 @@ void _gcry_slhdsa_gen_message_random(unsigned char *R, const unsigned char *sk_p
     }
 }
 
-void _gcry_slhdsa_hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
+void _gcry_slhdsa_hash_message(unsigned char *digest, u64 *tree, u32 *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
                   const _gcry_slhdsa_param_t *ctx)
@@ -108,7 +108,7 @@ void initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx)
  * Computes PRF(pk_seed, sk_seed, addr).
  */
 static void prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
-              const uint32_t addr[8])
+              const u32 addr[8])
 {
     gcry_md_hd_t hd;
 
@@ -118,7 +118,7 @@ static void prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
     /* TODO: md_open can give error code... */
     _gcry_md_open (&hd, GCRY_MD_SHA256, GCRY_MD_FLAG_SECURE);
     _gcry_md_write(hd, sha256_pubseed_block, SLHDSA_SHA256_BLOCK_BYTES);
-    _gcry_md_write(hd, (uint8_t*)addr, SLHDSA_SHA256_ADDR_BYTES);
+    _gcry_md_write(hd, (byte*)addr, SLHDSA_SHA256_ADDR_BYTES);
     _gcry_md_write(hd, ctx->sk_seed, ctx->n);
     memcpy(out, _gcry_md_read(hd, GCRY_MD_SHA256), ctx->n);
     _gcry_md_close(hd);
@@ -199,7 +199,7 @@ leave:
  * Outputs the message digest and the index of the leaf. The index is split in
  * the tree index and the leaf index, for convenient copying to an address.
  */
-static gcry_err_code_t hash_message_sha2(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
+static gcry_err_code_t hash_message_sha2(unsigned char *digest, u64 *tree, u32 *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
                   const _gcry_slhdsa_param_t *ctx)
@@ -212,8 +212,8 @@ static gcry_err_code_t hash_message_sha2(unsigned char *digest, uint64_t *tree, 
     size_t SLHDSA_LEAF_BYTES = ((SLHDSA_LEAF_BITS + 7) / 8);
     size_t SLHDSA_DGST_BYTES = (ctx->FORS_msg_bytes + SLHDSA_TREE_BYTES + SLHDSA_LEAF_BYTES);
     int hash_alg;
-    uint8_t shax_block_bytes;
-    uint8_t shax_output_bytes;
+    byte shax_block_bytes;
+    byte shax_output_bytes;
     size_t SLHDSA_INBLOCKS;
     unsigned char *seed = NULL;
     unsigned char *inbuf = NULL;
@@ -294,11 +294,11 @@ static gcry_err_code_t hash_message_sha2(unsigned char *digest, uint64_t *tree, 
     bufp += ctx->FORS_msg_bytes;
 
     *tree = _gcry_slhdsa_bytes_to_ull(bufp, SLHDSA_TREE_BYTES);
-    *tree &= (~(uint64_t)0) >> (64 - SLHDSA_TREE_BITS);
+    *tree &= (~(u64)0) >> (64 - SLHDSA_TREE_BITS);
     bufp += SLHDSA_TREE_BYTES;
 
-    *leaf_idx = (uint32_t)_gcry_slhdsa_bytes_to_ull(bufp, SLHDSA_LEAF_BYTES);
-    *leaf_idx &= (~(uint32_t)0) >> (32 - SLHDSA_LEAF_BITS);
+    *leaf_idx = (u32)_gcry_slhdsa_bytes_to_ull(bufp, SLHDSA_LEAF_BYTES);
+    *leaf_idx &= (~(u32)0) >> (32 - SLHDSA_LEAF_BITS);
 
 leave:
     xfree(seed);
@@ -320,7 +320,7 @@ static void initialize_hash_function_shake(_gcry_slhdsa_param_t* ctx)
  * Computes PRF(pk_seed, sk_seed, addr)
  */
 static gcry_err_code_t prf_addr_shake(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
-              const uint32_t addr[8])
+              const u32 addr[8])
 {
     gcry_err_code_t ec = 0;
     unsigned char *buf = NULL;
@@ -374,7 +374,7 @@ static void gen_message_random_shake(unsigned char *R, const unsigned char *sk_p
  * Outputs the message digest and the index of the leaf. The index is split in
  * the tree index and the leaf index, for convenient copying to an address.
  */
-static gcry_err_code_t hash_message_shake(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
+static gcry_err_code_t hash_message_shake(unsigned char *digest, u64 *tree, u32 *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
                   const _gcry_slhdsa_param_t *ctx)
@@ -410,11 +410,11 @@ static gcry_err_code_t hash_message_shake(unsigned char *digest, uint64_t *tree,
     bufp += ctx->FORS_msg_bytes;
 
     *tree = _gcry_slhdsa_bytes_to_ull(bufp, SLHDSA_TREE_BYTES);
-    *tree &= (~(uint64_t)0) >> (64 - SLHDSA_TREE_BITS);
+    *tree &= (~(u64)0) >> (64 - SLHDSA_TREE_BITS);
     bufp += SLHDSA_TREE_BYTES;
 
-    *leaf_idx = (uint32_t)_gcry_slhdsa_bytes_to_ull(bufp, SLHDSA_LEAF_BYTES);
-    *leaf_idx &= (~(uint32_t)0) >> (32 - SLHDSA_LEAF_BITS);
+    *leaf_idx = (u32)_gcry_slhdsa_bytes_to_ull(bufp, SLHDSA_LEAF_BYTES);
+    *leaf_idx &= (~(u32)0) >> (32 - SLHDSA_LEAF_BITS);
 
 leave:
     xfree(buf);

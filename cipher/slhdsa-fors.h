@@ -3,7 +3,7 @@
 
 #include "config.h"
 
-#include <stdint.h>
+#include "types.h"
 
 #include "slhdsa-params.h"
 #include "slhdsa-context.h"
@@ -17,7 +17,7 @@
 gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig, unsigned char *pk,
                const unsigned char *m,
                const _gcry_slhdsa_param_t* ctx,
-               const uint32_t fors_addr[8]);
+               const u32 fors_addr[8]);
 
 /**
  * Derives the FORS public key from a signature.
@@ -29,6 +29,6 @@ gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig, unsigned char *pk,
 gcry_err_code_t _gcry_slhdsa_fors_pk_from_sig(unsigned char *pk,
                       const unsigned char *sig, const unsigned char *m,
                       const _gcry_slhdsa_param_t* ctx,
-                      const uint32_t fors_addr[8]);
+                      const u32 fors_addr[8]);
 
 #endif
