@@ -25,9 +25,7 @@ int _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsi
 {
     /* Initialize SK_SEED, SK_PRF and PUB_SEED from seed. */
     memcpy(sk, seed, ctx->seed_bytes);
-
     memcpy(pk, sk + 2*ctx->n, ctx->n);
-
     memcpy(ctx->pub_seed, pk, ctx->n);
     memcpy(ctx->sk_seed, sk, ctx->n);
 
@@ -183,25 +181,25 @@ int _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const byte *sig, size_t sigle
         goto leave;
     }
 
-    mhash = xtrymalloc_secure(ctx->FORS_msg_bytes);
+    mhash = xtrymalloc(ctx->FORS_msg_bytes);
     if (!mhash)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-    wots_pk = xtrymalloc_secure(ctx->WOTS_bytes);
+    wots_pk = xtrymalloc(ctx->WOTS_bytes);
     if (!wots_pk)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-    root = xtrymalloc_secure(ctx->n);
+    root = xtrymalloc(ctx->n);
     if (!root)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-    leaf = xtrymalloc_secure(ctx->n);
+    leaf = xtrymalloc(ctx->n);
     if (!leaf)
     {
       ec = gpg_err_code_from_syserror();
