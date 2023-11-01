@@ -266,7 +266,7 @@ check_mldsa_keys (void)
     info ("creating ML-DSA key\n");
   rc = gcry_sexp_new (&keyparm,
                       "(genkey\n"
-                      " (mldsa\n"
+                      " (mldsa-ipd\n"
                       "  (nbits 3:5)\n"
                       " ))", 0, 1);
   if (rc)

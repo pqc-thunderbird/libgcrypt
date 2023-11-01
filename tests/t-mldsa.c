@@ -213,7 +213,7 @@ static int check_mldsa_roundtrip(size_t n_tests)
 
     rc = gcry_sexp_build(&keyparm,
                         NULL,
-                        "(genkey (mldsa (nbits%u)))",
+                        "(genkey (mldsa-ipd (nbits%u)))",
                         mldsa_nbits[i],
                         NULL);
 
@@ -314,7 +314,7 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   // pk
   err = gcry_sexp_build(&public_key_sx,
                         NULL,
-                        "(public-key (mldsa (p %b) (nbits%u) ))",
+                        "(public-key (mldsa-ipd (p %b) (nbits%u) ))",
                         pk_len,
                         pk,
                         pk_len * 8,
@@ -339,7 +339,7 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   // sig
   err = gcry_sexp_build (&signature_sx,
       NULL,
-      "(sig-val(mldsa(a %b)))", sig_len, sig, NULL);
+      "(sig-val(mldsa-ipd(a %b)))", sig_len, sig, NULL);
 
   if (err)
   {

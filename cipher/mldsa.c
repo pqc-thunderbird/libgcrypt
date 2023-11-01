@@ -27,8 +27,8 @@ mldsa_get_nbits (gcry_sexp_t parms)
 }
 
 static const char *mldsa_names[] = {
-  "mldsa",
-  "openpgp-mldsa",              // ? leave?
+  "mldsa-ipd",
+  "openpgp-mldsa-ipd",              // ? leave?
   NULL,
 };
 
@@ -240,9 +240,9 @@ mldsa_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
                       NULL,
                       "(key-data"
                       " (public-key"
-                      "  (mldsa(p%m) (nbits%u)))"
+                      "  (mldsa-ipd(p%m) (nbits%u)))"
                       " (private-key"
-                      "  (mldsa(s%m) (nbits%u))))",
+                      "  (mldsa-ipd(s%m) (nbits%u))))",
                       pk_mpi,
                       nbits,
                       sk_mpi,
@@ -340,7 +340,7 @@ mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
     goto leave;
   }
 
-  ec = sexp_build (r_sig, NULL, "(sig-val(mldsa(a%b)))", sig_buf_len, sig_buf);
+  ec = sexp_build (r_sig, NULL, "(sig-val(mldsa-ipd(a%b)))", sig_buf_len, sig_buf);
   if(ec)
     printf("sexp build failed\n");
 
@@ -489,7 +489,7 @@ compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparam)
 gcry_pk_spec_t _gcry_pubkey_spec_mldsa = {
   GCRY_PK_MLDSA, {0, 1},
   (GCRY_PK_USAGE_SIGN),
-  "ML-DSA", mldsa_names,
+  "ML-DSA-ipd", mldsa_names,    /* following the naming scheme given at https://github.com/ietf-wg-pquip/state-of-protocols-and-pqc#user-content-algorithm-names */
   "p", "s", "", "a", "p",       // elements of pub-key, sec-key, ciphertext, signature, key-grip
   mldsa_generate,
   mldsa_check_secret_key,
