@@ -125,28 +125,6 @@ const char* variant_from_paramset(slhdsa_paramset paramset) {
   return NULL;
 }
 
-size_t nbits_from_paramset(slhdsa_paramset paramset) {
-  switch(paramset)
-  {
-     case SHA2_128f:
-     case SHAKE_128f:
-     case SHA2_128s:
-     case SHAKE_128s:
-      return 32*8;
-     case SHA2_192f:
-     case SHAKE_192f:
-     case SHA2_192s:
-     case SHAKE_192s:
-      return 48*8;
-     case SHA2_256f:
-     case SHAKE_256f:
-     case SHA2_256s:
-     case SHAKE_256s:
-      return 64*8;
-  }
-  return 0;
-}
-
 /* Prepend FNAME with the srcdir environment variable's value and
  * return an allocated filename.  */
 char *
@@ -170,7 +148,7 @@ prepend_srcdir (const char *fname)
 static char *
 read_textline (FILE *fp, int *lineno)
 {
-  char line[150000]; /* max smlen for slhdsa+ is roughly 49k + msg size. 150k to be safe. */
+  char line[150000]; /* max smlen for slhdsa is roughly 49k + msg size. 150k to be safe. */
   char *p;
 
   do
@@ -297,8 +275,7 @@ static int check_slhdsa_roundtrip(size_t n_tests)
 
     rc = gcry_sexp_build(&keyparm,
                         NULL,
-                        "(genkey (slhdsa (nbits%u) (hash-alg%s) (variant%s)))",
-                        12345, // TODO !!
+                        "(genkey (slhdsa-ipd (hash-alg%s) (variant%s)))",
                         hashalg,
                         variant,
                         NULL);
@@ -641,10 +618,9 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   // pk
   err = gcry_sexp_build(&public_key_sx,
                         NULL,
-                        "(public-key (slhdsa (p %b) (nbits%u)  (hash-alg%s) (variant%s) ))",
+                        "(public-key (slhdsa-ipd (p %b) (hash-alg%s) (variant%s) ))",
                         pk_len,
                         pk,
-                        pk_len * 8,
                         hashalg, variant,
                         NULL);
   if (err)
@@ -665,7 +641,7 @@ int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, 
   // sig
   err = gcry_sexp_build (&signature_sx,
       NULL,
-      "(sig-val(slhdsa(a %b)))", sig_len, sig, NULL);
+      "(sig-val(slhdsa-ipd(a %b)))", sig_len, sig, NULL);
 
   if (err)
   {

@@ -302,30 +302,6 @@ const char *hash_alg_map[] = {"SHA2", "SHAKE"};
 const char *variant_map[] = {"128f", "128s", "192f", "192s", "256f", "256s"};
 static gcry_err_code_t slhdsa_get_hash_alg_and_variant_from_sexp(gcry_sexp_t list, const char **hash_alg, const char **variant)
 {
-  // char buf[50];
-  // const char *s;
-  // size_t n;
-
-
-  // list = sexp_find_token (list, "nbits", 0);
-  // if (!list)
-  //   return 0; /* No NBITS found.  */
-
-  // s = sexp_nth_data (list, 1, &n);
-  // if (!s || n >= DIM (buf) - 1 )
-  //   {
-  //     /* NBITS given without a cdr.  */
-  //     sexp_release (list);
-  //     return GPG_ERR_INV_OBJ;
-  //   }
-  // memcpy (buf, s, n);
-  // buf[n] = 0;
-  // sexp_release (list);
-
-  // *hash_alg = hash_alg_map[0];
-  // *variant = variant_map[0];
-  // return 0;
-
   const char *s_hashalg;
   const char *s_variant;
   size_t n_hashalg;
@@ -413,11 +389,6 @@ static gcry_err_code_t extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
       printf("error from sexp_extract_param (keyparms)\n");
       goto leave;
     }
-  if (mpi_get_nbits(sk) != exp_len * 8)
-    {
-      ec = GPG_ERR_INV_ARG;
-      goto leave;
-    }
 
   if (!(*sk_p = xtrymalloc(exp_len)))
     {
@@ -470,7 +441,6 @@ slhdsa_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
 
   unsigned char *pk = NULL;
   unsigned char * sk = NULL;
-  unsigned int nbits;
   _gcry_slhdsa_param_t param = {0};
   slhdsa_paramset paramset;
 
@@ -480,7 +450,6 @@ slhdsa_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   gcry_mpi_t sk_mpi = NULL;
   gcry_mpi_t pk_mpi = NULL;
 
-  ec = _gcry_pk_util_get_nbits (genparms, &nbits);
   if (ec)
     return ec;
   if ((ec = slhdsa_get_hash_alg_and_variant_from_sexp(genparms, &hash_alg, &variant)))
@@ -514,14 +483,12 @@ slhdsa_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
                       NULL,
                       "(key-data"
                       " (public-key"
-                      "  (slhdsa(p%m) (nbits%u) (hash-alg%s) (variant%s)))"
+                      "  (slhdsa-ipd(p%m) (hash-alg%s) (variant%s)))"
                       " (private-key"
-                      "  (slhdsa(s%m) (nbits%u) (hash-alg%s) (variant%s))))",
+                      "  (slhdsa-ipd(s%m) (hash-alg%s) (variant%s))))",
                       pk_mpi,
-                      nbits,
                       hash_alg, variant,
                       sk_mpi,
-                      nbits,
                       hash_alg, variant,
                       NULL);
 
@@ -628,7 +595,7 @@ slhdsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
     goto leave;
   }
 
-  ec = sexp_build (r_sig, NULL, "(sig-val(slhdsa(a%b)))", sig_buf_len, sig_buf);
+  ec = sexp_build (r_sig, NULL, "(sig-val(slhdsa-ipd(a%b)))", sig_buf_len, sig_buf);
   if(ec)
     printf("sexp build failed\n");
 
