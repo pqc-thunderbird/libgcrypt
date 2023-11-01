@@ -1,5 +1,5 @@
 #include <config.h>
-#include <stdint.h>
+#include "types.h"
 #include "mldsa-params.h"
 #include "mldsa-sign.h"
 #include "mldsa-packing.h"
@@ -13,18 +13,18 @@
 *
 * Description: Generates public and private key.
 *
-* Arguments:   - uint8_t *pk: pointer to output public key (allocated
+* Arguments:   - byte *pk: pointer to output public key (allocated
 *                             array of params->public_key_bytes bytes)
-*              - uint8_t *sk: pointer to output private key (allocated
+*              - byte *sk: pointer to output private key (allocated
 *                             array of params->secret_key_bytes bytes)
 *
 * Returns 0 (success)
 **************************************************/
-gcry_error_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, uint8_t *pk, uint8_t *sk) {
+gcry_error_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk) {
   gcry_error_t ec = 0;
-  uint8_t seedbuf[2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES];
-  uint8_t tr[GCRY_MLDSA_SEEDBYTES];
-  const uint8_t *rho, *rhoprime, *key;
+  byte seedbuf[2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES];
+  byte tr[GCRY_MLDSA_SEEDBYTES];
+  const byte *rho, *rhoprime, *key;
 
   //polyvecl mat[params->k];
   //polyvecl s1, s1hat;
@@ -101,27 +101,27 @@ leave:
 *
 * Description: Computes signature.
 *
-* Arguments:   - uint8_t *sig:   pointer to output signature (of length params->signature_bytes)
+* Arguments:   - byte *sig:   pointer to output signature (of length params->signature_bytes)
 *              - size_t *siglen: pointer to output length of signature
-*              - uint8_t *m:     pointer to message to be signed
+*              - byte *m:     pointer to message to be signed
 *              - size_t mlen:    length of message
-*              - uint8_t *sk:    pointer to bit-packed secret key
+*              - byte *sk:    pointer to bit-packed secret key
 *
 * Returns 0 (success)
 **************************************************/
 gcry_error_t _gcry_mldsa_sign(gcry_mldsa_param_t *params,
-                          uint8_t *sig,
+                          byte *sig,
                           size_t *siglen,
-                          const uint8_t *m,
+                          const byte *m,
                           size_t mlen,
-                          const uint8_t *sk)
+                          const byte *sk)
 {
   gcry_error_t ec = 0;
 
   unsigned int n;
-  uint8_t seedbuf[3*GCRY_MLDSA_SEEDBYTES + 2*GCRY_MLDSA_CRHBYTES];
-  uint8_t *rho, *tr, *key, *mu, *rhoprime;
-  uint16_t nonce = 0;
+  byte seedbuf[3*GCRY_MLDSA_SEEDBYTES + 2*GCRY_MLDSA_CRHBYTES];
+  byte *rho, *tr, *key, *mu, *rhoprime;
+  u16 nonce = 0;
   gcry_mldsa_poly cp;
   gcry_md_hd_t hd;
 
@@ -256,29 +256,29 @@ leave:
 *
 * Description: Verifies signature.
 *
-* Arguments:   - uint8_t *m: pointer to input signature
+* Arguments:   - byte *m: pointer to input signature
 *              - size_t siglen: length of signature
-*              - const uint8_t *m: pointer to message
+*              - const byte *m: pointer to message
 *              - size_t mlen: length of message
-*              - const uint8_t *pk: pointer to bit-packed public key
+*              - const byte *pk: pointer to bit-packed public key
 *
 * Returns 0 if signature could be verified correctly and -1 otherwise
 **************************************************/
 gcry_error_t _gcry_mldsa_verify(gcry_mldsa_param_t *params,
-                       const uint8_t *sig,
+                       const byte *sig,
                        size_t siglen,
-                       const uint8_t *m,
+                       const byte *m,
                        size_t mlen,
-                       const uint8_t *pk)
+                       const byte *pk)
 {
   gcry_error_t ec = 0;
   unsigned int i;
-  //uint8_t buf[params->k*params->polyw1_packedbytes];
-  uint8_t *buf;
-  uint8_t rho[GCRY_MLDSA_SEEDBYTES];
-  uint8_t mu[GCRY_MLDSA_CRHBYTES];
-  uint8_t c[GCRY_MLDSA_SEEDBYTES];
-  uint8_t c2[GCRY_MLDSA_SEEDBYTES];
+  //byte buf[params->k*params->polyw1_packedbytes];
+  byte *buf;
+  byte rho[GCRY_MLDSA_SEEDBYTES];
+  byte mu[GCRY_MLDSA_CRHBYTES];
+  byte c[GCRY_MLDSA_SEEDBYTES];
+  byte c2[GCRY_MLDSA_SEEDBYTES];
   gcry_mldsa_poly cp;
 
   //polyvecl mat[params->k], z;

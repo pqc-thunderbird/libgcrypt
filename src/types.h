@@ -82,6 +82,18 @@
 # define HAVE_U16
 #endif
 
+#ifndef HAVE_S16
+# undef s16	/* In case there is a macro with that name.  */
+# if SIZEOF_UNSIGNED_INT == 2
+   typedef int   s16;
+# elif SIZEOF_UNSIGNED_SHORT == 2
+   typedef short s16;
+# else
+#  error no typedef for s16
+# endif
+# define HAVE_S16
+#endif
+
 #ifndef HAVE_U32
 # undef u32	/* In case there is a macro with that name.  */
 # if SIZEOF_UNSIGNED_INT == 4
@@ -92,6 +104,18 @@
 #  error no typedef for u32
 # endif
 # define HAVE_U32
+#endif
+
+#ifndef HAVE_S32
+# undef s32	/* In case there is a macro with that name.  */
+# if SIZEOF_UNSIGNED_INT == 4
+   typedef int  s32;
+# elif SIZEOF_UNSIGNED_LONG == 4
+   typedef long s32;
+# else
+#  error no typedef for s32
+# endif
+# define HAVE_S32
 #endif
 
 /*

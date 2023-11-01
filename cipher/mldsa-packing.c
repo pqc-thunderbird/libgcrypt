@@ -9,13 +9,13 @@
 *
 * Description: Bit-pack public key pk = (rho, t1).
 *
-* Arguments:   - uint8_t pk[]: output byte array
-*              - const uint8_t rho[]: byte array containing rho
+* Arguments:   - byte pk[]: output byte array
+*              - const byte rho[]: byte array containing rho
 *              - const gcry_mldsa_polyvec *t1: pointer to vector t1
 **************************************************/
 void _gcry_mldsa_pack_pk(gcry_mldsa_param_t *params,
-             uint8_t *pk,
-             const uint8_t rho[GCRY_MLDSA_SEEDBYTES],
+             byte *pk,
+             const byte rho[GCRY_MLDSA_SEEDBYTES],
              const gcry_mldsa_polyvec *t1)
 {
   unsigned int i;
@@ -33,14 +33,14 @@ void _gcry_mldsa_pack_pk(gcry_mldsa_param_t *params,
 *
 * Description: Unpack public key pk = (rho, t1).
 *
-* Arguments:   - const uint8_t rho[]: output byte array for rho
+* Arguments:   - const byte rho[]: output byte array for rho
 *              - const gcry_mldsa_polyvec *t1: pointer to output vector t1
-*              - uint8_t pk[]: byte array containing bit-packed pk
+*              - byte pk[]: byte array containing bit-packed pk
 **************************************************/
 void _gcry_mldsa_unpack_pk(gcry_mldsa_param_t *params,
-               uint8_t rho[GCRY_MLDSA_SEEDBYTES],
+               byte rho[GCRY_MLDSA_SEEDBYTES],
                gcry_mldsa_polyvec *t1,
-               const uint8_t *pk)
+               const byte *pk)
 {
   unsigned int i;
 
@@ -57,19 +57,19 @@ void _gcry_mldsa_unpack_pk(gcry_mldsa_param_t *params,
 *
 * Description: Bit-pack secret key sk = (rho, tr, key, t0, s1, s2).
 *
-* Arguments:   - uint8_t sk[]: output byte array
-*              - const uint8_t rho[]: byte array containing rho
-*              - const uint8_t tr[]: byte array containing tr
-*              - const uint8_t key[]: byte array containing key
+* Arguments:   - byte sk[]: output byte array
+*              - const byte rho[]: byte array containing rho
+*              - const byte tr[]: byte array containing tr
+*              - const byte key[]: byte array containing key
 *              - const gcry_mldsa_polyvec *t0: pointer to vector t0
 *              - const gcry_mldsa_polyvec *s1: pointer to vector s1
 *              - const gcry_mldsa_polyvec *s2: pointer to vector s2
 **************************************************/
 void _gcry_mldsa_pack_sk(gcry_mldsa_param_t *params,
-             uint8_t *sk,
-             const uint8_t rho[GCRY_MLDSA_SEEDBYTES],
-             const uint8_t tr[GCRY_MLDSA_SEEDBYTES],
-             const uint8_t key[GCRY_MLDSA_SEEDBYTES],
+             byte *sk,
+             const byte rho[GCRY_MLDSA_SEEDBYTES],
+             const byte tr[GCRY_MLDSA_SEEDBYTES],
+             const byte key[GCRY_MLDSA_SEEDBYTES],
              const gcry_mldsa_polyvec *t0,
              const gcry_mldsa_polyvec *s1,
              const gcry_mldsa_polyvec *s2)
@@ -105,22 +105,22 @@ void _gcry_mldsa_pack_sk(gcry_mldsa_param_t *params,
 *
 * Description: Unpack secret key sk = (rho, tr, key, t0, s1, s2).
 *
-* Arguments:   - const uint8_t rho[]: output byte array for rho
-*              - const uint8_t tr[]: output byte array for tr
-*              - const uint8_t key[]: output byte array for key
+* Arguments:   - const byte rho[]: output byte array for rho
+*              - const byte tr[]: output byte array for tr
+*              - const byte key[]: output byte array for key
 *              - const gcry_mldsa_polyvec *t0: pointer to output vector t0
 *              - const gcry_mldsa_polyvec *s1: pointer to output vector s1
 *              - const gcry_mldsa_polyvec *s2: pointer to output vector s2
-*              - uint8_t sk[]: byte array containing bit-packed sk
+*              - byte sk[]: byte array containing bit-packed sk
 **************************************************/
 void _gcry_mldsa_unpack_sk(gcry_mldsa_param_t *params,
-               uint8_t rho[GCRY_MLDSA_SEEDBYTES],
-               uint8_t tr[GCRY_MLDSA_SEEDBYTES],
-               uint8_t key[GCRY_MLDSA_SEEDBYTES],
+               byte rho[GCRY_MLDSA_SEEDBYTES],
+               byte tr[GCRY_MLDSA_SEEDBYTES],
+               byte key[GCRY_MLDSA_SEEDBYTES],
                gcry_mldsa_polyvec *t0,
                gcry_mldsa_polyvec *s1,
                gcry_mldsa_polyvec *s2,
-               const uint8_t *sk)
+               const byte *sk)
 {
   unsigned int i;
 
@@ -153,14 +153,14 @@ void _gcry_mldsa_unpack_sk(gcry_mldsa_param_t *params,
 *
 * Description: Bit-pack signature sig = (c, z, h).
 *
-* Arguments:   - uint8_t sig[]: output byte array
-*              - const uint8_t *c: pointer to challenge hash length GCRY_MLDSA_SEEDBYTES
+* Arguments:   - byte sig[]: output byte array
+*              - const byte *c: pointer to challenge hash length GCRY_MLDSA_SEEDBYTES
 *              - const gcry_mldsa_polyvec *z: pointer to vector z
 *              - const gcry_mldsa_polyvec *h: pointer to hint vector h
 **************************************************/
 void _gcry_mldsa_pack_sig(gcry_mldsa_param_t *params,
-              uint8_t *sig,
-              const uint8_t c[GCRY_MLDSA_SEEDBYTES],
+              byte *sig,
+              const byte c[GCRY_MLDSA_SEEDBYTES],
               const gcry_mldsa_polyvec *z,
               const gcry_mldsa_polyvec *h)
 {
@@ -193,19 +193,19 @@ void _gcry_mldsa_pack_sig(gcry_mldsa_param_t *params,
 *
 * Description: Unpack signature sig = (c, z, h).
 *
-* Arguments:   - uint8_t *c: pointer to output challenge hash
+* Arguments:   - byte *c: pointer to output challenge hash
 *              - gcry_mldsa_polyvec *z: pointer to output vector z
 *              - gcry_mldsa_polyvec *h: pointer to output hint vector h
-*              - const uint8_t sig[]: byte array containing
+*              - const byte sig[]: byte array containing
 *                bit-packed signature
 *
 * Returns 1 in case of malformed signature; otherwise 0.
 **************************************************/
 int _gcry_mldsa_unpack_sig(gcry_mldsa_param_t *params,
-               uint8_t c[GCRY_MLDSA_SEEDBYTES],
+               byte c[GCRY_MLDSA_SEEDBYTES],
                gcry_mldsa_polyvec *z,
                gcry_mldsa_polyvec *h,
-               const uint8_t *sig)
+               const byte *sig)
 {
   unsigned int i, j, k;
 

@@ -1,5 +1,5 @@
 #include <config.h>
-#include <stdint.h>
+#include "types.h"
 #include "mldsa-params.h"
 #include "mldsa-reduce.h"
 
@@ -13,10 +13,10 @@
 *
 * Returns r.
 **************************************************/
-int32_t _gcry_mldsa_montgomery_reduce(int64_t a) {
-  int32_t t;
+s32 _gcry_mldsa_montgomery_reduce(int64_t a) {
+  s32 t;
 
-  t = (int64_t)(int32_t)a*GCRY_MLDSA_QINV;
+  t = (int64_t)(s32)a*GCRY_MLDSA_QINV;
   t = (a - (int64_t)t*GCRY_MLDSA_Q) >> 32;
   return t;
 }
@@ -27,12 +27,12 @@ int32_t _gcry_mldsa_montgomery_reduce(int64_t a) {
 * Description: For finite field element a with a <= 2^{31} - 2^{22} - 1,
 *              compute r \equiv a (mod GCRY_MLDSA_Q) such that -6283009 <= r <= 6283007.
 *
-* Arguments:   - int32_t: finite field element a
+* Arguments:   - s32: finite field element a
 *
 * Returns r.
 **************************************************/
-int32_t _gcry_mldsa_reduce32(int32_t a) {
-  int32_t t;
+s32 _gcry_mldsa_reduce32(s32 a) {
+  s32 t;
 
   t = (a + (1 << 22)) >> 23;
   t = a - t*GCRY_MLDSA_Q;
@@ -44,11 +44,11 @@ int32_t _gcry_mldsa_reduce32(int32_t a) {
 *
 * Description: Add GCRY_MLDSA_Q if input coefficient is negative.
 *
-* Arguments:   - int32_t: finite field element a
+* Arguments:   - s32: finite field element a
 *
 * Returns r.
 **************************************************/
-int32_t _gcry_mldsa_caddq(int32_t a) {
+s32 _gcry_mldsa_caddq(s32 a) {
   a += (a >> 31) & GCRY_MLDSA_Q;
   return a;
 }
@@ -59,11 +59,11 @@ int32_t _gcry_mldsa_caddq(int32_t a) {
 * Description: For finite field element a, compute standard
 *              representative r = a mod^+ GCRY_MLDSA_Q.
 *
-* Arguments:   - int32_t: finite field element a
+* Arguments:   - s32: finite field element a
 *
 * Returns r.
 **************************************************/
-int32_t _gcry_mldsa_freeze(int32_t a) {
+s32 _gcry_mldsa_freeze(s32 a) {
   a = _gcry_mldsa_reduce32(a);
   a = _gcry_mldsa_caddq(a);
   return a;

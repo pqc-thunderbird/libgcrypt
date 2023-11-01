@@ -1,11 +1,11 @@
 #include <config.h>
-#include <stdint.h>
+#include "types.h"
 #include "mldsa-params.h"
 #include "mldsa-symmetric.h"
 
-void _gcry_mldsa_shake128_stream_init(gcry_md_hd_t *md, const uint8_t seed[GCRY_MLDSA_SEEDBYTES], uint16_t nonce)
+void _gcry_mldsa_shake128_stream_init(gcry_md_hd_t *md, const byte seed[GCRY_MLDSA_SEEDBYTES], u16 nonce)
 {
-  uint8_t t[2];
+  byte t[2];
   t[0] = nonce;
   t[1] = nonce >> 8;
 
@@ -14,9 +14,9 @@ void _gcry_mldsa_shake128_stream_init(gcry_md_hd_t *md, const uint8_t seed[GCRY_
   _gcry_md_write(*md, t, 2);
 }
 
-void _gcry_mldsa_shake256_stream_init(gcry_md_hd_t *md, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
+void _gcry_mldsa_shake256_stream_init(gcry_md_hd_t *md, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce)
 {
-  uint8_t t[2];
+  byte t[2];
   t[0] = nonce;
   t[1] = nonce >> 8;
 

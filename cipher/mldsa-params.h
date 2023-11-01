@@ -1,7 +1,7 @@
 #ifndef _GCRY_MLDSA_PARAMS_H
 #define _GCRY_MLDSA_PARAMS_H
 
-#include <stdint.h>
+#include "types.h"
 
 #define GCRY_MLDSA_SEEDBYTES 32
 #define GCRY_MLDSA_CRHBYTES 64
@@ -31,18 +31,18 @@ typedef struct
     unsigned char eta;
     unsigned char tau;
     unsigned char beta;
-    uint32_t gamma1;
-    int32_t gamma2;
+    u32 gamma1;
+    s32 gamma2;
     unsigned char omega;
 
     /* derived */
-    uint16_t polyvech_packedbytes;
+    u16 polyvech_packedbytes;
     unsigned char polyw1_packedbytes;
-    uint16_t polyz_packedbytes;
-    uint16_t polyeta_packedbytes;
-    uint16_t public_key_bytes;
-    uint16_t secret_key_bytes;
-    uint16_t signature_bytes;
+    u16 polyz_packedbytes;
+    u16 polyeta_packedbytes;
+    u16 public_key_bytes;
+    u16 secret_key_bytes;
+    u16 signature_bytes;
 } gcry_mldsa_param_t;
 
 #endif
