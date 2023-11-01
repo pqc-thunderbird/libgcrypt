@@ -59,7 +59,9 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx1(unsigned char *dest,
         _gcry_slhdsa_set_hash_addr(ctx, leaf_addr, 0);
         _gcry_slhdsa_set_type(ctx, leaf_addr, SLHDSA_ADDR_TYPE_WOTSPRF);
 
-        _gcry_slhdsa_prf_addr(buffer, ctx, leaf_addr);
+        ec = _gcry_slhdsa_prf_addr(buffer, ctx, leaf_addr);
+        if(ec)
+            goto leave;
 
         _gcry_slhdsa_set_type(ctx, leaf_addr, SLHDSA_ADDR_TYPE_WOTS);
 

@@ -16,7 +16,7 @@
 
 static void initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx);
 static void initialize_hash_function_shake(_gcry_slhdsa_param_t *ctx);
-static void prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
+static gcry_err_code_t prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
               const u32 addr[8]);
 static gcry_err_code_t prf_addr_shake(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
               const u32 addr[8]);
@@ -24,7 +24,7 @@ static gcry_err_code_t gen_message_random_sha2(unsigned char *R, const unsigned 
         const unsigned char *optrand,
         const unsigned char *m, unsigned long long mlen,
         const _gcry_slhdsa_param_t *ctx);
-static void gen_message_random_shake(unsigned char *R, const unsigned char *sk_prf,
+static gcry_err_code_t gen_message_random_shake(unsigned char *R, const unsigned char *sk_prf,
         const unsigned char *optrand,
         const unsigned char *m, unsigned long long mlen,
         const _gcry_slhdsa_param_t *ctx);
@@ -50,20 +50,20 @@ void _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
     }
 }
 
-void _gcry_slhdsa_prf_addr(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
+gcry_err_code_t _gcry_slhdsa_prf_addr(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
               const u32 addr[8])
 {
     if(ctx->is_sha2)
     {
-        prf_addr_sha2(out, ctx, addr);
+        return prf_addr_sha2(out, ctx, addr);
     }
     else
     {
-        prf_addr_shake(out, ctx, addr);
+        return prf_addr_shake(out, ctx, addr);
     }
 }
 
-void _gcry_slhdsa_gen_message_random(unsigned char *R, const unsigned char *sk_prf,
+gcry_err_code_t _gcry_slhdsa_gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
                         const unsigned char *m, unsigned long long mlen,
                         const _gcry_slhdsa_param_t *ctx)
@@ -71,11 +71,11 @@ void _gcry_slhdsa_gen_message_random(unsigned char *R, const unsigned char *sk_p
     if(ctx->is_sha2)
     {
         /* TODO: propagate error from call */
-        gen_message_random_sha2(R, sk_prf, optrand, m, mlen, ctx);
+        return gen_message_random_sha2(R, sk_prf, optrand, m, mlen, ctx);
     }
     else
     {
-        gen_message_random_shake(R, sk_prf, optrand, m, mlen, ctx);
+        return gen_message_random_shake(R, sk_prf, optrand, m, mlen, ctx);
     }
 }
 
@@ -107,21 +107,27 @@ void initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx)
 /*
  * Computes PRF(pk_seed, sk_seed, addr).
  */
-static void prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
+static gcry_err_code_t prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
               const u32 addr[8])
 {
-    gcry_md_hd_t hd;
-
+    gcry_err_code_t ec;
+    gcry_md_hd_t hd = NULL;
     unsigned char sha256_pubseed_block[SLHDSA_SHA256_BLOCK_BYTES];
+
     memset(sha256_pubseed_block, 0, SLHDSA_SHA256_BLOCK_BYTES);
     memcpy(sha256_pubseed_block, ctx->pub_seed, ctx->n);
     /* TODO: md_open can give error code... */
-    _gcry_md_open (&hd, GCRY_MD_SHA256, GCRY_MD_FLAG_SECURE);
+    ec = _gcry_md_open (&hd, GCRY_MD_SHA256, GCRY_MD_FLAG_SECURE);
+    if (ec)
+        goto leave;
     _gcry_md_write(hd, sha256_pubseed_block, SLHDSA_SHA256_BLOCK_BYTES);
     _gcry_md_write(hd, (byte*)addr, SLHDSA_SHA256_ADDR_BYTES);
     _gcry_md_write(hd, ctx->sk_seed, ctx->n);
     memcpy(out, _gcry_md_read(hd, GCRY_MD_SHA256), ctx->n);
+
+leave:
     _gcry_md_close(hd);
+    return ec;
 
 }
 
@@ -144,6 +150,7 @@ static gcry_err_code_t gen_message_random_sha2(unsigned char *R, const unsigned 
     gcry_mac_hd_t hd = NULL;
     gcry_err_code_t ec;
     size_t outlen;
+    unsigned char *tmpmac = NULL;
 
     if(ctx->do_use_sha512)
     {
@@ -156,41 +163,41 @@ static gcry_err_code_t gen_message_random_sha2(unsigned char *R, const unsigned 
 
     ec = _gcry_mac_open (&hd, hmac_shaX_algo, GCRY_MAC_FLAG_SECURE, NULL);
     if(ec)
-    {
         goto leave;
-    }
 
     ec = _gcry_mac_setkey (hd, sk_prf, ctx->n);
     if(ec)
-    {
         goto leave;
-    }
 
     ec = _gcry_mac_write (hd, optrand, ctx->n);
     if(ec)
-    {
         goto leave;
-    }
 
     ec = _gcry_mac_write (hd, m, mlen);
     if(ec)
-    {
         goto leave;
+
+    tmpmac = xtrymalloc(_gcry_mac_get_algo_maclen(hmac_shaX_algo));
+    if (!tmpmac)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
     }
 
-    ec = _gcry_mac_read (hd, R, &outlen);
+    ec = _gcry_mac_read (hd, tmpmac, &outlen);
     if(ec)
-    {
         goto leave;
-    }
 
-    if(outlen != ctx->n)
+    if(outlen < ctx->n)
     {
         ec = GPG_ERR_INV_STATE;
+        goto leave;
     }
+    memcpy(R, tmpmac, outlen);
 
 leave:
     _gcry_mac_close(hd);
+    xfree(tmpmac);
     return ec;
 }
 
@@ -324,7 +331,7 @@ static gcry_err_code_t prf_addr_shake(unsigned char *out, const _gcry_slhdsa_par
 {
     gcry_err_code_t ec = 0;
     unsigned char *buf = NULL;
-    gcry_md_hd_t hd;
+    gcry_md_hd_t hd = NULL;
 
     buf = xtrymalloc_secure(2*ctx->n + ctx->addr_bytes);
     if (!buf)
@@ -339,12 +346,16 @@ static gcry_err_code_t prf_addr_shake(unsigned char *out, const _gcry_slhdsa_par
 
     //shake256(out, ctx->n, buf, 2*ctx->n + ctx->addr_bytes);
 
-    /* TODO: check err code */
-    _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+    ec = _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+    if (ec)
+        goto leave;
     _gcry_md_write(hd, buf, 2*ctx->n + ctx->addr_bytes);
-    _gcry_md_extract(hd, GCRY_MD_SHAKE256, out, ctx->n);
-    _gcry_md_close(hd);
+    ec = _gcry_md_extract(hd, GCRY_MD_SHAKE256, out, ctx->n);
+    if (ec)
+        goto leave;
+
 leave:
+    _gcry_md_close(hd);
     xfree(buf);
 	return ec;
 }
@@ -353,20 +364,25 @@ leave:
  * Computes the message-dependent randomness R, using a secret seed and an
  * optional randomization value as well as the message.
  */
-static void gen_message_random_shake(unsigned char *R, const unsigned char *sk_prf,
+static gcry_err_code_t gen_message_random_shake(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
                         const unsigned char *m, unsigned long long mlen,
                         const _gcry_slhdsa_param_t *ctx)
 {
-    gcry_md_hd_t hd;
+    gcry_err_code_t ec;
+    gcry_md_hd_t hd = NULL;
 
-    /* TODO: check and return err */
-   _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
-   _gcry_md_write(hd, sk_prf, ctx->n);
-   _gcry_md_write(hd, optrand, ctx->n);
-   _gcry_md_write(hd, m, mlen);
-   _gcry_md_extract(hd, GCRY_MD_SHAKE256, R, ctx->n);
-   _gcry_md_close(hd);
+    ec = _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+    if (ec)
+        goto leave;
+    _gcry_md_write(hd, sk_prf, ctx->n);
+    _gcry_md_write(hd, optrand, ctx->n);
+    _gcry_md_write(hd, m, mlen);
+    ec = _gcry_md_extract(hd, GCRY_MD_SHAKE256, R, ctx->n);
+
+leave:
+    _gcry_md_close(hd);
+    return ec;
 }
 
 /**

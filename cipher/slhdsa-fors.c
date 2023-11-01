@@ -13,17 +13,17 @@
 
 #include "g10lib.h"
 
-static void fors_gen_sk(unsigned char *sk, const _gcry_slhdsa_param_t *ctx,
+static gcry_err_code_t fors_gen_sk(unsigned char *sk, const _gcry_slhdsa_param_t *ctx,
                         u32 fors_leaf_addr[8])
 {
-    _gcry_slhdsa_prf_addr(sk, ctx, fors_leaf_addr);
+    return _gcry_slhdsa_prf_addr(sk, ctx, fors_leaf_addr);
 }
 
-static void fors_sk_to_leaf(unsigned char *leaf, const unsigned char *sk,
+static gcry_err_code_t fors_sk_to_leaf(unsigned char *leaf, const unsigned char *sk,
                             const _gcry_slhdsa_param_t *ctx,
                             u32 fors_leaf_addr[8])
 {
-    _gcry_slhdsa_thash(leaf, sk, 1, ctx, fors_leaf_addr);
+    return _gcry_slhdsa_thash(leaf, sk, 1, ctx, fors_leaf_addr);
 }
 
 struct fors_gen_leaf_info {
@@ -34,19 +34,23 @@ static gcry_err_code_t fors_gen_leafx1(unsigned char *leaf,
                             const _gcry_slhdsa_param_t *ctx,
                             u32 addr_idx, void *info)
 {
+    gcry_err_code_t ec;
     struct fors_gen_leaf_info *fors_info = info;
     u32 *fors_leaf_addr = fors_info->leaf_addrx;
 
     /* Only set the parts that the caller doesn't set */
     _gcry_slhdsa_set_tree_index(ctx, fors_leaf_addr, addr_idx);
     _gcry_slhdsa_set_type(ctx, fors_leaf_addr, SLHDSA_ADDR_TYPE_FORSPRF);
-    fors_gen_sk(leaf, ctx, fors_leaf_addr);
+    ec = fors_gen_sk(leaf, ctx, fors_leaf_addr);
+    if (ec)
+        goto leave;
 
     _gcry_slhdsa_set_type(ctx, fors_leaf_addr, SLHDSA_ADDR_TYPE_FORSTREE);
-    fors_sk_to_leaf(leaf, leaf,
+    ec = fors_sk_to_leaf(leaf, leaf,
                     ctx, fors_leaf_addr);
 
-    return 0; /* TODO check return codes in calls */
+leave:
+    return ec;
 }
 
 /**
@@ -116,7 +120,9 @@ gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig, unsigned char *pk,
         _gcry_slhdsa_set_type(ctx, fors_tree_addr, SLHDSA_ADDR_TYPE_FORSPRF);
 
         /* Include the secret key part that produces the selected leaf node. */
-        fors_gen_sk(sig, ctx, fors_tree_addr);
+        ec = fors_gen_sk(sig, ctx, fors_tree_addr);
+        if (ec)
+            goto leave;
         _gcry_slhdsa_set_type(ctx, fors_tree_addr, SLHDSA_ADDR_TYPE_FORSTREE);
         sig += ctx->n;
 

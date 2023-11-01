@@ -7,10 +7,10 @@
 
 void _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx);
 
-void _gcry_slhdsa_prf_addr(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
+gcry_err_code_t _gcry_slhdsa_prf_addr(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
               const u32 addr[8]);
 
-void _gcry_slhdsa_gen_message_random(unsigned char *R, const unsigned char *sk_prf,
+gcry_err_code_t _gcry_slhdsa_gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *optrand,
                         const unsigned char *m, unsigned long long mlen,
                         const _gcry_slhdsa_param_t *ctx);

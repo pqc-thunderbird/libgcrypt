@@ -20,7 +20,7 @@
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [PUB_SEED || root]
  */
-int _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsigned char *sk,
+gcry_err_code_t _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsigned char *sk,
                              const unsigned char *seed)
 {
     /* Initialize SK_SEED, SK_PRF and PUB_SEED from seed. */
@@ -46,7 +46,7 @@ int _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsi
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [PUB_SEED || root]
  */
-int _gcry_slhdsa_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsigned char *sk)
+gcry_err_code_t _gcry_slhdsa_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsigned char *sk)
 {
   gcry_err_code_t ec = 0;
   unsigned char *seed = NULL;
@@ -68,7 +68,7 @@ leave:
 /**
  * Returns an array containing a detached signature.
  */
-int _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, byte *sig, size_t *siglen,
+gcry_err_code_t _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, byte *sig, size_t *siglen,
                           const byte *m, size_t mlen, const byte *sk)
 {
     gcry_err_code_t ec = 0;
@@ -120,7 +120,9 @@ int _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, byte *sig, size_t *siglen,
        getting a large number of traces when the signer uses the same nodes. */
     _gcry_randomize(optrand, ctx->n, GCRY_VERY_STRONG_RANDOM);
     /* Compute the digest randomization value. */
-    _gcry_slhdsa_gen_message_random(sig, sk_prf, optrand, m, mlen, ctx);
+    ec = _gcry_slhdsa_gen_message_random(sig, sk_prf, optrand, m, mlen, ctx);
+    if (ec)
+      goto leave;
 
     /* Derive the message digest and leaf index from R, PK and M. */
     _gcry_slhdsa_hash_message(mhash, &tree, &idx_leaf, sig, pk, m, mlen, ctx);
@@ -160,7 +162,7 @@ leave:
 /**
  * Verifies a detached signature and message under a given public key.
  */
-int _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const byte *sig, size_t siglen,
+gcry_err_code_t _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const byte *sig, size_t siglen,
                        const byte *m, size_t mlen, const byte *pk)
 {
     gcry_err_code_t ec = 0;
