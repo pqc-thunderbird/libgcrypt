@@ -450,14 +450,12 @@ slhdsa_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   gcry_mpi_t sk_mpi = NULL;
   gcry_mpi_t pk_mpi = NULL;
 
-  if (ec)
-    return ec;
   if ((ec = slhdsa_get_hash_alg_and_variant_from_sexp(genparms, &hash_alg, &variant)))
-    return ec;
+    goto leave;
   if ((ec = paramset_from_hash_and_variant(&paramset, hash_alg, variant)))
-    return ec;
+    goto leave;
   if ((ec = gcry_slhdsa_get_param_from_paramset_id(&param, paramset)))
-    return ec;
+    goto leave;
 
   if (!(sk = xtrymalloc_secure(param.secret_key_bytes))
     || !(pk = xtrymalloc(param.public_key_bytes)))
@@ -465,7 +463,9 @@ slhdsa_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
     ec = gpg_err_code_from_syserror();
     goto leave;
   }
-  _gcry_slhdsa_keypair(&param, pk, sk);
+  ec = _gcry_slhdsa_keypair(&param, pk, sk);
+  if (ec)
+    goto leave;
 
   sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
   pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
@@ -538,11 +538,11 @@ slhdsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
   size_t sig_buf_len;
 
   if ((ec = slhdsa_get_hash_alg_and_variant_from_sexp(keyparms, &hash_alg, &variant)))
-    return ec;
+    goto leave;
   if ((ec = paramset_from_hash_and_variant(&paramset, hash_alg, variant)))
-    return ec;
+    goto leave;
   if ((ec = gcry_slhdsa_get_param_from_paramset_id(&param, paramset)))
-    return ec;
+    goto leave;
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_SIGN, nbits);
 
 
@@ -634,11 +634,11 @@ slhdsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
 
   unsigned int nbits = slhdsa_get_nbits (s_keyparms);
   if ((ec = slhdsa_get_hash_alg_and_variant_from_sexp(s_keyparms, &hash_alg, &variant)))
-    return ec;
+    goto leave;
   if ((ec = paramset_from_hash_and_variant(&paramset, hash_alg, variant)))
-    return ec;
+    goto leave;
   if ((ec = gcry_slhdsa_get_param_from_paramset_id(&param, paramset)))
-    return ec;
+    goto leave;
 
   _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_VERIFY, nbits);
 

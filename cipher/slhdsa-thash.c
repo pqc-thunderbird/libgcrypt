@@ -58,7 +58,7 @@ static gcry_err_code_t
 thash_sha2_simple(unsigned char *out, const unsigned char *in, unsigned int inblocks,
            const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
-    gcry_err_code_t ec;
+    gcry_err_code_t ec = 0;
     gcry_md_hd_t hd = NULL;
     unsigned char sha256_pubseed_block[SLHDSA_SHA256_BLOCK_BYTES];
 
@@ -88,7 +88,7 @@ leave:
 static gcry_err_code_t thash_512_simple(unsigned char *out, const unsigned char *in, unsigned int inblocks,
            const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
-    gcry_err_code_t ec;
+    gcry_err_code_t ec = 0;
     gcry_md_hd_t hd = NULL;
     unsigned char sha512_pubseed_block[SLHDSA_SHA512_BLOCK_BYTES];
 

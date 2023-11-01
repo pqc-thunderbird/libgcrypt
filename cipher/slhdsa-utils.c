@@ -87,11 +87,15 @@ gcry_err_code_t _gcry_slhdsa_compute_root(unsigned char *root, const unsigned ch
 
         /* Pick the right or left neighbor, depending on parity of the node. */
         if (leaf_idx & 1) {
-            _gcry_slhdsa_thash(buffer + ctx->n, buffer, 2, ctx, addr);
+            ec = _gcry_slhdsa_thash(buffer + ctx->n, buffer, 2, ctx, addr);
+            if (ec)
+                goto leave;
             memcpy(buffer, auth_path, ctx->n);
         }
         else {
-            _gcry_slhdsa_thash(buffer, buffer, 2, ctx, addr);
+            ec = _gcry_slhdsa_thash(buffer, buffer, 2, ctx, addr);
+            if (ec)
+                goto leave;
             memcpy(buffer + ctx->n, auth_path, ctx->n);
         }
         auth_path += ctx->n;
@@ -102,7 +106,7 @@ gcry_err_code_t _gcry_slhdsa_compute_root(unsigned char *root, const unsigned ch
     idx_offset >>= 1;
     _gcry_slhdsa_set_tree_height(ctx, addr, tree_height);
     _gcry_slhdsa_set_tree_index(ctx, addr, leaf_idx + idx_offset);
-    _gcry_slhdsa_thash(root, buffer, 2, ctx, addr);
+    ec = _gcry_slhdsa_thash(root, buffer, 2, ctx, addr);
 
 leave:
     xfree(buffer);
@@ -119,7 +123,7 @@ leave:
  */
 gcry_err_code_t _gcry_slhdsa_treehash(unsigned char *root, unsigned char *auth_path, const _gcry_slhdsa_param_t* ctx,
               u32 leaf_idx, u32 idx_offset, u32 tree_height,
-              void (*gen_leaf)(
+              gcry_err_code_t (*gen_leaf)(
                  unsigned char* /* leaf */,
                  const _gcry_slhdsa_param_t* /* ctx */,
                  u32 /* addr_idx */, const u32[8] /* tree_addr */),
@@ -166,8 +170,10 @@ gcry_err_code_t _gcry_slhdsa_treehash(unsigned char *root, unsigned char *auth_p
             _gcry_slhdsa_set_tree_index(ctx, tree_addr,
                            tree_idx + (idx_offset >> (heights[offset-1] + 1)));
             /* Hash the top-most nodes from the stack together. */
-            _gcry_slhdsa_thash(stack + (offset - 2)*ctx->n,
+            ec = _gcry_slhdsa_thash(stack + (offset - 2)*ctx->n,
                   stack + (offset - 2)*ctx->n, 2, ctx, tree_addr);
+            if (ec)
+                goto leave;
             offset--;
             /* Note that the top-most node is now one layer higher. */
             heights[offset - 1]++;

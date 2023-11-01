@@ -34,7 +34,7 @@ static gcry_err_code_t fors_gen_leafx1(unsigned char *leaf,
                             const _gcry_slhdsa_param_t *ctx,
                             u32 addr_idx, void *info)
 {
-    gcry_err_code_t ec;
+    gcry_err_code_t ec = 0;
     struct fors_gen_leaf_info *fors_info = info;
     u32 *fors_leaf_addr = fors_info->leaf_addrx;
 
@@ -135,7 +135,7 @@ gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig, unsigned char *pk,
     }
 
     /* Hash horizontally across all tree roots to derive the public key. */
-    _gcry_slhdsa_thash(pk, roots, ctx->FORS_trees, ctx, fors_pk_addr);
+    ec = _gcry_slhdsa_thash(pk, roots, ctx->FORS_trees, ctx, fors_pk_addr);
 
 leave:
     xfree(roots);
@@ -202,13 +202,15 @@ gcry_err_code_t _gcry_slhdsa_fors_pk_from_sig(unsigned char *pk,
         sig += ctx->n;
 
         /* Derive the corresponding root node of this tree. */
-        _gcry_slhdsa_compute_root(roots + i*ctx->n, leaf, indices[i], idx_offset,
+        ec = _gcry_slhdsa_compute_root(roots + i*ctx->n, leaf, indices[i], idx_offset,
                      sig, ctx->FORS_height, ctx, fors_tree_addr);
+        if (ec)
+            goto leave;
         sig += ctx->n * ctx->FORS_height;
     }
 
     /* Hash horizontally across all tree roots to derive the public key. */
-    _gcry_slhdsa_thash(pk, roots, ctx->FORS_trees, ctx, fors_pk_addr);
+    ec = _gcry_slhdsa_thash(pk, roots, ctx->FORS_trees, ctx, fors_pk_addr);
 
 leave:
     xfree(indices);

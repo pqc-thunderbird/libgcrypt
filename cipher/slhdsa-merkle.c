@@ -36,7 +36,9 @@ gcry_err_code_t _gcry_slhdsa_merkle_sign(byte *sig, unsigned char *root,
     }
 
     info.wots_sig = sig;
-    _gcry_slhdsa_chain_lengths(ctx, steps, root);
+    ec = _gcry_slhdsa_chain_lengths(ctx, steps, root);
+    if (ec)
+      goto leave;
     info.wots_steps = steps;
 
     _gcry_slhdsa_set_type(ctx, &tree_addr[0], SLHDSA_ADDR_TYPE_HASHTREE);
@@ -46,14 +48,16 @@ gcry_err_code_t _gcry_slhdsa_merkle_sign(byte *sig, unsigned char *root,
 
     info.wots_sign_leaf = idx_leaf;
 
-    treehashx1(root, auth_path, ctx,
+    ec = treehashx1(root, auth_path, ctx,
                 idx_leaf, 0,
                 ctx->tree_height,
                 _gcry_slhdsa_wots_gen_leafx1,
                 tree_addr, &info);
+    if (ec)
+      goto leave;
 
 leave:
-    xfree(steps);
+  xfree(steps);
 	return ec;
 }
 
@@ -64,7 +68,6 @@ gcry_err_code_t _gcry_slhdsa_merkle_gen_root(unsigned char *root, const _gcry_sl
        code to have just one _gcry_slhdsa_treehash routine that computes both root and path
        in one function. */
     gcry_err_code_t ec = 0;
-
     unsigned char *auth_path = NULL;
     u32 top_tree_addr[8] = {0};
     u32 wots_addr[8] = {0};
@@ -79,7 +82,7 @@ gcry_err_code_t _gcry_slhdsa_merkle_gen_root(unsigned char *root, const _gcry_sl
     _gcry_slhdsa_set_layer_addr(ctx, top_tree_addr, ctx->d - 1);
     _gcry_slhdsa_set_layer_addr(ctx, wots_addr, ctx->d - 1);
 
-    _gcry_slhdsa_merkle_sign(auth_path, root, ctx,
+    ec = _gcry_slhdsa_merkle_sign(auth_path, root, ctx,
                 wots_addr, top_tree_addr,
                 (u32)~0 /* ~0 means "don't bother generating an auth path */ );
 

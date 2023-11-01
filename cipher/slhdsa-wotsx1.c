@@ -79,12 +79,14 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx1(unsigned char *dest,
             /* Iterate one step on the chain */
             _gcry_slhdsa_set_hash_addr(ctx, leaf_addr, k);
 
-            _gcry_slhdsa_thash(buffer, buffer, 1, ctx, leaf_addr);
+            ec = _gcry_slhdsa_thash(buffer, buffer, 1, ctx, leaf_addr);
+            if (ec)
+                goto leave;
         }
     }
 
     /* Do the final _gcry_slhdsa_thash to generate the public keys */
-    _gcry_slhdsa_thash(dest, pk_buffer, ctx->WOTS_len, ctx, pk_addr);
+    ec = _gcry_slhdsa_thash(dest, pk_buffer, ctx->WOTS_len, ctx, pk_addr);
 
 leave:
     xfree(pk_buffer);

@@ -41,7 +41,7 @@ gcry_err_code_t _gcry_slhdsa_compute_root(unsigned char *root, const unsigned ch
 gcry_err_code_t _gcry_slhdsa_treehash(unsigned char *root, unsigned char *auth_path,
               const _gcry_slhdsa_param_t* ctx,
               u32 leaf_idx, u32 idx_offset, u32 tree_height,
-              void (*gen_leaf)(
+              gcry_err_code_t (*gen_leaf)(
                  unsigned char* /* leaf */,
                  const _gcry_slhdsa_param_t* ctx /* ctx */,
                  u32 /* addr_idx */, const u32[8] /* tree_addr */),

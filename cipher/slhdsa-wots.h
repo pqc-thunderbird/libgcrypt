@@ -22,6 +22,6 @@ gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig(unsigned char *pk,
 /*
  * Compute the chain lengths needed for a given message hash
  */
-void _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx, unsigned int *lengths, const unsigned char *msg);
+gcry_err_code_t _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx, unsigned int *lengths, const unsigned char *msg);
 
 #endif

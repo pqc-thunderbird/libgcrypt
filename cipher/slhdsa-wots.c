@@ -24,10 +24,11 @@
  * Interprets in as start-th value of the chain.
  * addr has to contain the address of the chain.
  */
-static void gen_chain(unsigned char *out, const unsigned char *in,
+static gcry_err_code_t gen_chain(unsigned char *out, const unsigned char *in,
                       unsigned int start, unsigned int steps,
                       const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
+    gcry_err_code_t ec = 0;
     u32 i;
 
     /* Initialize out with the value at position 'start'. */
@@ -36,8 +37,13 @@ static void gen_chain(unsigned char *out, const unsigned char *in,
     /* Iterate 'steps' calls to the hash function. */
     for (i = start; i < (start+steps) && i < ctx->WOTS_w; i++) {
         _gcry_slhdsa_set_hash_addr(ctx, addr, i);
-        _gcry_slhdsa_thash(out, out, 1, ctx, addr);
+        ec = _gcry_slhdsa_thash(out, out, 1, ctx, addr);
+        if (ec)
+            goto leave;
     }
+
+leave:
+    return ec;
 }
 
 /**
@@ -100,10 +106,10 @@ leave:
 }
 
 /* Takes a message and derives the matching chain lengths. */
-void _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx, unsigned int *lengths, const unsigned char *msg)
+gcry_err_code_t _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx, unsigned int *lengths, const unsigned char *msg)
 {
     base_w(ctx, lengths, ctx->WOTS_len1, msg);
-    wots_checksum(ctx, lengths + ctx->WOTS_len1, lengths);
+    return wots_checksum(ctx, lengths + ctx->WOTS_len1, lengths);
 }
 
 /**
@@ -127,12 +133,16 @@ _gcry_slhdsa_wots_pk_from_sig(unsigned char *pk,
       goto leave;
     }
 
-    _gcry_slhdsa_chain_lengths(ctx, lengths, msg);
+    ec = _gcry_slhdsa_chain_lengths(ctx, lengths, msg);
+    if (ec)
+        goto leave;
 
     for (i = 0; i < ctx->WOTS_len; i++) {
         _gcry_slhdsa_set_chain_addr(ctx, addr, i);
-        gen_chain(pk + i*ctx->n, sig + i*ctx->n,
+        ec = gen_chain(pk + i*ctx->n, sig + i*ctx->n,
                   lengths[i], ctx->WOTS_w - 1 - lengths[i], ctx, addr);
+        if (ec)
+            goto leave;
     }
 
 leave:

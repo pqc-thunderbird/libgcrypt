@@ -15,7 +15,7 @@ gcry_err_code_t _gcry_slhdsa_gen_message_random(unsigned char *R, const unsigned
                         const unsigned char *m, unsigned long long mlen,
                         const _gcry_slhdsa_param_t *ctx);
 
-void _gcry_slhdsa_hash_message(unsigned char *digest, u64 *tree, u32 *leaf_idx,
+gcry_err_code_t _gcry_slhdsa_hash_message(unsigned char *digest, u64 *tree, u32 *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
                   const _gcry_slhdsa_param_t *ctx);

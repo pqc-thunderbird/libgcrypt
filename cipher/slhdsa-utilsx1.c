@@ -67,9 +67,10 @@ gcry_err_code_t treehashx1(unsigned char *root, unsigned char *auth_path,
             goto leave;
         }
 
-        /* TODO check error code */
-        gen_leaf( &current[ctx->n], ctx, idx + idx_offset,
+        ec = gen_leaf( &current[ctx->n], ctx, idx + idx_offset,
                     info );
+        if (ec)
+            goto leave;
 
         /* Now combine the freshly generated right node with previously */
         /* generated left ones */
@@ -113,9 +114,11 @@ gcry_err_code_t treehashx1(unsigned char *root, unsigned char *auth_path,
 
             left = &stack[h * ctx->n];
             memcpy( &current[0], left, ctx->n );
-            _gcry_slhdsa_thash( &current[1 * ctx->n],
+            ec = _gcry_slhdsa_thash( &current[1 * ctx->n],
                    &current[0 * ctx->n],
                    2, ctx, tree_addr);
+            if (ec)
+                goto leave;
         }
 
         /* We've hit a left child; save the current for when we get the */

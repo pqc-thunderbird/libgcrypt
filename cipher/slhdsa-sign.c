@@ -23,6 +23,8 @@
 gcry_err_code_t _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsigned char *sk,
                              const unsigned char *seed)
 {
+    gcry_err_code_t ec = 0;
+
     /* Initialize SK_SEED, SK_PRF and PUB_SEED from seed. */
     memcpy(sk, seed, ctx->seed_bytes);
     memcpy(pk, sk + 2*ctx->n, ctx->n);
@@ -34,11 +36,14 @@ gcry_err_code_t _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx, unsigned ch
     _gcry_slhdsa_initialize_hash_function(ctx);
 
     /* Compute root node of the top-most subtree. */
-    _gcry_slhdsa_merkle_gen_root(sk + 3*ctx->n, ctx);
+    ec = _gcry_slhdsa_merkle_gen_root(sk + 3*ctx->n, ctx);
+    if (ec)
+      goto leave;
 
     memcpy(pk + ctx->n, sk + 3*ctx->n, ctx->n);
 
-    return 0;
+leave:
+    return ec;
 }
 
 /*
@@ -125,7 +130,9 @@ gcry_err_code_t _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, byte *sig, siz
       goto leave;
 
     /* Derive the message digest and leaf index from R, PK and M. */
-    _gcry_slhdsa_hash_message(mhash, &tree, &idx_leaf, sig, pk, m, mlen, ctx);
+    ec = _gcry_slhdsa_hash_message(mhash, &tree, &idx_leaf, sig, pk, m, mlen, ctx);
+    if (ec)
+      goto leave;
     sig += ctx->n;
 
     _gcry_slhdsa_set_tree_addr(ctx, wots_addr, tree);
@@ -142,7 +149,9 @@ gcry_err_code_t _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, byte *sig, siz
         _gcry_slhdsa_copy_subtree_addr(ctx, wots_addr, tree_addr);
         _gcry_slhdsa_set_keypair_addr(ctx, wots_addr, idx_leaf);
 
-        _gcry_slhdsa_merkle_sign(sig, root, ctx, wots_addr, tree_addr, idx_leaf);
+        ec = _gcry_slhdsa_merkle_sign(sig, root, ctx, wots_addr, tree_addr, idx_leaf);
+        if (ec)
+          goto leave;
         sig += ctx->WOTS_bytes + ctx->tree_height * ctx->n;
 
         /* Update the indices for the next layer. */
@@ -220,7 +229,9 @@ gcry_err_code_t _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const byte *sig, 
 
     /* Derive the message digest and leaf index from R || PK || M. */
     /* The additional ctx->n is a result of the hash domain separator. */
-    _gcry_slhdsa_hash_message(mhash, &tree, &idx_leaf, sig, pk, m, mlen, ctx);
+    ec = _gcry_slhdsa_hash_message(mhash, &tree, &idx_leaf, sig, pk, m, mlen, ctx);
+    if (ec)
+      goto leave;
     sig += ctx->n;
 
     /* Layer correctly defaults to 0, so no need to _gcry_slhdsa_set_layer_addr */
@@ -243,15 +254,21 @@ gcry_err_code_t _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const byte *sig, 
         /* The WOTS public key is only correct if the signature was correct. */
         /* Initially, root is the FORS pk, but on subsequent iterations it is
            the root of the subtree below the currently processed subtree. */
-        _gcry_slhdsa_wots_pk_from_sig(wots_pk, sig, root, ctx, wots_addr);
+        ec = _gcry_slhdsa_wots_pk_from_sig(wots_pk, sig, root, ctx, wots_addr);
+        if (ec)
+            goto leave;
         sig += ctx->WOTS_bytes;
 
         /* Compute the leaf node using the WOTS public key. */
-        _gcry_slhdsa_thash(leaf, wots_pk, ctx->WOTS_len, ctx, wots_pk_addr);
+        ec = _gcry_slhdsa_thash(leaf, wots_pk, ctx->WOTS_len, ctx, wots_pk_addr);
+        if (ec)
+          goto leave;
 
         /* Compute the root node of this subtree. */
-        _gcry_slhdsa_compute_root(root, leaf, idx_leaf, 0, sig, ctx->tree_height,
+        ec = _gcry_slhdsa_compute_root(root, leaf, idx_leaf, 0, sig, ctx->tree_height,
                      ctx, tree_addr);
+        if (ec)
+            goto leave;
         sig += ctx->tree_height * ctx->n;
 
         /* Update the indices for the next layer. */

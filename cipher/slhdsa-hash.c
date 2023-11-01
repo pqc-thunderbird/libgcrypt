@@ -38,6 +38,7 @@ static gcry_err_code_t hash_message_shake(unsigned char *digest, u64 *tree, u32 
                   const _gcry_slhdsa_param_t *ctx);
 
 
+/* TODO */
 void _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
 {
     if(ctx->is_sha2)
@@ -70,7 +71,6 @@ gcry_err_code_t _gcry_slhdsa_gen_message_random(unsigned char *R, const unsigned
 {
     if(ctx->is_sha2)
     {
-        /* TODO: propagate error from call */
         return gen_message_random_sha2(R, sk_prf, optrand, m, mlen, ctx);
     }
     else
@@ -79,7 +79,7 @@ gcry_err_code_t _gcry_slhdsa_gen_message_random(unsigned char *R, const unsigned
     }
 }
 
-void _gcry_slhdsa_hash_message(unsigned char *digest, u64 *tree, u32 *leaf_idx,
+gcry_err_code_t _gcry_slhdsa_hash_message(unsigned char *digest, u64 *tree, u32 *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *m, unsigned long long mlen,
                   const _gcry_slhdsa_param_t *ctx)
@@ -87,11 +87,11 @@ void _gcry_slhdsa_hash_message(unsigned char *digest, u64 *tree, u32 *leaf_idx,
 {
     if(ctx->is_sha2)
     {
-        hash_message_sha2(digest, tree, leaf_idx, R, pk, m, mlen, ctx);
+        return hash_message_sha2(digest, tree, leaf_idx, R, pk, m, mlen, ctx);
     }
     else
     {
-        hash_message_shake(digest, tree, leaf_idx, R, pk, m, mlen, ctx);
+        return hash_message_shake(digest, tree, leaf_idx, R, pk, m, mlen, ctx);
     }
 }
 
@@ -110,7 +110,7 @@ void initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx)
 static gcry_err_code_t prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
               const u32 addr[8])
 {
-    gcry_err_code_t ec;
+    gcry_err_code_t ec = 0;
     gcry_md_hd_t hd = NULL;
     unsigned char sha256_pubseed_block[SLHDSA_SHA256_BLOCK_BYTES];
 
@@ -146,9 +146,9 @@ static gcry_err_code_t gen_message_random_sha2(unsigned char *R, const unsigned 
 {
     /* HMAC-SHA-X(SK.prf, OptRand||M) */
 
+    gcry_err_code_t ec = 0;
     int hmac_shaX_algo;
     gcry_mac_hd_t hd = NULL;
-    gcry_err_code_t ec;
     size_t outlen;
     unsigned char *tmpmac = NULL;
 
@@ -212,7 +212,7 @@ static gcry_err_code_t hash_message_sha2(unsigned char *digest, u64 *tree, u32 *
                   const _gcry_slhdsa_param_t *ctx)
 {
     gcry_err_code_t ec = 0;
-    gcry_md_hd_t hd;
+    gcry_md_hd_t hd = NULL;
     size_t SLHDSA_TREE_BITS = (ctx->tree_height * (ctx->d - 1));
     size_t SLHDSA_TREE_BYTES = ((SLHDSA_TREE_BITS + 7) / 8);
     size_t SLHDSA_LEAF_BITS = ctx->tree_height;
@@ -267,7 +267,9 @@ static gcry_err_code_t hash_message_sha2(unsigned char *digest, u64 *tree, u32 *
     memcpy(inbuf + ctx->n, pk, ctx->public_key_bytes);
 
     /* TODO: md_open can give error code... */
-    _gcry_md_open (&hd, hash_alg, GCRY_MD_FLAG_SECURE);
+    ec = _gcry_md_open (&hd, hash_alg, GCRY_MD_FLAG_SECURE);
+    if (ec)
+        goto leave;
 
     /* If R + pk + message cannot fill up an entire block */
     if (ctx->n + ctx->public_key_bytes + mlen < SLHDSA_INBLOCKS * shax_block_bytes) {
@@ -286,15 +288,14 @@ static gcry_err_code_t hash_message_sha2(unsigned char *digest, u64 *tree, u32 *
 
     }
     memcpy(seed + 2*ctx->n, _gcry_md_read(hd, hash_alg), shax_output_bytes);
-    _gcry_md_close(hd);
-
 
     // H_msg: MGF1-SHA-X(R ‖ PK.seed ‖ seed)
     memcpy(seed, R, ctx->n);
     memcpy(seed + ctx->n, pk, ctx->n);
 
-    // TODO check err
-    mgf1(bufp, SLHDSA_DGST_BYTES, seed, 2*ctx->n + shax_output_bytes, hash_alg);
+    ec = mgf1(bufp, SLHDSA_DGST_BYTES, seed, 2*ctx->n + shax_output_bytes, hash_alg);
+    if (ec)
+        goto leave;
 
 
     memcpy(digest, bufp, ctx->FORS_msg_bytes);
@@ -308,6 +309,7 @@ static gcry_err_code_t hash_message_sha2(unsigned char *digest, u64 *tree, u32 *
     *leaf_idx &= (~(u32)0) >> (32 - SLHDSA_LEAF_BITS);
 
 leave:
+    _gcry_md_close(hd);
     xfree(seed);
     xfree(inbuf);
     xfree(buf);
@@ -369,7 +371,7 @@ static gcry_err_code_t gen_message_random_shake(unsigned char *R, const unsigned
                         const unsigned char *m, unsigned long long mlen,
                         const _gcry_slhdsa_param_t *ctx)
 {
-    gcry_err_code_t ec;
+    gcry_err_code_t ec = 0;
     gcry_md_hd_t hd = NULL;
 
     ec = _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
@@ -396,7 +398,7 @@ static gcry_err_code_t hash_message_shake(unsigned char *digest, u64 *tree, u32 
                   const _gcry_slhdsa_param_t *ctx)
 {
     gcry_err_code_t ec = 0;
-    gcry_md_hd_t hd;
+    gcry_md_hd_t hd = NULL;
     size_t SLHDSA_TREE_BITS = ctx->tree_height * (ctx->d - 1);
     size_t SLHDSA_TREE_BYTES = (SLHDSA_TREE_BITS + 7) / 8;
     size_t SLHDSA_LEAF_BITS = ctx->tree_height;
@@ -415,12 +417,15 @@ static gcry_err_code_t hash_message_shake(unsigned char *digest, u64 *tree, u32 
 
     bufp = buf;
 
-   _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
-   _gcry_md_write(hd, R, ctx->n);
-   _gcry_md_write(hd, pk, ctx->public_key_bytes);
-   _gcry_md_write(hd, m, mlen);
-   _gcry_md_extract(hd, GCRY_MD_SHAKE256, buf, SLHDSA_DGST_BYTES);
-   _gcry_md_close(hd);
+    ec = _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+    if (ec)
+        goto leave;
+    _gcry_md_write(hd, R, ctx->n);
+    _gcry_md_write(hd, pk, ctx->public_key_bytes);
+    _gcry_md_write(hd, m, mlen);
+    ec = _gcry_md_extract(hd, GCRY_MD_SHAKE256, buf, SLHDSA_DGST_BYTES);
+    if (ec)
+        goto leave;
 
     memcpy(digest, bufp, ctx->FORS_msg_bytes);
     bufp += ctx->FORS_msg_bytes;
@@ -433,6 +438,7 @@ static gcry_err_code_t hash_message_shake(unsigned char *digest, u64 *tree, u32 
     *leaf_idx &= (~(u32)0) >> (32 - SLHDSA_LEAF_BITS);
 
 leave:
+    _gcry_md_close(hd);
     xfree(buf);
 	return ec;
 }
