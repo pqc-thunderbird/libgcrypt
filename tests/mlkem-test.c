@@ -98,6 +98,7 @@ check_mlkem_gen_enc_dec (unsigned mlkem_bits, int do_print_secmem_peak_usages)
   gcry_sexp_t skey, pkey;
   gcry_sexp_t ct, shared_secret, shared_secret2;
   gcry_sexp_t keyparm, key, l;
+  size_t nbits_from_key;
 
   gcry_mpi_t ss, ss2;
   int rc;
@@ -207,6 +208,21 @@ check_mlkem_gen_enc_dec (unsigned mlkem_bits, int do_print_secmem_peak_usages)
       printf ("decryption result incorrect\n");
       die ("check_mlkem_gen_enc_dec test: error with decryption result\n");
     }
+
+  nbits_from_key = gcry_pk_get_nbits (pkey);
+  if (mlkem_bits != nbits_from_key)
+    {
+      printf ("error with getting nbits from ML-KEM public key: should be %u "
+              "but was %zu\n",
+              mlkem_bits,
+              nbits_from_key);
+      die ("error with getting nbits from ML-KEM public key");
+    }
+  /*if(mlkem_bits != gcry_pk_get_nbits(skey))
+  {
+    die("error with getting nbits from ML-KEM private key");
+  }*/
+
   gcry_mpi_release (ss);
   gcry_mpi_release (ss2);
   gcry_sexp_release (keyparm);
@@ -372,6 +388,7 @@ check_mlkem_kat (const char *fname, unsigned mlkem_bits)
       have_flags = !!l;
       gcry_sexp_release (l);
 
+
       rc = gcry_pk_decrypt (&shared_secret_sx, ciphertext_sx, private_key_sx);
       if (rc)
         {
@@ -411,6 +428,7 @@ check_mlkem_kat (const char *fname, unsigned mlkem_bits)
           die ("error with decryption result\n");
         }
       printf (".");
+
 
       xfree (line);
       for (i = 0; i < sizeof (test_vec) / sizeof (test_vec[0]); i++)

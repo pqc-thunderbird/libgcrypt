@@ -424,22 +424,48 @@ mlkem_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
   sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
   pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
 
+#if 0
+  // debug code ===>
+  //
+   {
+  unsigned char dbg_buf [10000];
+  size_t written;
+
+    _gcry_mpi_print(GCRYMPI_FMT_HEX, dbg_buf, sizeof(dbg_buf), &written, pk_mpi);
+    dbg_buf[written + 1] = 0;
+  printf("mlkem_generate(): public key mpi = %s\n", dbg_buf);
+   }
+  // <=== debug code
+#endif
+
   if (!ec)
     {
       ec = sexp_build (r_skey,
                        NULL,
                        "(key-data"
                        " (public-key"
-                       "  (mlkem(p%m) ))"
+                       "  (mlkem(p%M) ))"
                        " (private-key"
-                       "  (mlkem(p%m)(s%m) )))",
+                       "  (mlkem(p%M)(s%M) )))",
                        pk_mpi,
                        pk_mpi,
                        sk_mpi,
                        NULL);
+      // dbg code ===>
+#if 0
+      {
+      char buf[10000];
+    _gcry_sexp_sprint(r_skey, GCRYSEXP_FMT_DEFAULT, buf, sizeof(buf));
+    printf("mlkem_generate(): s-expr = %s\n", buf);
+      }
+#endif
+    // <=== dbg code
     }
   /* call the key check function for now so that we know that it is working: */
-  ec = mlkem_check_secret_key (*r_skey);
+  if(!ec)
+  {
+    ec = mlkem_check_secret_key (*r_skey);
+  }
   if (ec)
     {
       goto leave;
@@ -593,14 +619,28 @@ leave:
 static unsigned int
 mlkem_get_nbits (gcry_sexp_t parms)
 {
-  gpg_err_code_t ec;
-  unsigned int nbits;
-  ec = _gcry_pk_util_get_nbits (parms, &nbits);
-  if (ec)
-    {
-      return 0;
-    }
-  return nbits;
+  gcry_sexp_t l1;
+  unsigned int bit_strength, bit_length;
+  gcry_mpi_t p;
+  unsigned char* dbg_buf;
+  size_t dbg_buf_size;
+  l1 = sexp_find_token (parms, "p", 1);
+  if (!l1)
+    return 0; /* Parameter N not found.  */
+
+  p = sexp_nth_mpi (l1, 1, GCRYMPI_FMT_OPAQUE);
+
+  // debug code ===>
+#if 0
+    _gcry_mpi_aprint(GCRYMPI_FMT_HEX, &dbg_buf, &dbg_buf_size, p);
+  printf("mlkem_get_nbits: public key = %s\n", dbg_buf);
+#endif
+  // <=== debug code
+  sexp_release (l1);
+  bit_length = p? mpi_get_nbits (p) : 0;
+  _gcry_mpi_release (p);
+  bit_strength = bitstrength_from_public_size_bytes((bit_length + 7) / 8);
+  return bit_strength;
 }
 
 static gpg_err_code_t
