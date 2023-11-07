@@ -306,7 +306,7 @@ typedef struct
 int check_test_vec_verify(unsigned char *pk, unsigned pk_len, unsigned char *m, unsigned m_len, unsigned char *sig, unsigned sig_len) {
 
 
-  gcry_error_t err;
+  gcry_err_code_t err;
   gcry_sexp_t public_key_sx;
   gcry_sexp_t signature_sx;
   gcry_sexp_t data_sx;

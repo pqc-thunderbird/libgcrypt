@@ -12,15 +12,15 @@ typedef struct{
   //unsigned char vec_len;
 } gcry_mldsa_polyvec;
 
-gcry_error_t _gcry_mldsa_polymatrix_create(gcry_mldsa_polyvec **polymat, unsigned char mat_elems, unsigned char vec_elems);
+gcry_err_code_t _gcry_mldsa_polymatrix_create(gcry_mldsa_polyvec **polymat, unsigned char mat_elems, unsigned char vec_elems);
 void _gcry_mldsa_polymatrix_destroy(gcry_mldsa_polyvec **polymat, unsigned char elems);
-gcry_error_t _gcry_mldsa_polyvec_create(gcry_mldsa_polyvec *polyvec, unsigned char elems);
-gcry_error_t _gcry_mldsa_polyvec_copy(gcry_mldsa_polyvec *a, gcry_mldsa_polyvec *b, unsigned char elems);
+gcry_err_code_t _gcry_mldsa_polyvec_create(gcry_mldsa_polyvec *polyvec, unsigned char elems);
+gcry_err_code_t _gcry_mldsa_polyvec_copy(gcry_mldsa_polyvec *a, gcry_mldsa_polyvec *b, unsigned char elems);
 void _gcry_mldsa_polyvec_destroy(gcry_mldsa_polyvec *polyvec);
 
-void _gcry_mldsa_polyvecl_uniform_eta(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce);
+gcry_err_code_t _gcry_mldsa_polyvecl_uniform_eta(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce);
 
-void _gcry_mldsa_polyvecl_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce);
+gcry_err_code_t _gcry_mldsa_polyvecl_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce);
 
 void _gcry_mldsa_polyvecl_reduce(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v);
 
@@ -38,7 +38,7 @@ void _gcry_mldsa_polyvecl_pointwise_acc_montgomery(gcry_mldsa_param_t *params,
 
 int _gcry_mldsa_polyvecl_chknorm(gcry_mldsa_param_t *params, const gcry_mldsa_polyvec *v, s32 B);
 
-void _gcry_mldsa_polyveck_uniform_eta(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce);
+gcry_err_code_t _gcry_mldsa_polyveck_uniform_eta(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce);
 
 void _gcry_mldsa_polyveck_reduce(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v);
 void _gcry_mldsa_polyveck_caddq(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v);
@@ -62,7 +62,7 @@ void _gcry_mldsa_polyveck_use_hint(gcry_mldsa_param_t *params, gcry_mldsa_polyve
 
 void _gcry_mldsa_polyveck_pack_w1(gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_polyvec *w1);
 
-void _gcry_mldsa_polyvec_matrix_expand(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *mat, const byte rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t _gcry_mldsa_polyvec_matrix_expand(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *mat, const byte rho[GCRY_MLDSA_SEEDBYTES]);
 
 void _gcry_mldsa_polyvec_matrix_pointwise_montgomery(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *t, const gcry_mldsa_polyvec *mat, const gcry_mldsa_polyvec *v);
 

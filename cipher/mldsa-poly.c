@@ -289,18 +289,30 @@ static unsigned int rej_uniform(s32 *a,
 *              - u16 nonce: 2-byte nonce
 **************************************************/
 #define POLY_UNIFORM_NBLOCKS ((768 + GCRY_STREAM128_BLOCKBYTES - 1)/GCRY_STREAM128_BLOCKBYTES)
-void _gcry_mldsa_poly_uniform(gcry_mldsa_poly *a,
+gcry_err_code_t _gcry_mldsa_poly_uniform(gcry_mldsa_poly *a,
                   const byte seed[GCRY_MLDSA_SEEDBYTES],
                   u16 nonce)
 {
+  gcry_err_code_t ec = 0;
+  gcry_md_hd_t md = NULL;
   unsigned int i, ctr, off;
-  unsigned int buflen = POLY_UNIFORM_NBLOCKS*GCRY_STREAM128_BLOCKBYTES;
-  byte buf[POLY_UNIFORM_NBLOCKS*GCRY_STREAM128_BLOCKBYTES + 2];
+  unsigned int buflen;
+  byte *buf = NULL;
 
-  gcry_md_hd_t md;
+  buflen = POLY_UNIFORM_NBLOCKS*GCRY_STREAM128_BLOCKBYTES;
+  buf = xtrymalloc_secure (buflen + 2);
+  if (!buf)
+    {
+      ec = gpg_err_code_from_syserror ();
+      goto leave;
+    }
 
-  _gcry_mldsa_shake128_stream_init(&md, seed, nonce);
-  _gcry_mldsa_shake128_squeeze_nblocks(md, POLY_UNIFORM_NBLOCKS, buf);
+  ec = _gcry_mldsa_shake128_stream_init(&md, seed, nonce);
+  if (ec)
+    goto leave;
+  ec = _gcry_mldsa_shake128_squeeze_nblocks(md, POLY_UNIFORM_NBLOCKS, buf);
+  if (ec)
+    goto leave;
 
   ctr = rej_uniform(a->coeffs, GCRY_MLDSA_N, buf, buflen);
 
@@ -309,13 +321,17 @@ void _gcry_mldsa_poly_uniform(gcry_mldsa_poly *a,
     for(i = 0; i < off; ++i)
       buf[i] = buf[buflen - off + i];
 
-    //stream128_squeezeblocks(buf + off, 1, &state);
-    _gcry_mldsa_shake128_squeeze_nblocks(md, 1, buf+off);
+    ec = _gcry_mldsa_shake128_squeeze_nblocks(md, 1, buf+off);
+    if (ec)
+      goto leave;
     buflen = GCRY_STREAM128_BLOCKBYTES + off;
     ctr += rej_uniform(a->coeffs + ctr, GCRY_MLDSA_N - ctr, buf, buflen);
   }
 
+leave:
+  xfree(buf);
   _gcry_md_close(md);
+  return ec;
 }
 
 /*************************************************
@@ -378,36 +394,52 @@ static unsigned int rej_eta(gcry_mldsa_param_t *params,
 *              - const byte seed[]: byte array with seed of length GCRY_MLDSA_CRHBYTES
 *              - u16 nonce: 2-byte nonce
 **************************************************/
-void _gcry_mldsa_poly_uniform_eta(gcry_mldsa_param_t *params,
+gcry_err_code_t _gcry_mldsa_poly_uniform_eta(gcry_mldsa_param_t *params,
                       gcry_mldsa_poly *a,
                       const byte seed[GCRY_MLDSA_CRHBYTES],
                       u16 nonce)
 {
+  gcry_err_code_t ec = 0;
+  gcry_md_hd_t md = NULL;
+  unsigned int ctr;
+  unsigned int buflen;
+  byte *buf = NULL;
   unsigned int POLY_UNIFORM_ETA_NBLOCKS;
+
   if(params->eta == 2) {
     POLY_UNIFORM_ETA_NBLOCKS = ((136 + GCRY_STREAM256_BLOCKBYTES - 1)/GCRY_STREAM256_BLOCKBYTES);
   }
   else if(params->eta == 4) {
     POLY_UNIFORM_ETA_NBLOCKS = ((227 + GCRY_STREAM256_BLOCKBYTES - 1)/GCRY_STREAM256_BLOCKBYTES);
   }
+  buflen = POLY_UNIFORM_ETA_NBLOCKS*GCRY_STREAM256_BLOCKBYTES;
+  buf = xtrymalloc_secure (buflen);
+  if (!buf)
+    {
+      ec = gpg_err_code_from_syserror ();
+      goto leave;
+    }
 
-  unsigned int ctr;
-  unsigned int buflen = POLY_UNIFORM_ETA_NBLOCKS*GCRY_STREAM256_BLOCKBYTES;
-  byte buf[POLY_UNIFORM_ETA_NBLOCKS*GCRY_STREAM256_BLOCKBYTES];
-
-  gcry_md_hd_t md;
-
-  _gcry_mldsa_shake256_stream_init(&md, seed, nonce);
-  _gcry_mldsa_shake256_squeeze_nblocks(md, POLY_UNIFORM_ETA_NBLOCKS, buf);
+  ec = _gcry_mldsa_shake256_stream_init(&md, seed, nonce);
+  if (ec)
+    goto leave;
+  ec = _gcry_mldsa_shake256_squeeze_nblocks(md, POLY_UNIFORM_ETA_NBLOCKS, buf);
+  if (ec)
+    goto leave;
 
   ctr = rej_eta(params, a->coeffs, GCRY_MLDSA_N, buf, buflen);
 
   while(ctr < GCRY_MLDSA_N) {
-    _gcry_mldsa_shake256_squeeze_nblocks(md, 1, buf);
+    ec = _gcry_mldsa_shake256_squeeze_nblocks(md, 1, buf);
+    if (ec)
+      goto leave;
     ctr += rej_eta(params, a->coeffs + ctr, GCRY_MLDSA_N - ctr, buf, GCRY_STREAM256_BLOCKBYTES);
   }
 
+leave:
   _gcry_md_close(md);
+  xfree(buf);
+  return ec;
 }
 
 /*************************************************
@@ -421,20 +453,37 @@ void _gcry_mldsa_poly_uniform_eta(gcry_mldsa_param_t *params,
 *              - const byte seed[]: byte array with seed of length GCRY_MLDSA_CRHBYTES
 *              - u16 nonce: 16-bit nonce
 **************************************************/
-void _gcry_mldsa_poly_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_poly *a,
+gcry_err_code_t _gcry_mldsa_poly_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_poly *a,
                          const byte seed[GCRY_MLDSA_CRHBYTES],
                          u16 nonce)
 {
+  gcry_err_code_t ec = 0;
+  gcry_md_hd_t md = NULL;
   unsigned int POLY_UNIFORM_GAMMA1_NBLOCKS = ((params->polyz_packedbytes + GCRY_STREAM256_BLOCKBYTES - 1)/GCRY_STREAM256_BLOCKBYTES);
+  unsigned int buflen = POLY_UNIFORM_GAMMA1_NBLOCKS*GCRY_STREAM256_BLOCKBYTES;
+  byte *buf = NULL;
 
-  byte buf[POLY_UNIFORM_GAMMA1_NBLOCKS*GCRY_STREAM256_BLOCKBYTES];
-  gcry_md_hd_t md;
+  buf = xtrymalloc_secure (buflen);
+  if (!buf)
+    {
+      ec = gpg_err_code_from_syserror ();
+      goto leave;
+    }
 
-  _gcry_mldsa_shake256_stream_init(&md, seed, nonce);
-  _gcry_mldsa_shake256_squeeze_nblocks(md, POLY_UNIFORM_GAMMA1_NBLOCKS, buf);
-  _gcry_md_close(md);
+  ec = _gcry_mldsa_shake256_stream_init(&md, seed, nonce);
+  if (ec)
+    goto leave;
+  ec = _gcry_mldsa_shake256_squeeze_nblocks(md, POLY_UNIFORM_GAMMA1_NBLOCKS, buf);
+  if (ec)
+    goto leave;
+
 
   _gcry_mldsa_polyz_unpack(params, a, buf);
+
+leave:
+  xfree(buf);
+  _gcry_md_close(md);
+  return ec;
 }
 
 /*************************************************
@@ -447,15 +496,27 @@ void _gcry_mldsa_poly_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_poly
 * Arguments:   - gcry_mldsa_poly *c: pointer to output polynomial
 *              - const byte mu[]: byte array containing seed of length GCRY_MLDSA_SEEDBYTES
 **************************************************/
-void _gcry_mldsa_poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly *c, const byte seed[GCRY_MLDSA_SEEDBYTES]) {
+gcry_err_code_t _gcry_mldsa_poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly *c, const byte seed[GCRY_MLDSA_SEEDBYTES]) {
+  gcry_err_code_t ec = 0;
+  gcry_md_hd_t hd = NULL;
   unsigned int i, b, pos;
   uint64_t signs;
-  byte buf[GCRY_SHAKE256_RATE];
-  gcry_md_hd_t hd;
+  byte *buf = NULL;
 
-  _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  buf = xtrymalloc_secure (GCRY_SHAKE256_RATE);
+  if (!buf)
+    {
+      ec = gpg_err_code_from_syserror ();
+      goto leave;
+    }
+
+  ec = _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  if (ec)
+    goto leave;
   _gcry_md_write(hd, seed, GCRY_MLDSA_SEEDBYTES);
-  _gcry_mldsa_shake256_squeeze_nblocks(hd, 1, buf);
+  ec = _gcry_mldsa_shake256_squeeze_nblocks(hd, 1, buf);
+  if (ec)
+    goto leave;
 
   signs = 0;
   for(i = 0; i < 8; ++i)
@@ -467,7 +528,9 @@ void _gcry_mldsa_poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly *c, 
   for(i = GCRY_MLDSA_N-params->tau; i < GCRY_MLDSA_N; ++i) {
     do {
       if(pos >= GCRY_SHAKE256_RATE) {
-        _gcry_mldsa_shake256_squeeze_nblocks(hd, 1, buf);
+        ec = _gcry_mldsa_shake256_squeeze_nblocks(hd, 1, buf);
+        if (ec)
+          goto leave;
         pos = 0;
       }
 
@@ -479,7 +542,10 @@ void _gcry_mldsa_poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly *c, 
     signs >>= 1;
   }
 
+leave:
+  xfree(buf);
   _gcry_md_close(hd);
+  return ec;
 }
 
 /*************************************************

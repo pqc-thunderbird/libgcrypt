@@ -4,10 +4,10 @@
 #include "mldsa-polyvec.h"
 #include "mldsa-poly.h"
 
-gcry_error_t _gcry_mldsa_polymatrix_create(gcry_mldsa_polyvec **polymat,
+gcry_err_code_t _gcry_mldsa_polymatrix_create(gcry_mldsa_polyvec **polymat,
                                            unsigned char mat_elems, unsigned char vec_elems)
 {
-  gcry_error_t ec = 0;
+  gcry_err_code_t ec = 0;
   unsigned i;
 
   if (!(*polymat = xtrymalloc(sizeof(**polymat) * mat_elems)))
@@ -44,7 +44,7 @@ void _gcry_mldsa_polymatrix_destroy(gcry_mldsa_polyvec **polymat,
   *polymat = NULL;
 }
 
-gcry_error_t _gcry_mldsa_polyvec_create(gcry_mldsa_polyvec *polyvec,
+gcry_err_code_t _gcry_mldsa_polyvec_create(gcry_mldsa_polyvec *polyvec,
                                          unsigned char elems)
 {
   if (!(polyvec->vec = xtrymalloc_secure(sizeof(*polyvec->vec) * elems)))
@@ -63,7 +63,7 @@ void _gcry_mldsa_polyvec_destroy(gcry_mldsa_polyvec *polyvec)
   polyvec->vec = NULL;
 }
 
-gcry_error_t _gcry_mldsa_polyvec_copy(gcry_mldsa_polyvec *dst, gcry_mldsa_polyvec *src, unsigned char elems)
+gcry_err_code_t _gcry_mldsa_polyvec_copy(gcry_mldsa_polyvec *dst, gcry_mldsa_polyvec *src, unsigned char elems)
 {
   unsigned i;
   if(!dst || !src)
@@ -89,12 +89,20 @@ gcry_error_t _gcry_mldsa_polyvec_copy(gcry_mldsa_polyvec *dst, gcry_mldsa_polyve
 * Arguments:   - gcry_mldsa_polyvec mat[params->k]: output matrix
 *              - const byte rho[]: byte array containing seed rho
 **************************************************/
-void _gcry_mldsa_polyvec_matrix_expand(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *mat, const byte rho[GCRY_MLDSA_SEEDBYTES]) {
+gcry_err_code_t _gcry_mldsa_polyvec_matrix_expand(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *mat, const byte rho[GCRY_MLDSA_SEEDBYTES]) {
+  gcry_err_code_t ec = 0;
   unsigned int i, j;
 
   for(i = 0; i < params->k; ++i)
     for(j = 0; j < params->l; ++j)
-      _gcry_mldsa_poly_uniform(&mat[i].vec[j], rho, (i << 8) + j);
+      {
+      ec = _gcry_mldsa_poly_uniform(&mat[i].vec[j], rho, (i << 8) + j);
+      if (ec)
+        goto leave;
+      }
+
+leave:
+  return ec;
 }
 
 void _gcry_mldsa_polyvec_matrix_pointwise_montgomery(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *t, const gcry_mldsa_polyvec *mat, const gcry_mldsa_polyvec *v) {
@@ -108,18 +116,34 @@ void _gcry_mldsa_polyvec_matrix_pointwise_montgomery(gcry_mldsa_param_t *params,
 /************ Vectors of polynomials of length params->l **************/
 /**************************************************************/
 
-void _gcry_mldsa_polyvecl_uniform_eta(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce) {
+gcry_err_code_t _gcry_mldsa_polyvecl_uniform_eta(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce) {
+  gcry_err_code_t ec = 0;
   unsigned int i;
 
   for(i = 0; i < params->l; ++i)
-    _gcry_mldsa_poly_uniform_eta(params, &v->vec[i], seed, nonce++);
+  {
+    ec = _gcry_mldsa_poly_uniform_eta(params, &v->vec[i], seed, nonce++);
+    if (ec)
+      goto leave;
+  }
+
+leave:
+  return ec;
 }
 
-void _gcry_mldsa_polyvecl_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce) {
+gcry_err_code_t _gcry_mldsa_polyvecl_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce) {
+  gcry_err_code_t ec = 0;
   unsigned int i;
 
   for(i = 0; i < params->l; ++i)
-    _gcry_mldsa_poly_uniform_gamma1(params, &v->vec[i], seed, params->l*nonce + i);
+    {
+      ec = _gcry_mldsa_poly_uniform_gamma1(params, &v->vec[i], seed, params->l*nonce + i);
+      if (ec)
+        goto leave;
+    }
+
+leave:
+  return ec;
 }
 
 void _gcry_mldsa_polyvecl_reduce(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v) {
@@ -227,11 +251,19 @@ int _gcry_mldsa_polyvecl_chknorm(gcry_mldsa_param_t *params, const gcry_mldsa_po
 /************ Vectors of polynomials of length params->k **************/
 /**************************************************************/
 
-void _gcry_mldsa_polyveck_uniform_eta(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce) {
+gcry_err_code_t _gcry_mldsa_polyveck_uniform_eta(gcry_mldsa_param_t *params, gcry_mldsa_polyvec *v, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce) {
+  gcry_err_code_t ec = 0;
   unsigned int i;
 
   for(i = 0; i < params->k; ++i)
-    _gcry_mldsa_poly_uniform_eta(params, &v->vec[i], seed, nonce++);
+  {
+    ec = _gcry_mldsa_poly_uniform_eta(params, &v->vec[i], seed, nonce++);
+    if (ec)
+      goto leave;
+  }
+
+leave:
+  return ec;
 }
 
 /*************************************************
