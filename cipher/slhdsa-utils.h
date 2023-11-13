@@ -4,7 +4,6 @@
 #include "config.h"
 
 #include "types.h"
-#include "slhdsa-params.h"
 #include "slhdsa-context.h"
 
 #include "g10lib.h"

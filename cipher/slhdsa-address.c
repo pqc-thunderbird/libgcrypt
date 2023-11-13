@@ -2,7 +2,6 @@
 #include <config.h>
 #include "types.h"
 #include "slhdsa-address.h"
-#include "slhdsa-params.h"
 #include "slhdsa-utils.h"
 
 /*

@@ -4,7 +4,6 @@
 #include "config.h"
 
 #include "slhdsa-context.h"
-#include "slhdsa-params.h"
 
 #include "types.h"
 

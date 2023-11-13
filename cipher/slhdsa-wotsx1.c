@@ -9,7 +9,6 @@
 #include "slhdsa-wots.h"
 #include "slhdsa-wotsx1.h"
 #include "slhdsa-address.h"
-#include "slhdsa-params.h"
 
 #include "g10lib.h"
 

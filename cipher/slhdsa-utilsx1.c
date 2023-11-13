@@ -4,7 +4,6 @@
 
 #include "slhdsa-utils.h"
 #include "slhdsa-utilsx1.h"
-#include "slhdsa-params.h"
 #include "slhdsa-thash.h"
 #include "slhdsa-address.h"
 

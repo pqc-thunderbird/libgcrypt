@@ -5,7 +5,6 @@
 
 #include "slhdsa-address.h"
 #include "slhdsa-utils.h"
-#include "slhdsa-params.h"
 #include "slhdsa-hash.h"
 #include "slhdsa-sha2.h"
 

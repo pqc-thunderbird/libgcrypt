@@ -1,4 +1,3 @@
-
 #include <config.h>
 #include <stdio.h>
 
@@ -383,7 +382,6 @@ static const char *slhdsa_names[] = {
     NULL,
 };
 
-
 static gcry_err_code_t extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
                                                     const char *label,
                                                     unsigned char **sk_p,
@@ -511,17 +509,6 @@ leave:
   return ec;
 }
 
-
-static gcry_err_code_t slhdsa_check_secret_key(gcry_sexp_t keyparms)
-{
-  gpg_err_code_t ec = 0;
-
-  /* TODO implement */
-  (void)keyparms;
-
-  return ec;
-}
-
 static gcry_err_code_t slhdsa_sign(gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 {
   gpg_err_code_t ec       = 0;
@@ -550,7 +537,6 @@ static gcry_err_code_t slhdsa_sign(gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_
   if ((ec = gcry_slhdsa_get_param_from_paramset_id(&param, paramset)))
     goto leave;
   _gcry_pk_util_init_encoding_ctx(&ctx, PUBKEY_OP_SIGN, nbits);
-
 
   ec = _gcry_pk_util_data_to_mpi(s_data, &data, &ctx);
   if (ec)
@@ -616,7 +602,6 @@ leave:
     log_debug("slhdsa_sign    => %s\n", gpg_strerror(ec));
   return ec;
 }
-
 
 static gcry_err_code_t slhdsa_verify(gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
 {
@@ -722,32 +707,6 @@ leave:
   return ec;
 }
 
-static gpg_err_code_t selftests_slhdsa(selftest_report_func_t report, int extended)
-{
-  (void)report;
-  (void)extended;
-
-  return GPG_ERR_NO_ERROR; /* TODO implement */
-}
-
-/* Run a full self-test for ALGO and return 0 on success.  */
-static gpg_err_code_t run_selftests(int algo, int extended, selftest_report_func_t report)
-{
-  gpg_err_code_t ec;
-
-  switch (algo)
-    {
-    case GCRY_PK_SLHDSA:
-      ec = selftests_slhdsa(report, extended);
-      break;
-    default:
-      ec = GPG_ERR_PUBKEY_ALGO;
-      break;
-    }
-  return ec;
-}
-
-
 static gpg_err_code_t compute_keygrip(gcry_md_hd_t md, gcry_sexp_t keyparam)
 {
   gcry_sexp_t l1;
@@ -784,11 +743,11 @@ gcry_pk_spec_t _gcry_pubkey_spec_slhdsa
        "a",
        "", /* elements of pub-key, sec-key, ciphertext, signature, key-grip */
        slhdsa_generate,
-       slhdsa_check_secret_key,
+       NULL, /* slhdsa_check_secret_key */
        NULL,
        NULL,
        slhdsa_sign,
        slhdsa_verify,
        slhdsa_get_nbits,
-       run_selftests,
+       NULL, /* run_selftests */
        compute_keygrip};
