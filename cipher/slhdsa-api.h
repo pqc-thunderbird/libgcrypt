@@ -15,8 +15,10 @@
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [root || PUB_SEED]
  */
-gcry_err_code_t _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsigned char *sk,
-                             const unsigned char *seed);
+gcry_err_code_t _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx,
+                                          unsigned char *pk,
+                                          unsigned char *sk,
+                                          const unsigned char *seed);
 
 /*
  * Generates a slhdsa key pair.
@@ -28,13 +30,13 @@ gcry_err_code_t _gcry_slhdsa_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *p
 /**
  * Returns an array containing a detached signature.
  */
-gcry_err_code_t _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, byte *sig, size_t *siglen,
-                          const byte *m, size_t mlen, const byte *sk);
+gcry_err_code_t _gcry_slhdsa_signature(
+    _gcry_slhdsa_param_t *ctx, byte *sig, size_t *siglen, const byte *m, size_t mlen, const byte *sk);
 
 /**
  * Verifies a detached signature and message under a given public key.
  */
-gcry_err_code_t _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const byte *sig, size_t siglen,
-                       const byte *m, size_t mlen, const byte *pk);
+gcry_err_code_t _gcry_slhdsa_verify(
+    _gcry_slhdsa_param_t *ctx, const byte *sig, size_t siglen, const byte *m, size_t mlen, const byte *pk);
 
 #endif

@@ -17,14 +17,17 @@
  * Applies the offset idx_offset to indices before building addresses, so that
  * it is possible to continue counting indices across trees.
  */
-gcry_err_code_t
-treehashx1(unsigned char *root, unsigned char *auth_path,
-                const _gcry_slhdsa_param_t* ctx,
-                u32 leaf_idx, u32 idx_offset, u32 tree_height,
-                gcry_err_code_t (*gen_leaf)(
-                   unsigned char* /* Where to write the leaf */,
-                   const _gcry_slhdsa_param_t* /* ctx */,
-                   u32 addr_idx, void *info),
-                u32 tree_addrx4[8], void *info);
+gcry_err_code_t treehashx1(unsigned char *root,
+                           unsigned char *auth_path,
+                           const _gcry_slhdsa_param_t *ctx,
+                           u32 leaf_idx,
+                           u32 idx_offset,
+                           u32 tree_height,
+                           gcry_err_code_t (*gen_leaf)(unsigned char * /* Where to write the leaf */,
+                                                       const _gcry_slhdsa_param_t * /* ctx */,
+                                                       u32 addr_idx,
+                                                       void *info),
+                           u32 tree_addrx4[8],
+                           void *info);
 
 #endif

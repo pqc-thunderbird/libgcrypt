@@ -14,10 +14,11 @@
  * Signs a message m, deriving the secret key from sk_seed and the FTS address.
  * Assumes m contains at least SLHDSA_FORS_HEIGHT * SLHDSA_FORS_TREES bits.
  */
-gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig, unsigned char *pk,
-               const unsigned char *m,
-               const _gcry_slhdsa_param_t* ctx,
-               const u32 fors_addr[8]);
+gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig,
+                                       unsigned char *pk,
+                                       const unsigned char *m,
+                                       const _gcry_slhdsa_param_t *ctx,
+                                       const u32 fors_addr[8]);
 
 /**
  * Derives the FORS public key from a signature.
@@ -27,8 +28,9 @@ gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig, unsigned char *pk,
  * Assumes m contains at least SLHDSA_FORS_HEIGHT * SLHDSA_FORS_TREES bits.
  */
 gcry_err_code_t _gcry_slhdsa_fors_pk_from_sig(unsigned char *pk,
-                      const unsigned char *sig, const unsigned char *m,
-                      const _gcry_slhdsa_param_t* ctx,
-                      const u32 fors_addr[8]);
+                                              const unsigned char *sig,
+                                              const unsigned char *m,
+                                              const _gcry_slhdsa_param_t *ctx,
+                                              const u32 fors_addr[8]);
 
 #endif

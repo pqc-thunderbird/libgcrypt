@@ -16,12 +16,16 @@
  * Writes the computed public key to 'pk'.
  */
 gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig(unsigned char *pk,
-                      const unsigned char *sig, const unsigned char *msg,
-                      const _gcry_slhdsa_param_t *ctx, u32 addr[8]);
+                                              const unsigned char *sig,
+                                              const unsigned char *msg,
+                                              const _gcry_slhdsa_param_t *ctx,
+                                              u32 addr[8]);
 
 /*
  * Compute the chain lengths needed for a given message hash
  */
-gcry_err_code_t _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx, unsigned int *lengths, const unsigned char *msg);
+gcry_err_code_t _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx,
+                                           unsigned int *lengths,
+                                           const unsigned char *msg);
 
 #endif
