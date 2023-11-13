@@ -71,7 +71,7 @@ static gcry_err_code_t paramset_from_hash_and_variant(slhdsa_paramset *paramset,
         }
       else
         {
-          return 1; /* TODO: correct error code */
+          return GPG_ERR_INV_ARG;
         }
     }
   else if (strcmp(hash, "SHAKE") == 0)
@@ -102,12 +102,12 @@ static gcry_err_code_t paramset_from_hash_and_variant(slhdsa_paramset *paramset,
         }
       else
         {
-          return 1; /* TODO: correct error code */
+          return GPG_ERR_INV_ARG;
         }
     }
   else
     {
-      return 1; /* TODO: correct error code */
+      return GPG_ERR_INV_ARG;
     }
 
   return 0;
@@ -240,7 +240,7 @@ static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param
       param->is_sha2       = 0;
       break;
     default:
-      return 1; /* TODO: correct error code */
+      return GPG_ERR_INV_ARG;
     }
 
   param->pub_seed = xtrymalloc(param->n);
