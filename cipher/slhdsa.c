@@ -750,14 +750,25 @@ static gpg_err_code_t run_selftests(int algo, int extended, selftest_report_func
 
 static gpg_err_code_t compute_keygrip(gcry_md_hd_t md, gcry_sexp_t keyparam)
 {
-  gpg_err_code_t ec = 0;
+  gcry_sexp_t l1;
+  const char *data;
+  size_t datalen;
 
-  (void)md;
-  (void)keyparam;
+  l1 = sexp_find_token(keyparam, "p", 1);
+  if (!l1)
+    return GPG_ERR_NO_OBJ;
 
-  /* TODO: implement */
+  data = sexp_nth_data(l1, 1, &datalen);
+  if (!data)
+    {
+      sexp_release(l1);
+      return GPG_ERR_NO_OBJ;
+    }
 
-  return ec;
+  _gcry_md_write(md, data, datalen);
+  sexp_release(l1);
+
+  return 0;
 }
 
 gcry_pk_spec_t _gcry_pubkey_spec_slhdsa
@@ -771,7 +782,7 @@ gcry_pk_spec_t _gcry_pubkey_spec_slhdsa
        "s",
        "",
        "a",
-       "p", /* elements of pub-key, sec-key, ciphertext, signature, key-grip */
+       "", /* elements of pub-key, sec-key, ciphertext, signature, key-grip */
        slhdsa_generate,
        slhdsa_check_secret_key,
        NULL,
