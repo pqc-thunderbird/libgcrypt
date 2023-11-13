@@ -115,12 +115,18 @@ static void gcry_slhdsa_param_destroy(_gcry_slhdsa_param_t *param)
 {
   xfree(param->pub_seed);
   xfree(param->sk_seed);
-  xfree(param->state_seeded);
-  xfree(param->state_seeded_512);
+  _gcry_md_close(param->state_seeded);
+  _gcry_md_close(param->state_seeded_512);
 }
 
 static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param_t *param, slhdsa_paramset paramset)
 {
+  gcry_err_code_t ec = 0;
+  param->pub_seed = NULL;
+  param->sk_seed = NULL;
+  param->state_seeded = NULL;
+  param->state_seeded_512 = NULL;
+
   switch(paramset)
   {
    case SHA2_128f:
@@ -234,19 +240,17 @@ static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param
   default: return 1; /* TODO: correct error code */
   }
 
-  /* allocate buffers */
-  param->pub_seed = NULL;
-  param->sk_seed = NULL;
-  param->state_seeded = NULL;
-  param->state_seeded_512 = NULL;
   param->pub_seed = xtrymalloc(param->n);
-  param->sk_seed = xtrymalloc_secure(param->n);
-  param->state_seeded = xtrymalloc_secure(40);
-  param->state_seeded_512 = xtrymalloc_secure(72);
-  if(!param->pub_seed || !param->sk_seed || !param->state_seeded || !param->state_seeded_512)
+  if (!param->pub_seed)
   {
-      return gpg_err_code_from_syserror();
-      gcry_slhdsa_param_destroy(param);
+    ec = gpg_err_code_from_syserror();
+    goto leave;
+  }
+  param->sk_seed = xtrymalloc_secure(param->n);
+  if (!param->sk_seed)
+  {
+    ec = gpg_err_code_from_syserror();
+    goto leave;
   }
 
   /* derived and fix params */
@@ -295,7 +299,10 @@ static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param
     param->offset_tree_index = 28;
   }
 
-  return 0;
+leave:
+  if (ec)
+    gcry_slhdsa_param_destroy(param);
+  return ec;
 }
 
 const char *hash_alg_map[] = {"SHA2", "SHAKE"};

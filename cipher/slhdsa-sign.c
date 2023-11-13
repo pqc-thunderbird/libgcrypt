@@ -33,7 +33,9 @@ gcry_err_code_t _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx, unsigned ch
 
     /* This hook allows the hash function instantiation to do whatever
        preparation or computation it needs, based on the public seed. */
-    _gcry_slhdsa_initialize_hash_function(ctx);
+    ec = _gcry_slhdsa_initialize_hash_function(ctx);
+    if (ec)
+      goto leave;
 
     /* Compute root node of the top-most subtree. */
     ec = _gcry_slhdsa_merkle_gen_root(sk + 3*ctx->n, ctx);
@@ -115,7 +117,9 @@ gcry_err_code_t _gcry_slhdsa_signature(_gcry_slhdsa_param_t *ctx, byte *sig, siz
 
     /* This hook allows the hash function instantiation to do whatever
        preparation or computation it needs, based on the public seed. */
-    _gcry_slhdsa_initialize_hash_function(ctx);
+    ec = _gcry_slhdsa_initialize_hash_function(ctx);
+    if (ec)
+      goto leave;
 
     _gcry_slhdsa_set_type(ctx, wots_addr, SLHDSA_ADDR_TYPE_WOTS);
     _gcry_slhdsa_set_type(ctx, tree_addr, SLHDSA_ADDR_TYPE_HASHTREE);
@@ -221,7 +225,9 @@ gcry_err_code_t _gcry_slhdsa_verify(_gcry_slhdsa_param_t *ctx, const byte *sig, 
 
     /* This hook allows the hash function instantiation to do whatever
        preparation or computation it needs, based on the public seed. */
-    _gcry_slhdsa_initialize_hash_function(ctx);
+    ec = _gcry_slhdsa_initialize_hash_function(ctx);
+    if (ec)
+      goto leave;
 
     _gcry_slhdsa_set_type(ctx, wots_addr, SLHDSA_ADDR_TYPE_WOTS);
     _gcry_slhdsa_set_type(ctx, tree_addr, SLHDSA_ADDR_TYPE_HASHTREE);

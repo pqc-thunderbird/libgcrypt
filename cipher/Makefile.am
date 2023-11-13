@@ -155,7 +155,6 @@ EXTRA_libcipher_la_SOURCES = \
 	slhdsa-address.c slhdsa-merkle.c slhdsa-wots.c slhdsa-wotsx1.c slhdsa-utils.c slhdsa-utilsx1.c slhdsa-fors.c slhdsa-sign.c \
 	slhdsa-params.h slhdsa-address.h slhdsa-merkle.h slhdsa-wots.h slhdsa-wotsx1.h slhdsa-utils.h slhdsa-utilsx1.h slhdsa-fors.h slhdsa-api.h slhdsa-hash.h slhdsa-thash.h \
 	slhdsa-hash_shake.c \
-	slhdsa-sha2.c \
 	slhdsa.c \
 	slhdsa-thash.c
 

@@ -14,8 +14,7 @@
 
 
 
-static void initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx);
-static void initialize_hash_function_shake(_gcry_slhdsa_param_t *ctx);
+static gcry_err_code_t initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx);
 static gcry_err_code_t prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
               const u32 addr[8]);
 static gcry_err_code_t prf_addr_shake(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
@@ -38,16 +37,12 @@ static gcry_err_code_t hash_message_shake(unsigned char *digest, u64 *tree, u32 
                   const _gcry_slhdsa_param_t *ctx);
 
 
-/* TODO */
-void _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
+gcry_err_code_t _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
 {
+    /* absorb public seed */
     if(ctx->is_sha2)
     {
-        initialize_hash_function_sha2(ctx);
-    }
-    else
-    {
-        initialize_hash_function_shake(ctx);
+        return initialize_hash_function_sha2(ctx);
     }
 }
 
@@ -95,13 +90,34 @@ gcry_err_code_t _gcry_slhdsa_hash_message(unsigned char *digest, u64 *tree, u32 
     }
 }
 
-/* For SHA, there is no immediate reason to initialize at the start,
-   so this function is an empty operation. */
-void initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx)
+gcry_err_code_t initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx)
 {
-    (void) ctx;
-    /* TODO: implement this speed optimization */
-    //seed_state(ctx);
+     /**
+     * Absorb the constant pub_seed using one round of the compression function
+     * This initializes state_seeded and state_seeded_512, which can then be
+     * reused in thash
+     **/
+    gcry_err_code_t ec = 0;
+    byte block[SLHDSA_SHA512_BLOCK_BYTES];
+
+    memset(block, 0, SLHDSA_SHA512_BLOCK_BYTES);
+    memcpy(block, ctx->pub_seed, ctx->n);
+
+    /* seed SHA256 state */
+    ec = _gcry_md_open (&(ctx->state_seeded), GCRY_MD_SHA256, GCRY_MD_FLAG_SECURE);
+    if (ec)
+        return ec;
+    _gcry_md_write(ctx->state_seeded, block, SLHDSA_SHA256_BLOCK_BYTES);
+
+    /* seed SHA512 state */
+    if(ctx->do_use_sha512) {
+        ec = _gcry_md_open (&(ctx->state_seeded_512), GCRY_MD_SHA512, GCRY_MD_FLAG_SECURE);
+        if (ec)
+            return ec;
+        _gcry_md_write(ctx->state_seeded_512, block, SLHDSA_SHA512_BLOCK_BYTES);
+    }
+
+    return ec;
 }
 
 /*
@@ -313,15 +329,6 @@ leave:
     xfree(inbuf);
     xfree(buf);
 	return ec;
-}
-
-
-
-/* For SHAKE256, there is no immediate reason to initialize at the start,
-   so this function is an empty operation. */
-static void initialize_hash_function_shake(_gcry_slhdsa_param_t* ctx)
-{
-    (void)ctx; /* Suppress an 'unused parameter' warning. */
 }
 
 /*

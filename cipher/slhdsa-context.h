@@ -1,7 +1,9 @@
 #ifndef SLHDSA_CONTEXT_H
 #define SLHDSA_CONTEXT_H
 
+#include <config.h>
 #include "types.h"
+#include "g10lib.h"
 
 #include "slhdsa-params.h"
 
@@ -9,11 +11,11 @@ typedef struct {
     byte *pub_seed;
     byte *sk_seed;
 
-    // sha256 state that absorbed pub_seed
-    byte *state_seeded;
+    /* sha256 state that absorbed pub_seed */
+    gcry_md_hd_t state_seeded;
 
-    // sha512 state that absorbed pub_seed
-    byte *state_seeded_512;
+    /* sha512 state that absorbed pub_seed */
+    gcry_md_hd_t state_seeded_512;
 
     byte n; /* Hash output length in bytes */
     byte seed_bytes; /* seed length */

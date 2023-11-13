@@ -3046,7 +3046,7 @@ fi
 LIST_MEMBER(slhdsa, $enabled_pubkey_ciphers)
 AM_CONDITIONAL(USE_SLHDSA, [test "$found" = "1"])
 if test "$found" = "1" ; then
-  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS slhdsa.lo slhdsa-sha2.lo slhdsa-address.lo slhdsa-merkle.lo slhdsa-wots.lo slhdsa-wotsx1.lo slhdsa-utils.lo slhdsa-utilsx1.lo slhdsa-fors.lo slhdsa-sign.lo slhdsa-hash.lo slhdsa-thash.lo"
+  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS slhdsa.lo slhdsa-address.lo slhdsa-merkle.lo slhdsa-wots.lo slhdsa-wotsx1.lo slhdsa-utils.lo slhdsa-utilsx1.lo slhdsa-fors.lo slhdsa-sign.lo slhdsa-hash.lo slhdsa-thash.lo"
    AC_DEFINE(USE_SLHDSA, 1, [Defined if this module should be included])
 fi
 

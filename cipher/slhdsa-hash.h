@@ -5,7 +5,7 @@
 #include "slhdsa-context.h"
 #include "slhdsa-params.h"
 
-void _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx);
+gcry_err_code_t _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx);
 
 gcry_err_code_t _gcry_slhdsa_prf_addr(unsigned char *out, const _gcry_slhdsa_param_t *ctx,
               const u32 addr[8]);
