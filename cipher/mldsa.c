@@ -12,7 +12,7 @@
 
 
 static unsigned int
-/* TODOMTG nbits not meaningful for mldsa */
+/* TODO nbits not meaningful for mldsa */
 mldsa_get_nbits(gcry_sexp_t parms)
 {
   gpg_err_code_t ec;
