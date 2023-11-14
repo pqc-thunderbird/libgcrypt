@@ -169,11 +169,6 @@ static unsigned char *fill_bin_buf_from_hex_line(size_t *r_length, const char ta
  * MPIs */
 const char MLDSA_MESSAGE_TMPL[] = "(data (flags eddsa) (value %b))";
 
-
-#define GCRY_MLDSA2_NBITS (1312 * 8)10496
-#define GCRY_MLDSA3_NBITS (1952 * 8)15616
-#define GCRY_MLDSA5_NBITS (2592 * 8)20736
-
 static int check_mldsa_roundtrip(size_t n_tests)
 {
   const char *mldsa_name[] = {"ML-DSA-44", "ML-DSA-65", "ML-DSA-87"};
@@ -287,8 +282,6 @@ typedef struct
 int check_test_vec_verify(
     unsigned char *pk, unsigned pk_len, unsigned char *m, unsigned m_len, unsigned char *sig, unsigned sig_len)
 {
-
-
   gcry_err_code_t err;
   gcry_sexp_t public_key_sx;
   gcry_sexp_t signature_sx;
@@ -517,7 +510,6 @@ static void check_mldsa_kat(const char *fname)
 
 int main(int argc, char **argv)
 {
-
   int last_argc = -1;
   char *fname   = NULL;
   if (argc)
