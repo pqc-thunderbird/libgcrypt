@@ -9,25 +9,26 @@
 #include "g10lib.h"
 
 /*************************************************
-* Name:        _gcry_mldsa_keypair
-*
-* Description: Generates public and private key.
-*
-* Arguments:   - byte *pk: pointer to output public key (allocated
-*                             array of params->public_key_bytes bytes)
-*              - byte *sk: pointer to output private key (allocated
-*                             array of params->secret_key_bytes bytes)
-*
-* Returns 0 (success)
-**************************************************/
-gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk) {
+ * Name:        _gcry_mldsa_keypair
+ *
+ * Description: Generates public and private key.
+ *
+ * Arguments:   - byte *pk: pointer to output public key (allocated
+ *                             array of params->public_key_bytes bytes)
+ *              - byte *sk: pointer to output private key (allocated
+ *                             array of params->secret_key_bytes bytes)
+ *
+ * Returns 0 (success)
+ **************************************************/
+gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk)
+{
   gcry_err_code_t ec = 0;
-  byte seedbuf[2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES];
+  byte seedbuf[2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES];
   byte tr[GCRY_MLDSA_SEEDBYTES];
   const byte *rho, *rhoprime, *key;
 
-  gcry_mldsa_polyvec *mat = NULL;
-  gcry_mldsa_polyvec s1 = {.vec = NULL};
+  gcry_mldsa_polyvec *mat  = NULL;
+  gcry_mldsa_polyvec s1    = {.vec = NULL};
   gcry_mldsa_polyvec s1hat = {.vec = NULL};
 
   gcry_mldsa_polyvec s2 = {.vec = NULL};
@@ -35,26 +36,25 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   gcry_mldsa_polyvec t0 = {.vec = NULL};
 
   if ((ec = _gcry_mldsa_polymatrix_create(&mat, params->k, params->l))
-    || (ec = _gcry_mldsa_polyvec_create(&s1, params->l))
-    || (ec = _gcry_mldsa_polyvec_create(&s1hat, params->l))
-    || (ec = _gcry_mldsa_polyvec_create(&s2, params->k))
-    || (ec = _gcry_mldsa_polyvec_create(&t1, params->k))
-    || (ec = _gcry_mldsa_polyvec_create(&t0, params->k)))
-  {
-    ec = gpg_err_code_from_syserror();
-    goto leave;
-  }
+      || (ec = _gcry_mldsa_polyvec_create(&s1, params->l)) || (ec = _gcry_mldsa_polyvec_create(&s1hat, params->l))
+      || (ec = _gcry_mldsa_polyvec_create(&s2, params->k)) || (ec = _gcry_mldsa_polyvec_create(&t1, params->k))
+      || (ec = _gcry_mldsa_polyvec_create(&t0, params->k)))
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
   /* Get randomness for rho, rhoprime and key */
   _gcry_randomize(seedbuf, GCRY_MLDSA_SEEDBYTES, GCRY_VERY_STRONG_RANDOM);
 
-  ec = _gcry_mldsa_shake256(seedbuf, GCRY_MLDSA_SEEDBYTES, NULL, 0, seedbuf, 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES);
+  ec = _gcry_mldsa_shake256(
+      seedbuf, GCRY_MLDSA_SEEDBYTES, NULL, 0, seedbuf, 2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES);
   if (ec)
     goto leave;
 
-  rho = seedbuf;
+  rho      = seedbuf;
   rhoprime = rho + GCRY_MLDSA_SEEDBYTES;
-  key = rhoprime + GCRY_MLDSA_CRHBYTES;
+  key      = rhoprime + GCRY_MLDSA_CRHBYTES;
 
   /* Expand matrix */
   ec = _gcry_mldsa_polyvec_matrix_expand(params, mat, rho);
@@ -103,68 +103,60 @@ leave:
 }
 
 /*************************************************
-* Name:        _gcry_mldsa_sign
-*
-* Description: Computes signature.
-*
-* Arguments:   - byte *sig:   pointer to output signature (of length params->signature_bytes)
-*              - size_t *siglen: pointer to output length of signature
-*              - byte *m:     pointer to message to be signed
-*              - size_t mlen:    length of message
-*              - byte *sk:    pointer to bit-packed secret key
-*
-* Returns 0 (success)
-**************************************************/
-gcry_err_code_t _gcry_mldsa_sign(gcry_mldsa_param_t *params,
-                          byte *sig,
-                          size_t *siglen,
-                          const byte *m,
-                          size_t mlen,
-                          const byte *sk)
+ * Name:        _gcry_mldsa_sign
+ *
+ * Description: Computes signature.
+ *
+ * Arguments:   - byte *sig:   pointer to output signature (of length params->signature_bytes)
+ *              - size_t *siglen: pointer to output length of signature
+ *              - byte *m:     pointer to message to be signed
+ *              - size_t mlen:    length of message
+ *              - byte *sk:    pointer to bit-packed secret key
+ *
+ * Returns 0 (success)
+ **************************************************/
+gcry_err_code_t _gcry_mldsa_sign(
+    gcry_mldsa_param_t *params, byte *sig, size_t *siglen, const byte *m, size_t mlen, const byte *sk)
 {
   gcry_err_code_t ec = 0;
 
   unsigned int n;
-  byte seedbuf[3*GCRY_MLDSA_SEEDBYTES + 2*GCRY_MLDSA_CRHBYTES];
+  byte seedbuf[3 * GCRY_MLDSA_SEEDBYTES + 2 * GCRY_MLDSA_CRHBYTES];
   byte *rho, *tr, *key, *mu, *rhoprime;
   u16 nonce = 0;
   gcry_mldsa_poly cp;
   gcry_md_hd_t hd;
 
   gcry_mldsa_polyvec *mat = NULL;
-  gcry_mldsa_polyvec s1 = {.vec = NULL};
-  gcry_mldsa_polyvec y = {.vec = NULL};
-  gcry_mldsa_polyvec z = {.vec = NULL};
+  gcry_mldsa_polyvec s1   = {.vec = NULL};
+  gcry_mldsa_polyvec y    = {.vec = NULL};
+  gcry_mldsa_polyvec z    = {.vec = NULL};
 
   gcry_mldsa_polyvec t0 = {.vec = NULL};
   gcry_mldsa_polyvec s2 = {.vec = NULL};
   gcry_mldsa_polyvec w1 = {.vec = NULL};
   gcry_mldsa_polyvec w0 = {.vec = NULL};
-  gcry_mldsa_polyvec h = {.vec = NULL};
+  gcry_mldsa_polyvec h  = {.vec = NULL};
 
   if ((ec = _gcry_mldsa_polymatrix_create(&mat, params->k, params->l))
-    || (ec = _gcry_mldsa_polyvec_create(&s1, params->l))
-    || (ec = _gcry_mldsa_polyvec_create(&y, params->l))
-    || (ec = _gcry_mldsa_polyvec_create(&z, params->l))
-    || (ec = _gcry_mldsa_polyvec_create(&t0, params->k))
-    || (ec = _gcry_mldsa_polyvec_create(&s2, params->k))
-    || (ec = _gcry_mldsa_polyvec_create(&w1, params->k))
-    || (ec = _gcry_mldsa_polyvec_create(&w0, params->k))
-    || (ec = _gcry_mldsa_polyvec_create(&h, params->k)))
-  {
-    ec = gpg_err_code_from_syserror();
-    goto leave;
-  }
+      || (ec = _gcry_mldsa_polyvec_create(&s1, params->l)) || (ec = _gcry_mldsa_polyvec_create(&y, params->l))
+      || (ec = _gcry_mldsa_polyvec_create(&z, params->l)) || (ec = _gcry_mldsa_polyvec_create(&t0, params->k))
+      || (ec = _gcry_mldsa_polyvec_create(&s2, params->k)) || (ec = _gcry_mldsa_polyvec_create(&w1, params->k))
+      || (ec = _gcry_mldsa_polyvec_create(&w0, params->k)) || (ec = _gcry_mldsa_polyvec_create(&h, params->k)))
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
-  rho = seedbuf;
-  tr = rho + GCRY_MLDSA_SEEDBYTES;
-  key = tr + GCRY_MLDSA_SEEDBYTES;
-  mu = key + GCRY_MLDSA_SEEDBYTES;
+  rho      = seedbuf;
+  tr       = rho + GCRY_MLDSA_SEEDBYTES;
+  key      = tr + GCRY_MLDSA_SEEDBYTES;
+  mu       = key + GCRY_MLDSA_SEEDBYTES;
   rhoprime = mu + GCRY_MLDSA_CRHBYTES;
   _gcry_mldsa_unpack_sk(params, rho, tr, key, &t0, &s1, &s2, sk);
 
   /* Compute CRH(tr, msg) */
-  _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
   _gcry_md_write(hd, tr, GCRY_MLDSA_SEEDBYTES);
   _gcry_md_write(hd, m, mlen);
   _gcry_md_extract(hd, GCRY_MD_SHAKE256, mu, GCRY_MLDSA_CRHBYTES);
@@ -206,11 +198,11 @@ rej:
   _gcry_mldsa_polyveck_decompose(params, &w1, &w0, &w1);
   _gcry_mldsa_polyveck_pack_w1(params, sig, &w1);
 
-  ec = _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  ec = _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
   if (ec)
     goto leave;
   _gcry_md_write(hd, mu, GCRY_MLDSA_CRHBYTES);
-  _gcry_md_write(hd, sig, params->k*params->polyw1_packedbytes);
+  _gcry_md_write(hd, sig, params->k * params->polyw1_packedbytes);
   ec = _gcry_md_extract(hd, GCRY_MD_SHAKE256, sig, GCRY_MLDSA_SEEDBYTES);
   if (ec)
     goto leave;
@@ -225,7 +217,7 @@ rej:
   _gcry_mldsa_polyvecl_invntt_tomont(params, &z);
   _gcry_mldsa_polyvecl_add(params, &z, &z, &y);
   _gcry_mldsa_polyvecl_reduce(params, &z);
-  if(_gcry_mldsa_polyvecl_chknorm(params, &z, params->gamma1 - params->beta))
+  if (_gcry_mldsa_polyvecl_chknorm(params, &z, params->gamma1 - params->beta))
     goto rej;
 
   /* Check that subtracting cs2 does not change high bits of w and low bits
@@ -234,19 +226,19 @@ rej:
   _gcry_mldsa_polyveck_invntt_tomont(params, &h);
   _gcry_mldsa_polyveck_sub(params, &w0, &w0, &h);
   _gcry_mldsa_polyveck_reduce(params, &w0);
-  if(_gcry_mldsa_polyveck_chknorm(params, &w0, params->gamma2 - params->beta))
+  if (_gcry_mldsa_polyveck_chknorm(params, &w0, params->gamma2 - params->beta))
     goto rej;
 
   /* Compute hints for w1 */
   _gcry_mldsa_polyveck_pointwise_poly_montgomery(params, &h, &cp, &t0);
   _gcry_mldsa_polyveck_invntt_tomont(params, &h);
   _gcry_mldsa_polyveck_reduce(params, &h);
-  if(_gcry_mldsa_polyveck_chknorm(params, &h, params->gamma2))
+  if (_gcry_mldsa_polyveck_chknorm(params, &h, params->gamma2))
     goto rej;
 
   _gcry_mldsa_polyveck_add(params, &w0, &w0, &h);
   n = _gcry_mldsa_polyveck_make_hint(params, &h, &w0, &w1);
-  if(n > params->omega)
+  if (n > params->omega)
     goto rej;
 
   /* Write signature */
@@ -267,24 +259,20 @@ leave:
 }
 
 /*************************************************
-* Name:        _gcry_mldsa_verify
-*
-* Description: Verifies signature.
-*
-* Arguments:   - byte *m: pointer to input signature
-*              - size_t siglen: length of signature
-*              - const byte *m: pointer to message
-*              - size_t mlen: length of message
-*              - const byte *pk: pointer to bit-packed public key
-*
-* Returns 0 if signature could be verified correctly and -1 otherwise
-**************************************************/
-gcry_err_code_t _gcry_mldsa_verify(gcry_mldsa_param_t *params,
-                       const byte *sig,
-                       size_t siglen,
-                       const byte *m,
-                       size_t mlen,
-                       const byte *pk)
+ * Name:        _gcry_mldsa_verify
+ *
+ * Description: Verifies signature.
+ *
+ * Arguments:   - byte *m: pointer to input signature
+ *              - size_t siglen: length of signature
+ *              - const byte *m: pointer to message
+ *              - size_t mlen: length of message
+ *              - const byte *pk: pointer to bit-packed public key
+ *
+ * Returns 0 if signature could be verified correctly and -1 otherwise
+ **************************************************/
+gcry_err_code_t _gcry_mldsa_verify(
+    gcry_mldsa_param_t *params, const byte *sig, size_t siglen, const byte *m, size_t mlen, const byte *pk)
 {
   gcry_err_code_t ec = 0;
   unsigned int i;
@@ -296,47 +284,45 @@ gcry_err_code_t _gcry_mldsa_verify(gcry_mldsa_param_t *params,
   gcry_mldsa_poly cp;
 
   gcry_mldsa_polyvec *mat = NULL;
-  gcry_mldsa_polyvec z = {.vec = NULL};
+  gcry_mldsa_polyvec z    = {.vec = NULL};
 
   gcry_mldsa_polyvec t1 = {.vec = NULL};
   gcry_mldsa_polyvec w1 = {.vec = NULL};
-  gcry_mldsa_polyvec h = {.vec = NULL};
+  gcry_mldsa_polyvec h  = {.vec = NULL};
 
-    if (!(buf = xtrymalloc(sizeof(*buf) * (params->k*params->polyw1_packedbytes))))
-  {
-    return gpg_error_from_syserror();
-  }
+  if (!(buf = xtrymalloc(sizeof(*buf) * (params->k * params->polyw1_packedbytes))))
+    {
+      return gpg_error_from_syserror();
+    }
 
-  if(siglen != params->signature_bytes)
-  {
-    ec = GPG_ERR_BAD_SIGNATURE;
-    goto leave;
-  }
+  if (siglen != params->signature_bytes)
+    {
+      ec = GPG_ERR_BAD_SIGNATURE;
+      goto leave;
+    }
 
   if ((ec = _gcry_mldsa_polymatrix_create(&mat, params->k, params->l))
-    || (ec = _gcry_mldsa_polyvec_create(&z, params->l))
-    || (ec = _gcry_mldsa_polyvec_create(&t1, params->k))
-    || (ec = _gcry_mldsa_polyvec_create(&w1, params->k))
-    || (ec = _gcry_mldsa_polyvec_create(&h, params->k)))
-  {
-    ec = gpg_err_code_from_syserror();
-    goto leave;
-  }
+      || (ec = _gcry_mldsa_polyvec_create(&z, params->l)) || (ec = _gcry_mldsa_polyvec_create(&t1, params->k))
+      || (ec = _gcry_mldsa_polyvec_create(&w1, params->k)) || (ec = _gcry_mldsa_polyvec_create(&h, params->k)))
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
   _gcry_mldsa_unpack_pk(params, rho, &t1, pk);
-  if(_gcry_mldsa_unpack_sig(params, c, &z, &h, sig))
-  {
-    ec = GPG_ERR_BAD_SIGNATURE;
-    goto leave;
-  }
-  if(_gcry_mldsa_polyvecl_chknorm(params, &z, params->gamma1 - params->beta))
-  {
-    ec = GPG_ERR_BAD_SIGNATURE;
-    goto leave;
-  }
+  if (_gcry_mldsa_unpack_sig(params, c, &z, &h, sig))
+    {
+      ec = GPG_ERR_BAD_SIGNATURE;
+      goto leave;
+    }
+  if (_gcry_mldsa_polyvecl_chknorm(params, &z, params->gamma1 - params->beta))
+    {
+      ec = GPG_ERR_BAD_SIGNATURE;
+      goto leave;
+    }
 
   /* Compute CRH(H(rho, t1), msg) */
-  ec =_gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, mu, GCRY_MLDSA_SEEDBYTES);
+  ec = _gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, mu, GCRY_MLDSA_SEEDBYTES);
   if (ec)
     goto leave;
   ec = _gcry_mldsa_shake256(mu, GCRY_MLDSA_SEEDBYTES, m, mlen, mu, GCRY_MLDSA_CRHBYTES);
@@ -370,16 +356,17 @@ gcry_err_code_t _gcry_mldsa_verify(gcry_mldsa_param_t *params,
   _gcry_mldsa_polyveck_pack_w1(params, buf, &w1);
 
   /* Call random oracle and verify challenge */
-  ec = _gcry_mldsa_shake256(mu, GCRY_MLDSA_CRHBYTES, buf, params->k*params->polyw1_packedbytes, c2, GCRY_MLDSA_SEEDBYTES);
+  ec = _gcry_mldsa_shake256(
+      mu, GCRY_MLDSA_CRHBYTES, buf, params->k * params->polyw1_packedbytes, c2, GCRY_MLDSA_SEEDBYTES);
   if (ec)
     goto leave;
 
-  for(i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
-    if(c[i] != c2[i])
-    {
-      ec = GPG_ERR_BAD_SIGNATURE;
-      goto leave;
-    }
+  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
+    if (c[i] != c2[i])
+      {
+        ec = GPG_ERR_BAD_SIGNATURE;
+        goto leave;
+      }
 
 leave:
   xfree(buf);
