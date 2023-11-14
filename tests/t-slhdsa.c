@@ -31,7 +31,6 @@
 
 #define PGM "t-slhdsa"
 #include "t-common.h"
-//#define N_TESTS 120
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -44,9 +43,6 @@
 #include <errno.h>
 #include <ctype.h>
 
-
-//#define PGM "test-utils"
-//#include "t-common.h"
 
 #define digitp(p) (*(p) >= '0' && *(p) <= '9')
 #define hexdigitp(a) (digitp(a) || (*(a) >= 'A' && *(a) <= 'F') || (*(a) >= 'a' && *(a) <= 'f'))
@@ -464,9 +460,11 @@ static void check_slhdsa_kat(const char *fname)
 
   info("Checking Kyber KAT.\n");
 
+  fname = prepend_srcdir (fname);
   fp = fopen(fname, "r");
   if (!fp)
     die("error opening '%s': %s\n", fname, strerror(errno));
+  xfree ((void *)fname);
 
   while ((line = read_textline(fp, &lineno)) && !(nb_kat_tests && nb_kat_tests <= test_count))
     {
@@ -733,4 +731,5 @@ int main(int argc, char **argv)
     }
 
   printf("Success.\n");
+  return 0;
 }

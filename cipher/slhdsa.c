@@ -1,8 +1,6 @@
 #include <config.h>
 #include <stdio.h>
 
-//#include "gcrypt.h"
-
 #include "g10lib.h"
 #include "mpi.h"
 #include "cipher.h"
@@ -519,7 +517,6 @@ static gcry_err_code_t slhdsa_sign(gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_
 
   struct pk_encoding_ctx ctx;
 
-  // gcry_mpi_t sk = NULL;
   gcry_mpi_t data = NULL;
   size_t nwritten = 0;
 
