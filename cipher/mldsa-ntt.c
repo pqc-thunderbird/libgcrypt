@@ -78,7 +78,7 @@ void _gcry_mldsa_ntt(s32 a[GCRY_MLDSA_N]) {
 void _gcry_mldsa_invntt_tomont(s32 a[GCRY_MLDSA_N]) {
   unsigned int start, len, j, k;
   s32 t, zeta;
-  const s32 f = 41978; // mont^2/256
+  const s32 f = 41978; /* mont^2/256 */
 
   k = 256;
   for(len = 1; len < GCRY_MLDSA_N; len <<= 1) {

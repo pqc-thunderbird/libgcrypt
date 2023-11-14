@@ -2,7 +2,6 @@
 #include <config.h>
 #include <stdio.h>
 
-//#include "gcrypt.h"
 #include "mldsa-sign.h"
 #include "mldsa-params.h"
 
@@ -28,7 +27,7 @@ mldsa_get_nbits (gcry_sexp_t parms)
 
 static const char *mldsa_names[] = {
   "mldsa-ipd",
-  "openpgp-mldsa-ipd",              // ? leave?
+  "openpgp-mldsa-ipd",              /* ? leave? */
   NULL,
 };
 
@@ -36,7 +35,7 @@ static const char *mldsa_names[] = {
 static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits,
                                                     gcry_mldsa_param_t *param)
 {
-  // nbits: mldsa pubkey byte size * 8
+  /* nbits: mldsa pubkey byte size * 8 */
   switch (nbits)
   {
     case GCRY_MLDSA2_NBITS:
@@ -89,7 +88,7 @@ static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits,
     else
     {
       printf("error when determining polyz_packedbytes\n");
-      return GPG_ERR_GENERAL; // TODOMTG better errcode?
+      return GPG_ERR_GENERAL;
     }
 
 
@@ -104,7 +103,7 @@ static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits,
     else
     {
       printf("error when determining polyw1_packedbytes\n");
-      return GPG_ERR_GENERAL; // TODOMTG better errcode?
+      return GPG_ERR_GENERAL;
     }
 
     if(param->eta == 2)
@@ -118,7 +117,7 @@ static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits,
     else
     {
       printf("error when determining polyeta_packedbytes\n");
-      return GPG_ERR_GENERAL; // TODOMTG better errcode?
+      return GPG_ERR_GENERAL;
     }
 
     param->public_key_bytes = GCRY_MLDSA_SEEDBYTES + param->k * GCRY_MLDSA_POLYT1_PACKEDBYTES;
@@ -228,7 +227,6 @@ mldsa_generate (const gcry_sexp_t genparms, gcry_sexp_t * r_skey)
   pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
 
   if(!sk_mpi || !pk_mpi) {
-    // TODO: needed?
     printf("creating sk_mpi or pk_mpi failed!\n");
     ec = gpg_err_code_from_syserror();
     goto leave;
@@ -259,14 +257,6 @@ leave:
   return ec;
 }
 
-
-static gcry_err_code_t
-mldsa_check_secret_key (gcry_sexp_t keyparms)
-{
-  gpg_err_code_t ec = 0;
-  return ec;
-}
-
 static gcry_err_code_t
 mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 {
@@ -278,7 +268,6 @@ mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 
   struct pk_encoding_ctx ctx;
 
-  //gcry_mpi_t sk = NULL;
   gcry_mpi_t data = NULL;
   size_t nwritten = 0;
 
@@ -429,7 +418,6 @@ mldsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
   _gcry_mpi_print(GCRYMPI_FMT_USG, sig_buf, param.signature_bytes, &nwritten, sig);
   if(nwritten != param.signature_bytes)
   {
-    // signature length invalid
     ec = GPG_ERR_BAD_SIGNATURE;
     goto leave;
   }
@@ -453,51 +441,18 @@ leave:
   return ec;
 }
 
-static gpg_err_code_t
-selftests_mldsa (selftest_report_func_t report, int extended)
-{
-  return GPG_ERR_NO_ERROR; // TODO
-}
-
-/* Run a full self-test for ALGO and return 0 on success.  */
-static gpg_err_code_t
-run_selftests (int algo, int extended, selftest_report_func_t report)
-{
-  gpg_err_code_t ec;
-
-  switch (algo)
-    {
-    case GCRY_PK_MLDSA:
-      ec = selftests_mldsa (report, extended);
-      break;
-    default:
-      ec = GPG_ERR_PUBKEY_ALGO;
-      break;
-
-    }
-  return ec;
-}
-
-
-static gpg_err_code_t
-compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparam)
-{
-  gpg_err_code_t ec = 0;
-  return ec;
-}
-
 gcry_pk_spec_t _gcry_pubkey_spec_mldsa = {
   GCRY_PK_MLDSA, {0, 1},
   (GCRY_PK_USAGE_SIGN),
   "ML-DSA-ipd", mldsa_names,    /* following the naming scheme given at https://github.com/ietf-wg-pquip/state-of-protocols-and-pqc#user-content-algorithm-names */
   "p", "s", "", "a", "p",       // elements of pub-key, sec-key, ciphertext, signature, key-grip
   mldsa_generate,
-  mldsa_check_secret_key,
+  NULL, /*mldsa_check_secret_key*/
   NULL,
   NULL,
   mldsa_sign,
   mldsa_verify,
   mldsa_get_nbits,
-  run_selftests,
-  compute_keygrip
+  NULL, /*run_selftests*/
+  NULL /*compute_keygrip*/
 };

@@ -67,8 +67,7 @@ libcipher_la_SOURCES = \
 	primegen.c \
 	hash-common.c hash-common.h \
 	dsa-common.c rsa-common.c \
-	sha1.h \
-	consttime.c consttime.h
+	sha1.h
 
 EXTRA_libcipher_la_SOURCES = \
 	asm-common-aarch64.h \

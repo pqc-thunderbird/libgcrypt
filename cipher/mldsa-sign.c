@@ -26,13 +26,10 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   byte tr[GCRY_MLDSA_SEEDBYTES];
   const byte *rho, *rhoprime, *key;
 
-  //polyvecl mat[params->k];
-  //polyvecl s1, s1hat;
   gcry_mldsa_polyvec *mat = NULL;
   gcry_mldsa_polyvec s1 = {.vec = NULL};
   gcry_mldsa_polyvec s1hat = {.vec = NULL};
 
-  // polyveck s2, t1, t0;
   gcry_mldsa_polyvec s2 = {.vec = NULL};
   gcry_mldsa_polyvec t1 = {.vec = NULL};
   gcry_mldsa_polyvec t0 = {.vec = NULL};
@@ -73,7 +70,6 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
     goto leave;
 
   /* Matrix-vector multiplication */
-  //s1hat = s1;
   ec = _gcry_mldsa_polyvec_copy(&s1hat, &s1, params->l);
   if (ec)
     goto leave;
@@ -91,7 +87,6 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   _gcry_mldsa_pack_pk(params, pk, rho, &t1);
 
   /* Compute H(rho, t1) and write secret key */
-  //shake256(tr, GCRY_MLDSA_SEEDBYTES, pk, params->public_key_bytes);
   ec = _gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, tr, GCRY_MLDSA_SEEDBYTES);
   if (ec)
     goto leave;
@@ -136,13 +131,11 @@ gcry_err_code_t _gcry_mldsa_sign(gcry_mldsa_param_t *params,
   gcry_mldsa_poly cp;
   gcry_md_hd_t hd;
 
-  //polyvecl mat[params->k], s1, y, z;
   gcry_mldsa_polyvec *mat = NULL;
   gcry_mldsa_polyvec s1 = {.vec = NULL};
   gcry_mldsa_polyvec y = {.vec = NULL};
   gcry_mldsa_polyvec z = {.vec = NULL};
 
-  // polyveck t0, s2, w1, w0, h;
   gcry_mldsa_polyvec t0 = {.vec = NULL};
   gcry_mldsa_polyvec s2 = {.vec = NULL};
   gcry_mldsa_polyvec w1 = {.vec = NULL};
@@ -178,10 +171,8 @@ gcry_err_code_t _gcry_mldsa_sign(gcry_mldsa_param_t *params,
   _gcry_md_close(hd);
 
 #ifdef MLDSA_RANDOMIZED_SIGNING
-  //randombytes(rhoprime, GCRY_MLDSA_CRHBYTES);
   _gcry_randomize(rhoprime, GCRY_MLDSA_CRHBYTES, GCRY_VERY_STRONG_RANDOM);
 #else
-  //shake256(rhoprime, GCRY_MLDSA_CRHBYTES, key, GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES);
   ec = _gcry_mldsa_shake256(key, GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES, NULL, 0, rhoprime, GCRY_MLDSA_CRHBYTES);
   if (ec)
     goto leave;
@@ -202,7 +193,6 @@ rej:
     goto leave;
 
   /* Matrix-vector multiplication */
-  //z = y;
   ec = _gcry_mldsa_polyvec_copy(&z, &y, params->l);
   if (ec)
     goto leave;
@@ -216,7 +206,6 @@ rej:
   _gcry_mldsa_polyveck_decompose(params, &w1, &w0, &w1);
   _gcry_mldsa_polyveck_pack_w1(params, sig, &w1);
 
-  // TODO: _gcry_md_hash_buffers_extract ?
   ec = _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
   if (ec)
     goto leave;
@@ -306,11 +295,9 @@ gcry_err_code_t _gcry_mldsa_verify(gcry_mldsa_param_t *params,
   byte c2[GCRY_MLDSA_SEEDBYTES];
   gcry_mldsa_poly cp;
 
-  //polyvecl mat[params->k], z;
   gcry_mldsa_polyvec *mat = NULL;
   gcry_mldsa_polyvec z = {.vec = NULL};
 
-  // polyveck t1, w1, h;
   gcry_mldsa_polyvec t1 = {.vec = NULL};
   gcry_mldsa_polyvec w1 = {.vec = NULL};
   gcry_mldsa_polyvec h = {.vec = NULL};

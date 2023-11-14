@@ -13,7 +13,7 @@
 #define GCRY_MLDSA_POLYT1_PACKEDBYTES  320
 #define GCRY_MLDSA_POLYT0_PACKEDBYTES  416
 
-// pk size (bytes) * 8
+/* pk size (bytes) * 8 */
 #define GCRY_MLDSA2_NBITS (1312 * 8)
 #define GCRY_MLDSA3_NBITS (1952 * 8)
 #define GCRY_MLDSA5_NBITS (2592 * 8)

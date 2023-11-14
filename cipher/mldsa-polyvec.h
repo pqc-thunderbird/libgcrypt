@@ -9,7 +9,6 @@
 
 typedef struct{
   gcry_mldsa_poly *vec;
-  //unsigned char vec_len;
 } gcry_mldsa_polyvec;
 
 gcry_err_code_t _gcry_mldsa_polymatrix_create(gcry_mldsa_polyvec **polymat, unsigned char mat_elems, unsigned char vec_elems);

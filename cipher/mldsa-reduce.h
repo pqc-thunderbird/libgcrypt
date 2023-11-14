@@ -4,8 +4,8 @@
 #include "types.h"
 #include "mldsa-params.h"
 
-#define GCRY_MLDSA_MONT -4186625 // 2^32 % GCRY_MLDSA_Q
-#define GCRY_MLDSA_QINV 58728449 // q^(-1) mod 2^32
+#define GCRY_MLDSA_MONT -4186625 /* 2^32 % GCRY_MLDSA_Q */
+#define GCRY_MLDSA_QINV 58728449 /* q^(-1) mod 2^32 */
 
 s32 _gcry_mldsa_montgomery_reduce(int64_t a);
 
