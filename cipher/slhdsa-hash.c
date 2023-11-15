@@ -17,8 +17,6 @@
 #define SLHDSA_SHA512_OUTPUT_BYTES 64
 
 static gcry_err_code_t initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx);
-static gcry_err_code_t prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx, const u32 addr[8]);
-static gcry_err_code_t prf_addr_shake(unsigned char *out, const _gcry_slhdsa_param_t *ctx, const u32 addr[8]);
 static gcry_err_code_t gen_message_random_sha2(unsigned char *R,
                                                const unsigned char *sk_prf,
                                                const unsigned char *optrand,
@@ -58,16 +56,49 @@ gcry_err_code_t _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
     }
 }
 
+/*
+ * Computes PRF(pk_seed, sk_seed, addr).
+ */
 gcry_err_code_t _gcry_slhdsa_prf_addr(unsigned char *out, const _gcry_slhdsa_param_t *ctx, const u32 addr[8])
 {
+
+  gcry_err_code_t ec = 0;
+  gcry_md_hd_t hd    = NULL;
+  enum gcry_md_algos algo;
+
+  /* initialize hash */
   if (ctx->is_sha2)
     {
-      return prf_addr_sha2(out, ctx, addr);
+        algo = GCRY_MD_SHA256;
+        ec   = _gcry_md_copy(&hd, ctx->state_seeded);
     }
   else
     {
-      return prf_addr_shake(out, ctx, addr);
+      algo = GCRY_MD_SHAKE256;
+      ec   = _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+      if (!ec)
+        _gcry_md_write(hd, ctx->pub_seed, ctx->n);
     }
+  if (ec)
+    goto leave;
+
+  _gcry_md_write(hd, (byte *)addr, ctx->addr_bytes);
+  _gcry_md_write(hd, ctx->sk_seed, ctx->n);
+
+  if (ctx->is_sha2)
+    {
+      memcpy(out, _gcry_md_read(hd, algo), ctx->n);
+    }
+  else
+    {
+      ec = _gcry_md_extract(hd, algo, out, ctx->n);
+      if (ec)
+        goto leave;
+    }
+
+leave:
+  _gcry_md_close(hd);
+  return ec;
 }
 
 gcry_err_code_t _gcry_slhdsa_gen_message_random(unsigned char *R,
@@ -135,31 +166,6 @@ gcry_err_code_t initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx)
       _gcry_md_write(ctx->state_seeded_512, block, SLHDSA_SHA512_BLOCK_BYTES);
     }
 
-  return ec;
-}
-
-/*
- * Computes PRF(pk_seed, sk_seed, addr).
- */
-static gcry_err_code_t prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx, const u32 addr[8])
-{
-  gcry_err_code_t ec = 0;
-  gcry_md_hd_t hd    = NULL;
-  unsigned char sha256_pubseed_block[SLHDSA_SHA256_BLOCK_BYTES];
-
-  memset(sha256_pubseed_block, 0, SLHDSA_SHA256_BLOCK_BYTES);
-  memcpy(sha256_pubseed_block, ctx->pub_seed, ctx->n);
-
-  ec = _gcry_md_open(&hd, GCRY_MD_SHA256, GCRY_MD_FLAG_SECURE);
-  if (ec)
-    goto leave;
-  _gcry_md_write(hd, sha256_pubseed_block, SLHDSA_SHA256_BLOCK_BYTES);
-  _gcry_md_write(hd, (byte *)addr, ctx->addr_bytes);
-  _gcry_md_write(hd, ctx->sk_seed, ctx->n);
-  memcpy(out, _gcry_md_read(hd, GCRY_MD_SHA256), ctx->n);
-
-leave:
-  _gcry_md_close(hd);
   return ec;
 }
 
@@ -352,40 +358,6 @@ leave:
   _gcry_md_close(hd);
   xfree(seed);
   xfree(inbuf);
-  xfree(buf);
-  return ec;
-}
-
-/*
- * Computes PRF(pk_seed, sk_seed, addr)
- */
-static gcry_err_code_t prf_addr_shake(unsigned char *out, const _gcry_slhdsa_param_t *ctx, const u32 addr[8])
-{
-  gcry_err_code_t ec = 0;
-  unsigned char *buf = NULL;
-  gcry_md_hd_t hd    = NULL;
-
-  buf = xtrymalloc_secure(2 * ctx->n + ctx->addr_bytes);
-  if (!buf)
-    {
-      ec = gpg_err_code_from_syserror();
-      goto leave;
-    }
-
-  memcpy(buf, ctx->pub_seed, ctx->n);
-  memcpy(buf + ctx->n, addr, ctx->addr_bytes);
-  memcpy(buf + ctx->n + ctx->addr_bytes, ctx->sk_seed, ctx->n);
-
-  ec = _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
-  if (ec)
-    goto leave;
-  _gcry_md_write(hd, buf, 2 * ctx->n + ctx->addr_bytes);
-  ec = _gcry_md_extract(hd, GCRY_MD_SHAKE256, out, ctx->n);
-  if (ec)
-    goto leave;
-
-leave:
-  _gcry_md_close(hd);
   xfree(buf);
   return ec;
 }
