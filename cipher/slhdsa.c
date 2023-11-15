@@ -240,6 +240,8 @@ static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param
       return GPG_ERR_INV_ARG;
     }
 
+  param->addr_bytes     = param->is_sha2 ? 22 : 32;
+
   param->pub_seed = xtrymalloc(param->n);
   if (!param->pub_seed)
     {
@@ -254,7 +256,6 @@ static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param
     }
 
   /* derived and fix params */
-  param->addr_bytes     = 32;
   param->WOTS_w         = 16;
   param->WOTS_logw      = 4;
   param->seed_bytes     = 3 * param->n;

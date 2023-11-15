@@ -6,11 +6,15 @@
 #include "slhdsa-address.h"
 #include "slhdsa-utils.h"
 #include "slhdsa-hash.h"
-#include "slhdsa-sha2.h"
 
 #include "g10lib.h"
 #include "mgf.h"
 
+
+#define SLHDSA_SHA256_BLOCK_BYTES 64
+#define SLHDSA_SHA256_OUTPUT_BYTES 32 /* This does not necessarily equal SLHDSA_N */
+#define SLHDSA_SHA512_BLOCK_BYTES 128
+#define SLHDSA_SHA512_OUTPUT_BYTES 64
 
 static gcry_err_code_t initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx);
 static gcry_err_code_t prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_param_t *ctx, const u32 addr[8]);
@@ -150,7 +154,7 @@ static gcry_err_code_t prf_addr_sha2(unsigned char *out, const _gcry_slhdsa_para
   if (ec)
     goto leave;
   _gcry_md_write(hd, sha256_pubseed_block, SLHDSA_SHA256_BLOCK_BYTES);
-  _gcry_md_write(hd, (byte *)addr, SLHDSA_SHA256_ADDR_BYTES);
+  _gcry_md_write(hd, (byte *)addr, ctx->addr_bytes);
   _gcry_md_write(hd, ctx->sk_seed, ctx->n);
   memcpy(out, _gcry_md_read(hd, GCRY_MD_SHA256), ctx->n);
 

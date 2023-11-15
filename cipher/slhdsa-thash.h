@@ -2,11 +2,8 @@
 #define SLHDSA_THASH_H
 
 #include "config.h"
-
 #include "slhdsa-context.h"
-
 #include "types.h"
-
 #include "g10lib.h"
 
 gcry_err_code_t _gcry_slhdsa_thash(
