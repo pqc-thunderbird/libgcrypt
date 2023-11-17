@@ -68,7 +68,7 @@ void _gcry_mldsa_unpack_pk(gcry_mldsa_param_t *params,
 void _gcry_mldsa_pack_sk(gcry_mldsa_param_t *params,
                          byte *sk,
                          const byte rho[GCRY_MLDSA_SEEDBYTES],
-                         const byte tr[GCRY_MLDSA_SEEDBYTES],
+                         const byte tr[GCRY_MLDSA_TRBYTES],
                          const byte key[GCRY_MLDSA_SEEDBYTES],
                          const gcry_mldsa_polyvec *t0,
                          const gcry_mldsa_polyvec *s1,
@@ -84,9 +84,9 @@ void _gcry_mldsa_pack_sk(gcry_mldsa_param_t *params,
     sk[i] = key[i];
   sk += GCRY_MLDSA_SEEDBYTES;
 
-  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
+  for (i = 0; i < GCRY_MLDSA_TRBYTES; ++i)
     sk[i] = tr[i];
-  sk += GCRY_MLDSA_SEEDBYTES;
+  sk += GCRY_MLDSA_TRBYTES;
 
   for (i = 0; i < params->l; ++i)
     _gcry_mldsa_polyeta_pack(params, sk + i * params->polyeta_packedbytes, &s1->vec[i]);
@@ -115,7 +115,7 @@ void _gcry_mldsa_pack_sk(gcry_mldsa_param_t *params,
  **************************************************/
 void _gcry_mldsa_unpack_sk(gcry_mldsa_param_t *params,
                            byte rho[GCRY_MLDSA_SEEDBYTES],
-                           byte tr[GCRY_MLDSA_SEEDBYTES],
+                           byte tr[GCRY_MLDSA_TRBYTES],
                            byte key[GCRY_MLDSA_SEEDBYTES],
                            gcry_mldsa_polyvec *t0,
                            gcry_mldsa_polyvec *s1,
@@ -132,9 +132,9 @@ void _gcry_mldsa_unpack_sk(gcry_mldsa_param_t *params,
     key[i] = sk[i];
   sk += GCRY_MLDSA_SEEDBYTES;
 
-  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
+  for (i = 0; i < GCRY_MLDSA_TRBYTES; ++i)
     tr[i] = sk[i];
-  sk += GCRY_MLDSA_SEEDBYTES;
+  sk += GCRY_MLDSA_TRBYTES;
 
   for (i = 0; i < params->l; ++i)
     _gcry_mldsa_polyeta_unpack(params, &s1->vec[i], sk + i * params->polyeta_packedbytes);

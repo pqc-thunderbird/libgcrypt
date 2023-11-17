@@ -23,8 +23,8 @@
 gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk)
 {
   gcry_err_code_t ec = 0;
-  byte seedbuf[2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES];
-  byte tr[GCRY_MLDSA_SEEDBYTES];
+  byte seedbuf[2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES]; /* TODO: dynamic allocation */
+  byte tr[GCRY_MLDSA_TRBYTES]; /* TODO: dynamic allocation */
   const byte *rho, *rhoprime, *key;
 
   gcry_mldsa_polyvec *mat  = NULL;
@@ -87,7 +87,7 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   _gcry_mldsa_pack_pk(params, pk, rho, &t1);
 
   /* Compute H(rho, t1) and write secret key */
-  ec = _gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, tr, GCRY_MLDSA_SEEDBYTES);
+  ec = _gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, tr, GCRY_MLDSA_TRBYTES);
   if (ec)
     goto leave;
   _gcry_mldsa_pack_sk(params, sk, rho, tr, key, &t0, &s1, &s2);
@@ -121,7 +121,7 @@ gcry_err_code_t _gcry_mldsa_sign(
   gcry_err_code_t ec = 0;
 
   unsigned int n;
-  byte seedbuf[3 * GCRY_MLDSA_SEEDBYTES + 2 * GCRY_MLDSA_CRHBYTES];
+  byte seedbuf[2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + 2 * GCRY_MLDSA_CRHBYTES];
   byte *rho, *tr, *key, *mu, *rhoprime;
   u16 nonce = 0;
   gcry_mldsa_poly cp;
@@ -150,14 +150,14 @@ gcry_err_code_t _gcry_mldsa_sign(
 
   rho      = seedbuf;
   tr       = rho + GCRY_MLDSA_SEEDBYTES;
-  key      = tr + GCRY_MLDSA_SEEDBYTES;
+  key      = tr + GCRY_MLDSA_TRBYTES;
   mu       = key + GCRY_MLDSA_SEEDBYTES;
   rhoprime = mu + GCRY_MLDSA_CRHBYTES;
   _gcry_mldsa_unpack_sk(params, rho, tr, key, &t0, &s1, &s2, sk);
 
   /* Compute CRH(tr, msg) */
   _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
-  _gcry_md_write(hd, tr, GCRY_MLDSA_SEEDBYTES);
+  _gcry_md_write(hd, tr, GCRY_MLDSA_TRBYTES);
   _gcry_md_write(hd, m, mlen);
   _gcry_md_extract(hd, GCRY_MD_SHAKE256, mu, GCRY_MLDSA_CRHBYTES);
   _gcry_md_close(hd);
@@ -322,10 +322,10 @@ gcry_err_code_t _gcry_mldsa_verify(
     }
 
   /* Compute CRH(H(rho, t1), msg) */
-  ec = _gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, mu, GCRY_MLDSA_SEEDBYTES);
+  ec = _gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, mu, GCRY_MLDSA_TRBYTES);
   if (ec)
     goto leave;
-  ec = _gcry_mldsa_shake256(mu, GCRY_MLDSA_SEEDBYTES, m, mlen, mu, GCRY_MLDSA_CRHBYTES);
+  ec = _gcry_mldsa_shake256(mu, GCRY_MLDSA_TRBYTES, m, mlen, mu, GCRY_MLDSA_CRHBYTES);
   if (ec)
     goto leave;
 

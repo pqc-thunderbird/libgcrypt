@@ -120,7 +120,7 @@ static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits, gcry_mld
     }
 
   param->public_key_bytes = GCRY_MLDSA_SEEDBYTES + param->k * GCRY_MLDSA_POLYT1_PACKEDBYTES;
-  param->secret_key_bytes = 3 * GCRY_MLDSA_SEEDBYTES + param->l * param->polyeta_packedbytes
+  param->secret_key_bytes = 2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + param->l * param->polyeta_packedbytes
                             + param->k * param->polyeta_packedbytes + param->k * GCRY_MLDSA_POLYT0_PACKEDBYTES;
   param->signature_bytes = GCRY_MLDSA_SEEDBYTES + param->l * param->polyz_packedbytes + param->polyvech_packedbytes;
 
