@@ -318,10 +318,10 @@ gcry_err_code_t _gcry_mldsa_verify(
     }
 
   /* Compute CRH(H(rho, t1), msg) */
-  ec = _gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, mu, GCRY_MLDSA_TRBYTES);
+  ec = _gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, mu, GCRY_MLDSA_CRHBYTES);
   if (ec)
     goto leave;
-  ec = _gcry_mldsa_shake256(mu, GCRY_MLDSA_TRBYTES, m, mlen, mu, GCRY_MLDSA_CRHBYTES);
+  ec = _gcry_mldsa_shake256(mu, GCRY_MLDSA_CRHBYTES, m, mlen, mu, GCRY_MLDSA_CRHBYTES);
   if (ec)
     goto leave;
 
