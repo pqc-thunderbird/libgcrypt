@@ -38,6 +38,7 @@ typedef struct
   u32 gamma1;
   s32 gamma2;
   unsigned char omega;
+  unsigned char ctildebytes;
 
   /* derived */
   u16 polyvech_packedbytes;

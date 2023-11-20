@@ -38,37 +38,40 @@ static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits, gcry_mld
   switch (nbits)
     {
     case GCRY_MLDSA2_NBITS:
-      param->id     = GCRY_MLDSA2;
-      param->k      = 4;
-      param->l      = 4;
-      param->eta    = 2;
-      param->tau    = 39;
-      param->beta   = 78;
-      param->gamma1 = 1 << 17;
-      param->gamma2 = (GCRY_MLDSA_Q - 1) / 88;
-      param->omega  = 80;
+      param->id          = GCRY_MLDSA2;
+      param->k           = 4;
+      param->l           = 4;
+      param->eta         = 2;
+      param->tau         = 39;
+      param->beta        = 78;
+      param->gamma1      = 1 << 17;
+      param->gamma2      = (GCRY_MLDSA_Q - 1) / 88;
+      param->omega       = 80;
+      param->ctildebytes = 32;
       break;
     case GCRY_MLDSA3_NBITS:
-      param->id     = GCRY_MLDSA3;
-      param->k      = 6;
-      param->l      = 5;
-      param->eta    = 4;
-      param->tau    = 49;
-      param->beta   = 196;
-      param->gamma1 = 1 << 19;
-      param->gamma2 = (GCRY_MLDSA_Q - 1) / 32;
-      param->omega  = 55;
+      param->id          = GCRY_MLDSA3;
+      param->k           = 6;
+      param->l           = 5;
+      param->eta         = 4;
+      param->tau         = 49;
+      param->beta        = 196;
+      param->gamma1      = 1 << 19;
+      param->gamma2      = (GCRY_MLDSA_Q - 1) / 32;
+      param->omega       = 55;
+      param->ctildebytes = 48;
       break;
     case GCRY_MLDSA5_NBITS:
-      param->id     = GCRY_MLDSA5;
-      param->k      = 8;
-      param->l      = 7;
-      param->eta    = 2;
-      param->tau    = 60;
-      param->beta   = 120;
-      param->gamma1 = 1 << 19;
-      param->gamma2 = (GCRY_MLDSA_Q - 1) / 32;
-      param->omega  = 75;
+      param->id          = GCRY_MLDSA5;
+      param->k           = 8;
+      param->l           = 7;
+      param->eta         = 2;
+      param->tau         = 60;
+      param->beta        = 120;
+      param->gamma1      = 1 << 19;
+      param->gamma2      = (GCRY_MLDSA_Q - 1) / 32;
+      param->omega       = 75;
+      param->ctildebytes = 64;
       break;
     default:
       return GPG_ERR_INV_ARG;
@@ -122,7 +125,7 @@ static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits, gcry_mld
   param->public_key_bytes = GCRY_MLDSA_SEEDBYTES + param->k * GCRY_MLDSA_POLYT1_PACKEDBYTES;
   param->secret_key_bytes = 2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + param->l * param->polyeta_packedbytes
                             + param->k * param->polyeta_packedbytes + param->k * GCRY_MLDSA_POLYT0_PACKEDBYTES;
-  param->signature_bytes = GCRY_MLDSA_SEEDBYTES + param->l * param->polyz_packedbytes + param->polyvech_packedbytes;
+  param->signature_bytes = param->ctildebytes + param->l * param->polyz_packedbytes + param->polyvech_packedbytes;
 
   return 0;
 }

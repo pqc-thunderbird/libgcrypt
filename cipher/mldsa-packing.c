@@ -160,15 +160,15 @@ void _gcry_mldsa_unpack_sk(gcry_mldsa_param_t *params,
  **************************************************/
 void _gcry_mldsa_pack_sig(gcry_mldsa_param_t *params,
                           byte *sig,
-                          const byte c[GCRY_MLDSA_SEEDBYTES],
+                          const byte *c,
                           const gcry_mldsa_polyvec *z,
                           const gcry_mldsa_polyvec *h)
 {
   unsigned int i, j, k;
 
-  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
+  for (i = 0; i < params->ctildebytes; ++i)
     sig[i] = c[i];
-  sig += GCRY_MLDSA_SEEDBYTES;
+  sig += params->ctildebytes;
 
   for (i = 0; i < params->l; ++i)
     _gcry_mldsa_polyz_pack(params, sig + i * params->polyz_packedbytes, &z->vec[i]);
@@ -203,16 +203,16 @@ void _gcry_mldsa_pack_sig(gcry_mldsa_param_t *params,
  * Returns 1 in case of malformed signature; otherwise 0.
  **************************************************/
 int _gcry_mldsa_unpack_sig(gcry_mldsa_param_t *params,
-                           byte c[GCRY_MLDSA_SEEDBYTES],
+                           byte *c,
                            gcry_mldsa_polyvec *z,
                            gcry_mldsa_polyvec *h,
                            const byte *sig)
 {
   unsigned int i, j, k;
 
-  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
+  for (i = 0; i < params->ctildebytes; ++i)
     c[i] = sig[i];
-  sig += GCRY_MLDSA_SEEDBYTES;
+  sig += params->ctildebytes;
 
   for (i = 0; i < params->l; ++i)
     _gcry_mldsa_polyz_unpack(params, &z->vec[i], sig + i * params->polyz_packedbytes);

@@ -199,7 +199,7 @@ rej:
     goto leave;
   _gcry_md_write(hd, mu, GCRY_MLDSA_CRHBYTES);
   _gcry_md_write(hd, sig, params->k * params->polyw1_packedbytes);
-  ec = _gcry_md_extract(hd, GCRY_MD_SHAKE256, sig, GCRY_MLDSA_SEEDBYTES);
+  ec = _gcry_md_extract(hd, GCRY_MD_SHAKE256, sig, params->ctildebytes);
   if (ec)
     goto leave;
   _gcry_md_close(hd);
@@ -275,8 +275,8 @@ gcry_err_code_t _gcry_mldsa_verify(
   byte *buf = NULL;
   byte rho[GCRY_MLDSA_SEEDBYTES];
   byte mu[GCRY_MLDSA_CRHBYTES];
-  byte c[GCRY_MLDSA_SEEDBYTES];
-  byte c2[GCRY_MLDSA_SEEDBYTES];
+  byte *c;
+  byte *c2;
   gcry_mldsa_poly cp;
 
   gcry_mldsa_polyvec *mat = NULL;
@@ -287,6 +287,14 @@ gcry_err_code_t _gcry_mldsa_verify(
   gcry_mldsa_polyvec h  = {.vec = NULL};
 
   if (!(buf = xtrymalloc(sizeof(*buf) * (params->k * params->polyw1_packedbytes))))
+    {
+      return gpg_error_from_syserror();
+    }
+  if (!(c = xtrymalloc(params->ctildebytes)))
+    {
+      return gpg_error_from_syserror();
+    }
+  if (!(c2 = xtrymalloc(params->ctildebytes)))
     {
       return gpg_error_from_syserror();
     }
@@ -353,11 +361,11 @@ gcry_err_code_t _gcry_mldsa_verify(
 
   /* Call random oracle and verify challenge */
   ec = _gcry_mldsa_shake256(
-      mu, GCRY_MLDSA_CRHBYTES, buf, params->k * params->polyw1_packedbytes, c2, GCRY_MLDSA_SEEDBYTES);
+      mu, GCRY_MLDSA_CRHBYTES, buf, params->k * params->polyw1_packedbytes, c2, params->ctildebytes);
   if (ec)
     goto leave;
 
-  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
+  for (i = 0; i < params->ctildebytes; ++i)
     if (c[i] != c2[i])
       {
         ec = GPG_ERR_BAD_SIGNATURE;
@@ -366,6 +374,8 @@ gcry_err_code_t _gcry_mldsa_verify(
 
 leave:
   xfree(buf);
+  xfree(c);
+  xfree(c2);
   _gcry_mldsa_polymatrix_destroy(&mat, params->k);
   _gcry_mldsa_polyvec_destroy(&z);
   _gcry_mldsa_polyvec_destroy(&t1);

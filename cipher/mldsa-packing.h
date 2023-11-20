@@ -21,7 +21,7 @@ void _gcry_mldsa_pack_sk(gcry_mldsa_param_t *params,
 
 void _gcry_mldsa_pack_sig(gcry_mldsa_param_t *params,
                           byte *sig,
-                          const byte c[GCRY_MLDSA_SEEDBYTES],
+                          const byte *c,
                           const gcry_mldsa_polyvec *z,
                           const gcry_mldsa_polyvec *h);
 
@@ -40,7 +40,7 @@ void _gcry_mldsa_unpack_sk(gcry_mldsa_param_t *params,
                            const byte *sk);
 
 int _gcry_mldsa_unpack_sig(gcry_mldsa_param_t *params,
-                           byte c[GCRY_MLDSA_SEEDBYTES],
+                           byte *c,
                            gcry_mldsa_polyvec *z,
                            gcry_mldsa_polyvec *h,
                            const byte *sig);
