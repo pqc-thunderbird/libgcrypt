@@ -23,8 +23,8 @@
 gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk)
 {
   gcry_err_code_t ec = 0;
-  byte seedbuf[2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES]; /* TODO: dynamic allocation */
-  byte tr[GCRY_MLDSA_TRBYTES]; /* TODO: dynamic allocation */
+  byte *seedbuf = NULL;
+  byte *tr = NULL;
   const byte *rho, *rhoprime, *key;
 
   gcry_mldsa_polyvec *mat  = NULL;
@@ -43,6 +43,17 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
+
+  if (!(seedbuf = xtrymalloc_secure(2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES)))
+  {
+    ec = gpg_error_from_syserror();
+    goto leave;
+  }
+  if (!(tr = xtrymalloc_secure(GCRY_MLDSA_TRBYTES)))
+  {
+    ec = gpg_error_from_syserror();
+    goto leave;
+  }
 
   /* Get randomness for rho, rhoprime and key */
   _gcry_randomize(seedbuf, GCRY_MLDSA_SEEDBYTES, GCRY_VERY_STRONG_RANDOM);
@@ -93,6 +104,8 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   _gcry_mldsa_pack_sk(params, sk, rho, tr, key, &t0, &s1, &s2);
 
 leave:
+  xfree(seedbuf);
+  xfree(tr);
   _gcry_mldsa_polymatrix_destroy(&mat, params->k);
   _gcry_mldsa_polyvec_destroy(&s1);
   _gcry_mldsa_polyvec_destroy(&s1hat);
@@ -275,8 +288,8 @@ gcry_err_code_t _gcry_mldsa_verify(
   byte *buf = NULL;
   byte rho[GCRY_MLDSA_SEEDBYTES];
   byte mu[GCRY_MLDSA_CRHBYTES];
-  byte *c;
-  byte *c2;
+  byte *c = NULL;
+  byte *c2 = NULL;
   gcry_mldsa_poly cp;
 
   gcry_mldsa_polyvec *mat = NULL;
@@ -288,15 +301,18 @@ gcry_err_code_t _gcry_mldsa_verify(
 
   if (!(buf = xtrymalloc(sizeof(*buf) * (params->k * params->polyw1_packedbytes))))
     {
-      return gpg_error_from_syserror();
+      ec = gpg_error_from_syserror();
+      goto leave;
     }
   if (!(c = xtrymalloc(params->ctildebytes)))
     {
-      return gpg_error_from_syserror();
+      ec = gpg_error_from_syserror();
+      goto leave;
     }
   if (!(c2 = xtrymalloc(params->ctildebytes)))
     {
-      return gpg_error_from_syserror();
+      ec = gpg_error_from_syserror();
+      goto leave;
     }
 
   if (siglen != params->signature_bytes)
