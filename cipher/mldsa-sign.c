@@ -162,13 +162,9 @@ gcry_err_code_t _gcry_mldsa_sign(
   _gcry_md_extract(hd, GCRY_MD_SHAKE256, mu, GCRY_MLDSA_CRHBYTES);
   _gcry_md_close(hd);
 
-#ifdef MLDSA_RANDOMIZED_SIGNING
-  _gcry_randomize(rhoprime, GCRY_MLDSA_CRHBYTES, GCRY_VERY_STRONG_RANDOM);
-#else
   ec = _gcry_mldsa_shake256(key, GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES, NULL, 0, rhoprime, GCRY_MLDSA_CRHBYTES);
   if (ec)
     goto leave;
-#endif
 
   /* Expand matrix and transform vectors */
   ec = _gcry_mldsa_polyvec_matrix_expand(params, mat, rho);
