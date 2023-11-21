@@ -5,11 +5,15 @@
 
 #include "types.h"
 #include "mldsa-params.h"
+#include "mldsa-align-avx2.h"
 
 #include "g10lib.h"
 typedef struct
 {
-  s32 coeffs[GCRY_MLDSA_N];
+  union {
+    s32 coeffs[GCRY_MLDSA_N];
+    __m256i vec[(GCRY_MLDSA_N+7)/8]; // TODO ifdef
+  }
 } gcry_mldsa_poly;
 
 void _gcry_mldsa_poly_reduce(gcry_mldsa_poly *a);

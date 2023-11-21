@@ -8,7 +8,7 @@
 #include "mldsa-poly-avx2.h"
 
 #define challenge DILITHIUM_NAMESPACE(challenge)
-void challenge(poly *c, const uint8_t seed[SEEDBYTES]);
+void challenge(gcry_mldsa_poly *c, const uint8_t seed[SEEDBYTES]);
 
 int crypto_sign_keypair(uint8_t *pk, uint8_t *sk);
 

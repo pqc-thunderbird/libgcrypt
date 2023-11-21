@@ -304,7 +304,7 @@ void polyvecl_invntt_tomont(polyvecl *v) {
     poly_invntt_tomont(&v->vec[i]);
 }
 
-void polyvecl_pointwise_poly_montgomery(polyvecl *r, const poly *a, const polyvecl *v) {
+void polyvecl_pointwise_poly_montgomery(polyvecl *r, const gcry_mldsa_poly *a, const polyvecl *v) {
   unsigned int i;
 
   for(i = 0; i < L; ++i)
@@ -318,11 +318,11 @@ void polyvecl_pointwise_poly_montgomery(polyvecl *r, const poly *a, const polyve
 *              resulting vector by 2^{-32} and add (accumulate) polynomials
 *              in it. Input/output vectors are in NTT domain representation.
 *
-* Arguments:   - poly *w: output polynomial
+* Arguments:   - gcry_mldsa_poly *w: output polynomial
 *              - const polyvecl *u: pointer to first input vector
 *              - const polyvecl *v: pointer to second input vector
 **************************************************/
-void polyvecl_pointwise_acc_montgomery(poly *w, const polyvecl *u, const polyvecl *v) {
+void polyvecl_pointwise_acc_montgomery(gcry_mldsa_poly *w, const polyvecl *u, const polyvecl *v) {
   pointwise_acc_avx(w->vec, u->vec->vec, v->vec->vec, qdata.vec);
 }
 
@@ -470,7 +470,7 @@ void polyveck_invntt_tomont(polyveck *v) {
     poly_invntt_tomont(&v->vec[i]);
 }
 
-void polyveck_pointwise_poly_montgomery(polyveck *r, const poly *a, const polyveck *v) {
+void polyveck_pointwise_poly_montgomery(polyveck *r, const gcry_mldsa_poly *a, const polyveck *v) {
   unsigned int i;
 
   for(i = 0; i < K; ++i)

@@ -70,7 +70,7 @@ int crypto_sign_keypair(uint8_t *pk, uint8_t *sk) {
   polyvecl rowbuf[2];
   polyvecl s1, *row = rowbuf;
   polyveck s2;
-  poly t1, t0;
+  gcry_mldsa_poly t1, t0;
 
   /* Get randomness for rho, rhoprime and key */
   randombytes(seedbuf, SEEDBYTES);
@@ -156,7 +156,7 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t
   uint64_t nonce = 0;
   polyvecl mat[K], s1, z;
   polyveck t0, s2, w1;
-  poly c, tmp;
+  gcry_mldsa_poly c, tmp;
   union {
     polyvecl y;
     polyveck w0;
@@ -328,7 +328,7 @@ int crypto_sign_verify(const uint8_t *sig, size_t siglen, const uint8_t *m, size
   polyvecl rowbuf[2];
   polyvecl *row = rowbuf;
   polyvecl z;
-  poly c, w1, h;
+  gcry_mldsa_poly c, w1, h;
   keccak_state state;
 
   if(siglen != CRYPTO_BYTES)
@@ -369,7 +369,7 @@ int crypto_sign_verify(const uint8_t *sig, size_t siglen, const uint8_t *m, size
     poly_invntt_tomont(&w1);
 
     /* Get hint polynomial and reconstruct w1 */
-    memset(h.vec, 0, sizeof(poly));
+    memset(h.vec, 0, sizeof(gcry_mldsa_poly));
     if(hint[OMEGA + i] < pos || hint[OMEGA + i] > OMEGA)
       return -1;
 
