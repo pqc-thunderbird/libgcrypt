@@ -41,7 +41,7 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   printf("Executing KeyGen AVX2: \n");
   uint8_t pk_avx2[CRYPTO_PUBLICKEYBYTES];
   uint8_t sk_avx2[CRYPTO_SECRETKEYBYTES];
-  if(pqcrystals_dilithium2_avx2_keypair(pk_avx2, sk_avx2))
+  if(crypto_sign_keypair(pk_avx2, sk_avx2))
   {
       printf("generating avx2 keys failed\n");
       return -1;

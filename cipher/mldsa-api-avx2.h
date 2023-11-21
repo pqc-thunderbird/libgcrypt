@@ -12,21 +12,21 @@
 #define pqcrystals_dilithium2_avx2_SECRETKEYBYTES pqcrystals_dilithium2_SECRETKEYBYTES
 #define pqcrystals_dilithium2_avx2_BYTES pqcrystals_dilithium2_BYTES
 
-int pqcrystals_dilithium2_avx2_keypair(uint8_t *pk, uint8_t *sk);
+int crypto_sign_keypair(uint8_t *pk, uint8_t *sk);
 
-int pqcrystals_dilithium2_avx2_signature(uint8_t *sig, size_t *siglen,
+int crypto_sign_signature(uint8_t *sig, size_t *siglen,
                                         const uint8_t *m, size_t mlen,
                                         const uint8_t *sk);
 
-int pqcrystals_dilithium2_avx2(uint8_t *sm, size_t *smlen,
+int crypto_sign(uint8_t *sm, size_t *smlen,
                               const uint8_t *m, size_t mlen,
                               const uint8_t *sk);
 
-int pqcrystals_dilithium2_avx2_verify(const uint8_t *sig, size_t siglen,
+int crypto_sign_verify(const uint8_t *sig, size_t siglen,
                                      const uint8_t *m, size_t mlen,
                                      const uint8_t *pk);
 
-int pqcrystals_dilithium2_avx2_open(uint8_t *m, size_t *mlen,
+int crypto_sign_open(uint8_t *m, size_t *mlen,
                                    const uint8_t *sm, size_t smlen,
                                    const uint8_t *pk);
 

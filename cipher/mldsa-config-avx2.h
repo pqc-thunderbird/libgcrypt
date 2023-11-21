@@ -12,8 +12,7 @@
 
 #if DILITHIUM_MODE == 2
 #define CRYPTO_ALGNAME "Dilithium2"
-#define DILITHIUM_NAMESPACETOP pqcrystals_dilithium2_avx2
-#define DILITHIUM_NAMESPACE(s) pqcrystals_dilithium2_avx2_##s
+#define DILITHIUM_NAMESPACE(s) s
 #elif DILITHIUM_MODE == 3
 #define CRYPTO_ALGNAME "Dilithium3"
 #define DILITHIUM_NAMESPACETOP pqcrystals_dilithium3_avx2
