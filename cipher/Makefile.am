@@ -153,7 +153,12 @@ EXTRA_libcipher_la_SOURCES = \
 	blake2s-amd64-avx.S blake2s-amd64-avx512.S \
 	mldsa.c mldsa.h \
 	mldsa-ntt.c mldsa-packing.c mldsa-poly.c mldsa-polyvec.c mldsa-reduce.c mldsa-rounding.c mldsa-sign.c mldsa-symmetric.c \
-	mldsa-api.h mldsa-config.h mldsa-ntt.h mldsa-packing.h mldsa-params.h mldsa-poly.h mldsa-polyvec.h mldsa-reduce.h mldsa-rounding.h mldsa-sign.h mldsa-symmetric.h
+	mldsa-api.h mldsa-config.h mldsa-ntt.h mldsa-packing.h mldsa-params.h mldsa-poly.h mldsa-polyvec.h mldsa-reduce.h mldsa-rounding.h mldsa-sign.h mldsa-symmetric.h \
+	mldsa-sign-avx2.c mldsa-packing-avx2.c mldsa-polyvec-avx2.c mldsa-poly-avx2.c mldsa-ntt-avx2.S mldsa-invntt-avx2.S mldsa-pointwise-avx2.S \
+	mldsa-shuffle-avx2.S mldsa-consts-avx2.c mldsa-rejsample-avx2.c mldsa-rounding-avx2.c \
+	mldsa-align-avx2.h mldsa-config-avx2.h mldsa-params-avx2.h mldsa-api-avx2.h mldsa-sign-avx2.h mldsa-packing-avx2.h mldsa-polyvec-avx2.h mldsa-poly-avx2.h mldsa-ntt-avx2.h \
+	mldsa-consts-avx2.h mldsa-shuffle-avx2.inc mldsa-rejsample-avx2.h mldsa-rounding-avx2.h mldsa-symmetric-avx2.h mldsa-randombytes-avx2.h \
+	mldsa-randombytes-avx2.c mldsa-rejsample-avx2.c mldsa-rounding-avx2.c mldsa-rounding-avx2.h
 
 gost28147.lo: gost-sb.h
 gost-sb.h: gost-s-box$(EXEEXT_FOR_BUILD)

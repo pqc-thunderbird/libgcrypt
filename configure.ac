@@ -3047,6 +3047,11 @@ LIST_MEMBER(mldsa, $enabled_pubkey_ciphers)
 AM_CONDITIONAL(USE_MLDSA, [test "$found" = "1"])
 if test "$found" = "1" ; then
   GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mldsa.lo mldsa-ntt.lo mldsa-packing.lo mldsa-poly.lo mldsa-polyvec.lo mldsa-reduce.lo mldsa-rounding.lo mldsa-sign.lo mldsa-symmetric.lo"
+
+  # TODO: correctly integrate avx2
+  CFLAGS="$CFLAGS -mavx2"
+  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mldsa-sign-avx2.lo mldsa-packing-avx2.lo mldsa-polyvec-avx2.lo mldsa-poly-avx2.lo mldsa-ntt-avx2.lo mldsa-invntt-avx2.lo mldsa-pointwise-avx2.lo mldsa-fips202-avx2.lo mldsa-fips202x4-avx2.lo mldsa-f1600x4-avx2.lo mldsa-symmetric-shake-avx2.lo mldsa-randombytes-avx2.lo mldsa-rejsample-avx2.lo mldsa-consts-avx2.lo mldsa-rounding-avx2.lo mldsa-shuffle-avx2.lo"
+
    AC_DEFINE(USE_MLDSA, 1, [Defined if this module should be included])
 fi
 
