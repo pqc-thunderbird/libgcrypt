@@ -38,30 +38,50 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   gcry_mldsa_polyvec t0 = {.vec = NULL};
 
   /* TODO: REMOVE ****************************/
-  printf("Executing KeyGen AVX2: \n");
   uint8_t pk_avx2[CRYPTO_PUBLICKEYBYTES];
   uint8_t sk_avx2[CRYPTO_SECRETKEYBYTES];
+  uint8_t sig_avx2[CRYPTO_BYTES];
+  size_t sig_avx2_len;
+  byte msg_avx2[] = {0x01, 0x02};
   if(crypto_sign_keypair(pk_avx2, sk_avx2))
   {
       printf("generating avx2 keys failed\n");
       return -1;
   }
+  if(crypto_sign_signature(sig_avx2, &sig_avx2_len, msg_avx2, sizeof(msg_avx2), sk_avx2))
+  {
+      printf("generating avx2 sig failed\n");
+      return -1;
+  }
+  if(crypto_sign_verify(sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
+  {
+      printf("verifying avx2 sig failed\n");
+      return -1;
+  }
   if (params->l == 4) // mldsa-44
   {
-    byte sig_avx2[CRYPTO_BYTES];
-    size_t siglen_avx2;
-    byte msg_avx2[] = {0x01, 0x02};
-    if(_gcry_mldsa_sign(params, sig_avx2, &siglen_avx2, msg_avx2, sizeof(msg_avx2), sk_avx2))
+    // verify avx2 generated
+    if(_gcry_mldsa_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
     {
-      printf("sign with avx2 keys failed\n");
+      printf("verify avx2 sig with ref failed\n");
       return -1;
     }
-    if(_gcry_mldsa_verify(params, sig_avx2, siglen_avx2, msg_avx2, sizeof(msg_avx2), pk_avx2))
+    if(_gcry_mldsa_sign(params, sig_avx2, &sig_avx2_len, msg_avx2, sizeof(msg_avx2), sk_avx2))
     {
-      printf("sign with avx2 keys failed\n");
+      printf("sign with ref with avx2 keys failed\n");
       return -1;
     }
-    printf("successfully generated keys with AVX2 and signed/verified with non-AVX2!\n");
+    if(_gcry_mldsa_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
+    {
+      printf("verify ref sig with avx2 keys failed\n");
+      return -1;
+    }
+      if(crypto_sign_verify(sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
+    {
+        printf("verifying ref sig with avx2 failed\n");
+        return -1;
+    }
+    printf("successfully generated keys with AVX2 and cross signed/verified with non-AVX2!\n");
   }
   /********************************************/
   /********************************************/
