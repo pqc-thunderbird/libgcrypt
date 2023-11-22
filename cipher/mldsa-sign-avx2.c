@@ -1,6 +1,9 @@
+#include "config.h"
+
 #include <stdint.h>
 #include <string.h>
 #include "mldsa-align-avx2.h"
+#include "mldsa-params.h"
 #include "mldsa-params-avx2.h"
 #include "mldsa-sign-avx2.h"
 #include "mldsa-packing-avx2.h"
@@ -52,7 +55,7 @@ static inline void polyvec_matrix_expand_row(polyvecl **row, polyvecl buf[2], co
 }
 
 /*************************************************
-* Name:        crypto_sign_keypair
+* Name:        _gcry_mldsa_keypair_avx2
 *
 * Description: Generates public and private key.
 *
@@ -63,9 +66,11 @@ static inline void polyvec_matrix_expand_row(polyvecl **row, polyvecl buf[2], co
 *
 * Returns 0 (success)
 **************************************************/
-int crypto_sign_keypair(uint8_t *pk, uint8_t *sk) {
+gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk, uint8_t *sk) {
+  gcry_err_code_t ec = 0;
   unsigned int i;
-  uint8_t seedbuf[2*SEEDBYTES + CRHBYTES];
+  uint8_t seedbuf[2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES];
+  //byte *seedbuf = NULL;
   const uint8_t *rho, *rhoprime, *key;
   polyvecl rowbuf[2];
   polyvecl s1, *row = rowbuf;
@@ -73,44 +78,47 @@ int crypto_sign_keypair(uint8_t *pk, uint8_t *sk) {
   gcry_mldsa_poly t1, t0;
 
   /* Get randomness for rho, rhoprime and key */
-  randombytes(seedbuf, SEEDBYTES);
-  shake256(seedbuf, 2*SEEDBYTES + CRHBYTES, seedbuf, SEEDBYTES);
+  randombytes(seedbuf, GCRY_MLDSA_SEEDBYTES); /* TODO */
+  shake256(seedbuf, 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES, seedbuf, GCRY_MLDSA_SEEDBYTES); /* TODO */
   rho = seedbuf;
-  rhoprime = rho + SEEDBYTES;
-  key = rhoprime + CRHBYTES;
+  rhoprime = rho + GCRY_MLDSA_SEEDBYTES;
+  key = rhoprime + GCRY_MLDSA_CRHBYTES;
 
   /* Store rho, key */
-  memcpy(pk, rho, SEEDBYTES);
-  memcpy(sk, rho, SEEDBYTES);
-  memcpy(sk + SEEDBYTES, key, SEEDBYTES);
+  memcpy(pk, rho, GCRY_MLDSA_SEEDBYTES);
+  memcpy(sk, rho, GCRY_MLDSA_SEEDBYTES);
+  memcpy(sk + GCRY_MLDSA_SEEDBYTES, key, GCRY_MLDSA_SEEDBYTES);
 
   /* Sample short vectors s1 and s2 */
-#if K == 4 && L == 4
   poly_uniform_eta_4x(&s1.vec[0], &s1.vec[1], &s1.vec[2], &s1.vec[3], rhoprime, 0, 1, 2, 3);
-  poly_uniform_eta_4x(&s2.vec[0], &s2.vec[1], &s2.vec[2], &s2.vec[3], rhoprime, 4, 5, 6, 7);
-#elif K == 6 && L == 5
-  poly_uniform_eta_4x(&s1.vec[0], &s1.vec[1], &s1.vec[2], &s1.vec[3], rhoprime, 0, 1, 2, 3);
-  poly_uniform_eta_4x(&s1.vec[4], &s2.vec[0], &s2.vec[1], &s2.vec[2], rhoprime, 4, 5, 6, 7);
-  poly_uniform_eta_4x(&s2.vec[3], &s2.vec[4], &s2.vec[5], &t0, rhoprime, 8, 9, 10, 11);
-#elif K == 8 && L == 7
-  poly_uniform_eta_4x(&s1.vec[0], &s1.vec[1], &s1.vec[2], &s1.vec[3], rhoprime, 0, 1, 2, 3);
-  poly_uniform_eta_4x(&s1.vec[4], &s1.vec[5], &s1.vec[6], &s2.vec[0], rhoprime, 4, 5, 6, 7);
-  poly_uniform_eta_4x(&s2.vec[1], &s2.vec[2], &s2.vec[3], &s2.vec[4], rhoprime, 8, 9, 10, 11);
-  poly_uniform_eta_4x(&s2.vec[5], &s2.vec[6], &s2.vec[7], &t0, rhoprime, 12, 13, 14, 15);
-#else
-#error
-#endif
-
+  if(params->k == 4 && params->l == 4)
+  {
+    poly_uniform_eta_4x(&s2.vec[0], &s2.vec[1], &s2.vec[2], &s2.vec[3], rhoprime, 4, 5, 6, 7);
+  }
+  else if (params->k == 6 && params->l == 5)
+  {
+    poly_uniform_eta_4x(&s1.vec[4], &s2.vec[0], &s2.vec[1], &s2.vec[2], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(&s2.vec[3], &s2.vec[4], &s2.vec[5], &t0, rhoprime, 8, 9, 10, 11);
+  }
+  else if (params->k == 8 && params->l == 7)
+  {
+    poly_uniform_eta_4x(&s1.vec[4], &s1.vec[5], &s1.vec[6], &s2.vec[0], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(&s2.vec[1], &s2.vec[2], &s2.vec[3], &s2.vec[4], rhoprime, 8, 9, 10, 11);
+    poly_uniform_eta_4x(&s2.vec[5], &s2.vec[6], &s2.vec[7], &t0, rhoprime, 12, 13, 14, 15);
+  }
+  else {
+    // TODO err
+  }
   /* Pack secret vectors */
-  for(i = 0; i < L; i++)
-    polyeta_pack(sk + 2*SEEDBYTES + TRBYTES + i*POLYETA_PACKEDBYTES, &s1.vec[i]);
-  for(i = 0; i < K; i++)
-    polyeta_pack(sk + 2*SEEDBYTES + TRBYTES + (L + i)*POLYETA_PACKEDBYTES, &s2.vec[i]);
+  for(i = 0; i < params->l; i++)
+    polyeta_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + i*params->polyeta_packedbytes, &s1.vec[i]);
+  for(i = 0; i < params->k; i++)
+    polyeta_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l + i)*params->polyeta_packedbytes, &s2.vec[i]);
 
   /* Transform s1 */
   polyvecl_ntt(&s1);
 
-  for(i = 0; i < K; i++) {
+  for(i = 0; i < params->k; i++) {
     /* Expand matrix row */
     polyvec_matrix_expand_row(&row, rowbuf, rho, i);
 
@@ -124,12 +132,13 @@ int crypto_sign_keypair(uint8_t *pk, uint8_t *sk) {
     /* Round t and pack t1, t0 */
     poly_caddq(&t1);
     poly_power2round(&t1, &t0, &t1);
-    polyt1_pack(pk + SEEDBYTES + i*POLYT1_PACKEDBYTES, &t1);
-    polyt0_pack(sk + 2*SEEDBYTES + TRBYTES + (L+K)*POLYETA_PACKEDBYTES + i*POLYT0_PACKEDBYTES, &t0);
+    polyt1_pack(pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES, &t1);
+    polyt0_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l+params->k)*params->polyeta_packedbytes + i*GCRY_MLDSA_POLYT0_PACKEDBYTES, &t0);
   }
 
   /* Compute H(rho, t1) and store in secret key */
-  shake256(sk + 2*SEEDBYTES, TRBYTES, pk, CRYPTO_PUBLICKEYBYTES);
+  /* TODO */
+  shake256(sk + 2*GCRY_MLDSA_SEEDBYTES, GCRY_MLDSA_TRBYTES, pk, params->public_key_bytes);
 
   return 0;
 }

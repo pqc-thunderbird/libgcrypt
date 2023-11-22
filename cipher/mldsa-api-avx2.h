@@ -12,7 +12,7 @@
 #define pqcrystals_dilithium2_avx2_SECRETKEYBYTES pqcrystals_dilithium2_SECRETKEYBYTES
 #define pqcrystals_dilithium2_avx2_BYTES pqcrystals_dilithium2_BYTES
 
-int crypto_sign_keypair(uint8_t *pk, uint8_t *sk);
+gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk, uint8_t *sk);
 
 int crypto_sign_signature(uint8_t *sig, size_t *siglen,
                                         const uint8_t *m, size_t mlen,

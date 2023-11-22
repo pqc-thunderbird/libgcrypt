@@ -38,28 +38,29 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   gcry_mldsa_polyvec t0 = {.vec = NULL};
 
   /* TODO: REMOVE ****************************/
-  uint8_t pk_avx2[CRYPTO_PUBLICKEYBYTES];
-  uint8_t sk_avx2[CRYPTO_SECRETKEYBYTES];
-  uint8_t sig_avx2[CRYPTO_BYTES];
-  size_t sig_avx2_len;
-  byte msg_avx2[] = {0x01, 0x02};
-  if(crypto_sign_keypair(pk_avx2, sk_avx2))
-  {
-      printf("generating avx2 keys failed\n");
-      return -1;
-  }
-  if(crypto_sign_signature(sig_avx2, &sig_avx2_len, msg_avx2, sizeof(msg_avx2), sk_avx2))
-  {
-      printf("generating avx2 sig failed\n");
-      return -1;
-  }
-  if(crypto_sign_verify(sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
-  {
-      printf("verifying avx2 sig failed\n");
-      return -1;
-  }
   if (params->l == 4) // mldsa-44
   {
+    uint8_t pk_avx2[params->public_key_bytes];
+    uint8_t sk_avx2[params->secret_key_bytes];
+    uint8_t sig_avx2[params->signature_bytes];
+    size_t sig_avx2_len;
+    byte msg_avx2[] = {0x01, 0x02};
+    if(_gcry_mldsa_keypair_avx2(params, pk_avx2, sk_avx2))
+    {
+        printf("generating avx2 keys failed\n");
+        return -1;
+    }
+    if(crypto_sign_signature(sig_avx2, &sig_avx2_len, msg_avx2, sizeof(msg_avx2), sk_avx2))
+    {
+        printf("generating avx2 sig failed\n");
+        return -1;
+    }
+    if(crypto_sign_verify(sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
+    {
+        printf("verifying avx2 sig failed\n");
+        return -1;
+    }
+
     // verify avx2 generated
     if(_gcry_mldsa_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
     {
