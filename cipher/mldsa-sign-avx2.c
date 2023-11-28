@@ -14,24 +14,24 @@
 #include "mldsa-symmetric-avx2.h"
 #include "mldsa-fips202-avx2.h"
 
-static inline void polyvec_matrix_expand_row(polyvecl **row, byte* buf, const uint8_t rho[SEEDBYTES], unsigned int i) {
-  const size_t polysize = sizeof(gcry_mldsa_poly);
+static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **row, byte* buf, const uint8_t rho[SEEDBYTES], unsigned int i) {
+  const size_t offset = params->l * sizeof(gcry_mldsa_poly);
   switch(i) {
     case 0:
-      polyvec_matrix_expand_row0(buf, buf + L*polysize, rho);
+      polyvec_matrix_expand_row0(buf, buf + offset, rho);
       *row = buf;
       break;
     case 1:
-      polyvec_matrix_expand_row1(buf + L*polysize, buf, rho);
-      *row = buf + L*polysize;
+      polyvec_matrix_expand_row1(buf + offset, buf, rho);
+      *row = buf + offset;
       break;
     case 2:
-      polyvec_matrix_expand_row2(buf, buf + L*polysize, rho);
+      polyvec_matrix_expand_row2(buf, buf + offset, rho);
       *row = buf;
       break;
     case 3:
-      polyvec_matrix_expand_row3(buf + L*polysize, buf, rho);
-      *row = buf + L*polysize;
+      polyvec_matrix_expand_row3(buf + offset, buf, rho);
+      *row = buf + offset;
       break;
 #if K > 4
     case 4:
@@ -78,7 +78,6 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk
   byte *row = NULL;
   gcry_mldsa_polybuf_al s1 = {};
   gcry_mldsa_polybuf_al s2 = {};
-  //gcry_mldsa_poly t1, t0;
   gcry_mldsa_polybuf_al t1 = {};
   gcry_mldsa_polybuf_al t0 = {};
   const size_t polysize = sizeof(gcry_mldsa_poly);
@@ -133,7 +132,7 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk
 
   for(i = 0; i < params->k; i++) {
     /* Expand matrix row */
-    polyvec_matrix_expand_row(&row, rowbuf.buf, rho, i);
+    polyvec_matrix_expand_row(params, &row, rowbuf.buf, rho, i);
 
     /* Compute inner-product */
     polyvecl_pointwise_acc_montgomery(t1.buf, row, s1.buf);
@@ -347,7 +346,7 @@ int crypto_sign(uint8_t *sm, size_t *smlen, const uint8_t *m, size_t mlen, const
 *
 * Returns 0 if signature could be verified correctly and -1 otherwise
 **************************************************/
-int crypto_sign_verify(const uint8_t *sig, size_t siglen, const uint8_t *m, size_t mlen, const uint8_t *pk) {
+int crypto_sign_verify(gcry_mldsa_param_t *params, const uint8_t *sig, size_t siglen, const uint8_t *m, size_t mlen, const uint8_t *pk) {
   unsigned int i, j, pos = 0;
   /* polyw1_pack writes additional 14 bytes */
   ALIGNED_UINT8(K*POLYW1_PACKEDBYTES+14) buf;
@@ -382,7 +381,7 @@ int crypto_sign_verify(const uint8_t *sig, size_t siglen, const uint8_t *m, size
 
   for(i = 0; i < K; i++) {
     /* Expand matrix row */
-    polyvec_matrix_expand_row(&row, rowbuf, pk, i);
+    polyvec_matrix_expand_row(params, &row, rowbuf, pk, i);
 
     /* Compute i-th row of Az - c2^Dt1 */
     polyvecl_pointwise_acc_montgomery(&w1, row, &z);
@@ -444,14 +443,14 @@ int crypto_sign_verify(const uint8_t *sig, size_t siglen, const uint8_t *m, size
 *
 * Returns 0 if signed message could be verified correctly and -1 otherwise
 **************************************************/
-int crypto_sign_open(uint8_t *m, size_t *mlen, const uint8_t *sm, size_t smlen, const uint8_t *pk) {
+int crypto_sign_open(gcry_mldsa_param_t *params, uint8_t *m, size_t *mlen, const uint8_t *sm, size_t smlen, const uint8_t *pk) {
   size_t i;
 
   if(smlen < CRYPTO_BYTES)
     goto badsig;
 
   *mlen = smlen - CRYPTO_BYTES;
-  if(crypto_sign_verify(sm, CRYPTO_BYTES, sm + CRYPTO_BYTES, *mlen, pk))
+  if(crypto_sign_verify(params, sm, CRYPTO_BYTES, sm + CRYPTO_BYTES, *mlen, pk))
     goto badsig;
   else {
     /* All good, copy msg, return 0 */
