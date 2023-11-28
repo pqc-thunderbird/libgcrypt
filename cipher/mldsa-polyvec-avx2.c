@@ -1,9 +1,35 @@
 #include <stdint.h>
 #include "mldsa-params-avx2.h"
 #include "mldsa-polyvec-avx2.h"
+#include "mldsa-polyvec.h"
 #include "mldsa-poly-avx2.h"
 #include "mldsa-ntt-avx2.h"
 #include "mldsa-consts-avx2.h"
+
+gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf,
+                                              size_t mat_elems,
+                                              size_t vec_elems)
+{
+  polybuf->alloc_addr = xtrymalloc_secure(mat_elems * vec_elems * sizeof(gcry_mldsa_poly) + /*align*/128);
+
+  if (!polybuf->alloc_addr)
+    {
+      polybuf->buf = NULL;
+      return gpg_error_from_syserror();
+    }
+  polybuf->buf = (byte*)((uintptr_t)polybuf->alloc_addr + (128 - ((uintptr_t)polybuf->alloc_addr % 128))); // aligned memory
+  return 0;
+}
+
+void _gcry_mldsa_polybuf_al_destroy(gcry_mldsa_polybuf_al *polybuf)
+{
+  if (polybuf->alloc_addr)
+    {
+      xfree(polybuf->alloc_addr);
+    }
+  polybuf->buf = NULL;
+  polybuf->alloc_addr = NULL;
+}
 
 /*************************************************
 * Name:        expand_mat

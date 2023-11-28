@@ -8,28 +8,30 @@
 #include "mldsa-sign-avx2.h"
 #include "mldsa-packing-avx2.h"
 #include "mldsa-polyvec-avx2.h"
+#include "mldsa-polyvec.h"
 #include "mldsa-poly-avx2.h"
 #include "mldsa-randombytes-avx2.h"
 #include "mldsa-symmetric-avx2.h"
 #include "mldsa-fips202-avx2.h"
 
-static inline void polyvec_matrix_expand_row(polyvecl **row, polyvecl buf[2], const uint8_t rho[SEEDBYTES], unsigned int i) {
+static inline void polyvec_matrix_expand_row(polyvecl **row, byte* buf, const uint8_t rho[SEEDBYTES], unsigned int i) {
+  const size_t polysize = sizeof(gcry_mldsa_poly);
   switch(i) {
     case 0:
-      polyvec_matrix_expand_row0(buf, buf + 1, rho);
+      polyvec_matrix_expand_row0(buf, buf + L*polysize, rho);
       *row = buf;
       break;
     case 1:
-      polyvec_matrix_expand_row1(buf + 1, buf, rho);
-      *row = buf + 1;
+      polyvec_matrix_expand_row1(buf + L*polysize, buf, rho);
+      *row = buf + L*polysize;
       break;
     case 2:
-      polyvec_matrix_expand_row2(buf, buf + 1, rho);
+      polyvec_matrix_expand_row2(buf, buf + L*polysize, rho);
       *row = buf;
       break;
     case 3:
-      polyvec_matrix_expand_row3(buf + 1, buf, rho);
-      *row = buf + 1;
+      polyvec_matrix_expand_row3(buf + L*polysize, buf, rho);
+      *row = buf + L*polysize;
       break;
 #if K > 4
     case 4:
@@ -72,10 +74,21 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk
   uint8_t seedbuf[2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES];
   //byte *seedbuf = NULL;
   const uint8_t *rho, *rhoprime, *key;
-  polyvecl rowbuf[2];
-  polyvecl s1, *row = rowbuf;
-  polyveck s2;
-  gcry_mldsa_poly t1, t0;
+  gcry_mldsa_polybuf_al rowbuf = {};
+  byte *row = NULL;
+  gcry_mldsa_polybuf_al s1 = {};
+  gcry_mldsa_polybuf_al s2 = {};
+  //gcry_mldsa_poly t1, t0;
+  gcry_mldsa_polybuf_al t1 = {};
+  gcry_mldsa_polybuf_al t0 = {};
+  const size_t polysize = sizeof(gcry_mldsa_poly);
+
+  _gcry_mldsa_polybuf_al_create(&rowbuf, 2, params->l);
+  _gcry_mldsa_polybuf_al_create(&s1, 1, params->l);
+  _gcry_mldsa_polybuf_al_create(&s2, 1, params->k);
+  _gcry_mldsa_polybuf_al_create(&t1, 1, 1);
+  _gcry_mldsa_polybuf_al_create(&t0, 1, 1);
+  row = rowbuf.buf;
 
   /* Get randomness for rho, rhoprime and key */
   randombytes(seedbuf, GCRY_MLDSA_SEEDBYTES); /* TODO */
@@ -90,56 +103,62 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk
   memcpy(sk + GCRY_MLDSA_SEEDBYTES, key, GCRY_MLDSA_SEEDBYTES);
 
   /* Sample short vectors s1 and s2 */
-  poly_uniform_eta_4x(&s1.vec[0], &s1.vec[1], &s1.vec[2], &s1.vec[3], rhoprime, 0, 1, 2, 3);
+  poly_uniform_eta_4x(&s1.buf[0 * polysize], &s1.buf[1 * polysize], &s1.buf[2 * polysize], &s1.buf[3 * polysize], rhoprime, 0, 1, 2, 3);
   if(params->k == 4 && params->l == 4)
   {
-    poly_uniform_eta_4x(&s2.vec[0], &s2.vec[1], &s2.vec[2], &s2.vec[3], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(&s2.buf[0 * polysize], &s2.buf[1 * polysize], &s2.buf[2 * polysize], &s2.buf[3 * polysize], rhoprime, 4, 5, 6, 7);
   }
   else if (params->k == 6 && params->l == 5)
   {
-    poly_uniform_eta_4x(&s1.vec[4], &s2.vec[0], &s2.vec[1], &s2.vec[2], rhoprime, 4, 5, 6, 7);
-    poly_uniform_eta_4x(&s2.vec[3], &s2.vec[4], &s2.vec[5], &t0, rhoprime, 8, 9, 10, 11);
+    poly_uniform_eta_4x(&s1.buf[4 * polysize], &s2.buf[0 * polysize], &s2.buf[1 * polysize], &s2.buf[2 * polysize], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(&s2.buf[3 * polysize], &s2.buf[4 * polysize], &s2.buf[5 * polysize], t0.buf, rhoprime, 8, 9, 10, 11);
   }
   else if (params->k == 8 && params->l == 7)
   {
-    poly_uniform_eta_4x(&s1.vec[4], &s1.vec[5], &s1.vec[6], &s2.vec[0], rhoprime, 4, 5, 6, 7);
-    poly_uniform_eta_4x(&s2.vec[1], &s2.vec[2], &s2.vec[3], &s2.vec[4], rhoprime, 8, 9, 10, 11);
-    poly_uniform_eta_4x(&s2.vec[5], &s2.vec[6], &s2.vec[7], &t0, rhoprime, 12, 13, 14, 15);
+    poly_uniform_eta_4x(&s1.buf[4 * polysize], &s1.buf[5 * polysize], &s1.buf[6 * polysize], &s2.buf[0 * polysize], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(&s2.buf[1 * polysize], &s2.buf[2 * polysize], &s2.buf[3 * polysize], &s2.buf[4 * polysize], rhoprime, 8, 9, 10, 11);
+    poly_uniform_eta_4x(&s2.buf[5 * polysize], &s2.buf[6 * polysize], &s2.buf[7 * polysize], t0.buf, rhoprime, 12, 13, 14, 15);
   }
   else {
     // TODO err
   }
   /* Pack secret vectors */
   for(i = 0; i < params->l; i++)
-    polyeta_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + i*params->polyeta_packedbytes, &s1.vec[i]);
+    polyeta_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + i*params->polyeta_packedbytes, &s1.buf[i * polysize]);
   for(i = 0; i < params->k; i++)
-    polyeta_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l + i)*params->polyeta_packedbytes, &s2.vec[i]);
+    polyeta_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l + i)*params->polyeta_packedbytes, &s2.buf[i * polysize]);
 
   /* Transform s1 */
-  polyvecl_ntt(&s1);
+  polyvecl_ntt(s1.buf);
 
   for(i = 0; i < params->k; i++) {
     /* Expand matrix row */
-    polyvec_matrix_expand_row(&row, rowbuf, rho, i);
+    polyvec_matrix_expand_row(&row, rowbuf.buf, rho, i);
 
     /* Compute inner-product */
-    polyvecl_pointwise_acc_montgomery(&t1, row, &s1);
-    poly_invntt_tomont(&t1);
+    polyvecl_pointwise_acc_montgomery(t1.buf, row, s1.buf);
+    poly_invntt_tomont(t1.buf);
 
     /* Add error polynomial */
-    poly_add(&t1, &t1, &s2.vec[i]);
+    poly_add(t1.buf, t1.buf, &s2.buf[i * polysize]);
 
     /* Round t and pack t1, t0 */
-    poly_caddq(&t1);
-    poly_power2round(&t1, &t0, &t1);
-    polyt1_pack(pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES, &t1);
-    polyt0_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l+params->k)*params->polyeta_packedbytes + i*GCRY_MLDSA_POLYT0_PACKEDBYTES, &t0);
+    poly_caddq(t1.buf);
+    poly_power2round(t1.buf, t0.buf, t1.buf);
+    polyt1_pack(pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES, t1.buf);
+    polyt0_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l+params->k)*params->polyeta_packedbytes + i*GCRY_MLDSA_POLYT0_PACKEDBYTES, t0.buf);
   }
 
   /* Compute H(rho, t1) and store in secret key */
   /* TODO */
   shake256(sk + 2*GCRY_MLDSA_SEEDBYTES, GCRY_MLDSA_TRBYTES, pk, params->public_key_bytes);
 
+leave:
+  _gcry_mldsa_polybuf_al_destroy(&rowbuf);
+  _gcry_mldsa_polybuf_al_destroy(&s1);
+  _gcry_mldsa_polybuf_al_destroy(&s2);
+  _gcry_mldsa_polybuf_al_destroy(&t1);
+  _gcry_mldsa_polybuf_al_destroy(&t0);
   return 0;
 }
 
