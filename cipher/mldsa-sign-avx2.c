@@ -193,20 +193,48 @@ leave:
 * Returns 0 (success)
 **************************************************/
 int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mlen, const uint8_t *sk) {
+  gcry_err_code_t ec = 0;
   unsigned int i, n, pos;
-  uint8_t seedbuf[2*SEEDBYTES + TRBYTES + RNDBYTES + 2*CRHBYTES];
-  uint8_t *rho, *tr, *key, *rnd, *mu, *rhoprime;
-  uint8_t hintbuf[N];
-  uint8_t *hint = sig + CTILDEBYTES + L*POLYZ_PACKEDBYTES;
+  byte *seedbuf = NULL;
+  byte *rho, *tr, *key, *rnd, *mu, *rhoprime, *hint;
+  byte *hintbuf = NULL;
   uint64_t nonce = 0;
-  polyvecl mat[K], s1, z;
-  polyveck t0, s2, w1;
+  polyvecl z; /* TODO */
+  gcry_mldsa_polybuf_al mat = {};
+  gcry_mldsa_polybuf_al s1 = {};
+  // gcry_mldsa_polybuf_al z = {};
+
+  //polyveck t0, s2, w1;
+  gcry_mldsa_polybuf_al t0 = {};
+  gcry_mldsa_polybuf_al s2 = {};
+  gcry_mldsa_polybuf_al w1 = {};
   gcry_mldsa_poly c, tmp;
   union {
     polyvecl y;
     polyveck w0;
   } tmpv;
   keccak_state state;
+  const size_t polysize = sizeof(gcry_mldsa_poly);
+
+
+ _gcry_mldsa_polybuf_al_create(&mat, params->k, params->l);
+ _gcry_mldsa_polybuf_al_create(&s1, 1, params->l);
+ _gcry_mldsa_polybuf_al_create(&t0, 1, params->k);
+ _gcry_mldsa_polybuf_al_create(&s2, 1, params->k);
+  _gcry_mldsa_polybuf_al_create(&w1, 1, params->k);
+//  _gcry_mldsa_polybuf_al_create(&z, 1, params->l);
+
+  if (!(seedbuf = xtrymalloc_secure(2*SEEDBYTES + TRBYTES + RNDBYTES + 2*CRHBYTES)))
+  {
+    ec = gpg_error_from_syserror();
+    goto leave;
+  }  if (!(hintbuf = xtrymalloc_secure(GCRY_MLDSA_N)))
+  {
+    ec = gpg_error_from_syserror();
+    goto leave;
+  }
+
+  hint = sig + CTILDEBYTES + params->l*POLYZ_PACKEDBYTES;
 
   rho = seedbuf;
   tr = rho + SEEDBYTES;
@@ -214,7 +242,7 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *sigl
   rnd = key + SEEDBYTES;
   mu = rnd + RNDBYTES;
   rhoprime = mu + CRHBYTES;
-  unpack_sk(rho, tr, key, &t0, &s1, &s2, sk);
+  unpack_sk(rho, tr, key, t0.buf, s1.buf, s2.buf, sk);
 
   /* Compute CRH(tr, msg) */
   shake256_init(&state);
@@ -231,10 +259,10 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *sigl
   shake256(rhoprime, CRHBYTES, key, SEEDBYTES + RNDBYTES + CRHBYTES);
 
   /* Expand matrix and transform vectors */
-  polyvec_matrix_expand(params, mat, rho);
-  polyvecl_ntt(&s1);
-  polyveck_ntt(&s2);
-  polyveck_ntt(&t0);
+  polyvec_matrix_expand(params, mat.buf, rho);
+  polyvecl_ntt(s1.buf);
+  polyveck_ntt(s2.buf);
+  polyveck_ntt(t0.buf);
 
 rej:
   /* Sample intermediate vector y */
@@ -260,13 +288,13 @@ rej:
   /* Matrix-vector product */
   tmpv.y = z;
   polyvecl_ntt(&tmpv.y);
-  polyvec_matrix_pointwise_montgomery(&w1, mat, &tmpv.y);
-  polyveck_invntt_tomont(&w1);
+  polyvec_matrix_pointwise_montgomery(w1.buf, mat.buf, &tmpv.y);
+  polyveck_invntt_tomont(w1.buf);
 
   /* Decompose w and call the random oracle */
-  polyveck_caddq(&w1);
-  polyveck_decompose(&w1, &tmpv.w0, &w1);
-  polyveck_pack_w1(sig, &w1);
+  polyveck_caddq(w1.buf);
+  polyveck_decompose(w1.buf, &tmpv.w0, w1.buf);
+  polyveck_pack_w1(sig, w1.buf);
 
   shake256_init(&state);
   shake256_absorb(&state, mu, CRHBYTES);
@@ -278,7 +306,7 @@ rej:
 
   /* Compute z, reject if it reveals secret */
   for(i = 0; i < L; i++) {
-    poly_pointwise_montgomery(&tmp, &c, &s1.vec[i]);
+    poly_pointwise_montgomery(&tmp, &c, &s1.buf[i * polysize]);
     poly_invntt_tomont(&tmp);
     poly_add(&z.vec[i], &z.vec[i], &tmp);
     poly_reduce(&z.vec[i]);
@@ -293,7 +321,7 @@ rej:
   for(i = 0; i < K; i++) {
     /* Check that subtracting cs2 does not change high bits of w and low bits
      * do not reveal secret information */
-    poly_pointwise_montgomery(&tmp, &c, &s2.vec[i]);
+    poly_pointwise_montgomery(&tmp, &c, &s2.buf[i * polysize]);
     poly_invntt_tomont(&tmp);
     poly_sub(&tmpv.w0.vec[i], &tmpv.w0.vec[i], &tmp);
     poly_reduce(&tmpv.w0.vec[i]);
@@ -301,14 +329,14 @@ rej:
       goto rej;
 
     /* Compute hints */
-    poly_pointwise_montgomery(&tmp, &c, &t0.vec[i]);
+    poly_pointwise_montgomery(&tmp, &c, &t0.buf[i * polysize]);
     poly_invntt_tomont(&tmp);
     poly_reduce(&tmp);
     if(poly_chknorm(&tmp, GAMMA2))
       goto rej;
 
     poly_add(&tmpv.w0.vec[i], &tmpv.w0.vec[i], &tmp);
-    n = poly_make_hint(hintbuf, &tmpv.w0.vec[i], &w1.vec[i]);
+    n = poly_make_hint(hintbuf, &tmpv.w0.vec[i], &w1.buf[i * polysize]);
     if(pos + n > OMEGA)
       goto rej;
 
@@ -322,7 +350,17 @@ rej:
     polyz_pack(sig + CTILDEBYTES + i*POLYZ_PACKEDBYTES, &z.vec[i]);
 
   *siglen = CRYPTO_BYTES;
-  return 0;
+
+leave:
+  xfree(seedbuf);
+  xfree(hintbuf);
+  _gcry_mldsa_polybuf_al_destroy(&mat);
+  _gcry_mldsa_polybuf_al_destroy(&s1);
+  _gcry_mldsa_polybuf_al_destroy(&s2);
+  _gcry_mldsa_polybuf_al_destroy(&t0);
+  _gcry_mldsa_polybuf_al_destroy(&w1);
+  // _gcry_mldsa_polybuf_al_destroy(&z);
+  return ec;
 }
 
 /*************************************************
