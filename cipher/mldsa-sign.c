@@ -50,7 +50,7 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
         printf("generating avx2 keys failed\n");
         return -1;
     }
-    if(crypto_sign_signature(sig_avx2, &sig_avx2_len, msg_avx2, sizeof(msg_avx2), sk_avx2))
+    if(crypto_sign_signature(params, sig_avx2, &sig_avx2_len, msg_avx2, sizeof(msg_avx2), sk_avx2))
     {
         printf("generating avx2 sig failed\n");
         return -1;

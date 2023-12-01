@@ -55,16 +55,16 @@ void polyveck_use_hint(polyveck *w, const polyveck *v, const polyveck *h);
 
 void polyveck_pack_w1(uint8_t r[K*POLYW1_PACKEDBYTES], const polyveck *w1);
 
-void polyvec_matrix_expand(polyvecl mat[K], const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, polyvecl mat[K], const uint8_t rho[SEEDBYTES]);
 
-void polyvec_matrix_expand_row0(polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-void polyvec_matrix_expand_row1(polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-void polyvec_matrix_expand_row2(polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-void polyvec_matrix_expand_row3(polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-void polyvec_matrix_expand_row4(polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-void polyvec_matrix_expand_row5(polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-void polyvec_matrix_expand_row6(polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-void polyvec_matrix_expand_row7(polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row0(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row1(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row2(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row3(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row4(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row5(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row6(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row7(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
 
 void polyvec_matrix_pointwise_montgomery(polyveck *t, const polyvecl mat[K], const polyvecl *v);
 

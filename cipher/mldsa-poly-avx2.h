@@ -21,11 +21,8 @@ void poly_sub(gcry_mldsa_poly *c, const gcry_mldsa_poly *a, const gcry_mldsa_pol
 #define poly_shiftl DILITHIUM_NAMESPACE(poly_shiftl)
 void poly_shiftl(gcry_mldsa_poly *a);
 
-#define poly_ntt DILITHIUM_NAMESPACE(poly_ntt)
 void poly_ntt(gcry_mldsa_poly *a);
-#define poly_invntt_tomont DILITHIUM_NAMESPACE(poly_invntt_tomont)
 void poly_invntt_tomont(gcry_mldsa_poly *a);
-#define poly_nttunpack DILITHIUM_NAMESPACE(poly_nttunpack)
 void poly_nttunpack(gcry_mldsa_poly *a);
 #define poly_pointwise_montgomery DILITHIUM_NAMESPACE(poly_pointwise_montgomery)
 void poly_pointwise_montgomery(gcry_mldsa_poly *c, const gcry_mldsa_poly *a, const gcry_mldsa_poly *b);

@@ -18,41 +18,45 @@ static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **
   const size_t offset = params->l * sizeof(gcry_mldsa_poly);
   switch(i) {
     case 0:
-      polyvec_matrix_expand_row0(buf, buf + offset, rho);
+      polyvec_matrix_expand_row0(params, buf, buf + offset, rho);
       *row = buf;
       break;
     case 1:
-      polyvec_matrix_expand_row1(buf + offset, buf, rho);
+      polyvec_matrix_expand_row1(params, buf + offset, buf, rho);
       *row = buf + offset;
       break;
     case 2:
-      polyvec_matrix_expand_row2(buf, buf + offset, rho);
+      polyvec_matrix_expand_row2(params, buf, buf + offset, rho);
       *row = buf;
       break;
     case 3:
-      polyvec_matrix_expand_row3(buf + offset, buf, rho);
+      polyvec_matrix_expand_row3(params, buf + offset, buf, rho);
       *row = buf + offset;
       break;
-#if K > 4
     case 4:
-      polyvec_matrix_expand_row4(buf, buf + 1, rho);
+      if(params->k <= 4)
+        break;
+      polyvec_matrix_expand_row4(params, buf, buf + 1, rho);
       *row = buf;
       break;
     case 5:
-      polyvec_matrix_expand_row5(buf + 1, buf, rho);
+      if(params->k <= 4)
+        break;
+      polyvec_matrix_expand_row5(params, buf + 1, buf, rho);
       *row = buf + 1;
       break;
-#endif
-#if K > 6
     case 6:
-      polyvec_matrix_expand_row6(buf, buf + 1, rho);
+      if(params->k <= 6)
+        break;
+      polyvec_matrix_expand_row6(params, buf, buf + 1, rho);
       *row = buf;
       break;
     case 7:
-      polyvec_matrix_expand_row7(buf + 1, buf, rho);
+      if(params->k <= 4)
+        break;
+      polyvec_matrix_expand_row7(params, buf + 1, buf, rho);
       *row = buf + 1;
       break;
-#endif
   }
 }
 
@@ -71,8 +75,7 @@ static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **
 gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk, uint8_t *sk) {
   gcry_err_code_t ec = 0;
   unsigned int i;
-  uint8_t seedbuf[2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES];
-  //byte *seedbuf = NULL;
+  byte *seedbuf = NULL;
   const uint8_t *rho, *rhoprime, *key;
   gcry_mldsa_polybuf_al rowbuf = {};
   byte *row = NULL;
@@ -89,9 +92,20 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk
   _gcry_mldsa_polybuf_al_create(&t0, 1, 1);
   row = rowbuf.buf;
 
+  if (!(seedbuf = xtrymalloc_secure(2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES)))
+  {
+    ec = gpg_error_from_syserror();
+    goto leave;
+  }
+
   /* Get randomness for rho, rhoprime and key */
-  randombytes(seedbuf, GCRY_MLDSA_SEEDBYTES); /* TODO */
-  shake256(seedbuf, 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES, seedbuf, GCRY_MLDSA_SEEDBYTES); /* TODO */
+  _gcry_randomize(seedbuf, GCRY_MLDSA_SEEDBYTES, GCRY_VERY_STRONG_RANDOM);
+
+  ec = _gcry_mldsa_shake256(
+      seedbuf, GCRY_MLDSA_SEEDBYTES, NULL, 0, seedbuf, 2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES);
+  if (ec)
+    goto leave;
+
   rho = seedbuf;
   rhoprime = rho + GCRY_MLDSA_SEEDBYTES;
   key = rhoprime + GCRY_MLDSA_CRHBYTES;
@@ -119,7 +133,8 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk
     poly_uniform_eta_4x(&s2.buf[5 * polysize], &s2.buf[6 * polysize], &s2.buf[7 * polysize], t0.buf, rhoprime, 12, 13, 14, 15);
   }
   else {
-    // TODO err
+    ec = GPG_ERR_INV_STATE;
+    goto leave;
   }
   /* Pack secret vectors */
   for(i = 0; i < params->l; i++)
@@ -150,9 +165,12 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk
 
   /* Compute H(rho, t1) and store in secret key */
   /* TODO */
-  shake256(sk + 2*GCRY_MLDSA_SEEDBYTES, GCRY_MLDSA_TRBYTES, pk, params->public_key_bytes);
+  ec = _gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, sk + 2*GCRY_MLDSA_SEEDBYTES, GCRY_MLDSA_TRBYTES);
+  if (ec)
+    goto leave;
 
 leave:
+  xfree(seedbuf);
   _gcry_mldsa_polybuf_al_destroy(&rowbuf);
   _gcry_mldsa_polybuf_al_destroy(&s1);
   _gcry_mldsa_polybuf_al_destroy(&s2);
@@ -174,7 +192,7 @@ leave:
 *
 * Returns 0 (success)
 **************************************************/
-int crypto_sign_signature(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mlen, const uint8_t *sk) {
+int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mlen, const uint8_t *sk) {
   unsigned int i, n, pos;
   uint8_t seedbuf[2*SEEDBYTES + TRBYTES + RNDBYTES + 2*CRHBYTES];
   uint8_t *rho, *tr, *key, *rnd, *mu, *rhoprime;
@@ -213,7 +231,7 @@ int crypto_sign_signature(uint8_t *sig, size_t *siglen, const uint8_t *m, size_t
   shake256(rhoprime, CRHBYTES, key, SEEDBYTES + RNDBYTES + CRHBYTES);
 
   /* Expand matrix and transform vectors */
-  polyvec_matrix_expand(mat, rho);
+  polyvec_matrix_expand(params, mat, rho);
   polyvecl_ntt(&s1);
   polyveck_ntt(&s2);
   polyveck_ntt(&t0);
@@ -323,12 +341,12 @@ rej:
 *
 * Returns 0 (success)
 **************************************************/
-int crypto_sign(uint8_t *sm, size_t *smlen, const uint8_t *m, size_t mlen, const uint8_t *sk) {
+int crypto_sign(gcry_mldsa_param_t *params, uint8_t *sm, size_t *smlen, const uint8_t *m, size_t mlen, const uint8_t *sk) {
   size_t i;
 
   for(i = 0; i < mlen; ++i)
     sm[CRYPTO_BYTES + mlen - 1 - i] = m[mlen - 1 - i];
-  crypto_sign_signature(sm, smlen, sm + CRYPTO_BYTES, mlen, sk);
+  crypto_sign_signature(params, sm, smlen, sm + CRYPTO_BYTES, mlen, sk);
   *smlen += mlen;
   return 0;
 }

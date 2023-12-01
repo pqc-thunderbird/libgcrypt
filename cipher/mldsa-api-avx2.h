@@ -14,11 +14,11 @@
 
 gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk, uint8_t *sk);
 
-int crypto_sign_signature(uint8_t *sig, size_t *siglen,
+int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *siglen,
                                         const uint8_t *m, size_t mlen,
                                         const uint8_t *sk);
 
-int crypto_sign(uint8_t *sm, size_t *smlen,
+int crypto_sign(gcry_mldsa_param_t *params, uint8_t *sm, size_t *smlen,
                               const uint8_t *m, size_t mlen,
                               const uint8_t *sk);
 
