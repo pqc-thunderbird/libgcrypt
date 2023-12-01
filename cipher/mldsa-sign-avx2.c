@@ -383,9 +383,9 @@ leave:
 * Returns 0 if signature could be verified correctly and -1 otherwise
 **************************************************/
 int crypto_sign_verify(gcry_mldsa_param_t *params, const uint8_t *sig, size_t siglen, const uint8_t *m, size_t mlen, const uint8_t *pk) {
+  gcry_err_code_t ec = 0;
   unsigned int i, j, pos = 0;
-  /* polyw1_pack writes additional 14 bytes */
-  ALIGNED_UINT8(K*POLYW1_PACKEDBYTES+14) buf;
+  gcry_mldsa_buf_al buf;
   uint8_t mu[CRHBYTES];
   const uint8_t *hint = sig + CTILDEBYTES + L*POLYZ_PACKEDBYTES;
   polyvecl rowbuf[2];
@@ -393,6 +393,9 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const uint8_t *sig, size_t si
   polyvecl z;
   gcry_mldsa_poly c, w1, h;
   keccak_state state;
+
+  /* polyw1_pack writes additional 14 bytes */
+  _gcry_mldsa_buf_al_create(&buf, params->k*POLYW1_PACKEDBYTES+14);
 
   if(siglen != CRYPTO_BYTES)
     return -1;
@@ -445,7 +448,7 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const uint8_t *sig, size_t si
 
     poly_caddq(&w1);
     poly_use_hint(&w1, &w1, &h);
-    polyw1_pack(buf.coeffs + i*POLYW1_PACKEDBYTES, &w1);
+    polyw1_pack(buf.buf + i*POLYW1_PACKEDBYTES, &w1);
   }
 
   /* Extra indices are zero for strong unforgeability */
@@ -455,12 +458,14 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const uint8_t *sig, size_t si
   /* Call random oracle and verify challenge */
   shake256_init(&state);
   shake256_absorb(&state, mu, CRHBYTES);
-  shake256_absorb(&state, buf.coeffs, K*POLYW1_PACKEDBYTES);
+  shake256_absorb(&state, buf.buf, K*POLYW1_PACKEDBYTES);
   shake256_finalize(&state);
-  shake256_squeeze(buf.coeffs, CTILDEBYTES, &state);
+  shake256_squeeze(buf.buf, CTILDEBYTES, &state);
   for(i = 0; i < CTILDEBYTES; ++i)
-    if(buf.coeffs[i] != sig[i])
+    if(buf.buf[i] != sig[i])
       return -1;
 
-  return 0;
+leave:
+  _gcry_mldsa_buf_al_destroy(&buf);
+  return ec;
 }

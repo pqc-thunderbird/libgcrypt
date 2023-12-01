@@ -33,6 +33,33 @@ void _gcry_mldsa_polybuf_al_destroy(gcry_mldsa_polybuf_al *polybuf)
   polybuf->alloc_addr = NULL;
 }
 
+gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_mldsa_buf_al *buf, size_t size)
+{
+  const size_t alloc_size =  size + /*align*/ 128;
+  buf->alloc_addr = xtrymalloc_secure(alloc_size);
+
+  if (!buf->alloc_addr)
+    {
+      buf->buf = NULL;
+      return gpg_error_from_syserror();
+    }
+  buf->buf
+      = (byte *)((uintptr_t)buf->alloc_addr + (128 - ((uintptr_t)buf->alloc_addr % 128))); // aligned memory
+
+  memset(buf->alloc_addr, 0, alloc_size);
+  return 0;
+}
+
+void _gcry_mldsa_buf_al_destroy(gcry_mldsa_buf_al *buf)
+{
+  if (buf->alloc_addr)
+    {
+      xfree(buf->alloc_addr);
+    }
+  buf->buf        = NULL;
+  buf->alloc_addr = NULL;
+}
+
 /*************************************************
  * Name:        expand_mat
  *
