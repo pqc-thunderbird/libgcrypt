@@ -196,33 +196,31 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *sigl
   gcry_err_code_t ec = 0;
   unsigned int i, n, pos;
   byte *seedbuf = NULL;
-  byte *rho, *tr, *key, *rnd, *mu, *rhoprime, *hint;
+  byte *rho, *tr, *key, *mu, *rhoprime, *hint;
   byte *hintbuf = NULL;
   uint64_t nonce = 0;
-  polyvecl z; /* TODO */
   gcry_mldsa_polybuf_al mat = {};
   gcry_mldsa_polybuf_al s1 = {};
-  // gcry_mldsa_polybuf_al z = {};
-
-  //polyveck t0, s2, w1;
+  gcry_mldsa_polybuf_al z = {};
   gcry_mldsa_polybuf_al t0 = {};
   gcry_mldsa_polybuf_al s2 = {};
   gcry_mldsa_polybuf_al w1 = {};
+  gcry_mldsa_polybuf_al tmpv = {};
   gcry_mldsa_poly c, tmp;
-  union {
-    polyvecl y;
-    polyveck w0;
-  } tmpv;
-  keccak_state state;
+  // union {
+  //   polyvecl y;
+  //   polyveck w0;
+  // } tmpv;
   const size_t polysize = sizeof(gcry_mldsa_poly);
-
+  gcry_md_hd_t hd = NULL;
 
  _gcry_mldsa_polybuf_al_create(&mat, params->k, params->l);
  _gcry_mldsa_polybuf_al_create(&s1, 1, params->l);
+ _gcry_mldsa_polybuf_al_create(&z, 1, params->l);
+ _gcry_mldsa_polybuf_al_create(&tmpv, 1, params->k);
  _gcry_mldsa_polybuf_al_create(&t0, 1, params->k);
  _gcry_mldsa_polybuf_al_create(&s2, 1, params->k);
-  _gcry_mldsa_polybuf_al_create(&w1, 1, params->k);
-//  _gcry_mldsa_polybuf_al_create(&z, 1, params->l);
+ _gcry_mldsa_polybuf_al_create(&w1, 1, params->k);
 
   if (!(seedbuf = xtrymalloc_secure(2*SEEDBYTES + TRBYTES + RNDBYTES + 2*CRHBYTES)))
   {
@@ -234,29 +232,25 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *sigl
     goto leave;
   }
 
-  hint = sig + CTILDEBYTES + params->l*POLYZ_PACKEDBYTES;
+  hint = sig + params->ctildebytes + params->l*params->polyz_packedbytes;
 
   rho = seedbuf;
-  tr = rho + SEEDBYTES;
-  key = tr + TRBYTES;
-  rnd = key + SEEDBYTES;
-  mu = rnd + RNDBYTES;
-  rhoprime = mu + CRHBYTES;
+  tr = rho + GCRY_MLDSA_SEEDBYTES;
+  key = tr + GCRY_MLDSA_TRBYTES;
+  mu = key + GCRY_MLDSA_SEEDBYTES;
+  rhoprime = mu + GCRY_MLDSA_CRHBYTES;
   unpack_sk(rho, tr, key, t0.buf, s1.buf, s2.buf, sk);
 
   /* Compute CRH(tr, msg) */
-  shake256_init(&state);
-  shake256_absorb(&state, tr, TRBYTES);
-  shake256_absorb(&state, m, mlen);
-  shake256_finalize(&state);
-  shake256_squeeze(mu, CRHBYTES, &state);
+  _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  _gcry_md_write(hd, tr, GCRY_MLDSA_TRBYTES);
+  _gcry_md_write(hd, m, mlen);
+  _gcry_md_extract(hd, GCRY_MD_SHAKE256, mu, GCRY_MLDSA_CRHBYTES);
+  _gcry_md_close(hd);
 
-#ifdef DILITHIUM_RANDOMIZED_SIGNING
-  randombytes(rnd, RNDBYTES);
-#else
-  memset(rnd, 0, RNDBYTES);
-#endif
-  shake256(rhoprime, CRHBYTES, key, SEEDBYTES + RNDBYTES + CRHBYTES);
+  ec = _gcry_mldsa_shake256(key, GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES, NULL, 0, rhoprime, GCRY_MLDSA_CRHBYTES);
+  if (ec)
+    goto leave;
 
   /* Expand matrix and transform vectors */
   polyvec_matrix_expand(params, mat.buf, rho);
@@ -266,90 +260,100 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *sigl
 
 rej:
   /* Sample intermediate vector y */
-#if L == 4
-  poly_uniform_gamma1_4x(&z.vec[0], &z.vec[1], &z.vec[2], &z.vec[3],
+if(params->l == 4)
+{
+  poly_uniform_gamma1_4x(&z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
                          rhoprime, nonce, nonce + 1, nonce + 2, nonce + 3);
   nonce += 4;
-#elif L == 5
-  poly_uniform_gamma1_4x(&z.vec[0], &z.vec[1], &z.vec[2], &z.vec[3],
+}
+else if (params->l == 5)
+{
+  poly_uniform_gamma1_4x(&z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
                          rhoprime, nonce, nonce + 1, nonce + 2, nonce + 3);
-  poly_uniform_gamma1(&z.vec[4], rhoprime, nonce + 4);
+  poly_uniform_gamma1(&z.buf[4 * polysize], rhoprime, nonce + 4);
   nonce += 5;
-#elif L == 7
-  poly_uniform_gamma1_4x(&z.vec[0], &z.vec[1], &z.vec[2], &z.vec[3],
+ } else if(params->l == 7)
+ {
+
+  poly_uniform_gamma1_4x(&z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
                          rhoprime, nonce, nonce + 1, nonce + 2, nonce + 3);
-  poly_uniform_gamma1_4x(&z.vec[4], &z.vec[5], &z.vec[6], &tmp,
+  poly_uniform_gamma1_4x(&z.buf[4 * polysize], &z.buf[5 * polysize], &z.buf[6 * polysize], &tmp,
                          rhoprime, nonce + 4, nonce + 5, nonce + 6, 0);
   nonce += 7;
-#else
-#error
-#endif
+}
+else {
+  return GPG_ERR_INV_STATE;
+}
 
   /* Matrix-vector product */
-  tmpv.y = z;
-  polyvecl_ntt(&tmpv.y);
-  polyvec_matrix_pointwise_montgomery(w1.buf, mat.buf, &tmpv.y);
+  memcpy(tmpv.buf, z.buf, params->l * polysize);
+  polyvecl_ntt(tmpv.buf);
+  polyvec_matrix_pointwise_montgomery(w1.buf, mat.buf, tmpv.buf);
   polyveck_invntt_tomont(w1.buf);
 
   /* Decompose w and call the random oracle */
   polyveck_caddq(w1.buf);
-  polyveck_decompose(w1.buf, &tmpv.w0, w1.buf);
+  polyveck_decompose(w1.buf, tmpv.buf, w1.buf);
   polyveck_pack_w1(sig, w1.buf);
 
-  shake256_init(&state);
-  shake256_absorb(&state, mu, CRHBYTES);
-  shake256_absorb(&state, sig, K*POLYW1_PACKEDBYTES);
-  shake256_finalize(&state);
-  shake256_squeeze(sig, CTILDEBYTES, &state);
+  ec = _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  if (ec)
+    goto leave;
+  _gcry_md_write(hd, mu, GCRY_MLDSA_CRHBYTES);
+  _gcry_md_write(hd, sig, params->k * params->polyw1_packedbytes);
+  ec = _gcry_md_extract(hd, GCRY_MD_SHAKE256, sig, params->ctildebytes);
+  if (ec)
+    goto leave;
+  _gcry_md_close(hd);
   poly_challenge(&c, sig);
   poly_ntt(&c);
 
   /* Compute z, reject if it reveals secret */
-  for(i = 0; i < L; i++) {
+  for(i = 0; i < params->l; i++) {
     poly_pointwise_montgomery(&tmp, &c, &s1.buf[i * polysize]);
     poly_invntt_tomont(&tmp);
-    poly_add(&z.vec[i], &z.vec[i], &tmp);
-    poly_reduce(&z.vec[i]);
-    if(poly_chknorm(&z.vec[i], GAMMA1 - BETA))
+    poly_add(&z.buf[i * polysize], &z.buf[i * polysize], &tmp);
+    poly_reduce(&z.buf[i * polysize]);
+    if(poly_chknorm(&z.buf[i * polysize], params->gamma1 - params->beta))
       goto rej;
   }
 
   /* Zero hint vector in signature */
   pos = 0;
-  memset(hint, 0, OMEGA);
+  memset(hint, 0, params->omega);
 
-  for(i = 0; i < K; i++) {
+  for(i = 0; i < params->k; i++) {
     /* Check that subtracting cs2 does not change high bits of w and low bits
      * do not reveal secret information */
     poly_pointwise_montgomery(&tmp, &c, &s2.buf[i * polysize]);
     poly_invntt_tomont(&tmp);
-    poly_sub(&tmpv.w0.vec[i], &tmpv.w0.vec[i], &tmp);
-    poly_reduce(&tmpv.w0.vec[i]);
-    if(poly_chknorm(&tmpv.w0.vec[i], GAMMA2 - BETA))
+    poly_sub(&tmpv.buf[i * polysize], &tmpv.buf[i * polysize], &tmp);
+    poly_reduce(&tmpv.buf[i * polysize]);
+    if(poly_chknorm(&tmpv.buf[i * polysize], params->gamma2 - params->beta))
       goto rej;
 
     /* Compute hints */
     poly_pointwise_montgomery(&tmp, &c, &t0.buf[i * polysize]);
     poly_invntt_tomont(&tmp);
     poly_reduce(&tmp);
-    if(poly_chknorm(&tmp, GAMMA2))
+    if(poly_chknorm(&tmp, params->gamma2))
       goto rej;
 
-    poly_add(&tmpv.w0.vec[i], &tmpv.w0.vec[i], &tmp);
-    n = poly_make_hint(hintbuf, &tmpv.w0.vec[i], &w1.buf[i * polysize]);
-    if(pos + n > OMEGA)
+    poly_add(&tmpv.buf[i * polysize], &tmpv.buf[i * polysize], &tmp);
+    n = poly_make_hint(hintbuf, &tmpv.buf[i * polysize], &w1.buf[i * polysize]);
+    if(pos + n > params->omega)
       goto rej;
 
     /* Store hints in signature */
     memcpy(&hint[pos], hintbuf, n);
-    hint[OMEGA + i] = pos = pos + n;
+    hint[params->omega + i] = pos = pos + n;
   }
 
   /* Pack z into signature */
-  for(i = 0; i < L; i++)
-    polyz_pack(sig + CTILDEBYTES + i*POLYZ_PACKEDBYTES, &z.vec[i]);
+  for(i = 0; i < params->l; i++)
+    polyz_pack(sig + params->ctildebytes + i*params->polyz_packedbytes, &z.buf[i * polysize]);
 
-  *siglen = CRYPTO_BYTES;
+  *siglen = params->signature_bytes;
 
 leave:
   xfree(seedbuf);
@@ -359,35 +363,11 @@ leave:
   _gcry_mldsa_polybuf_al_destroy(&s2);
   _gcry_mldsa_polybuf_al_destroy(&t0);
   _gcry_mldsa_polybuf_al_destroy(&w1);
-  // _gcry_mldsa_polybuf_al_destroy(&z);
+  _gcry_mldsa_polybuf_al_destroy(&z);
+  _gcry_mldsa_polybuf_al_destroy(&tmpv);
   return ec;
 }
 
-/*************************************************
-* Name:        crypto_sign
-*
-* Description: Compute signed message.
-*
-* Arguments:   - uint8_t *sm: pointer to output signed message (allocated
-*                             array with CRYPTO_BYTES + mlen bytes),
-*                             can be equal to m
-*              - size_t *smlen: pointer to output length of signed
-*                               message
-*              - const uint8_t *m: pointer to message to be signed
-*              - size_t mlen: length of message
-*              - const uint8_t *sk: pointer to bit-packed secret key
-*
-* Returns 0 (success)
-**************************************************/
-int crypto_sign(gcry_mldsa_param_t *params, uint8_t *sm, size_t *smlen, const uint8_t *m, size_t mlen, const uint8_t *sk) {
-  size_t i;
-
-  for(i = 0; i < mlen; ++i)
-    sm[CRYPTO_BYTES + mlen - 1 - i] = m[mlen - 1 - i];
-  crypto_sign_signature(params, sm, smlen, sm + CRYPTO_BYTES, mlen, sk);
-  *smlen += mlen;
-  return 0;
-}
 
 /*************************************************
 * Name:        crypto_sign_verify
@@ -483,43 +463,4 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const uint8_t *sig, size_t si
       return -1;
 
   return 0;
-}
-
-/*************************************************
-* Name:        crypto_sign_open
-*
-* Description: Verify signed message.
-*
-* Arguments:   - uint8_t *m: pointer to output message (allocated
-*                            array with smlen bytes), can be equal to sm
-*              - size_t *mlen: pointer to output length of message
-*              - const uint8_t *sm: pointer to signed message
-*              - size_t smlen: length of signed message
-*              - const uint8_t *pk: pointer to bit-packed public key
-*
-* Returns 0 if signed message could be verified correctly and -1 otherwise
-**************************************************/
-int crypto_sign_open(gcry_mldsa_param_t *params, uint8_t *m, size_t *mlen, const uint8_t *sm, size_t smlen, const uint8_t *pk) {
-  size_t i;
-
-  if(smlen < CRYPTO_BYTES)
-    goto badsig;
-
-  *mlen = smlen - CRYPTO_BYTES;
-  if(crypto_sign_verify(params, sm, CRYPTO_BYTES, sm + CRYPTO_BYTES, *mlen, pk))
-    goto badsig;
-  else {
-    /* All good, copy msg, return 0 */
-    for(i = 0; i < *mlen; ++i)
-      m[i] = sm[CRYPTO_BYTES + i];
-    return 0;
-  }
-
-badsig:
-  /* Signature verification failed */
-  *mlen = -1;
-  for(i = 0; i < smlen; ++i)
-    m[i] = 0;
-
-  return -1;
 }

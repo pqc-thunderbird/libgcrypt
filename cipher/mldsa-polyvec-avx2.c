@@ -8,7 +8,8 @@
 
 gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf, size_t mat_elems, size_t vec_elems)
 {
-  polybuf->alloc_addr = xtrymalloc_secure(mat_elems * vec_elems * sizeof(gcry_mldsa_poly) + /*align*/ 128);
+  const size_t alloc_size = mat_elems * vec_elems * sizeof(gcry_mldsa_poly) + /*align*/ 128;
+  polybuf->alloc_addr = xtrymalloc_secure(alloc_size);
 
   if (!polybuf->alloc_addr)
     {
@@ -17,6 +18,8 @@ gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf, si
     }
   polybuf->buf
       = (byte *)((uintptr_t)polybuf->alloc_addr + (128 - ((uintptr_t)polybuf->alloc_addr % 128))); // aligned memory
+
+  memset(polybuf->alloc_addr, 0, alloc_size);
   return 0;
 }
 
