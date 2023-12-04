@@ -226,7 +226,8 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *sigl
   {
     ec = gpg_error_from_syserror();
     goto leave;
-  }  if (!(hintbuf = xtrymalloc_secure(GCRY_MLDSA_N)))
+  }
+  if (!(hintbuf = xtrymalloc_secure(GCRY_MLDSA_N)))
   {
     ec = gpg_error_from_syserror();
     goto leave;
@@ -385,87 +386,128 @@ leave:
 int crypto_sign_verify(gcry_mldsa_param_t *params, const uint8_t *sig, size_t siglen, const uint8_t *m, size_t mlen, const uint8_t *pk) {
   gcry_err_code_t ec = 0;
   unsigned int i, j, pos = 0;
-  gcry_mldsa_buf_al buf;
-  uint8_t mu[CRHBYTES];
-  const uint8_t *hint = sig + CTILDEBYTES + L*POLYZ_PACKEDBYTES;
-  polyvecl rowbuf[2];
-  polyvecl *row = rowbuf;
-  polyvecl z;
-  gcry_mldsa_poly c, w1, h;
-  keccak_state state;
+  gcry_mldsa_buf_al buf = {};
+  byte *mu = NULL;
+  const uint8_t *hint = sig + params->ctildebytes + params->l*params->polyz_packedbytes;
+  gcry_mldsa_polybuf_al rowbuf = {};
+  byte *row = NULL;
+  // polyvecl z;
+  gcry_mldsa_polybuf_al z = {};
+  gcry_mldsa_polybuf_al c = {};
+  gcry_mldsa_polybuf_al w1 = {};
+  gcry_mldsa_polybuf_al h = {};
+  //gcry_mldsa_poly c, w1, h;
+  const size_t polysize = sizeof(gcry_mldsa_poly);
+
+  if(siglen != params->signature_bytes)
+    {
+      ec = GPG_ERR_BAD_SIGNATURE;
+      goto leave;
+    }
+
+  _gcry_mldsa_polybuf_al_create(&rowbuf, 2, params->l);
+  _gcry_mldsa_polybuf_al_create(&z, 1, params->l);
+  _gcry_mldsa_polybuf_al_create(&c, 1, 1);
+  _gcry_mldsa_polybuf_al_create(&w1, 1, 1);
+  _gcry_mldsa_polybuf_al_create(&h, 1, 1);
+  row = rowbuf.buf;
 
   /* polyw1_pack writes additional 14 bytes */
-  _gcry_mldsa_buf_al_create(&buf, params->k*POLYW1_PACKEDBYTES+14);
+  _gcry_mldsa_buf_al_create(&buf, params->k*params->polyw1_packedbytes+14);
 
-  if(siglen != CRYPTO_BYTES)
-    return -1;
-
-  /* Compute CRH(H(rho, t1), msg) */
-  shake256(mu, CRHBYTES, pk, CRYPTO_PUBLICKEYBYTES);
-  shake256_init(&state);
-  shake256_absorb(&state, mu, CRHBYTES);
-  shake256_absorb(&state, m, mlen);
-  shake256_finalize(&state);
-  shake256_squeeze(mu, CRHBYTES, &state);
-
-  /* Expand challenge */
-  poly_challenge(&c, sig);
-  poly_ntt(&c);
-
-  /* Unpack z; shortness follows from unpacking */
-  for(i = 0; i < L; i++) {
-    polyz_unpack(&z.vec[i], sig + CTILDEBYTES + i*POLYZ_PACKEDBYTES);
-    poly_ntt(&z.vec[i]);
+  if (!(mu = xtrymalloc_secure(GCRY_MLDSA_CRHBYTES)))
+  {
+    ec = gpg_error_from_syserror();
+    goto leave;
   }
 
-  for(i = 0; i < K; i++) {
+  ec = _gcry_mldsa_shake256(pk, params->public_key_bytes, NULL, 0, mu, GCRY_MLDSA_CRHBYTES);
+  if (ec)
+    goto leave;
+  ec = _gcry_mldsa_shake256(mu, GCRY_MLDSA_CRHBYTES, m, mlen, mu, GCRY_MLDSA_CRHBYTES);
+  if (ec)
+    goto leave;
+
+  /* Expand challenge */
+  poly_challenge(c.buf, sig);
+  poly_ntt(c.buf);
+
+  /* Unpack z; shortness follows from unpacking */
+  for(i = 0; i < params->l; i++) {
+    polyz_unpack(&z.buf[i * polysize], sig + params->ctildebytes + i*params->polyz_packedbytes);
+    poly_ntt(&z.buf[i * polysize]);
+  }
+
+  for(i = 0; i < params->k; i++) {
     /* Expand matrix row */
-    polyvec_matrix_expand_row(params, &row, rowbuf, pk, i);
+    polyvec_matrix_expand_row(params, &row, rowbuf.buf, pk, i);
 
     /* Compute i-th row of Az - c2^Dt1 */
-    polyvecl_pointwise_acc_montgomery(&w1, row, &z);
+    polyvecl_pointwise_acc_montgomery(w1.buf, row, z.buf);
 
-    polyt1_unpack(&h, pk + SEEDBYTES + i*POLYT1_PACKEDBYTES);
-    poly_shiftl(&h);
-    poly_ntt(&h);
-    poly_pointwise_montgomery(&h, &c, &h);
+    polyt1_unpack(h.buf, pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES);
+    poly_shiftl(h.buf);
+    poly_ntt(h.buf);
+    poly_pointwise_montgomery(h.buf, c.buf, h.buf);
 
-    poly_sub(&w1, &w1, &h);
-    poly_reduce(&w1);
-    poly_invntt_tomont(&w1);
+    poly_sub(w1.buf, w1.buf, h.buf);
+    poly_reduce(w1.buf);
+    poly_invntt_tomont(w1.buf);
 
     /* Get hint polynomial and reconstruct w1 */
-    memset(h.vec, 0, sizeof(gcry_mldsa_poly));
-    if(hint[OMEGA + i] < pos || hint[OMEGA + i] > OMEGA)
-      return -1;
-
-    for(j = pos; j < hint[OMEGA + i]; ++j) {
-      /* Coefficients are ordered for strong unforgeability */
-      if(j > pos && hint[j] <= hint[j-1]) return -1;
-      h.coeffs[hint[j]] = 1;
+    memset(h.buf, 0, polysize);
+    if(hint[params->omega + i] < pos || hint[params->omega + i] > params->omega)
+    {
+      ec = GPG_ERR_BAD_SIGNATURE;
+      goto leave;
     }
-    pos = hint[OMEGA + i];
 
-    poly_caddq(&w1);
-    poly_use_hint(&w1, &w1, &h);
-    polyw1_pack(buf.buf + i*POLYW1_PACKEDBYTES, &w1);
+    for(j = pos; j < hint[params->omega + i]; ++j) {
+      /* Coefficients are ordered for strong unforgeability */
+      if(j > pos && hint[j] <= hint[j-1])
+      {
+      ec = GPG_ERR_BAD_SIGNATURE;
+      goto leave;
+      }
+          h.buf[hint[j] * sizeof(s32)] = 1;
+    }
+    pos = hint[params->omega + i];
+
+    poly_caddq(w1.buf);
+    poly_use_hint(w1.buf, w1.buf, h.buf);
+    polyw1_pack(buf.buf + i*params->polyw1_packedbytes, w1.buf);
   }
 
   /* Extra indices are zero for strong unforgeability */
-  for(j = pos; j < OMEGA; ++j)
-    if(hint[j]) return -1;
+  for(j = pos; j < params->omega; ++j)
+    if(hint[j])
+    {
+      ec = GPG_ERR_BAD_SIGNATURE;
+      goto leave;
+    }
 
   /* Call random oracle and verify challenge */
-  shake256_init(&state);
-  shake256_absorb(&state, mu, CRHBYTES);
-  shake256_absorb(&state, buf.buf, K*POLYW1_PACKEDBYTES);
-  shake256_finalize(&state);
-  shake256_squeeze(buf.buf, CTILDEBYTES, &state);
-  for(i = 0; i < CTILDEBYTES; ++i)
+  ec = _gcry_mldsa_shake256(
+      mu, GCRY_MLDSA_CRHBYTES, buf.buf, params->k * params->polyw1_packedbytes, buf.buf, params->ctildebytes);
+  if (ec)
+    goto leave;
+
+  for(i = 0; i < params->ctildebytes; ++i)
+  {
     if(buf.buf[i] != sig[i])
-      return -1;
+    {
+      ec = GPG_ERR_BAD_SIGNATURE;
+      goto leave;
+    }
+  }
 
 leave:
+  xfree(mu);
+  _gcry_mldsa_polybuf_al_destroy(&rowbuf);
+  _gcry_mldsa_polybuf_al_destroy(&z);
+  _gcry_mldsa_polybuf_al_destroy(&c);
+  _gcry_mldsa_polybuf_al_destroy(&w1);
+  _gcry_mldsa_polybuf_al_destroy(&h);
   _gcry_mldsa_buf_al_destroy(&buf);
   return ec;
 }
