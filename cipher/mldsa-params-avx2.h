@@ -3,14 +3,16 @@
 
 #include "mldsa-config-avx2.h"
 
-#define SEEDBYTES 32
-#define CRHBYTES 64
-#define TRBYTES 64
-#define RNDBYTES 32
-#define N 256
-#define Q 8380417
-#define D 13
+#define GCRY_MLDSA_SEEDBYTES 32
+#define GCRY_MLDSA_CRHBYTES 64
+#define GCRY_MLDSA_TRBYTES 64
+#define GCRY_MLDSA_N 256
+#define GCRY_MLDSA_Q 8380417
+#define GCRY_MLDSA_D 13
 #define ROOT_OF_UNITY 1753
+#define GCRY_MLDSA_POLYT1_PACKEDBYTES  320
+#define GCRY_MLDSA_POLYT0_PACKEDBYTES  416
+
 
 #if DILITHIUM_MODE == 2
 #define K 4
@@ -19,7 +21,7 @@
 #define TAU 39
 #define BETA 78
 #define GAMMA1 (1 << 17)
-#define GAMMA2 ((Q-1)/88)
+#define GAMMA2 ((GCRY_MLDSA_Q-1)/88)
 #define OMEGA 80
 #define CTILDEBYTES 32
 
@@ -30,7 +32,7 @@
 #define TAU 49
 #define BETA 196
 #define GAMMA1 (1 << 19)
-#define GAMMA2 ((Q-1)/32)
+#define GAMMA2 ((GCRY_MLDSA_Q-1)/32)
 #define OMEGA 55
 #define CTILDEBYTES 48
 
@@ -41,14 +43,12 @@
 #define TAU 60
 #define BETA 120
 #define GAMMA1 (1 << 19)
-#define GAMMA2 ((Q-1)/32)
+#define GAMMA2 ((GCRY_MLDSA_Q-1)/32)
 #define OMEGA 75
 #define CTILDEBYTES 64
 
 #endif
 
-#define POLYT1_PACKEDBYTES  320
-#define POLYT0_PACKEDBYTES  416
 #define POLYVECH_PACKEDBYTES (OMEGA + K)
 
 #if GAMMA1 == (1 << 17)
@@ -57,9 +57,9 @@
 #define POLYZ_PACKEDBYTES   640
 #endif
 
-#if GAMMA2 == (Q-1)/88
+#if GAMMA2 == (GCRY_MLDSA_Q-1)/88
 #define POLYW1_PACKEDBYTES  192
-#elif GAMMA2 == (Q-1)/32
+#elif GAMMA2 == (GCRY_MLDSA_Q-1)/32
 #define POLYW1_PACKEDBYTES  128
 #endif
 
@@ -69,12 +69,12 @@
 #define POLYETA_PACKEDBYTES 128
 #endif
 
-#define CRYPTO_PUBLICKEYBYTES (SEEDBYTES + K*POLYT1_PACKEDBYTES)
-#define CRYPTO_SECRETKEYBYTES (2*SEEDBYTES \
-                               + TRBYTES \
+#define CRYPTO_PUBLICKEYBYTES (GCRY_MLDSA_SEEDBYTES + K*GCRY_MLDSA_POLYT1_PACKEDBYTES)
+#define CRYPTO_SECRETKEYBYTES (2*GCRY_MLDSA_SEEDBYTES \
+                               + GCRY_MLDSA_TRBYTES \
                                + L*POLYETA_PACKEDBYTES \
                                + K*POLYETA_PACKEDBYTES \
-                               + K*POLYT0_PACKEDBYTES)
+                               + K*GCRY_MLDSA_POLYT0_PACKEDBYTES)
 #define CRYPTO_BYTES (CTILDEBYTES + L*POLYZ_PACKEDBYTES + POLYVECH_PACKEDBYTES)
 
 #endif

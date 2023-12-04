@@ -4,16 +4,16 @@
 #include <stdint.h>
 #include <immintrin.h>
 
-#define ALIGNED_UINT8(N)        \
+#define ALIGNED_UINT8(GCRY_MLDSA_N)        \
     union {                     \
-        uint8_t coeffs[N];      \
-        __m256i vec[(N+31)/32]; \
+        uint8_t coeffs[GCRY_MLDSA_N];      \
+        __m256i vec[(GCRY_MLDSA_N+31)/32]; \
     }
 
-#define ALIGNED_INT32(N)        \
+#define ALIGNED_INT32(GCRY_MLDSA_N)        \
     union {                     \
-        int32_t coeffs[N];      \
-        __m256i vec[(N+7)/8];   \
+        int32_t coeffs[GCRY_MLDSA_N];      \
+        __m256i vec[(GCRY_MLDSA_N+7)/8];   \
     }
 
 #endif

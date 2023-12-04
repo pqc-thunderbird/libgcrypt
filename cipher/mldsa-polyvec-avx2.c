@@ -71,7 +71,7 @@ void _gcry_mldsa_buf_al_destroy(gcry_mldsa_buf_al *buf)
  *              - const uint8_t rho[]: byte array containing seed rho
  **************************************************/
 
-gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, polyvecl mat[K], const uint8_t rho[SEEDBYTES])
+gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, polyvecl mat[K], const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
 {
 
   if (params->l == 4 && params->k == 4)
@@ -112,7 +112,7 @@ gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, polyvecl mat[K
 gcry_err_code_t polyvec_matrix_expand_row0(gcry_mldsa_param_t *params,
                                            polyvecl *rowa,
                                            polyvecl *rowb,
-                                           const uint8_t rho[SEEDBYTES])
+                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
 {
   if (params->l == 4 && params->k == 4)
     {
@@ -158,7 +158,7 @@ gcry_err_code_t polyvec_matrix_expand_row0(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row1(gcry_mldsa_param_t *params,
                                            polyvecl *rowa,
                                            polyvecl *rowb,
-                                           const uint8_t rho[SEEDBYTES])
+                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
 {
 
   if (params->l == 4 && params->k == 4)
@@ -200,7 +200,7 @@ gcry_err_code_t polyvec_matrix_expand_row1(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row2(gcry_mldsa_param_t *params,
                                            polyvecl *rowa,
                                            polyvecl *rowb,
-                                           const uint8_t rho[SEEDBYTES])
+                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
 {
 
   if (params->l == 4 && params->k == 4)
@@ -242,7 +242,7 @@ gcry_err_code_t polyvec_matrix_expand_row2(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row3(gcry_mldsa_param_t *params,
                                            polyvecl *rowa,
                                            __attribute__((unused)) polyvecl *rowb,
-                                           const uint8_t rho[SEEDBYTES])
+                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
 {
   if (params->l == 4 && params->k == 4)
     {
@@ -279,7 +279,7 @@ gcry_err_code_t polyvec_matrix_expand_row3(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row4(gcry_mldsa_param_t *params,
                                            polyvecl *rowa,
                                            polyvecl *rowb,
-                                           const uint8_t rho[SEEDBYTES])
+                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
 {
 
   if (params->k == 6 && params->l == 5)
@@ -318,7 +318,7 @@ gcry_err_code_t polyvec_matrix_expand_row4(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row5(gcry_mldsa_param_t *params,
                                            polyvecl *rowa,
                                            polyvecl *rowb,
-                                           const uint8_t rho[SEEDBYTES])
+                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
 {
   if (params->k == 6 && params->l == 5)
     {
@@ -349,7 +349,7 @@ gcry_err_code_t polyvec_matrix_expand_row5(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row6(gcry_mldsa_param_t *params,
                                 polyvecl *rowa,
                                 polyvecl *rowb,
-                                const uint8_t rho[SEEDBYTES])
+                                const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
 {
   if (params->k == 8 && params->l == 7)
     {
@@ -374,7 +374,7 @@ gcry_err_code_t polyvec_matrix_expand_row6(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row7(gcry_mldsa_param_t *params,
                                 polyvecl *rowa,
                                 polyvecl *rowb,
-                                const uint8_t rho[SEEDBYTES])
+                                const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
 {
   if (params->k == 8 && params->l == 7)
     {
@@ -403,7 +403,7 @@ void polyvec_matrix_pointwise_montgomery(polyveck *t, const polyvecl mat[K], con
 /************ Vectors of polynomials of length L **************/
 /**************************************************************/
 
-void polyvecl_uniform_eta(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce)
+void polyvecl_uniform_eta(polyvecl *v, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
 {
   unsigned int i;
 
@@ -411,7 +411,7 @@ void polyvecl_uniform_eta(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t no
     poly_uniform_eta(&v->vec[i], seed, nonce++);
 }
 
-void polyvecl_uniform_gamma1(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce)
+void polyvecl_uniform_gamma1(polyvecl *v, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
 {
   unsigned int i;
 
@@ -449,7 +449,7 @@ void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v)
  * Name:        polyvecl_ntt
  *
  * Description: Forward NTT of all polynomials in vector of length L. Output
- *              coefficients can be up to 16*Q larger than input coefficients.
+ *              coefficients can be up to 16*GCRY_MLDSA_Q larger than input coefficients.
  *
  * Arguments:   - polyvecl *v: pointer to input/output vector
  **************************************************/
@@ -502,7 +502,7 @@ void polyvecl_pointwise_acc_montgomery(gcry_mldsa_poly *w, const polyvecl *u, co
  * Arguments:   - const polyvecl *v: pointer to vector
  *              - int32_t B: norm bound
  *
- * Returns 0 if norm of all polynomials is strictly smaller than B <= (Q-1)/8
+ * Returns 0 if norm of all polynomials is strictly smaller than B <= (GCRY_MLDSA_Q-1)/8
  * and 1 otherwise.
  **************************************************/
 int polyvecl_chknorm(const polyvecl *v, int32_t bound)
@@ -520,7 +520,7 @@ int polyvecl_chknorm(const polyvecl *v, int32_t bound)
 /************ Vectors of polynomials of length K **************/
 /**************************************************************/
 
-void polyveck_uniform_eta(polyveck *v, const uint8_t seed[CRHBYTES], uint16_t nonce)
+void polyveck_uniform_eta(polyveck *v, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
 {
   unsigned int i;
 
@@ -548,7 +548,7 @@ void polyveck_reduce(polyveck *v)
  * Name:        polyveck_caddq
  *
  * Description: For all coefficients of polynomials in vector of length K
- *              add Q if coefficient is negative.
+ *              add GCRY_MLDSA_Q if coefficient is negative.
  *
  * Arguments:   - polyveck *v: pointer to input/output vector
  **************************************************/
@@ -600,8 +600,8 @@ void polyveck_sub(polyveck *w, const polyveck *u, const polyveck *v)
 /*************************************************
  * Name:        polyveck_shiftl
  *
- * Description: Multiply vector of polynomials of Length K by 2^D without modular
- *              reduction. Assumes input coefficients to be less than 2^{31-D}.
+ * Description: Multiply vector of polynomials of Length K by 2^GCRY_MLDSA_D without modular
+ *              reduction. Assumes input coefficients to be less than 2^{31-GCRY_MLDSA_D}.
  *
  * Arguments:   - polyveck *v: pointer to input/output vector
  **************************************************/
@@ -617,7 +617,7 @@ void polyveck_shiftl(polyveck *v)
  * Name:        polyveck_ntt
  *
  * Description: Forward NTT of all polynomials in vector of length K. Output
- *              coefficients can be up to 16*Q larger than input coefficients.
+ *              coefficients can be up to 16*GCRY_MLDSA_Q larger than input coefficients.
  *
  * Arguments:   - polyveck *v: pointer to input/output vector
  **************************************************/
@@ -634,7 +634,7 @@ void polyveck_ntt(polyveck *v)
  *
  * Description: Inverse NTT and multiplication by 2^{32} of polynomials
  *              in vector of length K. Input coefficients need to be less
- *              than 2*Q.
+ *              than 2*GCRY_MLDSA_Q.
  *
  * Arguments:   - polyveck *v: pointer to input/output vector
  **************************************************/
@@ -663,7 +663,7 @@ void polyveck_pointwise_poly_montgomery(polyveck *r, const gcry_mldsa_poly *a, c
  * Arguments:   - const polyveck *v: pointer to vector
  *              - int32_t B: norm bound
  *
- * Returns 0 if norm of all polynomials are strictly smaller than B <= (Q-1)/8
+ * Returns 0 if norm of all polynomials are strictly smaller than B <= (GCRY_MLDSA_Q-1)/8
  * and 1 otherwise.
  **************************************************/
 int polyveck_chknorm(const polyveck *v, int32_t bound)
@@ -681,8 +681,8 @@ int polyveck_chknorm(const polyveck *v, int32_t bound)
  * Name:        polyveck_power2round
  *
  * Description: For all coefficients a of polynomials in vector of length K,
- *              compute a0, a1 such that a mod^+ Q = a1*2^D + a0
- *              with -2^{D-1} < a0 <= 2^{D-1}. Assumes coefficients to be
+ *              compute a0, a1 such that a mod^+ GCRY_MLDSA_Q = a1*2^GCRY_MLDSA_D + a0
+ *              with -2^{GCRY_MLDSA_D-1} < a0 <= 2^{GCRY_MLDSA_D-1}. Assumes coefficients to be
  *              standard representatives.
  *
  * Arguments:   - polyveck *v1: pointer to output vector of polynomials with
@@ -703,9 +703,9 @@ void polyveck_power2round(polyveck *v1, polyveck *v0, const polyveck *v)
  * Name:        polyveck_decompose
  *
  * Description: For all coefficients a of polynomials in vector of length K,
- *              compute high and low bits a0, a1 such a mod^+ Q = a1*ALPHA + a0
- *              with -ALPHA/2 < a0 <= ALPHA/2 except a1 = (Q-1)/ALPHA where we
- *              set a1 = 0 and -ALPHA/2 <= a0 = a mod Q - Q < 0.
+ *              compute high and low bits a0, a1 such a mod^+ GCRY_MLDSA_Q = a1*ALPHA + a0
+ *              with -ALPHA/2 < a0 <= ALPHA/2 except a1 = (GCRY_MLDSA_Q-1)/ALPHA where we
+ *              set a1 = 0 and -ALPHA/2 <= a0 = a mod GCRY_MLDSA_Q - GCRY_MLDSA_Q < 0.
  *              Assumes coefficients to be standard representatives.
  *
  * Arguments:   - polyveck *v1: pointer to output vector of polynomials with

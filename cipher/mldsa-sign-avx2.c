@@ -14,7 +14,7 @@
 #include "mldsa-symmetric-avx2.h"
 #include "mldsa-fips202-avx2.h"
 
-static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **row, byte* buf, const uint8_t rho[SEEDBYTES], unsigned int i) {
+static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **row, byte* buf, const uint8_t rho[GCRY_MLDSA_SEEDBYTES], unsigned int i) {
   const size_t offset = params->l * sizeof(gcry_mldsa_poly);
   switch(i) {
     case 0:
@@ -85,11 +85,17 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk
   gcry_mldsa_polybuf_al t0 = {};
   const size_t polysize = sizeof(gcry_mldsa_poly);
 
-  _gcry_mldsa_polybuf_al_create(&rowbuf, 2, params->l);
-  _gcry_mldsa_polybuf_al_create(&s1, 1, params->l);
-  _gcry_mldsa_polybuf_al_create(&s2, 1, params->k);
-  _gcry_mldsa_polybuf_al_create(&t1, 1, 1);
-  _gcry_mldsa_polybuf_al_create(&t0, 1, 1);
+  if((ec = _gcry_mldsa_polybuf_al_create(&rowbuf, 2, params->l))
+  || (ec = _gcry_mldsa_polybuf_al_create(&s1, 1, params->l))
+  || (ec = _gcry_mldsa_polybuf_al_create(&s2, 1, params->k))
+  || (ec = _gcry_mldsa_polybuf_al_create(&t1, 1, 1))
+  || (ec = _gcry_mldsa_polybuf_al_create(&t0, 1, 1))
+  )
+  {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+  }
+
   row = rowbuf.buf;
 
   if (!(seedbuf = xtrymalloc_secure(2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_CRHBYTES)))
@@ -214,15 +220,21 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *sigl
   const size_t polysize = sizeof(gcry_mldsa_poly);
   gcry_md_hd_t hd = NULL;
 
- _gcry_mldsa_polybuf_al_create(&mat, params->k, params->l);
- _gcry_mldsa_polybuf_al_create(&s1, 1, params->l);
- _gcry_mldsa_polybuf_al_create(&z, 1, params->l);
- _gcry_mldsa_polybuf_al_create(&tmpv, 1, params->k);
- _gcry_mldsa_polybuf_al_create(&t0, 1, params->k);
- _gcry_mldsa_polybuf_al_create(&s2, 1, params->k);
- _gcry_mldsa_polybuf_al_create(&w1, 1, params->k);
+  if(
+    (ec =  _gcry_mldsa_polybuf_al_create(&mat, params->k, params->l))
+    || (ec =  _gcry_mldsa_polybuf_al_create(&s1, 1, params->l))
+    || (ec =  _gcry_mldsa_polybuf_al_create(&z, 1, params->l))
+    || (ec =  _gcry_mldsa_polybuf_al_create(&tmpv, 1, params->k))
+    || (ec =  _gcry_mldsa_polybuf_al_create(&t0, 1, params->k))
+    || (ec =  _gcry_mldsa_polybuf_al_create(&s2, 1, params->k))
+    || (ec =  _gcry_mldsa_polybuf_al_create(&w1, 1, params->k))
+  )
+  {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+  }
 
-  if (!(seedbuf = xtrymalloc_secure(2*SEEDBYTES + TRBYTES + RNDBYTES + 2*CRHBYTES)))
+  if (!(seedbuf = xtrymalloc_secure(2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + 2*GCRY_MLDSA_CRHBYTES)))
   {
     ec = gpg_error_from_syserror();
     goto leave;
@@ -391,12 +403,10 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const uint8_t *sig, size_t si
   const uint8_t *hint = sig + params->ctildebytes + params->l*params->polyz_packedbytes;
   gcry_mldsa_polybuf_al rowbuf = {};
   byte *row = NULL;
-  // polyvecl z;
   gcry_mldsa_polybuf_al z = {};
   gcry_mldsa_polybuf_al c = {};
   gcry_mldsa_polybuf_al w1 = {};
   gcry_mldsa_polybuf_al h = {};
-  //gcry_mldsa_poly c, w1, h;
   const size_t polysize = sizeof(gcry_mldsa_poly);
 
   if(siglen != params->signature_bytes)
@@ -405,11 +415,18 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const uint8_t *sig, size_t si
       goto leave;
     }
 
-  _gcry_mldsa_polybuf_al_create(&rowbuf, 2, params->l);
-  _gcry_mldsa_polybuf_al_create(&z, 1, params->l);
-  _gcry_mldsa_polybuf_al_create(&c, 1, 1);
-  _gcry_mldsa_polybuf_al_create(&w1, 1, 1);
-  _gcry_mldsa_polybuf_al_create(&h, 1, 1);
+  if(
+    (ec =   _gcry_mldsa_polybuf_al_create(&rowbuf, 2, params->l))
+    || (ec =   _gcry_mldsa_polybuf_al_create(&z, 1, params->l))
+    || (ec =   _gcry_mldsa_polybuf_al_create(&c, 1, 1))
+    || (ec =   _gcry_mldsa_polybuf_al_create(&w1, 1, 1))
+    || (ec =   _gcry_mldsa_polybuf_al_create(&h, 1, 1))
+  )
+  {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+  }
+
   row = rowbuf.buf;
 
   /* polyw1_pack writes additional 14 bytes */

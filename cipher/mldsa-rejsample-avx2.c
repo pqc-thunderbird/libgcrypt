@@ -268,7 +268,7 @@ unsigned int rej_uniform_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM
   unsigned int ctr, pos;
   uint32_t good;
   __m256i d, tmp;
-  const __m256i bound = _mm256_set1_epi32(Q);
+  const __m256i bound = _mm256_set1_epi32(GCRY_MLDSA_Q);
   const __m256i mask  = _mm256_set1_epi32(0x7FFFFF);
   const __m256i idx8  = _mm256_set_epi8(-1,15,14,13,-1,12,11,10,
                                         -1, 9, 8, 7,-1, 6, 5, 4,
@@ -291,17 +291,17 @@ unsigned int rej_uniform_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM
     _mm256_storeu_si256((__m256i *)&r[ctr], d);
     ctr += _mm_popcnt_u32(good);
 
-    if(ctr > N - 8) break;
+    if(ctr > GCRY_MLDSA_N - 8) break;
   }
 
   uint32_t t;
-  while(ctr < N && pos <= REJ_UNIFORM_BUFLEN - 3) {
+  while(ctr < GCRY_MLDSA_N && pos <= REJ_UNIFORM_BUFLEN - 3) {
     t  = buf[pos++];
     t |= (uint32_t)buf[pos++] << 8;
     t |= (uint32_t)buf[pos++] << 16;
     t &= 0x7FFFFF;
 
-    if(t < Q)
+    if(t < GCRY_MLDSA_Q)
       r[ctr++] = t;
   }
 
@@ -321,7 +321,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
   const __m256i p = _mm256_set1_epi32(5);
 
   ctr = pos = 0;
-  while(ctr <= N - 8 && pos <= REJ_UNIFORM_ETA_BUFLEN - 16) {
+  while(ctr <= GCRY_MLDSA_N - 8 && pos <= REJ_UNIFORM_ETA_BUFLEN - 16) {
     f0 = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)&buf[pos]));
     f1 = _mm256_slli_epi16(f0,4);
     f0 = _mm256_or_si256(f0,f1);
@@ -343,7 +343,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
     good >>= 8;
     pos += 4;
 
-    if(ctr > N - 8) break;
+    if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm_bsrli_si128(g0,8);
     g1 = _mm_loadl_epi64((__m128i *)&idxlut[good & 0xFF]);
     g1 = _mm_shuffle_epi8(g0,g1);
@@ -356,7 +356,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
     good >>= 8;
     pos += 4;
 
-    if(ctr > N - 8) break;
+    if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm256_extracti128_si256(f0,1);
     g1 = _mm_loadl_epi64((__m128i *)&idxlut[good & 0xFF]);
     g1 = _mm_shuffle_epi8(g0,g1);
@@ -369,7 +369,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
     good >>= 8;
     pos += 4;
 
-    if(ctr > N - 8) break;
+    if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm_bsrli_si128(g0,8);
     g1 = _mm_loadl_epi64((__m128i *)&idxlut[good]);
     g1 = _mm_shuffle_epi8(g0,g1);
@@ -383,7 +383,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
   }
 
   uint32_t t0, t1;
-  while(ctr < N && pos < REJ_UNIFORM_ETA_BUFLEN) {
+  while(ctr < GCRY_MLDSA_N && pos < REJ_UNIFORM_ETA_BUFLEN) {
     t0 = buf[pos] & 0x0F;
     t1 = buf[pos++] >> 4;
 
@@ -391,7 +391,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
       t0 = t0 - (205*t0 >> 10)*5;
       r[ctr++] = 2 - t0;
     }
-    if(t1 < 15 && ctr < N) {
+    if(t1 < 15 && ctr < GCRY_MLDSA_N) {
       t1 = t1 - (205*t1 >> 10)*5;
       r[ctr++] = 2 - t1;
     }
@@ -411,7 +411,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
   const __m256i bound = _mm256_set1_epi8(9);
 
   ctr = pos = 0;
-  while(ctr <= N - 8 && pos <= REJ_UNIFORM_ETA_BUFLEN - 16) {
+  while(ctr <= GCRY_MLDSA_N - 8 && pos <= REJ_UNIFORM_ETA_BUFLEN - 16) {
     f0 = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)&buf[pos]));
     f1 = _mm256_slli_epi16(f0,4);
     f0 = _mm256_or_si256(f0,f1);
@@ -430,7 +430,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
     good >>= 8;
     pos += 4;
 
-    if(ctr > N - 8) break;
+    if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm_bsrli_si128(g0,8);
     g1 = _mm_loadl_epi64((__m128i *)&idxlut[good & 0xFF]);
     g1 = _mm_shuffle_epi8(g0,g1);
@@ -440,7 +440,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
     good >>= 8;
     pos += 4;
 
-    if(ctr > N - 8) break;
+    if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm256_extracti128_si256(f0,1);
     g1 = _mm_loadl_epi64((__m128i *)&idxlut[good & 0xFF]);
     g1 = _mm_shuffle_epi8(g0,g1);
@@ -450,7 +450,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
     good >>= 8;
     pos += 4;
 
-    if(ctr > N - 8) break;
+    if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm_bsrli_si128(g0,8);
     g1 = _mm_loadl_epi64((__m128i *)&idxlut[good]);
     g1 = _mm_shuffle_epi8(g0,g1);
@@ -461,13 +461,13 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
   }
 
   uint32_t t0, t1;
-  while(ctr < N && pos < REJ_UNIFORM_ETA_BUFLEN) {
+  while(ctr < GCRY_MLDSA_N && pos < REJ_UNIFORM_ETA_BUFLEN) {
     t0 = buf[pos] & 0x0F;
     t1 = buf[pos++] >> 4;
 
     if(t0 < 9)
       r[ctr++] = 4 - t0;
-    if(t1 < 9 && ctr < N)
+    if(t1 < 9 && ctr < GCRY_MLDSA_N)
       r[ctr++] = 4 - t1;
   }
 

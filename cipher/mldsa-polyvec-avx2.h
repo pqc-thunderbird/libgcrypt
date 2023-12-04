@@ -10,9 +10,9 @@ typedef struct {
   gcry_mldsa_poly vec[L];
 } polyvecl;
 
-void polyvecl_uniform_eta(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce);
+void polyvecl_uniform_eta(polyvecl *v, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce);
 
-void polyvecl_uniform_gamma1(polyvecl *v, const uint8_t seed[CRHBYTES], uint16_t nonce);
+void polyvecl_uniform_gamma1(polyvecl *v, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce);
 
 void polyvecl_reduce(polyvecl *v);
 
@@ -33,7 +33,7 @@ typedef struct {
   gcry_mldsa_poly vec[K];
 } polyveck;
 
-void polyveck_uniform_eta(polyveck *v, const uint8_t seed[CRHBYTES], uint16_t nonce);
+void polyveck_uniform_eta(polyveck *v, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce);
 
 void polyveck_reduce(polyveck *v);
 void polyveck_caddq(polyveck *v);
@@ -55,16 +55,16 @@ void polyveck_use_hint(polyveck *w, const polyveck *v, const polyveck *h);
 
 void polyveck_pack_w1(uint8_t r[K*POLYW1_PACKEDBYTES], const polyveck *w1);
 
-gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, polyvecl mat[K], const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, polyvecl mat[K], const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
 
-gcry_err_code_t polyvec_matrix_expand_row0(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row1(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row2(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row3(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row4(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row5(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row6(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row7(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row0(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row1(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row2(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row3(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row4(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row5(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row6(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row7(gcry_mldsa_param_t *params, polyvecl *rowa, polyvecl *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
 
 void polyvec_matrix_pointwise_montgomery(polyveck *t, const polyvecl mat[K], const polyvecl *v);
 

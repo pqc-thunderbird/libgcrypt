@@ -13,17 +13,17 @@
 *              - const polyveck *t1: pointer to vector t1
 **************************************************/
 void pack_pk(uint8_t pk[CRYPTO_PUBLICKEYBYTES],
-             const uint8_t rho[SEEDBYTES],
+             const uint8_t rho[GCRY_MLDSA_SEEDBYTES],
              const polyveck *t1)
 {
   unsigned int i;
 
-  for(i = 0; i < SEEDBYTES; ++i)
+  for(i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
     pk[i] = rho[i];
-  pk += SEEDBYTES;
+  pk += GCRY_MLDSA_SEEDBYTES;
 
   for(i = 0; i < K; ++i)
-    polyt1_pack(pk + i*POLYT1_PACKEDBYTES, &t1->vec[i]);
+    polyt1_pack(pk + i*GCRY_MLDSA_POLYT1_PACKEDBYTES, &t1->vec[i]);
 }
 
 /*************************************************
@@ -35,18 +35,18 @@ void pack_pk(uint8_t pk[CRYPTO_PUBLICKEYBYTES],
 *              - const polyveck *t1: pointer to output vector t1
 *              - uint8_t pk[]: byte array containing bit-packed pk
 **************************************************/
-void unpack_pk(uint8_t rho[SEEDBYTES],
+void unpack_pk(uint8_t rho[GCRY_MLDSA_SEEDBYTES],
                polyveck *t1,
                const uint8_t pk[CRYPTO_PUBLICKEYBYTES])
 {
   unsigned int i;
 
-  for(i = 0; i < SEEDBYTES; ++i)
+  for(i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
     rho[i] = pk[i];
-  pk += SEEDBYTES;
+  pk += GCRY_MLDSA_SEEDBYTES;
 
   for(i = 0; i < K; ++i)
-    polyt1_unpack(&t1->vec[i], pk + i*POLYT1_PACKEDBYTES);
+    polyt1_unpack(&t1->vec[i], pk + i*GCRY_MLDSA_POLYT1_PACKEDBYTES);
 }
 
 /*************************************************
@@ -63,26 +63,26 @@ void unpack_pk(uint8_t rho[SEEDBYTES],
 *              - const polyveck *s2: pointer to vector s2
 **************************************************/
 void pack_sk(uint8_t sk[CRYPTO_SECRETKEYBYTES],
-             const uint8_t rho[SEEDBYTES],
-             const uint8_t tr[TRBYTES],
-             const uint8_t key[SEEDBYTES],
+             const uint8_t rho[GCRY_MLDSA_SEEDBYTES],
+             const uint8_t tr[GCRY_MLDSA_TRBYTES],
+             const uint8_t key[GCRY_MLDSA_SEEDBYTES],
              const polyveck *t0,
              const polyvecl *s1,
              const polyveck *s2)
 {
   unsigned int i;
 
-  for(i = 0; i < SEEDBYTES; ++i)
+  for(i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
     sk[i] = rho[i];
-  sk += SEEDBYTES;
+  sk += GCRY_MLDSA_SEEDBYTES;
 
-  for(i = 0; i < SEEDBYTES; ++i)
+  for(i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
     sk[i] = key[i];
-  sk += SEEDBYTES;
+  sk += GCRY_MLDSA_SEEDBYTES;
 
-  for(i = 0; i < TRBYTES; ++i)
+  for(i = 0; i < GCRY_MLDSA_TRBYTES; ++i)
     sk[i] = tr[i];
-  sk += TRBYTES;
+  sk += GCRY_MLDSA_TRBYTES;
 
   for(i = 0; i < L; ++i)
     polyeta_pack(sk + i*POLYETA_PACKEDBYTES, &s1->vec[i]);
@@ -93,7 +93,7 @@ void pack_sk(uint8_t sk[CRYPTO_SECRETKEYBYTES],
   sk += K*POLYETA_PACKEDBYTES;
 
   for(i = 0; i < K; ++i)
-    polyt0_pack(sk + i*POLYT0_PACKEDBYTES, &t0->vec[i]);
+    polyt0_pack(sk + i*GCRY_MLDSA_POLYT0_PACKEDBYTES, &t0->vec[i]);
 }
 
 /*************************************************
@@ -109,9 +109,9 @@ void pack_sk(uint8_t sk[CRYPTO_SECRETKEYBYTES],
 *              - const polyveck *s2: pointer to output vector s2
 *              - uint8_t sk[]: byte array containing bit-packed sk
 **************************************************/
-void unpack_sk(uint8_t rho[SEEDBYTES],
-               uint8_t tr[TRBYTES],
-               uint8_t key[SEEDBYTES],
+void unpack_sk(uint8_t rho[GCRY_MLDSA_SEEDBYTES],
+               uint8_t tr[GCRY_MLDSA_TRBYTES],
+               uint8_t key[GCRY_MLDSA_SEEDBYTES],
                polyveck *t0,
                polyvecl *s1,
                polyveck *s2,
@@ -119,17 +119,17 @@ void unpack_sk(uint8_t rho[SEEDBYTES],
 {
   unsigned int i;
 
-  for(i = 0; i < SEEDBYTES; ++i)
+  for(i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
     rho[i] = sk[i];
-  sk += SEEDBYTES;
+  sk += GCRY_MLDSA_SEEDBYTES;
 
-  for(i = 0; i < SEEDBYTES; ++i)
+  for(i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
     key[i] = sk[i];
-  sk += SEEDBYTES;
+  sk += GCRY_MLDSA_SEEDBYTES;
 
-  for(i = 0; i < TRBYTES; ++i)
+  for(i = 0; i < GCRY_MLDSA_TRBYTES; ++i)
     tr[i] = sk[i];
-  sk += TRBYTES;
+  sk += GCRY_MLDSA_TRBYTES;
 
   for(i=0; i < L; ++i)
     polyeta_unpack(&s1->vec[i], sk + i*POLYETA_PACKEDBYTES);
@@ -140,7 +140,7 @@ void unpack_sk(uint8_t rho[SEEDBYTES],
   sk += K*POLYETA_PACKEDBYTES;
 
   for(i=0; i < K; ++i)
-    polyt0_unpack(&t0->vec[i], sk + i*POLYT0_PACKEDBYTES);
+    polyt0_unpack(&t0->vec[i], sk + i*GCRY_MLDSA_POLYT0_PACKEDBYTES);
 }
 
 /*************************************************
@@ -149,7 +149,7 @@ void unpack_sk(uint8_t rho[SEEDBYTES],
 * Description: Bit-pack signature sig = (c, z, h).
 *
 * Arguments:   - uint8_t sig[]: output byte array
-*              - const uint8_t *c: pointer to challenge hash length SEEDBYTES
+*              - const uint8_t *c: pointer to challenge hash length GCRY_MLDSA_SEEDBYTES
 *              - const polyvecl *z: pointer to vector z
 *              - const polyveck *h: pointer to hint vector h
 **************************************************/
@@ -174,7 +174,7 @@ void pack_sig(uint8_t sig[CRYPTO_BYTES],
 
   k = 0;
   for(i = 0; i < K; ++i) {
-    for(j = 0; j < N; ++j)
+    for(j = 0; j < GCRY_MLDSA_N; ++j)
       if(h->vec[i].coeffs[j] != 0)
         sig[k++] = j;
 
@@ -213,7 +213,7 @@ int unpack_sig(uint8_t c[CTILDEBYTES],
   /* Decode h */
   k = 0;
   for(i = 0; i < K; ++i) {
-    for(j = 0; j < N; ++j)
+    for(j = 0; j < GCRY_MLDSA_N; ++j)
       h->vec[i].coeffs[j] = 0;
 
     if(sig[OMEGA + i] < k || sig[OMEGA + i] > OMEGA)

@@ -9,7 +9,7 @@
 
 const qdata_t qdata = {{
 #define _8XQ 0
-  Q, Q, Q, Q, Q, Q, Q, Q,
+  GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q,
 
 #define _8XQINV 8
   QINV, QINV, QINV, QINV, QINV, QINV, QINV, QINV,
