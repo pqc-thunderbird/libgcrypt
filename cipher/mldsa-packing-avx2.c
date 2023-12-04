@@ -3,51 +3,6 @@
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-poly-avx2.h"
 
-/*************************************************
-* Name:        pack_pk
-*
-* Description: Bit-pack public key pk = (rho, t1).
-*
-* Arguments:   - uint8_t pk[]: output byte array
-*              - const uint8_t rho[]: byte array containing rho
-*              - const polyveck *t1: pointer to vector t1
-**************************************************/
-void pack_pk(uint8_t pk[CRYPTO_PUBLICKEYBYTES],
-             const uint8_t rho[GCRY_MLDSA_SEEDBYTES],
-             const polyveck *t1)
-{
-  unsigned int i;
-
-  for(i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
-    pk[i] = rho[i];
-  pk += GCRY_MLDSA_SEEDBYTES;
-
-  for(i = 0; i < K; ++i)
-    polyt1_pack(pk + i*GCRY_MLDSA_POLYT1_PACKEDBYTES, &t1->vec[i]);
-}
-
-/*************************************************
-* Name:        unpack_pk
-*
-* Description: Unpack public key pk = (rho, t1).
-*
-* Arguments:   - const uint8_t rho[]: output byte array for rho
-*              - const polyveck *t1: pointer to output vector t1
-*              - uint8_t pk[]: byte array containing bit-packed pk
-**************************************************/
-void unpack_pk(uint8_t rho[GCRY_MLDSA_SEEDBYTES],
-               polyveck *t1,
-               const uint8_t pk[CRYPTO_PUBLICKEYBYTES])
-{
-  unsigned int i;
-
-  for(i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
-    rho[i] = pk[i];
-  pk += GCRY_MLDSA_SEEDBYTES;
-
-  for(i = 0; i < K; ++i)
-    polyt1_unpack(&t1->vec[i], pk + i*GCRY_MLDSA_POLYT1_PACKEDBYTES);
-}
 
 /*************************************************
 * Name:        pack_sk
