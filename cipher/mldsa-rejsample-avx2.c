@@ -308,14 +308,13 @@ unsigned int rej_uniform_avx(int32_t * restrict r, const byte buf[REJ_UNIFORM_BU
   return ctr;
 }
 
-#if ETA == 2
-unsigned int rej_eta_avx(int32_t * restrict r, const byte buf[REJ_UNIFORM_ETA_BUFLEN]) {
+unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte buf[REJ_UNIFORM_ETA_BUFLEN]) {
   unsigned int ctr, pos;
   uint32_t good;
   __m256i f0, f1, f2;
   __m128i g0, g1;
   const __m256i mask = _mm256_set1_epi8(15);
-  const __m256i eta = _mm256_set1_epi8(ETA);
+  const __m256i eta = _mm256_set1_epi8(2);
   const __m256i bound = mask;
   const __m256i v = _mm256_set1_epi32(-6560);
   const __m256i p = _mm256_set1_epi32(5);
@@ -400,8 +399,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const byte buf[REJ_UNIFORM_ETA_BU
   return ctr;
 }
 
-#elif ETA == 4
-unsigned int rej_eta_avx(int32_t * restrict r, const byte buf[REJ_UNIFORM_ETA_BUFLEN]) {
+unsigned int rej_eta_avx_eta4(int32_t * restrict r, const byte buf[REJ_UNIFORM_ETA_BUFLEN]) {
   unsigned int ctr, pos;
   uint32_t good;
   __m256i f0, f1;
@@ -473,4 +471,3 @@ unsigned int rej_eta_avx(int32_t * restrict r, const byte buf[REJ_UNIFORM_ETA_BU
 
   return ctr;
 }
-#endif

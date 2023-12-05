@@ -41,7 +41,7 @@ void poly_uniform_4x(gcry_mldsa_poly *a0,
                      uint16_t nonce1,
                      uint16_t nonce2,
                      uint16_t nonce3);
-void poly_uniform_eta_4x(gcry_mldsa_poly *a0,
+void poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
                          gcry_mldsa_poly *a1,
                          gcry_mldsa_poly *a2,
                          gcry_mldsa_poly *a3,

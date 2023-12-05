@@ -17,8 +17,9 @@
 
 extern const byte idxlut[256][8];
 
-unsigned int rej_uniform_avx(int32_t *r, const byte buf[REJ_UNIFORM_BUFLEN+8]);
+unsigned int rej_uniform_avx(int32_t *r, const byte *buf);
 
-unsigned int rej_eta_avx(int32_t *r, const byte buf[REJ_UNIFORM_ETA_BUFLEN]);
+unsigned int rej_eta_avx_eta2(int32_t *r, const byte *buf);
+unsigned int rej_eta_avx_eta4(int32_t *r, const byte *buf);
 
 #endif

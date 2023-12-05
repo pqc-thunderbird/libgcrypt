@@ -121,21 +121,21 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, byte *pk, b
   memcpy(sk + GCRY_MLDSA_SEEDBYTES, key, GCRY_MLDSA_SEEDBYTES);
 
   /* Sample short vectors s1 and s2 */
-  poly_uniform_eta_4x(&s1.buf[0 * polysize], &s1.buf[1 * polysize], &s1.buf[2 * polysize], &s1.buf[3 * polysize], rhoprime, 0, 1, 2, 3);
+  poly_uniform_eta_4x(params, &s1.buf[0 * polysize], &s1.buf[1 * polysize], &s1.buf[2 * polysize], &s1.buf[3 * polysize], rhoprime, 0, 1, 2, 3);
   if(params->k == 4 && params->l == 4)
   {
-    poly_uniform_eta_4x(&s2.buf[0 * polysize], &s2.buf[1 * polysize], &s2.buf[2 * polysize], &s2.buf[3 * polysize], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(params, &s2.buf[0 * polysize], &s2.buf[1 * polysize], &s2.buf[2 * polysize], &s2.buf[3 * polysize], rhoprime, 4, 5, 6, 7);
   }
   else if (params->k == 6 && params->l == 5)
   {
-    poly_uniform_eta_4x(&s1.buf[4 * polysize], &s2.buf[0 * polysize], &s2.buf[1 * polysize], &s2.buf[2 * polysize], rhoprime, 4, 5, 6, 7);
-    poly_uniform_eta_4x(&s2.buf[3 * polysize], &s2.buf[4 * polysize], &s2.buf[5 * polysize], t0.buf, rhoprime, 8, 9, 10, 11);
+    poly_uniform_eta_4x(params, &s1.buf[4 * polysize], &s2.buf[0 * polysize], &s2.buf[1 * polysize], &s2.buf[2 * polysize], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(params, &s2.buf[3 * polysize], &s2.buf[4 * polysize], &s2.buf[5 * polysize], t0.buf, rhoprime, 8, 9, 10, 11);
   }
   else if (params->k == 8 && params->l == 7)
   {
-    poly_uniform_eta_4x(&s1.buf[4 * polysize], &s1.buf[5 * polysize], &s1.buf[6 * polysize], &s2.buf[0 * polysize], rhoprime, 4, 5, 6, 7);
-    poly_uniform_eta_4x(&s2.buf[1 * polysize], &s2.buf[2 * polysize], &s2.buf[3 * polysize], &s2.buf[4 * polysize], rhoprime, 8, 9, 10, 11);
-    poly_uniform_eta_4x(&s2.buf[5 * polysize], &s2.buf[6 * polysize], &s2.buf[7 * polysize], t0.buf, rhoprime, 12, 13, 14, 15);
+    poly_uniform_eta_4x(params, &s1.buf[4 * polysize], &s1.buf[5 * polysize], &s1.buf[6 * polysize], &s2.buf[0 * polysize], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(params, &s2.buf[1 * polysize], &s2.buf[2 * polysize], &s2.buf[3 * polysize], &s2.buf[4 * polysize], rhoprime, 8, 9, 10, 11);
+    poly_uniform_eta_4x(params, &s2.buf[5 * polysize], &s2.buf[6 * polysize], &s2.buf[7 * polysize], t0.buf, rhoprime, 12, 13, 14, 15);
   }
   else {
     ec = GPG_ERR_INV_STATE;

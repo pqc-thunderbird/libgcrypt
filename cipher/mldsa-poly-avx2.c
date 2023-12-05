@@ -407,7 +407,7 @@ static unsigned int rej_eta(int32_t *a,
   return ctr;
 }
 
-void poly_uniform_eta_4x(gcry_mldsa_poly *a0,
+void poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
                          gcry_mldsa_poly *a1,
                          gcry_mldsa_poly *a2,
                          gcry_mldsa_poly *a3,
@@ -446,10 +446,19 @@ void poly_uniform_eta_4x(gcry_mldsa_poly *a0,
   shake256x4_absorb_once(&state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 66);
   shake256x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, REJ_UNIFORM_ETA_NBLOCKS, &state);
 
-  ctr0 = rej_eta_avx(a0->coeffs, buf[0].coeffs);
-  ctr1 = rej_eta_avx(a1->coeffs, buf[1].coeffs);
-  ctr2 = rej_eta_avx(a2->coeffs, buf[2].coeffs);
-  ctr3 = rej_eta_avx(a3->coeffs, buf[3].coeffs);
+  if(params->eta == 2)
+  {
+  ctr0 = rej_eta_avx_eta2(a0->coeffs, buf[0].coeffs);
+  ctr1 = rej_eta_avx_eta2(a1->coeffs, buf[1].coeffs);
+  ctr2 = rej_eta_avx_eta2(a2->coeffs, buf[2].coeffs);
+  ctr3 = rej_eta_avx_eta2(a3->coeffs, buf[3].coeffs);
+  }
+  else {
+  ctr0 = rej_eta_avx_eta4(a0->coeffs, buf[0].coeffs);
+  ctr1 = rej_eta_avx_eta4(a1->coeffs, buf[1].coeffs);
+  ctr2 = rej_eta_avx_eta4(a2->coeffs, buf[2].coeffs);
+  ctr3 = rej_eta_avx_eta4(a3->coeffs, buf[3].coeffs);
+  }
 
   while(ctr0 < GCRY_MLDSA_N || ctr1 < GCRY_MLDSA_N || ctr2 < GCRY_MLDSA_N || ctr3 < GCRY_MLDSA_N) {
     shake256x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 1, &state);
