@@ -28,10 +28,6 @@ unsigned int poly_make_hint(uint8_t hint[GCRY_MLDSA_N], const gcry_mldsa_poly *a
 void poly_use_hint(gcry_mldsa_poly *b, const gcry_mldsa_poly *a, const gcry_mldsa_poly *h);
 
 int poly_chknorm(const gcry_mldsa_poly *a, int32_t B);
-void poly_uniform_preinit(gcry_mldsa_poly *a, stream128_state *state);
-void poly_uniform(gcry_mldsa_poly *a, const uint8_t seed[GCRY_MLDSA_SEEDBYTES], uint16_t nonce);
-void poly_uniform_eta_preinit(gcry_mldsa_poly *a, stream256_state *state);
-void poly_uniform_eta(gcry_mldsa_poly *a, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce);
 void poly_uniform_gamma1_preinit(gcry_mldsa_poly *a, stream256_state *state);
 void poly_uniform_gamma1(gcry_mldsa_poly *a, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce);
 void poly_challenge(gcry_mldsa_poly *c, const uint8_t seed[GCRY_MLDSA_SEEDBYTES]);

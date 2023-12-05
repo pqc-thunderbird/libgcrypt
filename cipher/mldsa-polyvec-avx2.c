@@ -404,59 +404,16 @@ gcry_err_code_t polyvec_matrix_expand_row7(gcry_mldsa_param_t *params,
   return 0;
 }
 
-void polyvec_matrix_pointwise_montgomery(polyveck *t, const polyvecl mat[K], const polyvecl *v)
+void polyvec_matrix_pointwise_montgomery(gcry_mldsa_param_t *params, byte *t, const byte *mat, const byte *v)
 {
   unsigned int i;
+  const size_t polysize = sizeof(gcry_mldsa_poly);
+  const size_t rowsize = polysize * params->k;
 
-  for (i = 0; i < K; ++i)
-    polyvecl_pointwise_acc_montgomery(&t->vec[i], &mat[i], v);
+  for (i = 0; i < params->k; ++i)
+    polyvecl_pointwise_acc_montgomery(&t[i * polysize], &mat[i * rowsize], v);
 }
 
-/**************************************************************/
-/************ Vectors of polynomials of length L **************/
-/**************************************************************/
-
-void polyvecl_uniform_eta(polyvecl *v, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
-{
-  unsigned int i;
-
-  for (i = 0; i < L; ++i)
-    poly_uniform_eta(&v->vec[i], seed, nonce++);
-}
-
-void polyvecl_uniform_gamma1(polyvecl *v, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
-{
-  unsigned int i;
-
-  for (i = 0; i < L; ++i)
-    poly_uniform_gamma1(&v->vec[i], seed, L * nonce + i);
-}
-
-void polyvecl_reduce(polyvecl *v)
-{
-  unsigned int i;
-
-  for (i = 0; i < L; ++i)
-    poly_reduce(&v->vec[i]);
-}
-
-/*************************************************
- * Name:        polyvecl_add
- *
- * Description: Add vectors of polynomials of length L.
- *              No modular reduction is performed.
- *
- * Arguments:   - polyvecl *w: pointer to output vector
- *              - const polyvecl *u: pointer to first summand
- *              - const polyvecl *v: pointer to second summand
- **************************************************/
-void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v)
-{
-  unsigned int i;
-
-  for (i = 0; i < L; ++i)
-    poly_add(&w->vec[i], &u->vec[i], &v->vec[i]);
-}
 
 /*************************************************
  * Name:        polyvecl_ntt
@@ -466,29 +423,15 @@ void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v)
  *
  * Arguments:   - polyvecl *v: pointer to input/output vector
  **************************************************/
-void polyvecl_ntt(polyvecl *v)
+void polyvecl_ntt(gcry_mldsa_param_t *params, byte *v)
 {
   unsigned int i;
 
-  for (i = 0; i < L; ++i)
-    poly_ntt(&v->vec[i]);
+  for (i = 0; i < params->l; ++i)
+    poly_ntt(&v[i * sizeof(gcry_mldsa_poly)]);
 }
 
-void polyvecl_invntt_tomont(polyvecl *v)
-{
-  unsigned int i;
 
-  for (i = 0; i < L; ++i)
-    poly_invntt_tomont(&v->vec[i]);
-}
-
-void polyvecl_pointwise_poly_montgomery(polyvecl *r, const gcry_mldsa_poly *a, const polyvecl *v)
-{
-  unsigned int i;
-
-  for (i = 0; i < L; ++i)
-    poly_pointwise_montgomery(&r->vec[i], a, &v->vec[i]);
-}
 
 /*************************************************
  * Name:        polyvecl_pointwise_acc_montgomery
@@ -501,61 +444,13 @@ void polyvecl_pointwise_poly_montgomery(polyvecl *r, const gcry_mldsa_poly *a, c
  *              - const polyvecl *u: pointer to first input vector
  *              - const polyvecl *v: pointer to second input vector
  **************************************************/
-void polyvecl_pointwise_acc_montgomery(gcry_mldsa_poly *w, const polyvecl *u, const polyvecl *v)
+void polyvecl_pointwise_acc_montgomery(gcry_mldsa_poly *w, const byte *u, const byte *v)
 {
-  pointwise_acc_avx(w->vec, u->vec->vec, v->vec->vec, qdata.vec);
+  pointwise_acc_avx(w->vec, u, v, qdata.vec);
 }
 
-/*************************************************
- * Name:        polyvecl_chknorm
- *
- * Description: Check infinity norm of polynomials in vector of length L.
- *              Assumes input polyvecl to be reduced by polyvecl_reduce().
- *
- * Arguments:   - const polyvecl *v: pointer to vector
- *              - int32_t B: norm bound
- *
- * Returns 0 if norm of all polynomials is strictly smaller than B <= (GCRY_MLDSA_Q-1)/8
- * and 1 otherwise.
- **************************************************/
-int polyvecl_chknorm(const polyvecl *v, int32_t bound)
-{
-  unsigned int i;
 
-  for (i = 0; i < L; ++i)
-    if (poly_chknorm(&v->vec[i], bound))
-      return 1;
 
-  return 0;
-}
-
-/**************************************************************/
-/************ Vectors of polynomials of length K **************/
-/**************************************************************/
-
-void polyveck_uniform_eta(polyveck *v, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
-{
-  unsigned int i;
-
-  for (i = 0; i < K; ++i)
-    poly_uniform_eta(&v->vec[i], seed, nonce++);
-}
-
-/*************************************************
- * Name:        polyveck_reduce
- *
- * Description: Reduce coefficients of polynomials in vector of length K
- *              to representatives in [-6283009,6283007].
- *
- * Arguments:   - polyveck *v: pointer to input/output vector
- **************************************************/
-void polyveck_reduce(polyveck *v)
-{
-  unsigned int i;
-
-  for (i = 0; i < K; ++i)
-    poly_reduce(&v->vec[i]);
-}
 
 /*************************************************
  * Name:        polyveck_caddq
@@ -565,66 +460,14 @@ void polyveck_reduce(polyveck *v)
  *
  * Arguments:   - polyveck *v: pointer to input/output vector
  **************************************************/
-void polyveck_caddq(polyveck *v)
+void polyveck_caddq(gcry_mldsa_param_t *params, byte *v)
 {
   unsigned int i;
 
-  for (i = 0; i < K; ++i)
-    poly_caddq(&v->vec[i]);
+  for (i = 0; i < params->k; ++i)
+    poly_caddq(&v[i * sizeof(gcry_mldsa_poly)]);
 }
 
-/*************************************************
- * Name:        polyveck_add
- *
- * Description: Add vectors of polynomials of length K.
- *              No modular reduction is performed.
- *
- * Arguments:   - polyveck *w: pointer to output vector
- *              - const polyveck *u: pointer to first summand
- *              - const polyveck *v: pointer to second summand
- **************************************************/
-void polyveck_add(polyveck *w, const polyveck *u, const polyveck *v)
-{
-  unsigned int i;
-
-  for (i = 0; i < K; ++i)
-    poly_add(&w->vec[i], &u->vec[i], &v->vec[i]);
-}
-
-/*************************************************
- * Name:        polyveck_sub
- *
- * Description: Subtract vectors of polynomials of length K.
- *              No modular reduction is performed.
- *
- * Arguments:   - polyveck *w: pointer to output vector
- *              - const polyveck *u: pointer to first input vector
- *              - const polyveck *v: pointer to second input vector to be
- *                                   subtracted from first input vector
- **************************************************/
-void polyveck_sub(polyveck *w, const polyveck *u, const polyveck *v)
-{
-  unsigned int i;
-
-  for (i = 0; i < K; ++i)
-    poly_sub(&w->vec[i], &u->vec[i], &v->vec[i]);
-}
-
-/*************************************************
- * Name:        polyveck_shiftl
- *
- * Description: Multiply vector of polynomials of Length K by 2^GCRY_MLDSA_D without modular
- *              reduction. Assumes input coefficients to be less than 2^{31-GCRY_MLDSA_D}.
- *
- * Arguments:   - polyveck *v: pointer to input/output vector
- **************************************************/
-void polyveck_shiftl(polyveck *v)
-{
-  unsigned int i;
-
-  for (i = 0; i < K; ++i)
-    poly_shiftl(&v->vec[i]);
-}
 
 /*************************************************
  * Name:        polyveck_ntt
@@ -634,12 +477,12 @@ void polyveck_shiftl(polyveck *v)
  *
  * Arguments:   - polyveck *v: pointer to input/output vector
  **************************************************/
-void polyveck_ntt(polyveck *v)
+void polyveck_ntt(gcry_mldsa_param_t *params, byte *v)
 {
   unsigned int i;
 
-  for (i = 0; i < K; ++i)
-    poly_ntt(&v->vec[i]);
+  for (i = 0; i < params->k; ++i)
+    poly_ntt(&v[i * sizeof(gcry_mldsa_poly)]);
 }
 
 /*************************************************
@@ -651,66 +494,14 @@ void polyveck_ntt(polyveck *v)
  *
  * Arguments:   - polyveck *v: pointer to input/output vector
  **************************************************/
-void polyveck_invntt_tomont(polyveck *v)
+void polyveck_invntt_tomont(gcry_mldsa_param_t *params, byte *v)
 {
   unsigned int i;
 
-  for (i = 0; i < K; ++i)
-    poly_invntt_tomont(&v->vec[i]);
+  for (i = 0; i < params->k; ++i)
+    poly_invntt_tomont(&v[i * sizeof(gcry_mldsa_poly)]);
 }
 
-void polyveck_pointwise_poly_montgomery(polyveck *r, const gcry_mldsa_poly *a, const polyveck *v)
-{
-  unsigned int i;
-
-  for (i = 0; i < K; ++i)
-    poly_pointwise_montgomery(&r->vec[i], a, &v->vec[i]);
-}
-
-/*************************************************
- * Name:        polyveck_chknorm
- *
- * Description: Check infinity norm of polynomials in vector of length K.
- *              Assumes input polyveck to be reduced by polyveck_reduce().
- *
- * Arguments:   - const polyveck *v: pointer to vector
- *              - int32_t B: norm bound
- *
- * Returns 0 if norm of all polynomials are strictly smaller than B <= (GCRY_MLDSA_Q-1)/8
- * and 1 otherwise.
- **************************************************/
-int polyveck_chknorm(const polyveck *v, int32_t bound)
-{
-  unsigned int i;
-
-  for (i = 0; i < K; ++i)
-    if (poly_chknorm(&v->vec[i], bound))
-      return 1;
-
-  return 0;
-}
-
-/*************************************************
- * Name:        polyveck_power2round
- *
- * Description: For all coefficients a of polynomials in vector of length K,
- *              compute a0, a1 such that a mod^+ GCRY_MLDSA_Q = a1*2^GCRY_MLDSA_D + a0
- *              with -2^{GCRY_MLDSA_D-1} < a0 <= 2^{GCRY_MLDSA_D-1}. Assumes coefficients to be
- *              standard representatives.
- *
- * Arguments:   - polyveck *v1: pointer to output vector of polynomials with
- *                              coefficients a1
- *              - polyveck *v0: pointer to output vector of polynomials with
- *                              coefficients a0
- *              - const polyveck *v: pointer to input vector
- **************************************************/
-void polyveck_power2round(polyveck *v1, polyveck *v0, const polyveck *v)
-{
-  unsigned int i;
-
-  for (i = 0; i < K; ++i)
-    poly_power2round(&v1->vec[i], &v0->vec[i], &v->vec[i]);
-}
 
 /*************************************************
  * Name:        polyveck_decompose
@@ -727,57 +518,20 @@ void polyveck_power2round(polyveck *v1, polyveck *v0, const polyveck *v)
  *                              coefficients a0
  *              - const polyveck *v: pointer to input vector
  **************************************************/
-void polyveck_decompose(polyveck *v1, polyveck *v0, const polyveck *v)
+void polyveck_decompose(gcry_mldsa_param_t *params, byte *v1, byte *v0, const byte *v)
+{
+  unsigned int i;
+  const size_t polysize = sizeof(gcry_mldsa_poly);
+
+  for (i = 0; i < params->k; ++i)
+    poly_decompose(&v1[i * polysize], &v0[i * polysize], &v[i * polysize]);
+}
+
+
+void polyveck_pack_w1(gcry_mldsa_param_t *params, byte *r, const byte *w1)
 {
   unsigned int i;
 
-  for (i = 0; i < K; ++i)
-    poly_decompose(&v1->vec[i], &v0->vec[i], &v->vec[i]);
-}
-
-/*************************************************
- * Name:        polyveck_make_hint
- *
- * Description: Compute hint vector.
- *
- * Arguments:   - uint8_t *hint: pointer to output hint array
- *              - const polyveck *v0: pointer to low part of input vector
- *              - const polyveck *v1: pointer to high part of input vector
- *
- * Returns number of 1 bits.
- **************************************************/
-unsigned int polyveck_make_hint(uint8_t *hint, const polyveck *v0, const polyveck *v1)
-{
-  unsigned int i, n = 0;
-
-  for (i = 0; i < K; ++i)
-    n += poly_make_hint(&hint[n], &v0->vec[i], &v1->vec[i]);
-
-  return n;
-}
-
-/*************************************************
- * Name:        polyveck_use_hint
- *
- * Description: Use hint vector to correct the high bits of input vector.
- *
- * Arguments:   - polyveck *w: pointer to output vector of polynomials with
- *                             corrected high bits
- *              - const polyveck *u: pointer to input vector
- *              - const polyveck *h: pointer to input hint vector
- **************************************************/
-void polyveck_use_hint(polyveck *w, const polyveck *u, const polyveck *h)
-{
-  unsigned int i;
-
-  for (i = 0; i < K; ++i)
-    poly_use_hint(&w->vec[i], &u->vec[i], &h->vec[i]);
-}
-
-void polyveck_pack_w1(uint8_t r[K * POLYW1_PACKEDBYTES], const polyveck *w1)
-{
-  unsigned int i;
-
-  for (i = 0; i < K; ++i)
-    polyw1_pack(&r[i * POLYW1_PACKEDBYTES], &w1->vec[i]);
+  for (i = 0; i < params->k; ++i)
+    polyw1_pack(&r[i * params->polyw1_packedbytes], &w1[i * sizeof(gcry_mldsa_poly)]);
 }

@@ -149,7 +149,7 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk
     polyeta_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l + i)*params->polyeta_packedbytes, &s2.buf[i * polysize]);
 
   /* Transform s1 */
-  polyvecl_ntt(s1.buf);
+  polyvecl_ntt(params, s1.buf);
 
   for(i = 0; i < params->k; i++) {
     /* Expand matrix row */
@@ -267,9 +267,9 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *sigl
 
   /* Expand matrix and transform vectors */
   polyvec_matrix_expand(params, mat.buf, rho);
-  polyvecl_ntt(s1.buf);
-  polyveck_ntt(s2.buf);
-  polyveck_ntt(t0.buf);
+  polyvecl_ntt(params, s1.buf);
+  polyveck_ntt(params, s2.buf);
+  polyveck_ntt(params, t0.buf);
 
 rej:
   /* Sample intermediate vector y */
@@ -300,14 +300,14 @@ else {
 
   /* Matrix-vector product */
   memcpy(tmpv.buf, z.buf, params->l * polysize);
-  polyvecl_ntt(tmpv.buf);
-  polyvec_matrix_pointwise_montgomery(w1.buf, mat.buf, tmpv.buf);
-  polyveck_invntt_tomont(w1.buf);
+  polyvecl_ntt(params, tmpv.buf);
+  polyvec_matrix_pointwise_montgomery(params, w1.buf, mat.buf, tmpv.buf);
+  polyveck_invntt_tomont(params, w1.buf);
 
   /* Decompose w and call the random oracle */
-  polyveck_caddq(w1.buf);
-  polyveck_decompose(w1.buf, tmpv.buf, w1.buf);
-  polyveck_pack_w1(sig, w1.buf);
+  polyveck_caddq(params, w1.buf);
+  polyveck_decompose(params, w1.buf, tmpv.buf, w1.buf);
+  polyveck_pack_w1(params, sig, w1.buf);
 
   ec = _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
   if (ec)

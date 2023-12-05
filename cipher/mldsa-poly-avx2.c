@@ -10,6 +10,7 @@
 #include "mldsa-consts-avx2.h"
 #include "mldsa-symmetric-avx2.h"
 #include "mldsa-fips202x4-avx2.h"
+#include "mldsa-polyvec.h"
 
 #define _mm256_blendv_epi32(a,b,mask) \
   _mm256_castps_si256(_mm256_blendv_ps(_mm256_castsi256_ps(a), \
@@ -312,40 +313,6 @@ static unsigned int rej_uniform(int32_t *a,
   return ctr;
 }
 
-/*************************************************
-* Name:        poly_uniform
-*
-* Description: Sample polynomial with uniformly random coefficients
-*              in [0,GCRY_MLDSA_Q-1] by performing rejection sampling on the
-*              output stream of SHAKE256(seed|nonce)
-*
-* Arguments:   - gcry_mldsa_poly *a: pointer to output polynomial
-*              - const uint8_t seed[]: byte array with seed of length GCRY_MLDSA_SEEDBYTES
-*              - uint16_t nonce: 2-byte nonce
-**************************************************/
-void poly_uniform_preinit(gcry_mldsa_poly *a, stream128_state *state)
-{
-  unsigned int ctr;
-  /* rej_uniform_avx reads up to 8 additional bytes */
-  ALIGNED_UINT8(REJ_UNIFORM_BUFLEN+8) buf;
-
-  stream128_squeezeblocks(buf.coeffs, REJ_UNIFORM_NBLOCKS, state);
-  ctr = rej_uniform_avx(a->coeffs, buf.coeffs);
-
-  while(ctr < GCRY_MLDSA_N) {
-    /* length of buf is always divisible by 3; hence, no bytes left */
-    stream128_squeezeblocks(buf.coeffs, 1, state);
-    ctr += rej_uniform(a->coeffs + ctr, GCRY_MLDSA_N - ctr, buf.coeffs, STREAM128_BLOCKBYTES);
-  }
-}
-
-void poly_uniform(gcry_mldsa_poly *a, const uint8_t seed[GCRY_MLDSA_SEEDBYTES], uint16_t nonce)
-{
-  stream128_state state;
-  stream128_init(&state, seed, nonce);
-  poly_uniform_preinit(a, &state);
-}
-
 void poly_uniform_4x(gcry_mldsa_poly *a0,
                      gcry_mldsa_poly *a1,
                      gcry_mldsa_poly *a2,
@@ -438,38 +405,6 @@ static unsigned int rej_eta(int32_t *a,
 #endif
   }
   return ctr;
-}
-
-/*************************************************
-* Name:        poly_uniform_eta
-*
-* Description: Sample polynomial with uniformly random coefficients
-*              in [-ETA,ETA] by performing rejection sampling using the
-*              output stream of SHAKE256(seed|nonce)
-*
-* Arguments:   - gcry_mldsa_poly *a: pointer to output polynomial
-*              - const uint8_t seed[]: byte array with seed of length GCRY_MLDSA_CRHBYTES
-*              - uint16_t nonce: 2-byte nonce
-**************************************************/
-void poly_uniform_eta_preinit(gcry_mldsa_poly *a, stream256_state *state)
-{
-  unsigned int ctr;
-  ALIGNED_UINT8(REJ_UNIFORM_ETA_BUFLEN) buf;
-
-  stream256_squeezeblocks(buf.coeffs, REJ_UNIFORM_ETA_NBLOCKS, state);
-  ctr = rej_eta_avx(a->coeffs, buf.coeffs);
-
-  while(ctr < GCRY_MLDSA_N) {
-    stream256_squeezeblocks(buf.coeffs, 1, state);
-    ctr += rej_eta(a->coeffs + ctr, GCRY_MLDSA_N - ctr, buf.coeffs, STREAM256_BLOCKBYTES);
-  }
-}
-
-void poly_uniform_eta(gcry_mldsa_poly *a, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
-{
-  stream256_state state;
-  stream256_init(&state, seed, nonce);
-  poly_uniform_eta_preinit(a, &state);
 }
 
 void poly_uniform_eta_4x(gcry_mldsa_poly *a0,
