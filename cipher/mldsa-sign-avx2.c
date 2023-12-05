@@ -252,7 +252,7 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *sigl
   key = tr + GCRY_MLDSA_TRBYTES;
   mu = key + GCRY_MLDSA_SEEDBYTES;
   rhoprime = mu + GCRY_MLDSA_CRHBYTES;
-  unpack_sk(rho, tr, key, t0.buf, s1.buf, s2.buf, sk);
+  unpack_sk(params, rho, tr, key, t0.buf, s1.buf, s2.buf, sk);
 
   /* Compute CRH(tr, msg) */
   _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
