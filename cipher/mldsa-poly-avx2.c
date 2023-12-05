@@ -12,6 +12,18 @@
 #include "mldsa-fips202x4-avx2.h"
 #include "mldsa-polyvec.h"
 
+
+#define REJ_UNIFORM_NBLOCKS ((768+STREAM128_BLOCKBYTES-1)/STREAM128_BLOCKBYTES)
+#define REJ_UNIFORM_BUFLEN (REJ_UNIFORM_NBLOCKS*STREAM128_BLOCKBYTES)
+
+#if ETA == 2
+#define REJ_UNIFORM_ETA_NBLOCKS ((136+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)
+#elif ETA == 4
+#define REJ_UNIFORM_ETA_NBLOCKS ((227+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)
+#endif
+
+
+
 #define _mm256_blendv_epi32(a,b,mask) \
   _mm256_castps_si256(_mm256_blendv_ps(_mm256_castsi256_ps(a), \
                                        _mm256_castsi256_ps(b), \
@@ -418,56 +430,64 @@ void poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
                          uint16_t nonce3)
 {
   unsigned int ctr0, ctr1, ctr2, ctr3;
-  ALIGNED_UINT8(REJ_UNIFORM_ETA_BUFLEN) buf[4];
+
+  const size_t REJ_UNIFORM_ETA_BUFLEN = REJ_UNIFORM_ETA_NBLOCKS*STREAM256_BLOCKBYTES;
+  gcry_mldsa_buf_al buf = {};
+
+  /* make sure each sub structure starts memory aligned */
+  const size_t offset_al = REJ_UNIFORM_ETA_BUFLEN + (128 - (REJ_UNIFORM_ETA_BUFLEN % 128));
+  _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
 
   __m256i f;
   keccakx4_state state;
 
   f = _mm256_loadu_si256((__m256i *)&seed[0]);
-  _mm256_store_si256(&buf[0].vec[0],f);
-  _mm256_store_si256(&buf[1].vec[0],f);
-  _mm256_store_si256(&buf[2].vec[0],f);
-  _mm256_store_si256(&buf[3].vec[0],f);
+  _mm256_store_si256((__m256i *)&buf.buf[0 * offset_al + 0 * sizeof(__m256i)],f);
+  _mm256_store_si256((__m256i *)&buf.buf[1 * offset_al + 0 * sizeof(__m256i)],f);
+  _mm256_store_si256((__m256i *)&buf.buf[2 * offset_al + 0 * sizeof(__m256i)],f);
+  _mm256_store_si256((__m256i *)&buf.buf[3 * offset_al + 0 * sizeof(__m256i)],f);
   f = _mm256_loadu_si256((__m256i *)&seed[32]);
-  _mm256_store_si256(&buf[0].vec[1],f);
-  _mm256_store_si256(&buf[1].vec[1],f);
-  _mm256_store_si256(&buf[2].vec[1],f);
-  _mm256_store_si256(&buf[3].vec[1],f);
+  _mm256_store_si256((__m256i *)&buf.buf[0 * offset_al + 1 * sizeof(__m256i)],f);
+  _mm256_store_si256((__m256i *)&buf.buf[1 * offset_al + 1 * sizeof(__m256i)],f);
+  _mm256_store_si256((__m256i *)&buf.buf[2 * offset_al + 1 * sizeof(__m256i)],f);
+  _mm256_store_si256((__m256i *)&buf.buf[3 * offset_al + 1 * sizeof(__m256i)],f);
 
-  buf[0].coeffs[64] = nonce0;
-  buf[0].coeffs[65] = nonce0 >> 8;
-  buf[1].coeffs[64] = nonce1;
-  buf[1].coeffs[65] = nonce1 >> 8;
-  buf[2].coeffs[64] = nonce2;
-  buf[2].coeffs[65] = nonce2 >> 8;
-  buf[3].coeffs[64] = nonce3;
-  buf[3].coeffs[65] = nonce3 >> 8;
+  buf.buf[0 * offset_al + 64] = nonce0;
+  buf.buf[0 * offset_al + 65] = nonce0 >> 8;
+  buf.buf[1 * offset_al + 64] = nonce1;
+  buf.buf[1 * offset_al + 65] = nonce1 >> 8;
+  buf.buf[2 * offset_al + 64] = nonce2;
+  buf.buf[2 * offset_al + 65] = nonce2 >> 8;
+  buf.buf[3 * offset_al + 64] = nonce3;
+  buf.buf[3 * offset_al + 65] = nonce3 >> 8;
 
-  shake256x4_absorb_once(&state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 66);
-  shake256x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, REJ_UNIFORM_ETA_NBLOCKS, &state);
+  shake256x4_absorb_once(&state, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 66);
+  shake256x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], REJ_UNIFORM_ETA_NBLOCKS, &state);
 
   if(params->eta == 2)
   {
-  ctr0 = rej_eta_avx_eta2(a0->coeffs, buf[0].coeffs);
-  ctr1 = rej_eta_avx_eta2(a1->coeffs, buf[1].coeffs);
-  ctr2 = rej_eta_avx_eta2(a2->coeffs, buf[2].coeffs);
-  ctr3 = rej_eta_avx_eta2(a3->coeffs, buf[3].coeffs);
+    ctr0 = rej_eta_avx_eta2(a0->coeffs, &buf.buf[0 * offset_al]);
+    ctr1 = rej_eta_avx_eta2(a1->coeffs, &buf.buf[1 * offset_al]);
+    ctr2 = rej_eta_avx_eta2(a2->coeffs, &buf.buf[2 * offset_al]);
+    ctr3 = rej_eta_avx_eta2(a3->coeffs, &buf.buf[3 * offset_al]);
   }
   else {
-  ctr0 = rej_eta_avx_eta4(a0->coeffs, buf[0].coeffs);
-  ctr1 = rej_eta_avx_eta4(a1->coeffs, buf[1].coeffs);
-  ctr2 = rej_eta_avx_eta4(a2->coeffs, buf[2].coeffs);
-  ctr3 = rej_eta_avx_eta4(a3->coeffs, buf[3].coeffs);
+    ctr0 = rej_eta_avx_eta4(a0->coeffs, &buf.buf[0 * offset_al]);
+    ctr1 = rej_eta_avx_eta4(a1->coeffs, &buf.buf[1 * offset_al]);
+    ctr2 = rej_eta_avx_eta4(a2->coeffs, &buf.buf[2 * offset_al]);
+    ctr3 = rej_eta_avx_eta4(a3->coeffs, &buf.buf[3 * offset_al]);
   }
 
   while(ctr0 < GCRY_MLDSA_N || ctr1 < GCRY_MLDSA_N || ctr2 < GCRY_MLDSA_N || ctr3 < GCRY_MLDSA_N) {
-    shake256x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 1, &state);
+    shake256x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 1, &state);
 
-    ctr0 += rej_eta(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, buf[0].coeffs, SHAKE256_RATE);
-    ctr1 += rej_eta(a1->coeffs + ctr1, GCRY_MLDSA_N - ctr1, buf[1].coeffs, SHAKE256_RATE);
-    ctr2 += rej_eta(a2->coeffs + ctr2, GCRY_MLDSA_N - ctr2, buf[2].coeffs, SHAKE256_RATE);
-    ctr3 += rej_eta(a3->coeffs + ctr3, GCRY_MLDSA_N - ctr3, buf[3].coeffs, SHAKE256_RATE);
+    ctr0 += rej_eta(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], SHAKE256_RATE);
+    ctr1 += rej_eta(a1->coeffs + ctr1, GCRY_MLDSA_N - ctr1, &buf.buf[1 * offset_al], SHAKE256_RATE);
+    ctr2 += rej_eta(a2->coeffs + ctr2, GCRY_MLDSA_N - ctr2, &buf.buf[2 * offset_al], SHAKE256_RATE);
+    ctr3 += rej_eta(a3->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], SHAKE256_RATE);
   }
+
+  _gcry_mldsa_buf_al_destroy(&buf);
 }
 
 /*************************************************
