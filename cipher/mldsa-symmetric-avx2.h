@@ -9,9 +9,9 @@
 typedef keccak_state stream128_state;
 typedef keccak_state stream256_state;
 
-void dilithium_shake128_stream_init(keccak_state *state, const uint8_t seed[GCRY_MLDSA_SEEDBYTES], uint16_t nonce);
+void dilithium_shake128_stream_init(keccak_state *state, const byte seed[GCRY_MLDSA_SEEDBYTES], uint16_t nonce);
 
-void dilithium_shake256_stream_init(keccak_state *state, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce);
+void dilithium_shake256_stream_init(keccak_state *state, const byte seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce);
 
 #define STREAM128_BLOCKBYTES SHAKE128_RATE
 #define STREAM256_BLOCKBYTES SHAKE256_RATE

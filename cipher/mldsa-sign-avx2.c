@@ -14,7 +14,7 @@
 #include "mldsa-symmetric-avx2.h"
 #include "mldsa-fips202-avx2.h"
 
-static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **row, byte* buf, const uint8_t rho[GCRY_MLDSA_SEEDBYTES], unsigned int i) {
+static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **row, byte* buf, const byte rho[GCRY_MLDSA_SEEDBYTES], unsigned int i) {
   const size_t offset = params->l * sizeof(gcry_mldsa_poly);
   switch(i) {
     case 0:
@@ -65,18 +65,18 @@ static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **
 *
 * Description: Generates public and private key.
 *
-* Arguments:   - uint8_t *pk: pointer to output public key (allocated
+* Arguments:   - byte *pk: pointer to output public key (allocated
 *                             array of CRYPTO_PUBLICKEYBYTES bytes)
-*              - uint8_t *sk: pointer to output private key (allocated
+*              - byte *sk: pointer to output private key (allocated
 *                             array of CRYPTO_SECRETKEYBYTES bytes)
 *
 * Returns 0 (success)
 **************************************************/
-gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, uint8_t *pk, uint8_t *sk) {
+gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, byte *pk, byte *sk) {
   gcry_err_code_t ec = 0;
   unsigned int i;
   byte *seedbuf = NULL;
-  const uint8_t *rho, *rhoprime, *key;
+  const byte *rho, *rhoprime, *key;
   gcry_mldsa_polybuf_al rowbuf = {};
   byte *row = NULL;
   gcry_mldsa_polybuf_al s1 = {};
@@ -190,15 +190,15 @@ leave:
 *
 * Description: Computes signature.
 *
-* Arguments:   - uint8_t *sig: pointer to output signature (of length CRYPTO_BYTES)
+* Arguments:   - byte *sig: pointer to output signature (of length CRYPTO_BYTES)
 *              - size_t *siglen: pointer to output length of signature
-*              - uint8_t *m: pointer to message to be signed
+*              - byte *m: pointer to message to be signed
 *              - size_t mlen: length of message
-*              - uint8_t *sk: pointer to bit-packed secret key
+*              - byte *sk: pointer to bit-packed secret key
 *
 * Returns 0 (success)
 **************************************************/
-int crypto_sign_signature(gcry_mldsa_param_t *params, uint8_t *sig, size_t *siglen, const uint8_t *m, size_t mlen, const uint8_t *sk) {
+int crypto_sign_signature(gcry_mldsa_param_t *params, byte *sig, size_t *siglen, const byte *m, size_t mlen, const byte *sk) {
   gcry_err_code_t ec = 0;
   unsigned int i, n, pos;
   byte *seedbuf = NULL;
@@ -387,20 +387,20 @@ leave:
 *
 * Description: Verifies signature.
 *
-* Arguments:   - uint8_t *m: pointer to input signature
+* Arguments:   - byte *m: pointer to input signature
 *              - size_t siglen: length of signature
-*              - const uint8_t *m: pointer to message
+*              - const byte *m: pointer to message
 *              - size_t mlen: length of message
-*              - const uint8_t *pk: pointer to bit-packed public key
+*              - const byte *pk: pointer to bit-packed public key
 *
 * Returns 0 if signature could be verified correctly and -1 otherwise
 **************************************************/
-int crypto_sign_verify(gcry_mldsa_param_t *params, const uint8_t *sig, size_t siglen, const uint8_t *m, size_t mlen, const uint8_t *pk) {
+int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t siglen, const byte *m, size_t mlen, const byte *pk) {
   gcry_err_code_t ec = 0;
   unsigned int i, j, pos = 0;
   gcry_mldsa_buf_al buf = {};
   byte *mu = NULL;
-  const uint8_t *hint = sig + params->ctildebytes + params->l*params->polyz_packedbytes;
+  const byte *hint = sig + params->ctildebytes + params->l*params->polyz_packedbytes;
   gcry_mldsa_polybuf_al rowbuf = {};
   byte *row = NULL;
   gcry_mldsa_polybuf_al z = {};

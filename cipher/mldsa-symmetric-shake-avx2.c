@@ -3,9 +3,9 @@
 #include "mldsa-symmetric-avx2.h"
 #include "mldsa-fips202-avx2.h"
 
-void dilithium_shake128_stream_init(keccak_state *state, const uint8_t seed[GCRY_MLDSA_SEEDBYTES], uint16_t nonce)
+void dilithium_shake128_stream_init(keccak_state *state, const byte seed[GCRY_MLDSA_SEEDBYTES], uint16_t nonce)
 {
-  uint8_t t[2];
+  byte t[2];
   t[0] = nonce;
   t[1] = nonce >> 8;
 
@@ -15,9 +15,9 @@ void dilithium_shake128_stream_init(keccak_state *state, const uint8_t seed[GCRY
   shake128_finalize(state);
 }
 
-void dilithium_shake256_stream_init(keccak_state *state, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
+void dilithium_shake256_stream_init(keccak_state *state, const byte seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
 {
-  uint8_t t[2];
+  byte t[2];
   t[0] = nonce;
   t[1] = nonce >> 8;
 

@@ -31,16 +31,16 @@ void polyveck_decompose(gcry_mldsa_param_t *params, byte *v1, byte *v0, const by
 
 void polyveck_pack_w1(gcry_mldsa_param_t *params, byte *r, const byte *w1);
 
-gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, byte *mat, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, byte *mat, const byte rho[GCRY_MLDSA_SEEDBYTES]);
 
-gcry_err_code_t polyvec_matrix_expand_row0(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row1(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row2(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row3(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row4(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row5(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row6(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
-gcry_err_code_t polyvec_matrix_expand_row7(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const uint8_t rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row0(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const byte rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row1(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const byte rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row2(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const byte rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row3(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const byte rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row4(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const byte rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row5(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const byte rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row6(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const byte rho[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t polyvec_matrix_expand_row7(gcry_mldsa_param_t *params, byte *rowa, byte *rowb, const byte rho[GCRY_MLDSA_SEEDBYTES]);
 
 void polyvec_matrix_pointwise_montgomery(gcry_mldsa_param_t *params, byte *t, const byte *mat, const byte *v);
 

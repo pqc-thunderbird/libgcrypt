@@ -15,10 +15,10 @@
 #endif
 #define REJ_UNIFORM_ETA_BUFLEN (REJ_UNIFORM_ETA_NBLOCKS*STREAM256_BLOCKBYTES)
 
-extern const uint8_t idxlut[256][8];
+extern const byte idxlut[256][8];
 
-unsigned int rej_uniform_avx(int32_t *r, const uint8_t buf[REJ_UNIFORM_BUFLEN+8]);
+unsigned int rej_uniform_avx(int32_t *r, const byte buf[REJ_UNIFORM_BUFLEN+8]);
 
-unsigned int rej_eta_avx(int32_t *r, const uint8_t buf[REJ_UNIFORM_ETA_BUFLEN]);
+unsigned int rej_eta_avx(int32_t *r, const byte buf[REJ_UNIFORM_ETA_BUFLEN]);
 
 #endif

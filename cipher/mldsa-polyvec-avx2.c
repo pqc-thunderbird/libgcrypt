@@ -68,10 +68,10 @@ void _gcry_mldsa_buf_al_destroy(gcry_mldsa_buf_al *buf)
  *              sampling on the output stream of SHAKE128(rho|j|i)
  *
  * Arguments:   - polyvecl mat[K]: output matrix
- *              - const uint8_t rho[]: byte array containing seed rho
+ *              - const byte rho[]: byte array containing seed rho
  **************************************************/
 
-gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, byte *mat, const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, byte *mat, const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec = 0;
   const size_t rowsize = sizeof(gcry_mldsa_poly) * params->k;
@@ -118,7 +118,7 @@ leave:
 gcry_err_code_t polyvec_matrix_expand_row0(gcry_mldsa_param_t *params,
                                            byte *rowa,
                                            byte *rowb,
-                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
+                                           const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->l == 4 && params->k == 4)
@@ -165,7 +165,7 @@ gcry_err_code_t polyvec_matrix_expand_row0(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row1(gcry_mldsa_param_t *params,
                                            byte *rowa,
                                            byte *rowb,
-                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
+                                           const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->l == 4 && params->k == 4)
@@ -207,7 +207,7 @@ gcry_err_code_t polyvec_matrix_expand_row1(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row2(gcry_mldsa_param_t *params,
                                            byte *rowa,
                                            byte *rowb,
-                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
+                                           const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   const size_t polysize = sizeof(gcry_mldsa_poly);
 
@@ -250,7 +250,7 @@ gcry_err_code_t polyvec_matrix_expand_row2(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row3(gcry_mldsa_param_t *params,
                                            byte *rowa,
                                            byte *rowb,
-                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
+                                           const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->l == 4 && params->k == 4)
@@ -288,7 +288,7 @@ gcry_err_code_t polyvec_matrix_expand_row3(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row4(gcry_mldsa_param_t *params,
                                            byte *rowa,
                                            byte *rowb,
-                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
+                                           const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   const size_t polysize = sizeof(gcry_mldsa_poly);
 
@@ -328,7 +328,7 @@ gcry_err_code_t polyvec_matrix_expand_row4(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row5(gcry_mldsa_param_t *params,
                                            byte *rowa,
                                            byte *rowb,
-                                           const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
+                                           const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->k == 6 && params->l == 5)
@@ -360,7 +360,7 @@ gcry_err_code_t polyvec_matrix_expand_row5(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row6(gcry_mldsa_param_t *params,
                                 byte *rowa,
                                 byte *rowb,
-                                const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
+                                const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->k == 8 && params->l == 7)
@@ -386,7 +386,7 @@ gcry_err_code_t polyvec_matrix_expand_row6(gcry_mldsa_param_t *params,
 gcry_err_code_t polyvec_matrix_expand_row7(gcry_mldsa_param_t *params,
                                 byte *rowa,
                                 byte *rowb,
-                                const uint8_t rho[GCRY_MLDSA_SEEDBYTES])
+                                const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->k == 8 && params->l == 7)

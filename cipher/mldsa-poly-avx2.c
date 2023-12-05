@@ -219,13 +219,13 @@ void poly_decompose(gcry_mldsa_poly *a1, gcry_mldsa_poly *a0, const gcry_mldsa_p
 *              indices of the coefficients of the input polynomial
 *              whose low bits overflow into the high bits.
 *
-* Arguments:   - uint8_t *h: pointer to output hint array (preallocated of length GCRY_MLDSA_N)
+* Arguments:   - byte *h: pointer to output hint array (preallocated of length GCRY_MLDSA_N)
 *              - const gcry_mldsa_poly *a0: pointer to low part of input polynomial
 *              - const gcry_mldsa_poly *a1: pointer to high part of input polynomial
 *
 * Returns number of hints, i.e. length of hint array.
 **************************************************/
-unsigned int poly_make_hint(uint8_t hint[GCRY_MLDSA_N], const gcry_mldsa_poly *a0, const gcry_mldsa_poly *a1)
+unsigned int poly_make_hint(byte hint[GCRY_MLDSA_N], const gcry_mldsa_poly *a0, const gcry_mldsa_poly *a1)
 {
   unsigned int r;
 
@@ -286,7 +286,7 @@ int poly_chknorm(const gcry_mldsa_poly *a, int32_t B) {
 *
 * Arguments:   - int32_t *a: pointer to output array (allocated)
 *              - unsigned int len: number of coefficients to be sampled
-*              - const uint8_t *buf: array of random bytes
+*              - const byte *buf: array of random bytes
 *              - unsigned int buflen: length of array of random bytes
 *
 * Returns number of sampled coefficients. Can be smaller than len if not enough
@@ -294,7 +294,7 @@ int poly_chknorm(const gcry_mldsa_poly *a, int32_t B) {
 **************************************************/
 static unsigned int rej_uniform(int32_t *a,
                                 unsigned int len,
-                                const uint8_t *buf,
+                                const byte *buf,
                                 unsigned int buflen)
 {
   unsigned int ctr, pos;
@@ -317,7 +317,7 @@ void poly_uniform_4x(gcry_mldsa_poly *a0,
                      gcry_mldsa_poly *a1,
                      gcry_mldsa_poly *a2,
                      gcry_mldsa_poly *a3,
-                     const uint8_t seed[32],
+                     const byte seed[32],
                      uint16_t nonce0,
                      uint16_t nonce1,
                      uint16_t nonce2,
@@ -369,7 +369,7 @@ void poly_uniform_4x(gcry_mldsa_poly *a0,
 *
 * Arguments:   - int32_t *a: pointer to output array (allocated)
 *              - unsigned int len: number of coefficients to be sampled
-*              - const uint8_t *buf: array of random bytes
+*              - const byte *buf: array of random bytes
 *              - unsigned int buflen: length of array of random bytes
 *
 * Returns number of sampled coefficients. Can be smaller than len if not enough
@@ -377,7 +377,7 @@ void poly_uniform_4x(gcry_mldsa_poly *a0,
 **************************************************/
 static unsigned int rej_eta(int32_t *a,
                             unsigned int len,
-                            const uint8_t *buf,
+                            const byte *buf,
                             unsigned int buflen)
 {
   unsigned int ctr, pos;
@@ -411,7 +411,7 @@ void poly_uniform_eta_4x(gcry_mldsa_poly *a0,
                          gcry_mldsa_poly *a1,
                          gcry_mldsa_poly *a2,
                          gcry_mldsa_poly *a3,
-                         const uint8_t seed[64],
+                         const byte seed[64],
                          uint16_t nonce0,
                          uint16_t nonce1,
                          uint16_t nonce2,
@@ -469,7 +469,7 @@ void poly_uniform_eta_4x(gcry_mldsa_poly *a0,
 *              of SHAKE256(seed|nonce)
 *
 * Arguments:   - gcry_mldsa_poly *a: pointer to output polynomial
-*              - const uint8_t seed[]: byte array with seed of length GCRY_MLDSA_CRHBYTES
+*              - const byte seed[]: byte array with seed of length GCRY_MLDSA_CRHBYTES
 *              - uint16_t nonce: 16-bit nonce
 **************************************************/
 #define POLY_UNIFORM_GAMMA1_NBLOCKS ((POLYZ_PACKEDBYTES+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)
@@ -481,7 +481,7 @@ void poly_uniform_gamma1_preinit(gcry_mldsa_poly *a, stream256_state *state)
   polyz_unpack(a, buf.coeffs);
 }
 
-void poly_uniform_gamma1(gcry_mldsa_poly *a, const uint8_t seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
+void poly_uniform_gamma1(gcry_mldsa_poly *a, const byte seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
 {
   stream256_state state;
   stream256_init(&state, seed, nonce);
@@ -492,7 +492,7 @@ void poly_uniform_gamma1_4x(gcry_mldsa_poly *a0,
                             gcry_mldsa_poly *a1,
                             gcry_mldsa_poly *a2,
                             gcry_mldsa_poly *a3,
-                            const uint8_t seed[64],
+                            const byte seed[64],
                             uint16_t nonce0,
                             uint16_t nonce1,
                             uint16_t nonce2,
@@ -539,9 +539,9 @@ void poly_uniform_gamma1_4x(gcry_mldsa_poly *a0,
 *              SHAKE256(seed).
 *
 * Arguments:   - gcry_mldsa_poly *c: pointer to output polynomial
-*              - const uint8_t mu[]: byte array containing seed of length GCRY_MLDSA_SEEDBYTES
+*              - const byte mu[]: byte array containing seed of length GCRY_MLDSA_SEEDBYTES
 **************************************************/
-void poly_challenge(gcry_mldsa_poly * restrict c, const uint8_t seed[GCRY_MLDSA_SEEDBYTES]) {
+void poly_challenge(gcry_mldsa_poly * restrict c, const byte seed[GCRY_MLDSA_SEEDBYTES]) {
   unsigned int i, b, pos;
   uint64_t signs;
   ALIGNED_UINT8(SHAKE256_RATE) buf;
@@ -577,13 +577,13 @@ void poly_challenge(gcry_mldsa_poly * restrict c, const uint8_t seed[GCRY_MLDSA_
 *
 * Description: Bit-pack polynomial with coefficients in [-ETA,ETA].
 *
-* Arguments:   - uint8_t *r: pointer to output byte array with at least
+* Arguments:   - byte *r: pointer to output byte array with at least
 *                            POLYETA_PACKEDBYTES bytes
 *              - const gcry_mldsa_poly *a: pointer to input polynomial
 **************************************************/
-void polyeta_pack(uint8_t r[POLYETA_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
+void polyeta_pack(byte r[POLYETA_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
   unsigned int i;
-  uint8_t t[8];
+  byte t[8];
 
 #if ETA == 2
   for(i = 0; i < GCRY_MLDSA_N/8; ++i) {
@@ -615,9 +615,9 @@ void polyeta_pack(uint8_t r[POLYETA_PACKEDBYTES], const gcry_mldsa_poly * restri
 * Description: Unpack polynomial with coefficients in [-ETA,ETA].
 *
 * Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
-*              - const uint8_t *a: byte array with bit-packed polynomial
+*              - const byte *a: byte array with bit-packed polynomial
 **************************************************/
-void polyeta_unpack(gcry_mldsa_poly * restrict r, const uint8_t a[POLYETA_PACKEDBYTES]) {
+void polyeta_unpack(gcry_mldsa_poly * restrict r, const byte a[POLYETA_PACKEDBYTES]) {
   unsigned int i;
 
 #if ETA == 2
@@ -656,11 +656,11 @@ void polyeta_unpack(gcry_mldsa_poly * restrict r, const uint8_t a[POLYETA_PACKED
 * Description: Bit-pack polynomial t1 with coefficients fitting in 10 bits.
 *              Input coefficients are assumed to be positive standard representatives.
 *
-* Arguments:   - uint8_t *r: pointer to output byte array with at least
+* Arguments:   - byte *r: pointer to output byte array with at least
 *                            GCRY_MLDSA_POLYT1_PACKEDBYTES bytes
 *              - const gcry_mldsa_poly *a: pointer to input polynomial
 **************************************************/
-void polyt1_pack(uint8_t r[GCRY_MLDSA_POLYT1_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
+void polyt1_pack(byte r[GCRY_MLDSA_POLYT1_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
   unsigned int i;
 
   for(i = 0; i < GCRY_MLDSA_N/4; ++i) {
@@ -679,9 +679,9 @@ void polyt1_pack(uint8_t r[GCRY_MLDSA_POLYT1_PACKEDBYTES], const gcry_mldsa_poly
 *              Output coefficients are positive standard representatives.
 *
 * Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
-*              - const uint8_t *a: byte array with bit-packed polynomial
+*              - const byte *a: byte array with bit-packed polynomial
 **************************************************/
-void polyt1_unpack(gcry_mldsa_poly * restrict r, const uint8_t a[GCRY_MLDSA_POLYT1_PACKEDBYTES]) {
+void polyt1_unpack(gcry_mldsa_poly * restrict r, const byte a[GCRY_MLDSA_POLYT1_PACKEDBYTES]) {
   unsigned int i;
 
   for(i = 0; i < GCRY_MLDSA_N/4; ++i) {
@@ -697,11 +697,11 @@ void polyt1_unpack(gcry_mldsa_poly * restrict r, const uint8_t a[GCRY_MLDSA_POLY
 *
 * Description: Bit-pack polynomial t0 with coefficients in ]-2^{GCRY_MLDSA_D-1}, 2^{GCRY_MLDSA_D-1}].
 *
-* Arguments:   - uint8_t *r: pointer to output byte array with at least
+* Arguments:   - byte *r: pointer to output byte array with at least
 *                            GCRY_MLDSA_POLYT0_PACKEDBYTES bytes
 *              - const gcry_mldsa_poly *a: pointer to input polynomial
 **************************************************/
-void polyt0_pack(uint8_t r[GCRY_MLDSA_POLYT0_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
+void polyt0_pack(byte r[GCRY_MLDSA_POLYT0_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
   unsigned int i;
   uint32_t t[8];
 
@@ -744,9 +744,9 @@ void polyt0_pack(uint8_t r[GCRY_MLDSA_POLYT0_PACKEDBYTES], const gcry_mldsa_poly
 * Description: Unpack polynomial t0 with coefficients in ]-2^{GCRY_MLDSA_D-1}, 2^{GCRY_MLDSA_D-1}].
 *
 * Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
-*              - const uint8_t *a: byte array with bit-packed polynomial
+*              - const byte *a: byte array with bit-packed polynomial
 **************************************************/
-void polyt0_unpack(gcry_mldsa_poly * restrict r, const uint8_t a[GCRY_MLDSA_POLYT0_PACKEDBYTES]) {
+void polyt0_unpack(gcry_mldsa_poly * restrict r, const byte a[GCRY_MLDSA_POLYT0_PACKEDBYTES]) {
   unsigned int i;
 
   for(i = 0; i < GCRY_MLDSA_N/8; ++i) {
@@ -803,11 +803,11 @@ void polyt0_unpack(gcry_mldsa_poly * restrict r, const uint8_t a[GCRY_MLDSA_POLY
 * Description: Bit-pack polynomial with coefficients
 *              in [-(GAMMA1 - 1), GAMMA1].
 *
-* Arguments:   - uint8_t *r: pointer to output byte array with at least
+* Arguments:   - byte *r: pointer to output byte array with at least
 *                            POLYZ_PACKEDBYTES bytes
 *              - const gcry_mldsa_poly *a: pointer to input polynomial
 **************************************************/
-void polyz_pack(uint8_t r[POLYZ_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
+void polyz_pack(byte r[POLYZ_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
   unsigned int i;
   uint32_t t[4];
 
@@ -853,10 +853,10 @@ void polyz_pack(uint8_t r[POLYZ_PACKEDBYTES], const gcry_mldsa_poly * restrict a
 *              in [-(GAMMA1 - 1), GAMMA1].
 *
 * Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
-*              - const uint8_t *a: byte array with bit-packed polynomial
+*              - const byte *a: byte array with bit-packed polynomial
 **************************************************/
 #if GAMMA1 == (1 << 17)
-void polyz_unpack(gcry_mldsa_poly * restrict r, const uint8_t *a) {
+void polyz_unpack(gcry_mldsa_poly * restrict r, const byte *a) {
   unsigned int i;
   __m256i f;
   const __m256i shufbidx = _mm256_set_epi8(-1, 9, 8, 7,-1, 7, 6, 5,-1, 5, 4, 3,-1, 3, 2, 1,
@@ -877,7 +877,7 @@ void polyz_unpack(gcry_mldsa_poly * restrict r, const uint8_t *a) {
 }
 
 #elif GAMMA1 == (1 << 19)
-void polyz_unpack(gcry_mldsa_poly * restrict r, const uint8_t *a) {
+void polyz_unpack(gcry_mldsa_poly * restrict r, const byte *a) {
   unsigned int i;
   __m256i f;
   const __m256i shufbidx = _mm256_set_epi8(-1,11,10, 9,-1, 9, 8, 7,-1, 6, 5, 4,-1, 4, 3, 2,
@@ -904,12 +904,12 @@ void polyz_unpack(gcry_mldsa_poly * restrict r, const uint8_t *a) {
 * Description: Bit-pack polynomial w1 with coefficients in [0,15] or [0,43].
 *              Input coefficients are assumed to be positive standard representatives.
 *
-* Arguments:   - uint8_t *r: pointer to output byte array with at least
+* Arguments:   - byte *r: pointer to output byte array with at least
 *                            POLYW1_PACKEDBYTES bytes
 *              - const gcry_mldsa_poly *a: pointer to input polynomial
 **************************************************/
 #if GAMMA2 == (GCRY_MLDSA_Q-1)/88
-void polyw1_pack(uint8_t *r, const gcry_mldsa_poly * restrict a) {
+void polyw1_pack(byte *r, const gcry_mldsa_poly * restrict a) {
   unsigned int i;
   __m256i f0,f1,f2,f3;
   const __m256i shift1 = _mm256_set1_epi16((64 << 8) + 1);
@@ -937,7 +937,7 @@ void polyw1_pack(uint8_t *r, const gcry_mldsa_poly * restrict a) {
 }
 
 #elif GAMMA2 == (GCRY_MLDSA_Q-1)/32
-void polyw1_pack(uint8_t *r, const gcry_mldsa_poly * restrict a) {
+void polyw1_pack(byte *r, const gcry_mldsa_poly * restrict a) {
   unsigned int i;
   __m256i f0, f1, f2, f3, f4, f5, f6, f7;
   const __m256i shift = _mm256_set1_epi16((16 << 8) + 1);

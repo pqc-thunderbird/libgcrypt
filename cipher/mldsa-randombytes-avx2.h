@@ -3,7 +3,9 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "config.h"
+#include "types.h"
 
-void randombytes(uint8_t *out, size_t outlen);
+void randombytes(byte *out, size_t outlen);
 
 #endif

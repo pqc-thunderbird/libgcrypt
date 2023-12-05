@@ -7,12 +7,12 @@
 
 static void keccakx4_absorb_once(__m256i s[25],
                                  unsigned int r,
-                                 const uint8_t *in0,
-                                 const uint8_t *in1,
-                                 const uint8_t *in2,
-                                 const uint8_t *in3,
+                                 const byte *in0,
+                                 const byte *in1,
+                                 const byte *in2,
+                                 const byte *in3,
                                  size_t inlen,
-                                 uint8_t p)
+                                 byte p)
 {
   size_t i;
   uint64_t pos = 0;
@@ -53,10 +53,10 @@ static void keccakx4_absorb_once(__m256i s[25],
   s[r/8 - 1] = _mm256_xor_si256(s[r/8 - 1], t);
 }
 
-static void keccakx4_squeezeblocks(uint8_t *out0,
-                                   uint8_t *out1,
-                                   uint8_t *out2,
-                                   uint8_t *out3,
+static void keccakx4_squeezeblocks(byte *out0,
+                                   byte *out1,
+                                   byte *out2,
+                                   byte *out3,
                                    size_t nblocks,
                                    unsigned int r,
                                    __m256i s[25])
@@ -84,19 +84,19 @@ static void keccakx4_squeezeblocks(uint8_t *out0,
 }
 
 void shake128x4_absorb_once(keccakx4_state *state,
-                            const uint8_t *in0,
-                            const uint8_t *in1,
-                            const uint8_t *in2,
-                            const uint8_t *in3,
+                            const byte *in0,
+                            const byte *in1,
+                            const byte *in2,
+                            const byte *in3,
                             size_t inlen)
 {
   keccakx4_absorb_once(state->s, SHAKE128_RATE, in0, in1, in2, in3, inlen, 0x1F);
 }
 
-void shake128x4_squeezeblocks(uint8_t *out0,
-                              uint8_t *out1,
-                              uint8_t *out2,
-                              uint8_t *out3,
+void shake128x4_squeezeblocks(byte *out0,
+                              byte *out1,
+                              byte *out2,
+                              byte *out3,
                               size_t nblocks,
                               keccakx4_state *state)
 {
@@ -104,39 +104,39 @@ void shake128x4_squeezeblocks(uint8_t *out0,
 }
 
 void shake256x4_absorb_once(keccakx4_state *state,
-                            const uint8_t *in0,
-                            const uint8_t *in1,
-                            const uint8_t *in2,
-                            const uint8_t *in3,
+                            const byte *in0,
+                            const byte *in1,
+                            const byte *in2,
+                            const byte *in3,
                             size_t inlen)
 {
   keccakx4_absorb_once(state->s, SHAKE256_RATE, in0, in1, in2, in3, inlen, 0x1F);
 }
 
-void shake256x4_squeezeblocks(uint8_t *out0,
-                              uint8_t *out1,
-                              uint8_t *out2,
-                              uint8_t *out3,
+void shake256x4_squeezeblocks(byte *out0,
+                              byte *out1,
+                              byte *out2,
+                              byte *out3,
                               size_t nblocks,
                               keccakx4_state *state)
 {
   keccakx4_squeezeblocks(out0, out1, out2, out3, nblocks, SHAKE256_RATE, state->s);
 }
 
-void shake128x4(uint8_t *out0,
-                uint8_t *out1,
-                uint8_t *out2,
-                uint8_t *out3,
+void shake128x4(byte *out0,
+                byte *out1,
+                byte *out2,
+                byte *out3,
                 size_t outlen,
-                const uint8_t *in0,
-                const uint8_t *in1,
-                const uint8_t *in2,
-                const uint8_t *in3,
+                const byte *in0,
+                const byte *in1,
+                const byte *in2,
+                const byte *in3,
                 size_t inlen)
 {
   unsigned int i;
   size_t nblocks = outlen/SHAKE128_RATE;
-  uint8_t t[4][SHAKE128_RATE];
+  byte t[4][SHAKE128_RATE];
   keccakx4_state state;
 
   shake128x4_absorb_once(&state, in0, in1, in2, in3, inlen);
@@ -159,20 +159,20 @@ void shake128x4(uint8_t *out0,
   }
 }
 
-void shake256x4(uint8_t *out0,
-                uint8_t *out1,
-                uint8_t *out2,
-                uint8_t *out3,
+void shake256x4(byte *out0,
+                byte *out1,
+                byte *out2,
+                byte *out3,
                 size_t outlen,
-                const uint8_t *in0,
-                const uint8_t *in1,
-                const uint8_t *in2,
-                const uint8_t *in3,
+                const byte *in0,
+                const byte *in1,
+                const byte *in2,
+                const byte *in3,
                 size_t inlen)
 {
   unsigned int i;
   size_t nblocks = outlen/SHAKE256_RATE;
-  uint8_t t[4][SHAKE256_RATE];
+  byte t[4][SHAKE256_RATE];
   keccakx4_state state;
 
   shake256x4_absorb_once(&state, in0, in1, in2, in3, inlen);

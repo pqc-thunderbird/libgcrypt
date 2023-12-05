@@ -124,13 +124,13 @@ void decompose_avx(__m256i *a1, __m256i *a0, const __m256i *a)
 * Description: Compute indices of polynomial coefficients whose low bits
 *              overflow into the high bits.
 *
-* Arguments:   - uint8_t *hint: hint array
+* Arguments:   - byte *hint: hint array
 *              - const __m256i *a0: low bits of input elements
 *              - const __m256i *a1: high bits of input elements
 *
 * Returns number of overflowing low bits
 **************************************************/
-unsigned int make_hint_avx(uint8_t hint[GCRY_MLDSA_N], const __m256i * restrict a0, const __m256i * restrict a1)
+unsigned int make_hint_avx(byte hint[GCRY_MLDSA_N], const __m256i * restrict a0, const __m256i * restrict a1)
 {
   unsigned int i, n = 0;
   __m256i f0, f1, g0, g1;

@@ -4,7 +4,7 @@
 #include "mldsa-rejsample-avx2.h"
 #include "mldsa-symmetric-avx2.h"
 
-const uint8_t idxlut[256][8] = {
+const byte idxlut[256][8] = {
   { 0,  0,  0,  0,  0,  0,  0,  0},
   { 0,  0,  0,  0,  0,  0,  0,  0},
   { 1,  0,  0,  0,  0,  0,  0,  0},
@@ -263,7 +263,7 @@ const uint8_t idxlut[256][8] = {
   { 0,  1,  2,  3,  4,  5,  6,  7}
 };
 
-unsigned int rej_uniform_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_BUFLEN+8])
+unsigned int rej_uniform_avx(int32_t * restrict r, const byte buf[REJ_UNIFORM_BUFLEN+8])
 {
   unsigned int ctr, pos;
   uint32_t good;
@@ -309,7 +309,7 @@ unsigned int rej_uniform_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM
 }
 
 #if ETA == 2
-unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA_BUFLEN]) {
+unsigned int rej_eta_avx(int32_t * restrict r, const byte buf[REJ_UNIFORM_ETA_BUFLEN]) {
   unsigned int ctr, pos;
   uint32_t good;
   __m256i f0, f1, f2;
@@ -401,7 +401,7 @@ unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA
 }
 
 #elif ETA == 4
-unsigned int rej_eta_avx(int32_t * restrict r, const uint8_t buf[REJ_UNIFORM_ETA_BUFLEN]) {
+unsigned int rej_eta_avx(int32_t * restrict r, const byte buf[REJ_UNIFORM_ETA_BUFLEN]) {
   unsigned int ctr, pos;
   uint32_t good;
   __m256i f0, f1;
