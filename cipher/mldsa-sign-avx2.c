@@ -10,7 +10,6 @@
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-polyvec.h"
 #include "mldsa-poly-avx2.h"
-#include "mldsa-randombytes-avx2.h"
 #include "mldsa-symmetric-avx2.h"
 #include "mldsa-fips202-avx2.h"
 
