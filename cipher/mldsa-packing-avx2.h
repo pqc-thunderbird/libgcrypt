@@ -9,9 +9,9 @@
 void unpack_sk(gcry_mldsa_param_t *params, byte rho[GCRY_MLDSA_SEEDBYTES],
                byte tr[GCRY_MLDSA_TRBYTES],
                byte key[GCRY_MLDSA_SEEDBYTES],
-               polyveck *t0,
-               polyvecl *s1,
-               polyveck *s2,
+               byte *t0,
+               byte *s1,
+               byte *s2,
                const byte sk[CRYPTO_SECRETKEYBYTES]);
 
 

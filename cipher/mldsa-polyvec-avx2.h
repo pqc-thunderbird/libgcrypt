@@ -6,9 +6,7 @@
 #include "mldsa-poly-avx2.h"
 
 /* Vectors of polynomials of length L */
-typedef struct {
-  gcry_mldsa_poly vec[L];
-} polyvecl;
+
 
 void polyvecl_ntt(gcry_mldsa_param_t *params, byte *v);
 
@@ -17,9 +15,7 @@ void polyvecl_pointwise_acc_montgomery(gcry_mldsa_poly *w,
                                        const byte *v);
 
 /* Vectors of polynomials of length K */
-typedef struct {
-  gcry_mldsa_poly vec[K];
-} polyveck;
+
 
 
 void polyveck_caddq(gcry_mldsa_param_t *params, byte *v);

@@ -213,10 +213,7 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, byte *sig, size_t *siglen,
   gcry_mldsa_polybuf_al w1 = {};
   gcry_mldsa_polybuf_al tmpv = {};
   gcry_mldsa_poly c, tmp;
-  // union {
-  //   polyvecl y;
-  //   polyveck w0;
-  // } tmpv;
+
   const size_t polysize = sizeof(gcry_mldsa_poly);
   gcry_md_hd_t hd = NULL;
 
