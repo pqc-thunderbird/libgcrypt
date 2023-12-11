@@ -4,8 +4,6 @@
 #include <string.h>
 #include "config.h"
 #include "mldsa-align-avx2.h"
-#include "mldsa-params.h"
-#include "mldsa-params-avx2.h"
 #include "mldsa-sign-avx2.h"
 #include "mldsa-packing-avx2.h"
 #include "mldsa-polyvec-avx2.h"
@@ -144,9 +142,9 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, byte *pk, b
   }
   /* Pack secret vectors */
   for(i = 0; i < params->l; i++)
-    polyeta_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + i*params->polyeta_packedbytes, &s1.buf[i * polysize]);
+    polyeta_pack(params, sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + i*params->polyeta_packedbytes, &s1.buf[i * polysize]);
   for(i = 0; i < params->k; i++)
-    polyeta_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l + i)*params->polyeta_packedbytes, &s2.buf[i * polysize]);
+    polyeta_pack(params, sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l + i)*params->polyeta_packedbytes, &s2.buf[i * polysize]);
 
   /* Transform s1 */
   polyvecl_ntt(params, s1.buf);
@@ -156,7 +154,7 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, byte *pk, b
     polyvec_matrix_expand_row(params, &row, rowbuf.buf, rho, i);
 
     /* Compute inner-product */
-    polyvecl_pointwise_acc_montgomery(t1.buf, row, s1.buf);
+    polyvecl_pointwise_acc_montgomery(params, t1.buf, row, s1.buf);
     poly_invntt_tomont(t1.buf);
 
     /* Add error polynomial */
@@ -457,7 +455,7 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t sigle
     polyvec_matrix_expand_row(params, &row, rowbuf.buf, pk, i);
 
     /* Compute i-th row of Az - c2^Dt1 */
-    polyvecl_pointwise_acc_montgomery(w1.buf, row, z.buf);
+    polyvecl_pointwise_acc_montgomery(params, w1.buf, row, z.buf);
 
     polyt1_unpack(h.buf, pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES);
     poly_shiftl(h.buf);

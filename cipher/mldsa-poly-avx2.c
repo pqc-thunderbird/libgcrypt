@@ -3,7 +3,6 @@
 #include <string.h>
 #include "config.h"
 #include "mldsa-align-avx2.h"
-#include "mldsa-params-avx2.h"
 #include "mldsa-poly-avx2.h"
 #include "mldsa-ntt-avx2.h"
 #include "mldsa-rounding-avx2.h"
@@ -16,14 +15,6 @@
 
 #define REJ_UNIFORM_NBLOCKS ((768+STREAM128_BLOCKBYTES-1)/STREAM128_BLOCKBYTES)
 #define REJ_UNIFORM_BUFLEN (REJ_UNIFORM_NBLOCKS*STREAM128_BLOCKBYTES)
-
-#if ETA == 2
-#define REJ_UNIFORM_ETA_NBLOCKS ((136+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)
-#elif ETA == 4
-#define REJ_UNIFORM_ETA_NBLOCKS ((227+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)
-#endif
-
-
 
 #define _mm256_blendv_epi32(a,b,mask) \
   _mm256_castps_si256(_mm256_blendv_ps(_mm256_castsi256_ps(a), \
@@ -388,7 +379,7 @@ void poly_uniform_4x(gcry_mldsa_poly *a0,
 * Returns number of sampled coefficients. Can be smaller than len if not enough
 * random bytes were given.
 **************************************************/
-static unsigned int rej_eta(int32_t *a,
+static unsigned int rej_eta2(int32_t *a,
                             unsigned int len,
                             const byte *buf,
                             unsigned int buflen)
@@ -401,7 +392,6 @@ static unsigned int rej_eta(int32_t *a,
     t0 = buf[pos] & 0x0F;
     t1 = buf[pos++] >> 4;
 
-#if ETA == 2
     if(t0 < 15) {
       t0 = t0 - (205*t0 >> 10)*5;
       a[ctr++] = 2 - t0;
@@ -410,12 +400,26 @@ static unsigned int rej_eta(int32_t *a,
       t1 = t1 - (205*t1 >> 10)*5;
       a[ctr++] = 2 - t1;
     }
-#elif ETA == 4
+  }
+  return ctr;
+}
+static unsigned int rej_eta4(int32_t *a,
+                            unsigned int len,
+                            const byte *buf,
+                            unsigned int buflen)
+{
+  unsigned int ctr, pos;
+  uint32_t t0, t1;
+
+  ctr = pos = 0;
+  while(ctr < len && pos < buflen) {
+    t0 = buf[pos] & 0x0F;
+    t1 = buf[pos++] >> 4;
+
     if(t0 < 9)
       a[ctr++] = 4 - t0;
     if(t1 < 9 && ctr < len)
       a[ctr++] = 4 - t1;
-#endif
   }
   return ctr;
 }
@@ -431,6 +435,15 @@ void poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
                          uint16_t nonce3)
 {
   unsigned int ctr0, ctr1, ctr2, ctr3;
+
+  size_t REJ_UNIFORM_ETA_NBLOCKS;
+  if(params->eta == 2)
+  {
+    REJ_UNIFORM_ETA_NBLOCKS = (136+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
+  }
+  else {
+    REJ_UNIFORM_ETA_NBLOCKS = (227+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
+  }
 
   const size_t REJ_UNIFORM_ETA_BUFLEN = REJ_UNIFORM_ETA_NBLOCKS*STREAM256_BLOCKBYTES;
   gcry_mldsa_buf_al buf = {};
@@ -481,11 +494,19 @@ void poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
 
   while(ctr0 < GCRY_MLDSA_N || ctr1 < GCRY_MLDSA_N || ctr2 < GCRY_MLDSA_N || ctr3 < GCRY_MLDSA_N) {
     shake256x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 1, &state);
-
-    ctr0 += rej_eta(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], SHAKE256_RATE);
-    ctr1 += rej_eta(a1->coeffs + ctr1, GCRY_MLDSA_N - ctr1, &buf.buf[1 * offset_al], SHAKE256_RATE);
-    ctr2 += rej_eta(a2->coeffs + ctr2, GCRY_MLDSA_N - ctr2, &buf.buf[2 * offset_al], SHAKE256_RATE);
-    ctr3 += rej_eta(a3->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], SHAKE256_RATE);
+    if(params->eta == 2)
+    {
+    ctr0 += rej_eta2(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], SHAKE256_RATE);
+    ctr1 += rej_eta2(a1->coeffs + ctr1, GCRY_MLDSA_N - ctr1, &buf.buf[1 * offset_al], SHAKE256_RATE);
+    ctr2 += rej_eta2(a2->coeffs + ctr2, GCRY_MLDSA_N - ctr2, &buf.buf[2 * offset_al], SHAKE256_RATE);
+    ctr3 += rej_eta2(a3->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], SHAKE256_RATE);
+    }
+    else {
+    ctr0 += rej_eta4(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], SHAKE256_RATE);
+    ctr1 += rej_eta4(a1->coeffs + ctr1, GCRY_MLDSA_N - ctr1, &buf.buf[1 * offset_al], SHAKE256_RATE);
+    ctr2 += rej_eta4(a2->coeffs + ctr2, GCRY_MLDSA_N - ctr2, &buf.buf[2 * offset_al], SHAKE256_RATE);
+    ctr3 += rej_eta4(a3->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], SHAKE256_RATE);
+    }
   }
 
   _gcry_mldsa_buf_al_destroy(&buf);
@@ -612,32 +633,35 @@ void poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly * restrict c, co
 *                            POLYETA_PACKEDBYTES bytes
 *              - const gcry_mldsa_poly *a: pointer to input polynomial
 **************************************************/
-void polyeta_pack(byte *r, const gcry_mldsa_poly * restrict a) {
+void polyeta_pack(gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly * restrict a) {
   unsigned int i;
   byte t[8];
 
-#if ETA == 2
+  if(params->eta == 2)
+  {
   for(i = 0; i < GCRY_MLDSA_N/8; ++i) {
-    t[0] = ETA - a->coeffs[8*i+0];
-    t[1] = ETA - a->coeffs[8*i+1];
-    t[2] = ETA - a->coeffs[8*i+2];
-    t[3] = ETA - a->coeffs[8*i+3];
-    t[4] = ETA - a->coeffs[8*i+4];
-    t[5] = ETA - a->coeffs[8*i+5];
-    t[6] = ETA - a->coeffs[8*i+6];
-    t[7] = ETA - a->coeffs[8*i+7];
+    t[0] = params->eta - a->coeffs[8*i+0];
+    t[1] = params->eta - a->coeffs[8*i+1];
+    t[2] = params->eta - a->coeffs[8*i+2];
+    t[3] = params->eta - a->coeffs[8*i+3];
+    t[4] = params->eta - a->coeffs[8*i+4];
+    t[5] = params->eta - a->coeffs[8*i+5];
+    t[6] = params->eta - a->coeffs[8*i+6];
+    t[7] = params->eta - a->coeffs[8*i+7];
 
     r[3*i+0]  = (t[0] >> 0) | (t[1] << 3) | (t[2] << 6);
     r[3*i+1]  = (t[2] >> 2) | (t[3] << 1) | (t[4] << 4) | (t[5] << 7);
     r[3*i+2]  = (t[5] >> 1) | (t[6] << 2) | (t[7] << 5);
   }
-#elif ETA == 4
-  for(i = 0; i < GCRY_MLDSA_N/2; ++i) {
-    t[0] = ETA - a->coeffs[2*i+0];
-    t[1] = ETA - a->coeffs[2*i+1];
+  }
+else {
+
+ for(i = 0; i < GCRY_MLDSA_N/2; ++i) {
+    t[0] = params->eta - a->coeffs[2*i+0];
+    t[1] = params->eta - a->coeffs[2*i+1];
     r[i] = t[0] | (t[1] << 4);
   }
-#endif
+}
 }
 
 /*************************************************
@@ -648,10 +672,11 @@ void polyeta_pack(byte *r, const gcry_mldsa_poly * restrict a) {
 * Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
 *              - const byte *a: byte array with bit-packed polynomial
 **************************************************/
-void polyeta_unpack(gcry_mldsa_poly * restrict r, const byte *a) {
+void polyeta_unpack(gcry_mldsa_param_t *params, gcry_mldsa_poly * restrict r, const byte *a) {
   unsigned int i;
 
-#if ETA == 2
+  if(params->eta == 2)
+  {
   for(i = 0; i < GCRY_MLDSA_N/8; ++i) {
     r->coeffs[8*i+0] =  (a[3*i+0] >> 0) & 7;
     r->coeffs[8*i+1] =  (a[3*i+0] >> 3) & 7;
@@ -662,23 +687,24 @@ void polyeta_unpack(gcry_mldsa_poly * restrict r, const byte *a) {
     r->coeffs[8*i+6] =  (a[3*i+2] >> 2) & 7;
     r->coeffs[8*i+7] =  (a[3*i+2] >> 5) & 7;
 
-    r->coeffs[8*i+0] = ETA - r->coeffs[8*i+0];
-    r->coeffs[8*i+1] = ETA - r->coeffs[8*i+1];
-    r->coeffs[8*i+2] = ETA - r->coeffs[8*i+2];
-    r->coeffs[8*i+3] = ETA - r->coeffs[8*i+3];
-    r->coeffs[8*i+4] = ETA - r->coeffs[8*i+4];
-    r->coeffs[8*i+5] = ETA - r->coeffs[8*i+5];
-    r->coeffs[8*i+6] = ETA - r->coeffs[8*i+6];
-    r->coeffs[8*i+7] = ETA - r->coeffs[8*i+7];
+    r->coeffs[8*i+0] = params->eta - r->coeffs[8*i+0];
+    r->coeffs[8*i+1] = params->eta - r->coeffs[8*i+1];
+    r->coeffs[8*i+2] = params->eta - r->coeffs[8*i+2];
+    r->coeffs[8*i+3] = params->eta - r->coeffs[8*i+3];
+    r->coeffs[8*i+4] = params->eta - r->coeffs[8*i+4];
+    r->coeffs[8*i+5] = params->eta - r->coeffs[8*i+5];
+    r->coeffs[8*i+6] = params->eta - r->coeffs[8*i+6];
+    r->coeffs[8*i+7] = params->eta - r->coeffs[8*i+7];
   }
-#elif ETA == 4
+  }
+  else {
   for(i = 0; i < GCRY_MLDSA_N/2; ++i) {
     r->coeffs[2*i+0] = a[i] & 0x0F;
     r->coeffs[2*i+1] = a[i] >> 4;
-    r->coeffs[2*i+0] = ETA - r->coeffs[2*i+0];
-    r->coeffs[2*i+1] = ETA - r->coeffs[2*i+1];
+    r->coeffs[2*i+0] = params->eta - r->coeffs[2*i+0];
+    r->coeffs[2*i+1] = params->eta - r->coeffs[2*i+1];
   }
-#endif
+}
 }
 
 /*************************************************

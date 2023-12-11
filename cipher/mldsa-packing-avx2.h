@@ -2,7 +2,7 @@
 #define PACKING_H
 
 #include <stdint.h>
-#include "mldsa-params-avx2.h"
+#include "mldsa-params.h"
 #include "mldsa-polyvec-avx2.h"
 
 

@@ -2,7 +2,7 @@
 #define POLYVEC_H
 
 #include <stdint.h>
-#include "mldsa-params-avx2.h"
+#include "mldsa-params.h"
 #include "mldsa-poly-avx2.h"
 
 /* Vectors of polynomials of length L */
@@ -10,7 +10,7 @@
 
 void polyvecl_ntt(gcry_mldsa_param_t *params, byte *v);
 
-void polyvecl_pointwise_acc_montgomery(gcry_mldsa_poly *w,
+void polyvecl_pointwise_acc_montgomery(gcry_mldsa_param_t *params, gcry_mldsa_poly *w,
                                        const byte *u,
                                        const byte *v);
 

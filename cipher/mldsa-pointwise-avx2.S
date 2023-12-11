@@ -1,6 +1,4 @@
-#include "config.h"
 #include "mldsa-consts-avx2.h"
-#define L 4 // TODO remove
 
 .text
 .global cdecl(pointwise_avx)
@@ -135,14 +133,14 @@ vpaddq		%ymm8,%ymm4,%ymm4
 vpaddq		%ymm9,%ymm5,%ymm5
 .endm
 
-.global cdecl(pointwise_acc_avx)
-cdecl(pointwise_acc_avx):
+.global cdecl(pointwise_acc_avx_L4)
+cdecl(pointwise_acc_avx_L4):
 #consts
 vmovdqa		_8XQINV*4(%rcx),%ymm0
 vmovdqa		_8XQ*4(%rcx),%ymm1
 
 xor		%eax,%eax
-_looptop2:
+_looptop2_L4:
 pointwise	0
 
 #mov
@@ -154,30 +152,11 @@ vmovdqa		%ymm9,%ymm5
 pointwise	1024
 acc
 
-#if L >= 3
 pointwise	2048
 acc
-#endif
 
-#if L >= 4
 pointwise	3072
 acc
-#endif
-
-#if L >= 5
-pointwise	4096
-acc
-#endif
-
-#if L >= 6
-pointwise	5120
-acc
-#endif
-
-#if L >= 7
-pointwise	6144
-acc
-#endif
 
 #reduce
 vpmuldq		%ymm0,%ymm2,%ymm6
@@ -207,6 +186,132 @@ add		$64,%rdx
 add		$64,%rdi
 add		$1,%eax
 cmp		$16,%eax
-jb _looptop2
+jb _looptop2_L4
+
+ret
+
+.global cdecl(pointwise_acc_avx_L5)
+cdecl(pointwise_acc_avx_L5):
+#consts
+vmovdqa		_8XQINV*4(%rcx),%ymm0
+vmovdqa		_8XQ*4(%rcx),%ymm1
+
+xor		%eax,%eax
+_looptop2_L5:
+pointwise	0
+
+#mov
+vmovdqa		%ymm6,%ymm2
+vmovdqa		%ymm7,%ymm3
+vmovdqa		%ymm8,%ymm4
+vmovdqa		%ymm9,%ymm5
+
+pointwise	1024
+acc
+
+pointwise	2048
+acc
+
+pointwise	3072
+acc
+
+pointwise	4096
+acc
+
+#reduce
+vpmuldq		%ymm0,%ymm2,%ymm6
+vpmuldq		%ymm0,%ymm3,%ymm7
+vpmuldq		%ymm0,%ymm4,%ymm8
+vpmuldq		%ymm0,%ymm5,%ymm9
+vpmuldq		%ymm1,%ymm6,%ymm6
+vpmuldq		%ymm1,%ymm7,%ymm7
+vpmuldq		%ymm1,%ymm8,%ymm8
+vpmuldq		%ymm1,%ymm9,%ymm9
+vpsubq		%ymm6,%ymm2,%ymm2
+vpsubq		%ymm7,%ymm3,%ymm3
+vpsubq		%ymm8,%ymm4,%ymm4
+vpsubq		%ymm9,%ymm5,%ymm5
+vpsrlq		$32,%ymm2,%ymm2
+vmovshdup	%ymm4,%ymm4
+
+#store
+vpblendd	$0xAA,%ymm3,%ymm2,%ymm2
+vpblendd	$0xAA,%ymm5,%ymm4,%ymm4
+
+vmovdqa		%ymm2,(%rdi)
+vmovdqa		%ymm4,32(%rdi)
+
+add		$64,%rsi
+add		$64,%rdx
+add		$64,%rdi
+add		$1,%eax
+cmp		$16,%eax
+jb _looptop2_L5
+
+ret
+
+.global cdecl(pointwise_acc_avx_L7)
+cdecl(pointwise_acc_avx_L7):
+#consts
+vmovdqa		_8XQINV*4(%rcx),%ymm0
+vmovdqa		_8XQ*4(%rcx),%ymm1
+
+xor		%eax,%eax
+_looptop2_L7:
+pointwise	0
+
+#mov
+vmovdqa		%ymm6,%ymm2
+vmovdqa		%ymm7,%ymm3
+vmovdqa		%ymm8,%ymm4
+vmovdqa		%ymm9,%ymm5
+
+pointwise	1024
+acc
+
+pointwise	2048
+acc
+
+pointwise	3072
+acc
+
+pointwise	4096
+acc
+
+pointwise	5120
+acc
+
+pointwise	6144
+acc
+
+#reduce
+vpmuldq		%ymm0,%ymm2,%ymm6
+vpmuldq		%ymm0,%ymm3,%ymm7
+vpmuldq		%ymm0,%ymm4,%ymm8
+vpmuldq		%ymm0,%ymm5,%ymm9
+vpmuldq		%ymm1,%ymm6,%ymm6
+vpmuldq		%ymm1,%ymm7,%ymm7
+vpmuldq		%ymm1,%ymm8,%ymm8
+vpmuldq		%ymm1,%ymm9,%ymm9
+vpsubq		%ymm6,%ymm2,%ymm2
+vpsubq		%ymm7,%ymm3,%ymm3
+vpsubq		%ymm8,%ymm4,%ymm4
+vpsubq		%ymm9,%ymm5,%ymm5
+vpsrlq		$32,%ymm2,%ymm2
+vmovshdup	%ymm4,%ymm4
+
+#store
+vpblendd	$0xAA,%ymm3,%ymm2,%ymm2
+vpblendd	$0xAA,%ymm5,%ymm4,%ymm4
+
+vmovdqa		%ymm2,(%rdi)
+vmovdqa		%ymm4,32(%rdi)
+
+add		$64,%rsi
+add		$64,%rdx
+add		$64,%rdi
+add		$1,%eax
+cmp		$16,%eax
+jb _looptop2_L7
 
 ret

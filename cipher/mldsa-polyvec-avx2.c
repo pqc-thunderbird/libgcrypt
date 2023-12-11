@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include "config.h"
-#include "mldsa-params-avx2.h"
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-polyvec.h"
 #include "mldsa-poly-avx2.h"
@@ -445,9 +444,19 @@ void polyvecl_ntt(gcry_mldsa_param_t *params, byte *v)
  *              - const polyvecl *u: pointer to first input vector
  *              - const polyvecl *v: pointer to second input vector
  **************************************************/
-void polyvecl_pointwise_acc_montgomery(gcry_mldsa_poly *w, const byte *u, const byte *v)
+void polyvecl_pointwise_acc_montgomery(gcry_mldsa_param_t *params, gcry_mldsa_poly *w, const byte *u, const byte *v)
 {
-  pointwise_acc_avx(w->vec, u, v, qdata.vec);
+  if(params->l == 4)
+    {
+      pointwise_acc_avx_L4(w->vec, u, v, qdata.vec);
+    }
+    else if (params->l == 5)
+    {
+      pointwise_acc_avx_L5(w->vec, u, v, qdata.vec);
+    }
+    else {
+      pointwise_acc_avx_L7(w->vec, u, v, qdata.vec);
+    }
 }
 
 

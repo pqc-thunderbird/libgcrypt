@@ -1,5 +1,4 @@
 #include "config.h"
-#include "mldsa-params-avx2.h"
 #include "mldsa-packing-avx2.h"
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-poly-avx2.h"
@@ -40,11 +39,11 @@ void unpack_sk(gcry_mldsa_param_t *params, byte rho[GCRY_MLDSA_SEEDBYTES],
   sk += GCRY_MLDSA_TRBYTES;
 
   for(i=0; i < params->l; ++i)
-    polyeta_unpack(&s1[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
+    polyeta_unpack(params, &s1[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
   sk += params->l*params->polyeta_packedbytes;
 
   for(i=0; i < params->k; ++i)
-    polyeta_unpack(&s2[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
+    polyeta_unpack(params, &s2[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
   sk += params->k*params->polyeta_packedbytes;
 
   for(i=0; i < params->k; ++i)

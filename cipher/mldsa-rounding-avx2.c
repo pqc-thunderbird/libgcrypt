@@ -2,7 +2,6 @@
 #include <immintrin.h>
 #include <string.h>
 #include "config.h"
-#include "mldsa-params-avx2.h"
 #include "mldsa-rounding-avx2.h"
 #include "mldsa-rejsample-avx2.h"
 #include "mldsa-consts-avx2.h"

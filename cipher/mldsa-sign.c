@@ -6,6 +6,7 @@
 #include "mldsa-polyvec.h"
 #include "mldsa-poly.h"
 #include "mldsa-symmetric.h"
+#include "mldsa-api-avx2.h"
 #include "g10lib.h"
 
 /*************************************************
@@ -20,8 +21,7 @@
  *
  * Returns 0 (success)
  **************************************************/
-#include "mldsa-api-avx2.h"
-#include "mldsa-params-avx2.h"
+
 gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk)
 {
   gcry_err_code_t ec = 0;

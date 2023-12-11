@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "config.h"
-#include "mldsa-params-avx2.h"
+#include "mldsa-params.h"
 #include "mldsa-symmetric-avx2.h"
 #include "mldsa-fips202-avx2.h"
 

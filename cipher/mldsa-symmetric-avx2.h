@@ -2,7 +2,7 @@
 #define SYMMETRIC_H
 
 #include <stdint.h>
-#include "mldsa-params-avx2.h"
+#include "mldsa-params.h"
 
 #include "mldsa-fips202-avx2.h"
 

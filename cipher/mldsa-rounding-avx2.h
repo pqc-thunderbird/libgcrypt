@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <immintrin.h>
 #include "config.h"
-#include "mldsa-params-avx2.h"
 #include "mldsa-params.h"
 #include "types.h"
 

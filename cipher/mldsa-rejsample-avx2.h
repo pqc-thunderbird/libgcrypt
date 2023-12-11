@@ -2,7 +2,6 @@
 #define REJSAMPLE_H
 
 #include <stdint.h>
-#include "mldsa-params-avx2.h"
 #include "mldsa-symmetric-avx2.h"
 
 extern const byte idxlut[256][8];

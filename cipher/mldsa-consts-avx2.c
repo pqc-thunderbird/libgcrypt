@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "config.h"
-#include "mldsa-params-avx2.h"
+#include "mldsa-params.h"
 #include "mldsa-consts-avx2.h"
 
 #define QINV 58728449 // q^(-1) mod 2^32
