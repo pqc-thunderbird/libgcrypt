@@ -411,7 +411,7 @@ void polyvec_matrix_pointwise_montgomery(gcry_mldsa_param_t *params, byte *t, co
   const size_t rowsize = polysize * params->k;
 
   for (i = 0; i < params->k; ++i)
-    polyvecl_pointwise_acc_montgomery(&t[i * polysize], &mat[i * rowsize], v);
+    polyvecl_pointwise_acc_montgomery(params, (gcry_mldsa_poly*)&t[i * polysize], &mat[i * rowsize], v);
 }
 
 
@@ -428,7 +428,7 @@ void polyvecl_ntt(gcry_mldsa_param_t *params, byte *v)
   unsigned int i;
 
   for (i = 0; i < params->l; ++i)
-    poly_ntt(&v[i * sizeof(gcry_mldsa_poly)]);
+    poly_ntt((gcry_mldsa_poly*)&v[i * sizeof(gcry_mldsa_poly)]);
 }
 
 
@@ -448,14 +448,14 @@ void polyvecl_pointwise_acc_montgomery(gcry_mldsa_param_t *params, gcry_mldsa_po
 {
   if(params->l == 4)
     {
-      pointwise_acc_avx_L4(w->vec, u, v, qdata.vec);
+      pointwise_acc_avx_L4(w->vec, (__m256i*)u, (__m256i*)v, qdata.vec);
     }
     else if (params->l == 5)
     {
-      pointwise_acc_avx_L5(w->vec, u, v, qdata.vec);
+      pointwise_acc_avx_L5(w->vec, (__m256i*)u, (__m256i*)v, qdata.vec);
     }
     else {
-      pointwise_acc_avx_L7(w->vec, u, v, qdata.vec);
+      pointwise_acc_avx_L7(w->vec, (__m256i*)u, (__m256i*)v, qdata.vec);
     }
 }
 
@@ -475,7 +475,7 @@ void polyveck_caddq(gcry_mldsa_param_t *params, byte *v)
   unsigned int i;
 
   for (i = 0; i < params->k; ++i)
-    poly_caddq(&v[i * sizeof(gcry_mldsa_poly)]);
+    poly_caddq((gcry_mldsa_poly*)&v[i * sizeof(gcry_mldsa_poly)]);
 }
 
 
@@ -492,7 +492,7 @@ void polyveck_ntt(gcry_mldsa_param_t *params, byte *v)
   unsigned int i;
 
   for (i = 0; i < params->k; ++i)
-    poly_ntt(&v[i * sizeof(gcry_mldsa_poly)]);
+    poly_ntt((gcry_mldsa_poly*)&v[i * sizeof(gcry_mldsa_poly)]);
 }
 
 /*************************************************
@@ -509,7 +509,7 @@ void polyveck_invntt_tomont(gcry_mldsa_param_t *params, byte *v)
   unsigned int i;
 
   for (i = 0; i < params->k; ++i)
-    poly_invntt_tomont(&v[i * sizeof(gcry_mldsa_poly)]);
+    poly_invntt_tomont((gcry_mldsa_poly*)&v[i * sizeof(gcry_mldsa_poly)]);
 }
 
 
@@ -534,7 +534,7 @@ void polyveck_decompose(gcry_mldsa_param_t *params, byte *v1, byte *v0, const by
   const size_t polysize = sizeof(gcry_mldsa_poly);
 
   for (i = 0; i < params->k; ++i)
-    poly_decompose(params, &v1[i * polysize], &v0[i * polysize], &v[i * polysize]);
+    poly_decompose(params, (gcry_mldsa_poly*)&v1[i * polysize], (gcry_mldsa_poly*)&v0[i * polysize], (gcry_mldsa_poly*)&v[i * polysize]);
 }
 
 
@@ -543,5 +543,5 @@ void polyveck_pack_w1(gcry_mldsa_param_t *params, byte *r, const byte *w1)
   unsigned int i;
 
   for (i = 0; i < params->k; ++i)
-    polyw1_pack(params, &r[i * params->polyw1_packedbytes], &w1[i * sizeof(gcry_mldsa_poly)]);
+    polyw1_pack(params, &r[i * params->polyw1_packedbytes], (gcry_mldsa_poly*)&w1[i * sizeof(gcry_mldsa_poly)]);
 }

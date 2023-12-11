@@ -4,6 +4,7 @@
 #include "config.h"
 #include "mldsa-align-avx2.h"
 #include "mldsa-poly-avx2.h"
+#include "mldsa-polyvec-avx2.h"
 #include "mldsa-ntt-avx2.h"
 #include "mldsa-rounding-avx2.h"
 #include "mldsa-rejsample-avx2.h"
@@ -159,9 +160,9 @@ void poly_invntt_tomont(gcry_mldsa_poly *a) {
   invntt_avx(a->vec, qdata.vec);
 }
 
-void poly_nttunpack(gcry_mldsa_poly *a) {
+void poly_nttunpack(byte *a) {
 
-  nttunpack_avx(a->vec);
+  nttunpack_avx(((gcry_mldsa_poly*)a)->vec);
 }
 
 /*************************************************
@@ -317,10 +318,10 @@ static unsigned int rej_uniform(int32_t *a,
   return ctr;
 }
 
-void poly_uniform_4x(gcry_mldsa_poly *a0,
-                     gcry_mldsa_poly *a1,
-                     gcry_mldsa_poly *a2,
-                     gcry_mldsa_poly *a3,
+void poly_uniform_4x(byte *a0,
+                     byte *a1,
+                     byte *a2,
+                     byte *a3,
                      const byte seed[32],
                      uint16_t nonce0,
                      uint16_t nonce1,
@@ -350,18 +351,18 @@ void poly_uniform_4x(gcry_mldsa_poly *a0,
   shake128x4_absorb_once(&state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, GCRY_MLDSA_SEEDBYTES + 2);
   shake128x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, REJ_UNIFORM_NBLOCKS, &state);
 
-  ctr0 = rej_uniform_avx(a0->coeffs, buf[0].coeffs);
-  ctr1 = rej_uniform_avx(a1->coeffs, buf[1].coeffs);
-  ctr2 = rej_uniform_avx(a2->coeffs, buf[2].coeffs);
-  ctr3 = rej_uniform_avx(a3->coeffs, buf[3].coeffs);
+  ctr0 = rej_uniform_avx(((gcry_mldsa_poly*)a0)->coeffs, buf[0].coeffs);
+  ctr1 = rej_uniform_avx(((gcry_mldsa_poly*)a1)->coeffs, buf[1].coeffs);
+  ctr2 = rej_uniform_avx(((gcry_mldsa_poly*)a2)->coeffs, buf[2].coeffs);
+  ctr3 = rej_uniform_avx(((gcry_mldsa_poly*)a3)->coeffs, buf[3].coeffs);
 
   while(ctr0 < GCRY_MLDSA_N || ctr1 < GCRY_MLDSA_N || ctr2 < GCRY_MLDSA_N || ctr3 < GCRY_MLDSA_N) {
     shake128x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 1, &state);
 
-    ctr0 += rej_uniform(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
-    ctr1 += rej_uniform(a1->coeffs + ctr1, GCRY_MLDSA_N - ctr1, buf[1].coeffs, SHAKE128_RATE);
-    ctr2 += rej_uniform(a2->coeffs + ctr2, GCRY_MLDSA_N - ctr2, buf[2].coeffs, SHAKE128_RATE);
-    ctr3 += rej_uniform(a3->coeffs + ctr3, GCRY_MLDSA_N - ctr3, buf[3].coeffs, SHAKE128_RATE);
+    ctr0 += rej_uniform(((gcry_mldsa_poly*)a0)->coeffs + ctr0, GCRY_MLDSA_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
+    ctr1 += rej_uniform(((gcry_mldsa_poly*)a1)->coeffs + ctr1, GCRY_MLDSA_N - ctr1, buf[1].coeffs, SHAKE128_RATE);
+    ctr2 += rej_uniform(((gcry_mldsa_poly*)a2)->coeffs + ctr2, GCRY_MLDSA_N - ctr2, buf[2].coeffs, SHAKE128_RATE);
+    ctr3 += rej_uniform(((gcry_mldsa_poly*)a3)->coeffs + ctr3, GCRY_MLDSA_N - ctr3, buf[3].coeffs, SHAKE128_RATE);
   }
 }
 
@@ -435,8 +436,13 @@ void poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
                          uint16_t nonce3)
 {
   unsigned int ctr0, ctr1, ctr2, ctr3;
-
+  size_t REJ_UNIFORM_ETA_BUFLEN;
+  size_t offset_al;
   size_t REJ_UNIFORM_ETA_NBLOCKS;
+  gcry_mldsa_buf_al buf = {};
+  __m256i f;
+  keccakx4_state state;
+
   if(params->eta == 2)
   {
     REJ_UNIFORM_ETA_NBLOCKS = (136+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
@@ -445,15 +451,12 @@ void poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
     REJ_UNIFORM_ETA_NBLOCKS = (227+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
   }
 
-  const size_t REJ_UNIFORM_ETA_BUFLEN = REJ_UNIFORM_ETA_NBLOCKS*STREAM256_BLOCKBYTES;
-  gcry_mldsa_buf_al buf = {};
+  REJ_UNIFORM_ETA_BUFLEN = REJ_UNIFORM_ETA_NBLOCKS*STREAM256_BLOCKBYTES;
 
   /* make sure each sub structure starts memory aligned */
-  const size_t offset_al = REJ_UNIFORM_ETA_BUFLEN + (128 - (REJ_UNIFORM_ETA_BUFLEN % 128));
+  offset_al = REJ_UNIFORM_ETA_BUFLEN + (128 - (REJ_UNIFORM_ETA_BUFLEN % 128));
   _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
 
-  __m256i f;
-  keccakx4_state state;
 
   f = _mm256_loadu_si256((__m256i *)&seed[0]);
   _mm256_store_si256((__m256i *)&buf.buf[0 * offset_al + 0 * sizeof(__m256i)],f);
@@ -539,10 +542,10 @@ void poly_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_poly *a, const b
   poly_uniform_gamma1_preinit(params, a, &state);
 }
 
-void poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
-                            gcry_mldsa_poly *a1,
-                            gcry_mldsa_poly *a2,
-                            gcry_mldsa_poly *a3,
+void poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a0,
+                            byte *a1,
+                            byte *a2,
+                            byte *a3,
                             const byte seed[64],
                             uint16_t nonce0,
                             uint16_t nonce1,
@@ -577,10 +580,10 @@ void poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
   shake256x4_absorb_once(&state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 66);
   shake256x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, POLY_UNIFORM_GAMMA1_NBLOCKS, &state);
 
-  polyz_unpack(params, a0, buf[0].coeffs);
-  polyz_unpack(params, a1, buf[1].coeffs);
-  polyz_unpack(params, a2, buf[2].coeffs);
-  polyz_unpack(params, a3, buf[3].coeffs);
+  polyz_unpack(params, (gcry_mldsa_poly*)a0, buf[0].coeffs);
+  polyz_unpack(params, (gcry_mldsa_poly*)a1, buf[1].coeffs);
+  polyz_unpack(params, (gcry_mldsa_poly*)a2, buf[2].coeffs);
+  polyz_unpack(params, (gcry_mldsa_poly*)a3, buf[3].coeffs);
 }
 
 /*************************************************

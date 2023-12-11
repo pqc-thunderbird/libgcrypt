@@ -120,21 +120,21 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, byte *pk, b
   memcpy(sk + GCRY_MLDSA_SEEDBYTES, key, GCRY_MLDSA_SEEDBYTES);
 
   /* Sample short vectors s1 and s2 */
-  poly_uniform_eta_4x(params, &s1.buf[0 * polysize], &s1.buf[1 * polysize], &s1.buf[2 * polysize], &s1.buf[3 * polysize], rhoprime, 0, 1, 2, 3);
+  poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s1.buf[0 * polysize], (gcry_mldsa_poly*)&s1.buf[1 * polysize], (gcry_mldsa_poly*)&s1.buf[2 * polysize], (gcry_mldsa_poly*)&s1.buf[3 * polysize], rhoprime, 0, 1, 2, 3);
   if(params->k == 4 && params->l == 4)
   {
-    poly_uniform_eta_4x(params, &s2.buf[0 * polysize], &s2.buf[1 * polysize], &s2.buf[2 * polysize], &s2.buf[3 * polysize], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[0 * polysize], (gcry_mldsa_poly*)&s2.buf[1 * polysize], (gcry_mldsa_poly*)&s2.buf[2 * polysize], (gcry_mldsa_poly*)&s2.buf[3 * polysize], rhoprime, 4, 5, 6, 7);
   }
   else if (params->k == 6 && params->l == 5)
   {
-    poly_uniform_eta_4x(params, &s1.buf[4 * polysize], &s2.buf[0 * polysize], &s2.buf[1 * polysize], &s2.buf[2 * polysize], rhoprime, 4, 5, 6, 7);
-    poly_uniform_eta_4x(params, &s2.buf[3 * polysize], &s2.buf[4 * polysize], &s2.buf[5 * polysize], t0.buf, rhoprime, 8, 9, 10, 11);
+    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s1.buf[4 * polysize], (gcry_mldsa_poly*)&s2.buf[0 * polysize], (gcry_mldsa_poly*)&s2.buf[1 * polysize], (gcry_mldsa_poly*)&s2.buf[2 * polysize], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[3 * polysize], (gcry_mldsa_poly*)&s2.buf[4 * polysize], (gcry_mldsa_poly*)&s2.buf[5 * polysize], t0.buf, rhoprime, 8, 9, 10, 11);
   }
   else if (params->k == 8 && params->l == 7)
   {
-    poly_uniform_eta_4x(params, &s1.buf[4 * polysize], &s1.buf[5 * polysize], &s1.buf[6 * polysize], &s2.buf[0 * polysize], rhoprime, 4, 5, 6, 7);
-    poly_uniform_eta_4x(params, &s2.buf[1 * polysize], &s2.buf[2 * polysize], &s2.buf[3 * polysize], &s2.buf[4 * polysize], rhoprime, 8, 9, 10, 11);
-    poly_uniform_eta_4x(params, &s2.buf[5 * polysize], &s2.buf[6 * polysize], &s2.buf[7 * polysize], t0.buf, rhoprime, 12, 13, 14, 15);
+    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s1.buf[4 * polysize], (gcry_mldsa_poly*)&s1.buf[5 * polysize], (gcry_mldsa_poly*)&s1.buf[6 * polysize], (gcry_mldsa_poly*)&s2.buf[0 * polysize], rhoprime, 4, 5, 6, 7);
+    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[1 * polysize], (gcry_mldsa_poly*)&s2.buf[2 * polysize], (gcry_mldsa_poly*)&s2.buf[3 * polysize], (gcry_mldsa_poly*)&s2.buf[4 * polysize], rhoprime, 8, 9, 10, 11);
+    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[5 * polysize], (gcry_mldsa_poly*)&s2.buf[6 * polysize], (gcry_mldsa_poly*)&s2.buf[7 * polysize], t0.buf, rhoprime, 12, 13, 14, 15);
   }
   else {
     ec = GPG_ERR_INV_STATE;
@@ -142,9 +142,9 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, byte *pk, b
   }
   /* Pack secret vectors */
   for(i = 0; i < params->l; i++)
-    polyeta_pack(params, sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + i*params->polyeta_packedbytes, &s1.buf[i * polysize]);
+    polyeta_pack(params, sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + i*params->polyeta_packedbytes, (gcry_mldsa_poly*)&s1.buf[i * polysize]);
   for(i = 0; i < params->k; i++)
-    polyeta_pack(params, sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l + i)*params->polyeta_packedbytes, &s2.buf[i * polysize]);
+    polyeta_pack(params, sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l + i)*params->polyeta_packedbytes, (gcry_mldsa_poly*)&s2.buf[i * polysize]);
 
   /* Transform s1 */
   polyvecl_ntt(params, s1.buf);
@@ -155,10 +155,10 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, byte *pk, b
 
     /* Compute inner-product */
     polyvecl_pointwise_acc_montgomery(params, t1.buf, row, s1.buf);
-    poly_invntt_tomont(t1.buf);
+    poly_invntt_tomont((gcry_mldsa_poly*)t1.buf);
 
     /* Add error polynomial */
-    poly_add(t1.buf, t1.buf, &s2.buf[i * polysize]);
+    poly_add((gcry_mldsa_poly*)t1.buf, (gcry_mldsa_poly*)t1.buf, (gcry_mldsa_poly*)&s2.buf[i * polysize]);
 
     /* Round t and pack t1, t0 */
     poly_caddq(t1.buf);
@@ -278,7 +278,7 @@ else if (params->l == 5)
 {
   poly_uniform_gamma1_4x(params, &z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
                          rhoprime, nonce, nonce + 1, nonce + 2, nonce + 3);
-  poly_uniform_gamma1(params, &z.buf[4 * polysize], rhoprime, nonce + 4);
+  poly_uniform_gamma1(params, (gcry_mldsa_poly*)&z.buf[4 * polysize], rhoprime, nonce + 4);
   nonce += 5;
  } else if(params->l == 7)
  {
@@ -318,11 +318,11 @@ else {
 
   /* Compute z, reject if it reveals secret */
   for(i = 0; i < params->l; i++) {
-    poly_pointwise_montgomery(&tmp, &c, &s1.buf[i * polysize]);
+    poly_pointwise_montgomery(&tmp, &c, (gcry_mldsa_poly*)&s1.buf[i * polysize]);
     poly_invntt_tomont(&tmp);
-    poly_add(&z.buf[i * polysize], &z.buf[i * polysize], &tmp);
-    poly_reduce(&z.buf[i * polysize]);
-    if(poly_chknorm(&z.buf[i * polysize], params->gamma1 - params->beta))
+    poly_add((gcry_mldsa_poly*)&z.buf[i * polysize], (gcry_mldsa_poly*)&z.buf[i * polysize], &tmp);
+    poly_reduce((gcry_mldsa_poly*)&z.buf[i * polysize]);
+    if(poly_chknorm((gcry_mldsa_poly*)&z.buf[i * polysize], params->gamma1 - params->beta))
       goto rej;
   }
 
@@ -333,22 +333,22 @@ else {
   for(i = 0; i < params->k; i++) {
     /* Check that subtracting cs2 does not change high bits of w and low bits
      * do not reveal secret information */
-    poly_pointwise_montgomery(&tmp, &c, &s2.buf[i * polysize]);
-    poly_invntt_tomont(&tmp);
-    poly_sub(&tmpv.buf[i * polysize], &tmpv.buf[i * polysize], &tmp);
-    poly_reduce(&tmpv.buf[i * polysize]);
-    if(poly_chknorm(&tmpv.buf[i * polysize], params->gamma2 - params->beta))
+    poly_pointwise_montgomery(&tmp, &c, (gcry_mldsa_poly*)&s2.buf[i * polysize]);
+    poly_invntt_tomont((gcry_mldsa_poly*)&tmp);
+    poly_sub((gcry_mldsa_poly*)&tmpv.buf[i * polysize], (gcry_mldsa_poly*)&tmpv.buf[i * polysize], &tmp);
+    poly_reduce((gcry_mldsa_poly*)&tmpv.buf[i * polysize]);
+    if(poly_chknorm((gcry_mldsa_poly*)&tmpv.buf[i * polysize], params->gamma2 - params->beta))
       goto rej;
 
     /* Compute hints */
-    poly_pointwise_montgomery(&tmp, &c, &t0.buf[i * polysize]);
+    poly_pointwise_montgomery(&tmp, &c, (gcry_mldsa_poly*)&t0.buf[i * polysize]);
     poly_invntt_tomont(&tmp);
     poly_reduce(&tmp);
     if(poly_chknorm(&tmp, params->gamma2))
       goto rej;
 
-    poly_add(&tmpv.buf[i * polysize], &tmpv.buf[i * polysize], &tmp);
-    n = poly_make_hint(params, hintbuf, &tmpv.buf[i * polysize], &w1.buf[i * polysize]);
+    poly_add((gcry_mldsa_poly*)&tmpv.buf[i * polysize], (gcry_mldsa_poly*)&tmpv.buf[i * polysize], &tmp);
+    n = poly_make_hint(params, hintbuf, (gcry_mldsa_poly*)&tmpv.buf[i * polysize], (gcry_mldsa_poly*)&w1.buf[i * polysize]);
     if(pos + n > params->omega)
       goto rej;
 
@@ -359,7 +359,7 @@ else {
 
   /* Pack z into signature */
   for(i = 0; i < params->l; i++)
-    polyz_pack(params, sig + params->ctildebytes + i*params->polyz_packedbytes, &z.buf[i * polysize]);
+    polyz_pack(params, sig + params->ctildebytes + i*params->polyz_packedbytes, (gcry_mldsa_poly*)&z.buf[i * polysize]);
 
   *siglen = params->signature_bytes;
 
@@ -441,13 +441,13 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t sigle
     goto leave;
 
   /* Expand challenge */
-  poly_challenge(params, c.buf, sig);
-  poly_ntt(c.buf);
+  poly_challenge(params, (gcry_mldsa_poly*)c.buf, sig);
+  poly_ntt((gcry_mldsa_poly*)c.buf);
 
   /* Unpack z; shortness follows from unpacking */
   for(i = 0; i < params->l; i++) {
-    polyz_unpack(params, &z.buf[i * polysize], sig + params->ctildebytes + i*params->polyz_packedbytes);
-    poly_ntt(&z.buf[i * polysize]);
+    polyz_unpack(params, (gcry_mldsa_poly*)&z.buf[i * polysize], sig + params->ctildebytes + i*params->polyz_packedbytes);
+    poly_ntt((gcry_mldsa_poly*)&z.buf[i * polysize]);
   }
 
   for(i = 0; i < params->k; i++) {
@@ -455,16 +455,16 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t sigle
     polyvec_matrix_expand_row(params, &row, rowbuf.buf, pk, i);
 
     /* Compute i-th row of Az - c2^Dt1 */
-    polyvecl_pointwise_acc_montgomery(params, w1.buf, row, z.buf);
+    polyvecl_pointwise_acc_montgomery(params, (gcry_mldsa_poly*)w1.buf, row, z.buf);
 
-    polyt1_unpack(h.buf, pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES);
-    poly_shiftl(h.buf);
-    poly_ntt(h.buf);
-    poly_pointwise_montgomery(h.buf, c.buf, h.buf);
+    polyt1_unpack((gcry_mldsa_poly*)h.buf, pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES);
+    poly_shiftl((gcry_mldsa_poly*)h.buf);
+    poly_ntt((gcry_mldsa_poly*)h.buf);
+    poly_pointwise_montgomery((gcry_mldsa_poly*)h.buf, (gcry_mldsa_poly*)c.buf, (gcry_mldsa_poly*)h.buf);
 
-    poly_sub(w1.buf, w1.buf, h.buf);
-    poly_reduce(w1.buf);
-    poly_invntt_tomont(w1.buf);
+    poly_sub((gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)h.buf);
+    poly_reduce((gcry_mldsa_poly*)w1.buf);
+    poly_invntt_tomont((gcry_mldsa_poly*)w1.buf);
 
     /* Get hint polynomial and reconstruct w1 */
     memset(h.buf, 0, polysize);
@@ -485,9 +485,9 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t sigle
     }
     pos = hint[params->omega + i];
 
-    poly_caddq(w1.buf);
-    poly_use_hint(params, w1.buf, w1.buf, h.buf);
-    polyw1_pack(params, buf.buf + i*params->polyw1_packedbytes, w1.buf);
+    poly_caddq((gcry_mldsa_poly*)w1.buf);
+    poly_use_hint(params, (gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)h.buf);
+    polyw1_pack(params, buf.buf + i*params->polyw1_packedbytes, (gcry_mldsa_poly*)w1.buf);
   }
 
   /* Extra indices are zero for strong unforgeability */

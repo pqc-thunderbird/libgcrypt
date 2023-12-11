@@ -277,6 +277,7 @@ unsigned int rej_uniform_avx(int32_t * restrict r, const byte *buf)
                                         -1, 9, 8, 7,-1, 6, 5, 4,
                                         -1,11,10, 9,-1, 8, 7, 6,
                                         -1, 5, 4, 3,-1, 2, 1, 0);
+  uint32_t t;
 
   ctr = pos = 0;
   while(pos <= REJ_UNIFORM_BUFLEN - 24) {
@@ -297,7 +298,6 @@ unsigned int rej_uniform_avx(int32_t * restrict r, const byte *buf)
     if(ctr > GCRY_MLDSA_N - 8) break;
   }
 
-  uint32_t t;
   while(ctr < GCRY_MLDSA_N && pos <= REJ_UNIFORM_BUFLEN - 3) {
     t  = buf[pos++];
     t |= (uint32_t)buf[pos++] << 8;
@@ -323,6 +323,7 @@ unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
   const __m256i bound = mask;
   const __m256i v = _mm256_set1_epi32(-6560);
   const __m256i p = _mm256_set1_epi32(5);
+  uint32_t t0, t1;
 
   ctr = pos = 0;
   while(ctr <= GCRY_MLDSA_N - 8 && pos <= REJ_UNIFORM_ETA_BUFLEN - 16) {
@@ -386,7 +387,6 @@ unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
     pos += 4;
   }
 
-  uint32_t t0, t1;
   while(ctr < GCRY_MLDSA_N && pos < REJ_UNIFORM_ETA_BUFLEN) {
     t0 = buf[pos] & 0x0F;
     t1 = buf[pos++] >> 4;
@@ -414,6 +414,7 @@ unsigned int rej_eta_avx_eta4(int32_t * restrict r, const byte *buf) {
   const __m256i mask = _mm256_set1_epi8(15);
   const __m256i eta = _mm256_set1_epi8(4);
   const __m256i bound = _mm256_set1_epi8(9);
+  uint32_t t0, t1;
 
   ctr = pos = 0;
   while(ctr <= GCRY_MLDSA_N - 8 && pos <= REJ_UNIFORM_ETA_BUFLEN - 16) {
@@ -465,7 +466,6 @@ unsigned int rej_eta_avx_eta4(int32_t * restrict r, const byte *buf) {
     pos += 4;
   }
 
-  uint32_t t0, t1;
   while(ctr < GCRY_MLDSA_N && pos < REJ_UNIFORM_ETA_BUFLEN) {
     t0 = buf[pos] & 0x0F;
     t1 = buf[pos++] >> 4;

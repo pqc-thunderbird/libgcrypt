@@ -12,18 +12,6 @@ typedef struct
   gcry_mldsa_poly *vec;
 } gcry_mldsa_polyvec;
 
-/**
- * represents the avx2 poly / polymat / polyvec types, each is simply an aligned buffer.
-*/
-typedef struct
-{
-  byte *buf;
-  byte *alloc_addr;
-} gcry_mldsa_polybuf_al;
-
-/* aligned buffer type */
-typedef gcry_mldsa_polybuf_al gcry_mldsa_buf_al;
-
 gcry_err_code_t _gcry_mldsa_polymatrix_create(gcry_mldsa_polyvec **polymat,
                                               unsigned char mat_elems,
                                               unsigned char vec_elems);

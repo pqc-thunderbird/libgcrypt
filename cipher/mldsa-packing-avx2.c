@@ -39,13 +39,13 @@ void unpack_sk(gcry_mldsa_param_t *params, byte rho[GCRY_MLDSA_SEEDBYTES],
   sk += GCRY_MLDSA_TRBYTES;
 
   for(i=0; i < params->l; ++i)
-    polyeta_unpack(params, &s1[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
+    polyeta_unpack(params, (gcry_mldsa_poly*)&s1[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
   sk += params->l*params->polyeta_packedbytes;
 
   for(i=0; i < params->k; ++i)
-    polyeta_unpack(params, &s2[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
+    polyeta_unpack(params, (gcry_mldsa_poly*)&s2[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
   sk += params->k*params->polyeta_packedbytes;
 
   for(i=0; i < params->k; ++i)
-    polyt0_unpack(&t0[i * sizeof(gcry_mldsa_poly)], sk + i*GCRY_MLDSA_POLYT0_PACKEDBYTES);
+    polyt0_unpack((gcry_mldsa_poly*)&t0[i * sizeof(gcry_mldsa_poly)], sk + i*GCRY_MLDSA_POLYT0_PACKEDBYTES);
 }

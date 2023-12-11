@@ -5,6 +5,25 @@
 #include "mldsa-params.h"
 #include "mldsa-poly-avx2.h"
 
+/**
+ * represents the avx2 poly / polymat / polyvec types, each is simply an aligned buffer.
+*/
+typedef struct
+{
+  byte *buf;
+  byte *alloc_addr;
+} gcry_mldsa_polybuf_al;
+
+/* aligned buffer type */
+typedef gcry_mldsa_polybuf_al gcry_mldsa_buf_al;
+
+gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf, size_t mat_elems, size_t vec_elems);
+void _gcry_mldsa_polybuf_al_destroy(gcry_mldsa_polybuf_al *polybuf);
+
+gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_mldsa_buf_al *buf, size_t size);
+void _gcry_mldsa_buf_al_destroy(gcry_mldsa_buf_al *buf);
+
+
 /* Vectors of polynomials of length L */
 
 
