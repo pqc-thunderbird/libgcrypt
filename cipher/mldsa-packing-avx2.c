@@ -22,7 +22,7 @@ void unpack_sk(gcry_mldsa_param_t *params, byte rho[GCRY_MLDSA_SEEDBYTES],
                byte *t0,
                byte *s1,
                byte *s2,
-               const byte sk[CRYPTO_SECRETKEYBYTES])
+               const byte *sk)
 {
   unsigned int i;
 

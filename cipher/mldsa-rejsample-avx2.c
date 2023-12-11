@@ -266,13 +266,6 @@ const byte idxlut[256][8] = {
 #define REJ_UNIFORM_NBLOCKS ((768+STREAM128_BLOCKBYTES-1)/STREAM128_BLOCKBYTES)
 #define REJ_UNIFORM_BUFLEN (REJ_UNIFORM_NBLOCKS*STREAM128_BLOCKBYTES)
 
-#if ETA == 2
-#define REJ_UNIFORM_ETA_NBLOCKS ((136+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)
-#elif ETA == 4
-#define REJ_UNIFORM_ETA_NBLOCKS ((227+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)
-#endif
-#define REJ_UNIFORM_ETA_BUFLEN (REJ_UNIFORM_ETA_NBLOCKS*STREAM256_BLOCKBYTES)
-
 unsigned int rej_uniform_avx(int32_t * restrict r, const byte *buf)
 {
   unsigned int ctr, pos;
@@ -319,6 +312,8 @@ unsigned int rej_uniform_avx(int32_t * restrict r, const byte *buf)
 }
 
 unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
+  const size_t REJ_UNIFORM_ETA_BUFLEN  = ((136+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)*STREAM256_BLOCKBYTES;
+
   unsigned int ctr, pos;
   uint32_t good;
   __m256i f0, f1, f2;
@@ -410,6 +405,8 @@ unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
 }
 
 unsigned int rej_eta_avx_eta4(int32_t * restrict r, const byte *buf) {
+  const size_t REJ_UNIFORM_ETA_BUFLEN = ((227+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)*STREAM256_BLOCKBYTES;
+
   unsigned int ctr, pos;
   uint32_t good;
   __m256i f0, f1;

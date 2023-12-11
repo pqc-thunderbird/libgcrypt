@@ -524,7 +524,7 @@ void polyveck_decompose(gcry_mldsa_param_t *params, byte *v1, byte *v0, const by
   const size_t polysize = sizeof(gcry_mldsa_poly);
 
   for (i = 0; i < params->k; ++i)
-    poly_decompose(&v1[i * polysize], &v0[i * polysize], &v[i * polysize]);
+    poly_decompose(params, &v1[i * polysize], &v0[i * polysize], &v[i * polysize]);
 }
 
 
@@ -533,5 +533,5 @@ void polyveck_pack_w1(gcry_mldsa_param_t *params, byte *r, const byte *w1)
   unsigned int i;
 
   for (i = 0; i < params->k; ++i)
-    polyw1_pack(&r[i * params->polyw1_packedbytes], &w1[i * sizeof(gcry_mldsa_poly)]);
+    polyw1_pack(params, &r[i * params->polyw1_packedbytes], &w1[i * sizeof(gcry_mldsa_poly)]);
 }

@@ -271,22 +271,22 @@ rej:
   /* Sample intermediate vector y */
 if(params->l == 4)
 {
-  poly_uniform_gamma1_4x(&z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
+  poly_uniform_gamma1_4x(params, &z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
                          rhoprime, nonce, nonce + 1, nonce + 2, nonce + 3);
   nonce += 4;
 }
 else if (params->l == 5)
 {
-  poly_uniform_gamma1_4x(&z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
+  poly_uniform_gamma1_4x(params, &z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
                          rhoprime, nonce, nonce + 1, nonce + 2, nonce + 3);
-  poly_uniform_gamma1(&z.buf[4 * polysize], rhoprime, nonce + 4);
+  poly_uniform_gamma1(params, &z.buf[4 * polysize], rhoprime, nonce + 4);
   nonce += 5;
  } else if(params->l == 7)
  {
 
-  poly_uniform_gamma1_4x(&z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
+  poly_uniform_gamma1_4x(params, &z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
                          rhoprime, nonce, nonce + 1, nonce + 2, nonce + 3);
-  poly_uniform_gamma1_4x(&z.buf[4 * polysize], &z.buf[5 * polysize], &z.buf[6 * polysize], &tmp,
+  poly_uniform_gamma1_4x(params, &z.buf[4 * polysize], &z.buf[5 * polysize], &z.buf[6 * polysize], &tmp,
                          rhoprime, nonce + 4, nonce + 5, nonce + 6, 0);
   nonce += 7;
 }
@@ -314,7 +314,7 @@ else {
   if (ec)
     goto leave;
   _gcry_md_close(hd);
-  poly_challenge(&c, sig);
+  poly_challenge(params, &c, sig);
   poly_ntt(&c);
 
   /* Compute z, reject if it reveals secret */
@@ -349,7 +349,7 @@ else {
       goto rej;
 
     poly_add(&tmpv.buf[i * polysize], &tmpv.buf[i * polysize], &tmp);
-    n = poly_make_hint(hintbuf, &tmpv.buf[i * polysize], &w1.buf[i * polysize]);
+    n = poly_make_hint(params, hintbuf, &tmpv.buf[i * polysize], &w1.buf[i * polysize]);
     if(pos + n > params->omega)
       goto rej;
 
@@ -360,7 +360,7 @@ else {
 
   /* Pack z into signature */
   for(i = 0; i < params->l; i++)
-    polyz_pack(sig + params->ctildebytes + i*params->polyz_packedbytes, &z.buf[i * polysize]);
+    polyz_pack(params, sig + params->ctildebytes + i*params->polyz_packedbytes, &z.buf[i * polysize]);
 
   *siglen = params->signature_bytes;
 
@@ -442,12 +442,12 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t sigle
     goto leave;
 
   /* Expand challenge */
-  poly_challenge(c.buf, sig);
+  poly_challenge(params, c.buf, sig);
   poly_ntt(c.buf);
 
   /* Unpack z; shortness follows from unpacking */
   for(i = 0; i < params->l; i++) {
-    polyz_unpack(&z.buf[i * polysize], sig + params->ctildebytes + i*params->polyz_packedbytes);
+    polyz_unpack(params, &z.buf[i * polysize], sig + params->ctildebytes + i*params->polyz_packedbytes);
     poly_ntt(&z.buf[i * polysize]);
   }
 
@@ -487,8 +487,8 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t sigle
     pos = hint[params->omega + i];
 
     poly_caddq(w1.buf);
-    poly_use_hint(w1.buf, w1.buf, h.buf);
-    polyw1_pack(buf.buf + i*params->polyw1_packedbytes, w1.buf);
+    poly_use_hint(params, w1.buf, w1.buf, h.buf);
+    polyw1_pack(params, buf.buf + i*params->polyw1_packedbytes, w1.buf);
   }
 
   /* Extra indices are zero for strong unforgeability */

@@ -219,9 +219,9 @@ void poly_power2round(gcry_mldsa_poly *a1, gcry_mldsa_poly *a0, const gcry_mldsa
 *              - gcry_mldsa_poly *a0: pointer to output polynomial with coefficients c0
 *              - const gcry_mldsa_poly *a: pointer to input polynomial
 **************************************************/
-void poly_decompose(gcry_mldsa_poly *a1, gcry_mldsa_poly *a0, const gcry_mldsa_poly *a)
+void poly_decompose(gcry_mldsa_param_t *params, gcry_mldsa_poly *a1, gcry_mldsa_poly *a0, const gcry_mldsa_poly *a)
 {
-  decompose_avx(a1->vec, a0->vec, a->vec);
+  decompose_avx(params, a1->vec, a0->vec, a->vec);
 }
 
 /*************************************************
@@ -237,11 +237,11 @@ void poly_decompose(gcry_mldsa_poly *a1, gcry_mldsa_poly *a0, const gcry_mldsa_p
 *
 * Returns number of hints, i.e. length of hint array.
 **************************************************/
-unsigned int poly_make_hint(byte hint[GCRY_MLDSA_N], const gcry_mldsa_poly *a0, const gcry_mldsa_poly *a1)
+unsigned int poly_make_hint(gcry_mldsa_param_t *params, byte hint[GCRY_MLDSA_N], const gcry_mldsa_poly *a0, const gcry_mldsa_poly *a1)
 {
   unsigned int r;
 
-  r = make_hint_avx(hint, a0->vec, a1->vec);
+  r = make_hint_avx(params, hint, a0->vec, a1->vec);
   return r;
 }
 
@@ -254,9 +254,9 @@ unsigned int poly_make_hint(byte hint[GCRY_MLDSA_N], const gcry_mldsa_poly *a0, 
 *              - const gcry_mldsa_poly *a: pointer to input polynomial
 *              - const gcry_mldsa_poly *h: pointer to input hint polynomial
 **************************************************/
-void poly_use_hint(gcry_mldsa_poly *b, const gcry_mldsa_poly *a, const gcry_mldsa_poly *h)
+void poly_use_hint(gcry_mldsa_param_t *params, gcry_mldsa_poly *b, const gcry_mldsa_poly *a, const gcry_mldsa_poly *h)
 {
-  use_hint_avx(b->vec, a->vec, h->vec);
+  use_hint_avx(params, b->vec, a->vec, h->vec);
 }
 
 /*************************************************
@@ -501,23 +501,23 @@ void poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
 *              - const byte seed[]: byte array with seed of length GCRY_MLDSA_CRHBYTES
 *              - uint16_t nonce: 16-bit nonce
 **************************************************/
-#define POLY_UNIFORM_GAMMA1_NBLOCKS ((POLYZ_PACKEDBYTES+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)
-void poly_uniform_gamma1_preinit(gcry_mldsa_poly *a, stream256_state *state)
+void poly_uniform_gamma1_preinit(gcry_mldsa_param_t *params, gcry_mldsa_poly *a, stream256_state *state)
 {
+  const size_t POLY_UNIFORM_GAMMA1_NBLOCKS = (params->polyz_packedbytes+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
   /* polyz_unpack reads 14 additional bytes */
   ALIGNED_UINT8(POLY_UNIFORM_GAMMA1_NBLOCKS*STREAM256_BLOCKBYTES+14) buf;
   stream256_squeezeblocks(buf.coeffs, POLY_UNIFORM_GAMMA1_NBLOCKS, state);
-  polyz_unpack(a, buf.coeffs);
+  polyz_unpack(params, a, buf.coeffs);
 }
 
-void poly_uniform_gamma1(gcry_mldsa_poly *a, const byte seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
+void poly_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_poly *a, const byte seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
 {
   stream256_state state;
   stream256_init(&state, seed, nonce);
-  poly_uniform_gamma1_preinit(a, &state);
+  poly_uniform_gamma1_preinit(params, a, &state);
 }
 
-void poly_uniform_gamma1_4x(gcry_mldsa_poly *a0,
+void poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
                             gcry_mldsa_poly *a1,
                             gcry_mldsa_poly *a2,
                             gcry_mldsa_poly *a3,
@@ -527,6 +527,7 @@ void poly_uniform_gamma1_4x(gcry_mldsa_poly *a0,
                             uint16_t nonce2,
                             uint16_t nonce3)
 {
+  const size_t POLY_UNIFORM_GAMMA1_NBLOCKS = (params->polyz_packedbytes+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
   ALIGNED_UINT8(POLY_UNIFORM_GAMMA1_NBLOCKS*STREAM256_BLOCKBYTES+14) buf[4];
   keccakx4_state state;
   __m256i f;
@@ -554,10 +555,10 @@ void poly_uniform_gamma1_4x(gcry_mldsa_poly *a0,
   shake256x4_absorb_once(&state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 66);
   shake256x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, POLY_UNIFORM_GAMMA1_NBLOCKS, &state);
 
-  polyz_unpack(a0, buf[0].coeffs);
-  polyz_unpack(a1, buf[1].coeffs);
-  polyz_unpack(a2, buf[2].coeffs);
-  polyz_unpack(a3, buf[3].coeffs);
+  polyz_unpack(params, a0, buf[0].coeffs);
+  polyz_unpack(params, a1, buf[1].coeffs);
+  polyz_unpack(params, a2, buf[2].coeffs);
+  polyz_unpack(params, a3, buf[3].coeffs);
 }
 
 /*************************************************
@@ -570,7 +571,7 @@ void poly_uniform_gamma1_4x(gcry_mldsa_poly *a0,
 * Arguments:   - gcry_mldsa_poly *c: pointer to output polynomial
 *              - const byte mu[]: byte array containing seed of length GCRY_MLDSA_SEEDBYTES
 **************************************************/
-void poly_challenge(gcry_mldsa_poly * restrict c, const byte seed[GCRY_MLDSA_SEEDBYTES]) {
+void poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly * restrict c, const byte seed[GCRY_MLDSA_SEEDBYTES]) {
   unsigned int i, b, pos;
   uint64_t signs;
   ALIGNED_UINT8(SHAKE256_RATE) buf;
@@ -585,7 +586,7 @@ void poly_challenge(gcry_mldsa_poly * restrict c, const byte seed[GCRY_MLDSA_SEE
   pos = 8;
 
   memset(c->vec, 0, sizeof(gcry_mldsa_poly));
-  for(i = GCRY_MLDSA_N-TAU; i < GCRY_MLDSA_N; ++i) {
+  for(i = GCRY_MLDSA_N-params->tau; i < GCRY_MLDSA_N; ++i) {
     do {
       if(pos >= SHAKE256_RATE) {
         shake256_squeezeblocks(buf.coeffs, 1, &state);
@@ -836,16 +837,17 @@ void polyt0_unpack(gcry_mldsa_poly * restrict r, const byte a[GCRY_MLDSA_POLYT0_
 *                            POLYZ_PACKEDBYTES bytes
 *              - const gcry_mldsa_poly *a: pointer to input polynomial
 **************************************************/
-void polyz_pack(byte r[POLYZ_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
+void polyz_pack(gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly * restrict a) {
   unsigned int i;
   uint32_t t[4];
 
-#if GAMMA1 == (1 << 17)
+if (params->gamma1 == (1 << 17))
+{
   for(i = 0; i < GCRY_MLDSA_N/4; ++i) {
-    t[0] = GAMMA1 - a->coeffs[4*i+0];
-    t[1] = GAMMA1 - a->coeffs[4*i+1];
-    t[2] = GAMMA1 - a->coeffs[4*i+2];
-    t[3] = GAMMA1 - a->coeffs[4*i+3];
+    t[0] = params->gamma1 - a->coeffs[4*i+0];
+    t[1] = params->gamma1 - a->coeffs[4*i+1];
+    t[2] = params->gamma1 - a->coeffs[4*i+2];
+    t[3] = params->gamma1 - a->coeffs[4*i+3];
 
     r[9*i+0]  = t[0];
     r[9*i+1]  = t[0] >> 8;
@@ -860,10 +862,11 @@ void polyz_pack(byte r[POLYZ_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
     r[9*i+7]  = t[3] >> 2;
     r[9*i+8]  = t[3] >> 10;
   }
-#elif GAMMA1 == (1 << 19)
+}
+else {
   for(i = 0; i < GCRY_MLDSA_N/2; ++i) {
-    t[0] = GAMMA1 - a->coeffs[2*i+0];
-    t[1] = GAMMA1 - a->coeffs[2*i+1];
+    t[0] = params->gamma1 - a->coeffs[2*i+0];
+    t[1] = params->gamma1 - a->coeffs[2*i+1];
 
     r[5*i+0]  = t[0];
     r[5*i+1]  = t[0] >> 8;
@@ -872,27 +875,17 @@ void polyz_pack(byte r[POLYZ_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
     r[5*i+3]  = t[1] >> 4;
     r[5*i+4]  = t[1] >> 12;
   }
-#endif
+}
 }
 
-/*************************************************
-* Name:        polyz_unpack
-*
-* Description: Unpack polynomial z with coefficients
-*              in [-(GAMMA1 - 1), GAMMA1].
-*
-* Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
-*              - const byte *a: byte array with bit-packed polynomial
-**************************************************/
-#if GAMMA1 == (1 << 17)
-void polyz_unpack(gcry_mldsa_poly * restrict r, const byte *a) {
+static void polyz_unpack_17(gcry_mldsa_poly * restrict r, const byte *a) {
   unsigned int i;
   __m256i f;
   const __m256i shufbidx = _mm256_set_epi8(-1, 9, 8, 7,-1, 7, 6, 5,-1, 5, 4, 3,-1, 3, 2, 1,
                                            -1, 8, 7, 6,-1, 6, 5, 4,-1, 4, 3, 2,-1, 2, 1, 0);
   const __m256i srlvdidx = _mm256_set_epi32(6,4,2,0,6,4,2,0);
   const __m256i mask = _mm256_set1_epi32(0x3FFFF);
-  const __m256i gamma1 = _mm256_set1_epi32(GAMMA1);
+  const __m256i gamma1 = _mm256_set1_epi32(1 << 17);
 
   for(i = 0; i < GCRY_MLDSA_N/8; i++) {
     f = _mm256_loadu_si256((__m256i *)&a[18*i]);
@@ -905,15 +898,14 @@ void polyz_unpack(gcry_mldsa_poly * restrict r, const byte *a) {
   }
 }
 
-#elif GAMMA1 == (1 << 19)
-void polyz_unpack(gcry_mldsa_poly * restrict r, const byte *a) {
+static void polyz_unpack_19(gcry_mldsa_poly * restrict r, const byte *a) {
   unsigned int i;
   __m256i f;
   const __m256i shufbidx = _mm256_set_epi8(-1,11,10, 9,-1, 9, 8, 7,-1, 6, 5, 4,-1, 4, 3, 2,
                                            -1, 9, 8, 7,-1, 7, 6, 5,-1, 4, 3, 2,-1, 2, 1, 0);
   const __m256i srlvdidx = _mm256_set1_epi64x((uint64_t)4 << 32);
   const __m256i mask = _mm256_set1_epi32(0xFFFFF);
-  const __m256i gamma1 = _mm256_set1_epi32(GAMMA1);
+  const __m256i gamma1 = _mm256_set1_epi32(1 << 19);
 
   for(i = 0; i < GCRY_MLDSA_N/8; i++) {
     f = _mm256_loadu_si256((__m256i *)&a[20*i]);
@@ -925,20 +917,29 @@ void polyz_unpack(gcry_mldsa_poly * restrict r, const byte *a) {
     _mm256_store_si256(&r->vec[i],f);
   }
 }
-#endif
 
 /*************************************************
-* Name:        polyw1_pack
+* Name:        polyz_unpack
 *
-* Description: Bit-pack polynomial w1 with coefficients in [0,15] or [0,43].
-*              Input coefficients are assumed to be positive standard representatives.
+* Description: Unpack polynomial z with coefficients
+*              in [-(GAMMA1 - 1), GAMMA1].
 *
-* Arguments:   - byte *r: pointer to output byte array with at least
-*                            POLYW1_PACKEDBYTES bytes
-*              - const gcry_mldsa_poly *a: pointer to input polynomial
+* Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
+*              - const byte *a: byte array with bit-packed polynomial
 **************************************************/
-#if GAMMA2 == (GCRY_MLDSA_Q-1)/88
-void polyw1_pack(byte *r, const gcry_mldsa_poly * restrict a) {
+
+void polyz_unpack(gcry_mldsa_param_t *params, gcry_mldsa_poly * restrict r, const byte *a) {
+if (params->gamma1 == (1 << 17))
+{
+  polyz_unpack_17(r, a);
+}
+else {
+    polyz_unpack_19(r, a);
+}
+}
+
+
+static void polyw1_pack_88(byte *r, const gcry_mldsa_poly * restrict a) {
   unsigned int i;
   __m256i f0,f1,f2,f3;
   const __m256i shift1 = _mm256_set1_epi16((64 << 8) + 1);
@@ -965,8 +966,7 @@ void polyw1_pack(byte *r, const gcry_mldsa_poly * restrict a) {
   }
 }
 
-#elif GAMMA2 == (GCRY_MLDSA_Q-1)/32
-void polyw1_pack(byte *r, const gcry_mldsa_poly * restrict a) {
+static void polyw1_pack_32(byte *r, const gcry_mldsa_poly * restrict a) {
   unsigned int i;
   __m256i f0, f1, f2, f3, f4, f5, f6, f7;
   const __m256i shift = _mm256_set1_epi16((16 << 8) + 1);
@@ -996,4 +996,24 @@ void polyw1_pack(byte *r, const gcry_mldsa_poly * restrict a) {
     _mm256_storeu_si256((__m256i *)&r[32*i], f0);
   }
 }
-#endif
+
+
+/*************************************************
+* Name:        polyw1_pack
+*
+* Description: Bit-pack polynomial w1 with coefficients in [0,15] or [0,43].
+*              Input coefficients are assumed to be positive standard representatives.
+*
+* Arguments:   - byte *r: pointer to output byte array with at least
+*                            POLYW1_PACKEDBYTES bytes
+*              - const gcry_mldsa_poly *a: pointer to input polynomial
+**************************************************/
+void polyw1_pack(gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly * restrict a) {
+  if(params->gamma2 == (GCRY_MLDSA_Q-1)/88)
+  {
+    polyw1_pack_88(r, a);
+  }
+  else {
+    polyw1_pack_32(r, a);
+  }
+}

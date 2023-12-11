@@ -41,29 +41,16 @@ void power2round_avx(__m256i *a1, __m256i *a0, const __m256i *a)
   }
 }
 
-/*************************************************
-* Name:        decompose
-*
-* Description: For finite field element a, compute high and low parts a0, a1 such
-*              that a mod^+ GCRY_MLDSA_Q = a1*ALPHA + a0 with -ALPHA/2 < a0 <= ALPHA/2 except
-*              if a1 = (GCRY_MLDSA_Q-1)/ALPHA where we set a1 = 0 and
-*              -ALPHA/2 <= a0 = a mod GCRY_MLDSA_Q - GCRY_MLDSA_Q < 0. Assumes a to be positive standard
-*              representative.
-*
-* Arguments:   - __m256i *a1: output array of length GCRY_MLDSA_N/8 with high parts
-*              - __m256i *a0: output array of length GCRY_MLDSA_N/8 with low parts a0
-*              - const __m256i *a: input array of length GCRY_MLDSA_N/8
-*
-**************************************************/
-#if GAMMA2 == (GCRY_MLDSA_Q-1)/32
-void decompose_avx(__m256i *a1, __m256i *a0, const __m256i *a)
+
+static void decompose_avx_32(__m256i *a1, __m256i *a0, const __m256i *a)
 {
+  const size_t gamma2 = (GCRY_MLDSA_Q-1)/32;
   unsigned int i;
   __m256i f,f0,f1;
   const __m256i q = _mm256_load_si256(&qdata.vec[_8XQ/8]);
   const __m256i hq = _mm256_srli_epi32(q,1);
   const __m256i v = _mm256_set1_epi32(1025);
-  const __m256i alpha = _mm256_set1_epi32(2*GAMMA2);
+  const __m256i alpha = _mm256_set1_epi32(2*gamma2);
   const __m256i off = _mm256_set1_epi32(127);
   const __m256i shift = _mm256_set1_epi32(512);
   const __m256i mask = _mm256_set1_epi32(15);
@@ -85,15 +72,15 @@ void decompose_avx(__m256i *a1, __m256i *a0, const __m256i *a)
   }
 }
 
-#elif GAMMA2 == (GCRY_MLDSA_Q-1)/88
-void decompose_avx(__m256i *a1, __m256i *a0, const __m256i *a)
+static void decompose_avx_88(__m256i *a1, __m256i *a0, const __m256i *a)
 {
+  const size_t gamma2 = (GCRY_MLDSA_Q-1)/88;
   unsigned int i;
   __m256i f,f0,f1,t;
   const __m256i q = _mm256_load_si256(&qdata.vec[_8XQ/8]);
   const __m256i hq = _mm256_srli_epi32(q,1);
   const __m256i v = _mm256_set1_epi32(11275);
-  const __m256i alpha = _mm256_set1_epi32(2*GAMMA2);
+  const __m256i alpha = _mm256_set1_epi32(2*gamma2);
   const __m256i off = _mm256_set1_epi32(127);
   const __m256i shift = _mm256_set1_epi32(128);
   const __m256i max = _mm256_set1_epi32(43);
@@ -116,7 +103,29 @@ void decompose_avx(__m256i *a1, __m256i *a0, const __m256i *a)
     _mm256_store_si256(&a0[i],f0);
   }
 }
-#endif
+
+/*************************************************
+* Name:        decompose
+*
+* Description: For finite field element a, compute high and low parts a0, a1 such
+*              that a mod^+ GCRY_MLDSA_Q = a1*ALPHA + a0 with -ALPHA/2 < a0 <= ALPHA/2 except
+*              if a1 = (GCRY_MLDSA_Q-1)/ALPHA where we set a1 = 0 and
+*              -ALPHA/2 <= a0 = a mod GCRY_MLDSA_Q - GCRY_MLDSA_Q < 0. Assumes a to be positive standard
+*              representative.
+*
+* Arguments:   - __m256i *a1: output array of length GCRY_MLDSA_N/8 with high parts
+*              - __m256i *a0: output array of length GCRY_MLDSA_N/8 with low parts a0
+*              - const __m256i *a: input array of length GCRY_MLDSA_N/8
+*
+**************************************************/
+void decompose_avx(gcry_mldsa_param_t *params, __m256i *a1, __m256i *a0, const __m256i *a) {
+if(params->gamma2 == (GCRY_MLDSA_Q-1)/32)
+{
+  decompose_avx_32(a1, a0, a);
+} else {
+  decompose_avx_88(a1, a0, a);
+}
+}
 
 /*************************************************
 * Name:        make_hint
@@ -130,14 +139,14 @@ void decompose_avx(__m256i *a1, __m256i *a0, const __m256i *a)
 *
 * Returns number of overflowing low bits
 **************************************************/
-unsigned int make_hint_avx(byte hint[GCRY_MLDSA_N], const __m256i * restrict a0, const __m256i * restrict a1)
+unsigned int make_hint_avx(gcry_mldsa_param_t *params, byte hint[GCRY_MLDSA_N], const __m256i * restrict a0, const __m256i * restrict a1)
 {
   unsigned int i, n = 0;
   __m256i f0, f1, g0, g1;
   uint32_t bad;
   uint64_t idx;
-  const __m256i low = _mm256_set1_epi32(-GAMMA2);
-  const __m256i high = _mm256_set1_epi32(GAMMA2);
+  const __m256i low = _mm256_set1_epi32(-params->gamma2);
+  const __m256i high = _mm256_set1_epi32(params->gamma2);
 
   for(i = 0; i < GCRY_MLDSA_N/8; ++i) {
     f0 = _mm256_load_si256(&a0[i]);
@@ -168,18 +177,15 @@ unsigned int make_hint_avx(byte hint[GCRY_MLDSA_N], const __m256i * restrict a0,
 *              - const __m256i *a: input array of length GCRY_MLDSA_N/8 with hint bits
 *
 **************************************************/
-void use_hint_avx(__m256i *b, const __m256i *a, const __m256i * restrict hint) {
+void use_hint_avx(gcry_mldsa_param_t *params, __m256i *b, const __m256i *a, const __m256i * restrict hint) {
   unsigned int i;
   __m256i a0[GCRY_MLDSA_N/8];
   __m256i f,g,h,t;
   const __m256i zero = _mm256_setzero_si256();
-#if GAMMA2 == (GCRY_MLDSA_Q-1)/32
-  const __m256i mask = _mm256_set1_epi32(15);
-#elif GAMMA2 == (GCRY_MLDSA_Q-1)/88
-  const __m256i max = _mm256_set1_epi32(43);
-#endif
+  __m256i mask = _mm256_set1_epi32(15);
+  __m256i max = _mm256_set1_epi32(43);
 
-  decompose_avx(b, a0, a);
+  decompose_avx(params, b, a0, a);
   for(i=0;i<GCRY_MLDSA_N/8;i++) {
     f = _mm256_load_si256(&a0[i]);
     g = _mm256_load_si256(&b[i]);
@@ -188,13 +194,14 @@ void use_hint_avx(__m256i *b, const __m256i *a, const __m256i * restrict hint) {
     t = _mm256_slli_epi32(t,1);
     h = _mm256_sub_epi32(h,t);
     g = _mm256_add_epi32(g,h);
-#if GAMMA2 == (GCRY_MLDSA_Q-1)/32
+ if(params->gamma2 == (GCRY_MLDSA_Q-1)/32)
+  {
     g = _mm256_and_si256(g,mask);
-#elif GAMMA2 == (GCRY_MLDSA_Q-1)/88
+  }
+  else {
     g = _mm256_blendv_epi32(g,max,g);
     f = _mm256_cmpgt_epi32(g,max);
-    g = _mm256_blendv_epi32(g,zero,f);
-#endif
+    g = _mm256_blendv_epi32(g,zero,f);  }
     _mm256_store_si256(&b[i],g);
   }
 }
