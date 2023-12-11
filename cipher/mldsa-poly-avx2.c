@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <immintrin.h>
 #include <string.h>
+#include "config.h"
 #include "mldsa-align-avx2.h"
 #include "mldsa-params-avx2.h"
 #include "mldsa-poly-avx2.h"
@@ -611,7 +612,7 @@ void poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly * restrict c, co
 *                            POLYETA_PACKEDBYTES bytes
 *              - const gcry_mldsa_poly *a: pointer to input polynomial
 **************************************************/
-void polyeta_pack(byte r[POLYETA_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
+void polyeta_pack(byte *r, const gcry_mldsa_poly * restrict a) {
   unsigned int i;
   byte t[8];
 
@@ -647,7 +648,7 @@ void polyeta_pack(byte r[POLYETA_PACKEDBYTES], const gcry_mldsa_poly * restrict 
 * Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
 *              - const byte *a: byte array with bit-packed polynomial
 **************************************************/
-void polyeta_unpack(gcry_mldsa_poly * restrict r, const byte a[POLYETA_PACKEDBYTES]) {
+void polyeta_unpack(gcry_mldsa_poly * restrict r, const byte *a) {
   unsigned int i;
 
 #if ETA == 2

@@ -60,8 +60,8 @@ void poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
                             uint16_t nonce2,
                             uint16_t nonce3);
 
-void polyeta_pack(byte r[POLYETA_PACKEDBYTES], const gcry_mldsa_poly *a);
-void polyeta_unpack(gcry_mldsa_poly *r, const byte a[POLYETA_PACKEDBYTES]);
+void polyeta_pack(byte *r, const gcry_mldsa_poly *a);
+void polyeta_unpack(gcry_mldsa_poly *r, const byte *a);
 
 void polyt1_pack(byte r[GCRY_MLDSA_POLYT1_PACKEDBYTES], const gcry_mldsa_poly *a);
 void polyt1_unpack(gcry_mldsa_poly *r, const byte a[GCRY_MLDSA_POLYT1_PACKEDBYTES]);

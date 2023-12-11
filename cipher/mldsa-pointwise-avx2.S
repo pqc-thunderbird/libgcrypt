@@ -1,5 +1,6 @@
-#include "mldsa-params-avx2.h"
+#include "config.h"
 #include "mldsa-consts-avx2.h"
+#define L 4 // TODO remove
 
 .text
 .global cdecl(pointwise_avx)

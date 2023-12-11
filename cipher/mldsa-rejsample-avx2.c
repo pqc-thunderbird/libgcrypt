@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <immintrin.h>
+#include "config.h"
 #include "mldsa-params-avx2.h"
 #include "mldsa-rejsample-avx2.h"
 #include "mldsa-symmetric-avx2.h"

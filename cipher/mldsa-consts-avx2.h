@@ -1,8 +1,6 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
-#include "mldsa-params-avx2.h"
-
 #define _8XQ          0
 #define _8XQINV       8
 #define _8XDIV_QINV  16
@@ -20,9 +18,9 @@
 #if defined(__WIN32__) || defined(__APPLE__)
 #define decorate(s) _##s
 #define _cdecl(s) decorate(s)
-#define cdecl(s) _cdecl(DILITHIUM_NAMESPACE(##s))
+#define cdecl(s) _cdecl(s)
 #else
-#define cdecl(s) DILITHIUM_NAMESPACE(##s)
+#define cdecl(s) s
 #endif
 
 #ifndef __ASSEMBLER__
@@ -31,7 +29,6 @@
 
 typedef ALIGNED_INT32(624) qdata_t;
 
-#define qdata DILITHIUM_NAMESPACE(qdata)
 extern const qdata_t qdata;
 
 #endif

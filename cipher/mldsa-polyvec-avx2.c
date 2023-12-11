@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "config.h"
 #include "mldsa-params-avx2.h"
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-polyvec.h"

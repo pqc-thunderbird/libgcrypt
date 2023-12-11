@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "config.h"
 #include "mldsa-align-avx2.h"
 #include "mldsa-params.h"
 #include "mldsa-params-avx2.h"
