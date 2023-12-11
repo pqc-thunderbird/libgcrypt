@@ -74,7 +74,7 @@ void _gcry_mldsa_buf_al_destroy(gcry_mldsa_buf_al *buf)
 gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, byte *mat, const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec = 0;
-  const size_t rowsize = sizeof(gcry_mldsa_poly) * params->k;
+  const size_t rowsize = sizeof(gcry_mldsa_poly) * params->l;
   gcry_mldsa_buf_al tmp = {};
   if (params->l == 4 && params->k == 4)
     {
@@ -85,7 +85,7 @@ gcry_err_code_t polyvec_matrix_expand(gcry_mldsa_param_t *params, byte *mat, con
     }
   else if (params->k == 6 && params->l == 5)
     {
-      _gcry_mldsa_buf_al_create(&tmp, sizeof(gcry_mldsa_poly));
+      _gcry_mldsa_buf_al_create(&tmp, rowsize);
       polyvec_matrix_expand_row0(params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
       polyvec_matrix_expand_row1(params, &mat[1 * rowsize], &mat[2 * rowsize], rho);
       polyvec_matrix_expand_row2(params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
@@ -408,7 +408,7 @@ void polyvec_matrix_pointwise_montgomery(gcry_mldsa_param_t *params, byte *t, co
 {
   unsigned int i;
   const size_t polysize = sizeof(gcry_mldsa_poly);
-  const size_t rowsize = polysize * params->k;
+  const size_t rowsize = polysize * params->l;
 
   for (i = 0; i < params->k; ++i)
     polyvecl_pointwise_acc_montgomery(params, (gcry_mldsa_poly*)&t[i * polysize], &mat[i * rowsize], v);

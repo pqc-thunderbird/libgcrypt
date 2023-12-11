@@ -38,7 +38,7 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   gcry_mldsa_polyvec t0 = {.vec = NULL};
 
   /* TODO: REMOVE ****************************/
-  if (params->l == 4) // mldsa-44
+  if (1)
   {
     uint8_t pk_avx2[params->public_key_bytes];
     uint8_t sk_avx2[params->secret_key_bytes];

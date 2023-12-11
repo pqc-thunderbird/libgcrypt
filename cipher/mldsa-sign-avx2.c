@@ -34,26 +34,26 @@ static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **
     case 4:
       if(params->k <= 4)
         break;
-      polyvec_matrix_expand_row4(params, buf, buf + 1, rho);
+      polyvec_matrix_expand_row4(params, buf, buf + offset, rho);
       *row = buf;
       break;
     case 5:
       if(params->k <= 4)
         break;
-      polyvec_matrix_expand_row5(params, buf + 1, buf, rho);
-      *row = buf + 1;
+      polyvec_matrix_expand_row5(params, buf + offset, buf, rho);
+      *row = buf + offset;
       break;
     case 6:
       if(params->k <= 6)
         break;
-      polyvec_matrix_expand_row6(params, buf, buf + 1, rho);
+      polyvec_matrix_expand_row6(params, buf, buf + offset, rho);
       *row = buf;
       break;
     case 7:
-      if(params->k <= 4)
+      if(params->k <= 6)
         break;
-      polyvec_matrix_expand_row7(params, buf + 1, buf, rho);
-      *row = buf + 1;
+      polyvec_matrix_expand_row7(params, buf + offset, buf, rho);
+      *row = buf + offset;
       break;
   }
 }
