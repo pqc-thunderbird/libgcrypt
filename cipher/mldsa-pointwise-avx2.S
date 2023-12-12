@@ -1,8 +1,8 @@
 #include "mldsa-consts-avx2.h"
 
 .text
-.global cdecl(pointwise_avx)
-cdecl(pointwise_avx):
+.global cdecl(_gcry_mldsa_avx2_pointwise_avx)
+cdecl(_gcry_mldsa_avx2_pointwise_avx):
 #consts
 vmovdqa		_8XQINV*4(%rcx),%ymm0
 vmovdqa		_8XQ*4(%rcx),%ymm1
@@ -133,8 +133,8 @@ vpaddq		%ymm8,%ymm4,%ymm4
 vpaddq		%ymm9,%ymm5,%ymm5
 .endm
 
-.global cdecl(pointwise_acc_avx_L4)
-cdecl(pointwise_acc_avx_L4):
+.global cdecl(_gcry_mldsa_avx2_pointwise_acc_avx_L4)
+cdecl(_gcry_mldsa_avx2_pointwise_acc_avx_L4):
 #consts
 vmovdqa		_8XQINV*4(%rcx),%ymm0
 vmovdqa		_8XQ*4(%rcx),%ymm1
@@ -190,8 +190,8 @@ jb _looptop2_L4
 
 ret
 
-.global cdecl(pointwise_acc_avx_L5)
-cdecl(pointwise_acc_avx_L5):
+.global cdecl(_gcry_mldsa_avx2_pointwise_acc_avx_L5)
+cdecl(_gcry_mldsa_avx2_pointwise_acc_avx_L5):
 #consts
 vmovdqa		_8XQINV*4(%rcx),%ymm0
 vmovdqa		_8XQ*4(%rcx),%ymm1
@@ -250,8 +250,8 @@ jb _looptop2_L5
 
 ret
 
-.global cdecl(pointwise_acc_avx_L7)
-cdecl(pointwise_acc_avx_L7):
+.global cdecl(_gcry_mldsa_avx2_pointwise_acc_avx_L7)
+cdecl(_gcry_mldsa_avx2_pointwise_acc_avx_L7):
 #consts
 vmovdqa		_8XQINV*4(%rcx),%ymm0
 vmovdqa		_8XQ*4(%rcx),%ymm1

@@ -4,7 +4,7 @@
 #include "mldsa-poly-avx2.h"
 
 /*************************************************
-* Name:        unpack_sk
+* Name:        _gcry_mldsa_avx2_unpack_sk
 *
 * Description: Unpack secret key sk = (rho, tr, key, t0, s1, s2).
 *
@@ -16,7 +16,7 @@
 *              - const polyveck *s2: pointer to output vector s2
 *              - byte sk[]: byte array containing bit-packed sk
 **************************************************/
-void unpack_sk(gcry_mldsa_param_t *params, byte rho[GCRY_MLDSA_SEEDBYTES],
+void _gcry_mldsa_avx2_unpack_sk(gcry_mldsa_param_t *params, byte rho[GCRY_MLDSA_SEEDBYTES],
                byte tr[GCRY_MLDSA_TRBYTES],
                byte key[GCRY_MLDSA_SEEDBYTES],
                byte *t0,
@@ -39,13 +39,13 @@ void unpack_sk(gcry_mldsa_param_t *params, byte rho[GCRY_MLDSA_SEEDBYTES],
   sk += GCRY_MLDSA_TRBYTES;
 
   for(i=0; i < params->l; ++i)
-    polyeta_unpack(params, (gcry_mldsa_poly*)&s1[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
+    _gcry_mldsa_avx2_polyeta_unpack(params, (gcry_mldsa_poly*)&s1[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
   sk += params->l*params->polyeta_packedbytes;
 
   for(i=0; i < params->k; ++i)
-    polyeta_unpack(params, (gcry_mldsa_poly*)&s2[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
+    _gcry_mldsa_avx2_polyeta_unpack(params, (gcry_mldsa_poly*)&s2[i * sizeof(gcry_mldsa_poly)], sk + i*params->polyeta_packedbytes);
   sk += params->k*params->polyeta_packedbytes;
 
   for(i=0; i < params->k; ++i)
-    polyt0_unpack((gcry_mldsa_poly*)&t0[i * sizeof(gcry_mldsa_poly)], sk + i*GCRY_MLDSA_POLYT0_PACKEDBYTES);
+    _gcry_mldsa_avx2_polyt0_unpack((gcry_mldsa_poly*)&t0[i * sizeof(gcry_mldsa_poly)], sk + i*GCRY_MLDSA_POLYT0_PACKEDBYTES);
 }

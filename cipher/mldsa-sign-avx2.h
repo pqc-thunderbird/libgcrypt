@@ -7,6 +7,6 @@
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-poly-avx2.h"
 
-void challenge(gcry_mldsa_poly *c, const byte seed[GCRY_MLDSA_SEEDBYTES]);
+void _gcry_mldsa_avx2_challenge(gcry_mldsa_poly *c, const byte seed[GCRY_MLDSA_SEEDBYTES]);
 
 #endif

@@ -6,7 +6,7 @@
 #include "mldsa-polyvec-avx2.h"
 
 
-void unpack_sk(gcry_mldsa_param_t *params, byte rho[GCRY_MLDSA_SEEDBYTES],
+void _gcry_mldsa_avx2_unpack_sk(gcry_mldsa_param_t *params, byte rho[GCRY_MLDSA_SEEDBYTES],
                byte tr[GCRY_MLDSA_TRBYTES],
                byte key[GCRY_MLDSA_SEEDBYTES],
                byte *t0,

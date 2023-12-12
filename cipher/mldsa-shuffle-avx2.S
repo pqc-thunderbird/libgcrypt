@@ -40,8 +40,8 @@ vmovdqa		%ymm11,224(%rdi)
 
 ret
 
-.global cdecl(nttunpack_avx)
-cdecl(nttunpack_avx):
+.global cdecl(_gcry_mldsa_avx2_nttunpack_avx)
+cdecl(_gcry_mldsa_avx2_nttunpack_avx):
 call		nttunpack128_avx
 add		$256,%rdi
 call		nttunpack128_avx

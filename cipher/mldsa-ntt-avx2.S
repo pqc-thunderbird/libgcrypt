@@ -179,8 +179,8 @@ vmovdqa		%ymm11,256*\off+224(%rdi)
 .endm
 
 .text
-.global cdecl(ntt_avx)
-cdecl(ntt_avx):
+.global cdecl(_gcry_mldsa_avx2_ntt_avx)
+cdecl(_gcry_mldsa_avx2_ntt_avx):
 vmovdqa		_8XQ*4(%rsi),%ymm0
 
 levels0t1	0

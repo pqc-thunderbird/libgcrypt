@@ -16,50 +16,50 @@ static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **
   const size_t offset = params->l * sizeof(gcry_mldsa_poly);
   switch(i) {
     case 0:
-      polyvec_matrix_expand_row0(params, buf, buf + offset, rho);
+      _gcry_mldsa_avx2_polyvec_matrix_expand_row0(params, buf, buf + offset, rho);
       *row = buf;
       break;
     case 1:
-      polyvec_matrix_expand_row1(params, buf + offset, buf, rho);
+      _gcry_mldsa_avx2_polyvec_matrix_expand_row1(params, buf + offset, buf, rho);
       *row = buf + offset;
       break;
     case 2:
-      polyvec_matrix_expand_row2(params, buf, buf + offset, rho);
+      _gcry_mldsa_avx2_polyvec_matrix_expand_row2(params, buf, buf + offset, rho);
       *row = buf;
       break;
     case 3:
-      polyvec_matrix_expand_row3(params, buf + offset, buf, rho);
+      _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, buf + offset, buf, rho);
       *row = buf + offset;
       break;
     case 4:
       if(params->k <= 4)
         break;
-      polyvec_matrix_expand_row4(params, buf, buf + offset, rho);
+      _gcry_mldsa_avx2_polyvec_matrix_expand_row4(params, buf, buf + offset, rho);
       *row = buf;
       break;
     case 5:
       if(params->k <= 4)
         break;
-      polyvec_matrix_expand_row5(params, buf + offset, buf, rho);
+      _gcry_mldsa_avx2_polyvec_matrix_expand_row5(params, buf + offset, buf, rho);
       *row = buf + offset;
       break;
     case 6:
       if(params->k <= 6)
         break;
-      polyvec_matrix_expand_row6(params, buf, buf + offset, rho);
+      _gcry_mldsa_avx2_polyvec_matrix_expand_row6(params, buf, buf + offset, rho);
       *row = buf;
       break;
     case 7:
       if(params->k <= 6)
         break;
-      polyvec_matrix_expand_row7(params, buf + offset, buf, rho);
+      _gcry_mldsa_avx2_polyvec_matrix_expand_row7(params, buf + offset, buf, rho);
       *row = buf + offset;
       break;
   }
 }
 
 /*************************************************
-* Name:        _gcry_mldsa_keypair_avx2
+* Name:        _gcry_mldsa_avx2_keypair
 *
 * Description: Generates public and private key.
 *
@@ -70,7 +70,7 @@ static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **
 *
 * Returns 0 (success)
 **************************************************/
-gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, byte *pk, byte *sk) {
+gcry_err_code_t _gcry_mldsa_avx2_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk) {
   gcry_err_code_t ec = 0;
   unsigned int i;
   byte *seedbuf = NULL;
@@ -120,21 +120,21 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, byte *pk, b
   memcpy(sk + GCRY_MLDSA_SEEDBYTES, key, GCRY_MLDSA_SEEDBYTES);
 
   /* Sample short vectors s1 and s2 */
-  poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s1.buf[0 * polysize], (gcry_mldsa_poly*)&s1.buf[1 * polysize], (gcry_mldsa_poly*)&s1.buf[2 * polysize], (gcry_mldsa_poly*)&s1.buf[3 * polysize], rhoprime, 0, 1, 2, 3);
+  _gcry_mldsa_avx2_poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s1.buf[0 * polysize], (gcry_mldsa_poly*)&s1.buf[1 * polysize], (gcry_mldsa_poly*)&s1.buf[2 * polysize], (gcry_mldsa_poly*)&s1.buf[3 * polysize], rhoprime, 0, 1, 2, 3);
   if(params->k == 4 && params->l == 4)
   {
-    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[0 * polysize], (gcry_mldsa_poly*)&s2.buf[1 * polysize], (gcry_mldsa_poly*)&s2.buf[2 * polysize], (gcry_mldsa_poly*)&s2.buf[3 * polysize], rhoprime, 4, 5, 6, 7);
+    _gcry_mldsa_avx2_poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[0 * polysize], (gcry_mldsa_poly*)&s2.buf[1 * polysize], (gcry_mldsa_poly*)&s2.buf[2 * polysize], (gcry_mldsa_poly*)&s2.buf[3 * polysize], rhoprime, 4, 5, 6, 7);
   }
   else if (params->k == 6 && params->l == 5)
   {
-    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s1.buf[4 * polysize], (gcry_mldsa_poly*)&s2.buf[0 * polysize], (gcry_mldsa_poly*)&s2.buf[1 * polysize], (gcry_mldsa_poly*)&s2.buf[2 * polysize], rhoprime, 4, 5, 6, 7);
-    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[3 * polysize], (gcry_mldsa_poly*)&s2.buf[4 * polysize], (gcry_mldsa_poly*)&s2.buf[5 * polysize], t0.buf, rhoprime, 8, 9, 10, 11);
+    _gcry_mldsa_avx2_poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s1.buf[4 * polysize], (gcry_mldsa_poly*)&s2.buf[0 * polysize], (gcry_mldsa_poly*)&s2.buf[1 * polysize], (gcry_mldsa_poly*)&s2.buf[2 * polysize], rhoprime, 4, 5, 6, 7);
+    _gcry_mldsa_avx2_poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[3 * polysize], (gcry_mldsa_poly*)&s2.buf[4 * polysize], (gcry_mldsa_poly*)&s2.buf[5 * polysize], t0.buf, rhoprime, 8, 9, 10, 11);
   }
   else if (params->k == 8 && params->l == 7)
   {
-    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s1.buf[4 * polysize], (gcry_mldsa_poly*)&s1.buf[5 * polysize], (gcry_mldsa_poly*)&s1.buf[6 * polysize], (gcry_mldsa_poly*)&s2.buf[0 * polysize], rhoprime, 4, 5, 6, 7);
-    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[1 * polysize], (gcry_mldsa_poly*)&s2.buf[2 * polysize], (gcry_mldsa_poly*)&s2.buf[3 * polysize], (gcry_mldsa_poly*)&s2.buf[4 * polysize], rhoprime, 8, 9, 10, 11);
-    poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[5 * polysize], (gcry_mldsa_poly*)&s2.buf[6 * polysize], (gcry_mldsa_poly*)&s2.buf[7 * polysize], t0.buf, rhoprime, 12, 13, 14, 15);
+    _gcry_mldsa_avx2_poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s1.buf[4 * polysize], (gcry_mldsa_poly*)&s1.buf[5 * polysize], (gcry_mldsa_poly*)&s1.buf[6 * polysize], (gcry_mldsa_poly*)&s2.buf[0 * polysize], rhoprime, 4, 5, 6, 7);
+    _gcry_mldsa_avx2_poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[1 * polysize], (gcry_mldsa_poly*)&s2.buf[2 * polysize], (gcry_mldsa_poly*)&s2.buf[3 * polysize], (gcry_mldsa_poly*)&s2.buf[4 * polysize], rhoprime, 8, 9, 10, 11);
+    _gcry_mldsa_avx2_poly_uniform_eta_4x(params, (gcry_mldsa_poly*)&s2.buf[5 * polysize], (gcry_mldsa_poly*)&s2.buf[6 * polysize], (gcry_mldsa_poly*)&s2.buf[7 * polysize], t0.buf, rhoprime, 12, 13, 14, 15);
   }
   else {
     ec = GPG_ERR_INV_STATE;
@@ -142,29 +142,29 @@ gcry_err_code_t _gcry_mldsa_keypair_avx2(gcry_mldsa_param_t *params, byte *pk, b
   }
   /* Pack secret vectors */
   for(i = 0; i < params->l; i++)
-    polyeta_pack(params, sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + i*params->polyeta_packedbytes, (gcry_mldsa_poly*)&s1.buf[i * polysize]);
+    _gcry_mldsa_avx2_polyeta_pack(params, sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + i*params->polyeta_packedbytes, (gcry_mldsa_poly*)&s1.buf[i * polysize]);
   for(i = 0; i < params->k; i++)
-    polyeta_pack(params, sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l + i)*params->polyeta_packedbytes, (gcry_mldsa_poly*)&s2.buf[i * polysize]);
+    _gcry_mldsa_avx2_polyeta_pack(params, sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l + i)*params->polyeta_packedbytes, (gcry_mldsa_poly*)&s2.buf[i * polysize]);
 
   /* Transform s1 */
-  polyvecl_ntt(params, s1.buf);
+  _gcry_mldsa_avx2_polyvecl_ntt(params, s1.buf);
 
   for(i = 0; i < params->k; i++) {
     /* Expand matrix row */
     polyvec_matrix_expand_row(params, &row, rowbuf.buf, rho, i);
 
     /* Compute inner-product */
-    polyvecl_pointwise_acc_montgomery(params, t1.buf, row, s1.buf);
-    poly_invntt_tomont((gcry_mldsa_poly*)t1.buf);
+    _gcry_mldsa_avx2_polyvecl_pointwise_acc_montgomery(params, t1.buf, row, s1.buf);
+    _gcry_mldsa_avx2_poly_invntt_tomont((gcry_mldsa_poly*)t1.buf);
 
     /* Add error polynomial */
-    poly_add((gcry_mldsa_poly*)t1.buf, (gcry_mldsa_poly*)t1.buf, (gcry_mldsa_poly*)&s2.buf[i * polysize]);
+    _gcry_mldsa_avx2_poly_add((gcry_mldsa_poly*)t1.buf, (gcry_mldsa_poly*)t1.buf, (gcry_mldsa_poly*)&s2.buf[i * polysize]);
 
     /* Round t and pack t1, t0 */
-    poly_caddq(t1.buf);
-    poly_power2round(t1.buf, t0.buf, t1.buf);
-    polyt1_pack(pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES, t1.buf);
-    polyt0_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l+params->k)*params->polyeta_packedbytes + i*GCRY_MLDSA_POLYT0_PACKEDBYTES, t0.buf);
+    _gcry_mldsa_avx2_poly_caddq(t1.buf);
+    _gcry_mldsa_avx2_poly_power2round(t1.buf, t0.buf, t1.buf);
+    _gcry_mldsa_avx2_polyt1_pack(pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES, t1.buf);
+    _gcry_mldsa_avx2_polyt0_pack(sk + 2*GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + (params->l+params->k)*params->polyeta_packedbytes + i*GCRY_MLDSA_POLYT0_PACKEDBYTES, t0.buf);
   }
 
   /* Compute H(rho, t1) and store in secret key */
@@ -184,7 +184,7 @@ leave:
 }
 
 /*************************************************
-* Name:        crypto_sign_signature
+* Name:        _gcry_mldsa_avx2_sign
 *
 * Description: Computes signature.
 *
@@ -196,7 +196,7 @@ leave:
 *
 * Returns 0 (success)
 **************************************************/
-int crypto_sign_signature(gcry_mldsa_param_t *params, byte *sig, size_t *siglen, const byte *m, size_t mlen, const byte *sk) {
+int _gcry_mldsa_avx2_sign(gcry_mldsa_param_t *params, byte *sig, size_t *siglen, const byte *m, size_t mlen, const byte *sk) {
   gcry_err_code_t ec = 0;
   unsigned int i, n, pos;
   byte *seedbuf = NULL;
@@ -247,7 +247,7 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, byte *sig, size_t *siglen,
   key = tr + GCRY_MLDSA_TRBYTES;
   mu = key + GCRY_MLDSA_SEEDBYTES;
   rhoprime = mu + GCRY_MLDSA_CRHBYTES;
-  unpack_sk(params, rho, tr, key, t0.buf, s1.buf, s2.buf, sk);
+  _gcry_mldsa_avx2_unpack_sk(params, rho, tr, key, t0.buf, s1.buf, s2.buf, sk);
 
   /* Compute CRH(tr, msg) */
   _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
@@ -261,31 +261,31 @@ int crypto_sign_signature(gcry_mldsa_param_t *params, byte *sig, size_t *siglen,
     goto leave;
 
   /* Expand matrix and transform vectors */
-  polyvec_matrix_expand(params, mat.buf, rho);
-  polyvecl_ntt(params, s1.buf);
-  polyveck_ntt(params, s2.buf);
-  polyveck_ntt(params, t0.buf);
+  _gcry_mldsa_avx2_polyvec_matrix_expand(params, mat.buf, rho);
+  _gcry_mldsa_avx2_polyvecl_ntt(params, s1.buf);
+  _gcry_mldsa_avx2_polyveck_ntt(params, s2.buf);
+  _gcry_mldsa_avx2_polyveck_ntt(params, t0.buf);
 
 rej:
   /* Sample intermediate vector y */
 if(params->l == 4)
 {
-  poly_uniform_gamma1_4x(params, &z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
+  _gcry_mldsa_avx2_poly_uniform_gamma1_4x(params, &z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
                          rhoprime, nonce, nonce + 1, nonce + 2, nonce + 3);
   nonce += 4;
 }
 else if (params->l == 5)
 {
-  poly_uniform_gamma1_4x(params, &z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
+  _gcry_mldsa_avx2_poly_uniform_gamma1_4x(params, &z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
                          rhoprime, nonce, nonce + 1, nonce + 2, nonce + 3);
-  poly_uniform_gamma1(params, (gcry_mldsa_poly*)&z.buf[4 * polysize], rhoprime, nonce + 4);
+  _gcry_mldsa_avx2_poly_uniform_gamma1(params, (gcry_mldsa_poly*)&z.buf[4 * polysize], rhoprime, nonce + 4);
   nonce += 5;
  } else if(params->l == 7)
  {
 
-  poly_uniform_gamma1_4x(params, &z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
+  _gcry_mldsa_avx2_poly_uniform_gamma1_4x(params, &z.buf[0 * polysize], &z.buf[1 * polysize], &z.buf[2 * polysize], &z.buf[3 * polysize],
                          rhoprime, nonce, nonce + 1, nonce + 2, nonce + 3);
-  poly_uniform_gamma1_4x(params, &z.buf[4 * polysize], &z.buf[5 * polysize], &z.buf[6 * polysize], &tmp,
+  _gcry_mldsa_avx2_poly_uniform_gamma1_4x(params, &z.buf[4 * polysize], &z.buf[5 * polysize], &z.buf[6 * polysize], &tmp,
                          rhoprime, nonce + 4, nonce + 5, nonce + 6, 0);
   nonce += 7;
 }
@@ -295,14 +295,14 @@ else {
 
   /* Matrix-vector product */
   memcpy(tmpv.buf, z.buf, params->l * polysize);
-  polyvecl_ntt(params, tmpv.buf);
-  polyvec_matrix_pointwise_montgomery(params, w1.buf, mat.buf, tmpv.buf);
-  polyveck_invntt_tomont(params, w1.buf);
+  _gcry_mldsa_avx2_polyvecl_ntt(params, tmpv.buf);
+  _gcry_mldsa_avx2_polyvec_matrix_pointwise_montgomery(params, w1.buf, mat.buf, tmpv.buf);
+  _gcry_mldsa_avx2_polyveck_invntt_tomont(params, w1.buf);
 
   /* Decompose w and call the random oracle */
-  polyveck_caddq(params, w1.buf);
-  polyveck_decompose(params, w1.buf, tmpv.buf, w1.buf);
-  polyveck_pack_w1(params, sig, w1.buf);
+  _gcry_mldsa_avx2_polyveck_caddq(params, w1.buf);
+  _gcry_mldsa_avx2_polyveck_decompose(params, w1.buf, tmpv.buf, w1.buf);
+  _gcry_mldsa_avx2_polyveck_pack_w1(params, sig, w1.buf);
 
   ec = _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
   if (ec)
@@ -313,16 +313,16 @@ else {
   if (ec)
     goto leave;
   _gcry_md_close(hd);
-  poly_challenge(params, &c, sig);
-  poly_ntt(&c);
+  _gcry_mldsa_avx2_poly_challenge(params, &c, sig);
+  _gcry_mldsa_avx2_poly_ntt(&c);
 
   /* Compute z, reject if it reveals secret */
   for(i = 0; i < params->l; i++) {
-    poly_pointwise_montgomery(&tmp, &c, (gcry_mldsa_poly*)&s1.buf[i * polysize]);
-    poly_invntt_tomont(&tmp);
-    poly_add((gcry_mldsa_poly*)&z.buf[i * polysize], (gcry_mldsa_poly*)&z.buf[i * polysize], &tmp);
-    poly_reduce((gcry_mldsa_poly*)&z.buf[i * polysize]);
-    if(poly_chknorm((gcry_mldsa_poly*)&z.buf[i * polysize], params->gamma1 - params->beta))
+    _gcry_mldsa_avx2_poly_pointwise_montgomery(&tmp, &c, (gcry_mldsa_poly*)&s1.buf[i * polysize]);
+    _gcry_mldsa_avx2_poly_invntt_tomont(&tmp);
+    _gcry_mldsa_avx2_poly_add((gcry_mldsa_poly*)&z.buf[i * polysize], (gcry_mldsa_poly*)&z.buf[i * polysize], &tmp);
+    _gcry_mldsa_avx2_poly_reduce((gcry_mldsa_poly*)&z.buf[i * polysize]);
+    if(_gcry_mldsa_avx2_poly_chknorm((gcry_mldsa_poly*)&z.buf[i * polysize], params->gamma1 - params->beta))
       goto rej;
   }
 
@@ -333,22 +333,22 @@ else {
   for(i = 0; i < params->k; i++) {
     /* Check that subtracting cs2 does not change high bits of w and low bits
      * do not reveal secret information */
-    poly_pointwise_montgomery(&tmp, &c, (gcry_mldsa_poly*)&s2.buf[i * polysize]);
-    poly_invntt_tomont((gcry_mldsa_poly*)&tmp);
-    poly_sub((gcry_mldsa_poly*)&tmpv.buf[i * polysize], (gcry_mldsa_poly*)&tmpv.buf[i * polysize], &tmp);
-    poly_reduce((gcry_mldsa_poly*)&tmpv.buf[i * polysize]);
-    if(poly_chknorm((gcry_mldsa_poly*)&tmpv.buf[i * polysize], params->gamma2 - params->beta))
+    _gcry_mldsa_avx2_poly_pointwise_montgomery(&tmp, &c, (gcry_mldsa_poly*)&s2.buf[i * polysize]);
+    _gcry_mldsa_avx2_poly_invntt_tomont((gcry_mldsa_poly*)&tmp);
+    _gcry_mldsa_avx2_poly_sub((gcry_mldsa_poly*)&tmpv.buf[i * polysize], (gcry_mldsa_poly*)&tmpv.buf[i * polysize], &tmp);
+    _gcry_mldsa_avx2_poly_reduce((gcry_mldsa_poly*)&tmpv.buf[i * polysize]);
+    if(_gcry_mldsa_avx2_poly_chknorm((gcry_mldsa_poly*)&tmpv.buf[i * polysize], params->gamma2 - params->beta))
       goto rej;
 
     /* Compute hints */
-    poly_pointwise_montgomery(&tmp, &c, (gcry_mldsa_poly*)&t0.buf[i * polysize]);
-    poly_invntt_tomont(&tmp);
-    poly_reduce(&tmp);
-    if(poly_chknorm(&tmp, params->gamma2))
+    _gcry_mldsa_avx2_poly_pointwise_montgomery(&tmp, &c, (gcry_mldsa_poly*)&t0.buf[i * polysize]);
+    _gcry_mldsa_avx2_poly_invntt_tomont(&tmp);
+    _gcry_mldsa_avx2_poly_reduce(&tmp);
+    if(_gcry_mldsa_avx2_poly_chknorm(&tmp, params->gamma2))
       goto rej;
 
-    poly_add((gcry_mldsa_poly*)&tmpv.buf[i * polysize], (gcry_mldsa_poly*)&tmpv.buf[i * polysize], &tmp);
-    n = poly_make_hint(params, hintbuf, (gcry_mldsa_poly*)&tmpv.buf[i * polysize], (gcry_mldsa_poly*)&w1.buf[i * polysize]);
+    _gcry_mldsa_avx2_poly_add((gcry_mldsa_poly*)&tmpv.buf[i * polysize], (gcry_mldsa_poly*)&tmpv.buf[i * polysize], &tmp);
+    n = _gcry_mldsa_avx2_poly_make_hint(params, hintbuf, (gcry_mldsa_poly*)&tmpv.buf[i * polysize], (gcry_mldsa_poly*)&w1.buf[i * polysize]);
     if(pos + n > params->omega)
       goto rej;
 
@@ -359,7 +359,7 @@ else {
 
   /* Pack z into signature */
   for(i = 0; i < params->l; i++)
-    polyz_pack(params, sig + params->ctildebytes + i*params->polyz_packedbytes, (gcry_mldsa_poly*)&z.buf[i * polysize]);
+    _gcry_mldsa_avx2_polyz_pack(params, sig + params->ctildebytes + i*params->polyz_packedbytes, (gcry_mldsa_poly*)&z.buf[i * polysize]);
 
   *siglen = params->signature_bytes;
 
@@ -378,7 +378,7 @@ leave:
 
 
 /*************************************************
-* Name:        crypto_sign_verify
+* Name:        _gcry_mldsa_avx2_verify
 *
 * Description: Verifies signature.
 *
@@ -390,7 +390,7 @@ leave:
 *
 * Returns 0 if signature could be verified correctly and -1 otherwise
 **************************************************/
-int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t siglen, const byte *m, size_t mlen, const byte *pk) {
+int _gcry_mldsa_avx2_verify(gcry_mldsa_param_t *params, const byte *sig, size_t siglen, const byte *m, size_t mlen, const byte *pk) {
   gcry_err_code_t ec = 0;
   unsigned int i, j, pos = 0;
   gcry_mldsa_buf_al buf = {};
@@ -424,7 +424,7 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t sigle
 
   row = rowbuf.buf;
 
-  /* polyw1_pack writes additional 14 bytes */
+  /* _gcry_mldsa_avx2_polyw1_pack writes additional 14 bytes */
   _gcry_mldsa_buf_al_create(&buf, params->k*params->polyw1_packedbytes+14);
 
   if (!(mu = xtrymalloc_secure(GCRY_MLDSA_CRHBYTES)))
@@ -441,13 +441,13 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t sigle
     goto leave;
 
   /* Expand challenge */
-  poly_challenge(params, (gcry_mldsa_poly*)c.buf, sig);
-  poly_ntt((gcry_mldsa_poly*)c.buf);
+  _gcry_mldsa_avx2_poly_challenge(params, (gcry_mldsa_poly*)c.buf, sig);
+  _gcry_mldsa_avx2_poly_ntt((gcry_mldsa_poly*)c.buf);
 
   /* Unpack z; shortness follows from unpacking */
   for(i = 0; i < params->l; i++) {
-    polyz_unpack(params, (gcry_mldsa_poly*)&z.buf[i * polysize], sig + params->ctildebytes + i*params->polyz_packedbytes);
-    poly_ntt((gcry_mldsa_poly*)&z.buf[i * polysize]);
+    _gcry_mldsa_avx2_polyz_unpack(params, (gcry_mldsa_poly*)&z.buf[i * polysize], sig + params->ctildebytes + i*params->polyz_packedbytes);
+    _gcry_mldsa_avx2_poly_ntt((gcry_mldsa_poly*)&z.buf[i * polysize]);
   }
 
   for(i = 0; i < params->k; i++) {
@@ -455,16 +455,16 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t sigle
     polyvec_matrix_expand_row(params, &row, rowbuf.buf, pk, i);
 
     /* Compute i-th row of Az - c2^Dt1 */
-    polyvecl_pointwise_acc_montgomery(params, (gcry_mldsa_poly*)w1.buf, row, z.buf);
+    _gcry_mldsa_avx2_polyvecl_pointwise_acc_montgomery(params, (gcry_mldsa_poly*)w1.buf, row, z.buf);
 
-    polyt1_unpack((gcry_mldsa_poly*)h.buf, pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES);
+    _gcry_mldsa_avx2_polyt1_unpack((gcry_mldsa_poly*)h.buf, pk + GCRY_MLDSA_SEEDBYTES + i*GCRY_MLDSA_POLYT1_PACKEDBYTES);
     poly_shiftl((gcry_mldsa_poly*)h.buf);
-    poly_ntt((gcry_mldsa_poly*)h.buf);
-    poly_pointwise_montgomery((gcry_mldsa_poly*)h.buf, (gcry_mldsa_poly*)c.buf, (gcry_mldsa_poly*)h.buf);
+    _gcry_mldsa_avx2_poly_ntt((gcry_mldsa_poly*)h.buf);
+    _gcry_mldsa_avx2_poly_pointwise_montgomery((gcry_mldsa_poly*)h.buf, (gcry_mldsa_poly*)c.buf, (gcry_mldsa_poly*)h.buf);
 
-    poly_sub((gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)h.buf);
-    poly_reduce((gcry_mldsa_poly*)w1.buf);
-    poly_invntt_tomont((gcry_mldsa_poly*)w1.buf);
+    _gcry_mldsa_avx2_poly_sub((gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)h.buf);
+    _gcry_mldsa_avx2_poly_reduce((gcry_mldsa_poly*)w1.buf);
+    _gcry_mldsa_avx2_poly_invntt_tomont((gcry_mldsa_poly*)w1.buf);
 
     /* Get hint polynomial and reconstruct w1 */
     memset(h.buf, 0, polysize);
@@ -485,9 +485,9 @@ int crypto_sign_verify(gcry_mldsa_param_t *params, const byte *sig, size_t sigle
     }
     pos = hint[params->omega + i];
 
-    poly_caddq((gcry_mldsa_poly*)w1.buf);
-    poly_use_hint(params, (gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)h.buf);
-    polyw1_pack(params, buf.buf + i*params->polyw1_packedbytes, (gcry_mldsa_poly*)w1.buf);
+    _gcry_mldsa_avx2_poly_caddq((gcry_mldsa_poly*)w1.buf);
+    _gcry_mldsa_avx2_poly_use_hint(params, (gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)w1.buf, (gcry_mldsa_poly*)h.buf);
+    _gcry_mldsa_avx2_polyw1_pack(params, buf.buf + i*params->polyw1_packedbytes, (gcry_mldsa_poly*)w1.buf);
   }
 
   /* Extra indices are zero for strong unforgeability */

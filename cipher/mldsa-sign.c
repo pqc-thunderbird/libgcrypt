@@ -45,17 +45,17 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
     uint8_t sig_avx2[params->signature_bytes];
     size_t sig_avx2_len;
     byte msg_avx2[] = {0x01, 0x02};
-    if(_gcry_mldsa_keypair_avx2(params, pk_avx2, sk_avx2))
+    if(_gcry_mldsa_avx2_keypair(params, pk_avx2, sk_avx2))
     {
         printf("generating avx2 keys failed\n");
         return -1;
     }
-    if(crypto_sign_signature(params, sig_avx2, &sig_avx2_len, msg_avx2, sizeof(msg_avx2), sk_avx2))
+    if(_gcry_mldsa_avx2_sign(params, sig_avx2, &sig_avx2_len, msg_avx2, sizeof(msg_avx2), sk_avx2))
     {
         printf("generating avx2 sig failed\n");
         return -1;
     }
-    if(crypto_sign_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
+    if(_gcry_mldsa_avx2_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
     {
         printf("verifying avx2 sig failed\n");
         return -1;
@@ -77,7 +77,7 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
       printf("verify ref sig with avx2 keys failed\n");
       return -1;
     }
-      if(crypto_sign_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
+      if(_gcry_mldsa_avx2_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
     {
         printf("verifying ref sig with avx2 failed\n");
         return -1;

@@ -4,7 +4,7 @@
 #include "mldsa-rejsample-avx2.h"
 #include "mldsa-symmetric-avx2.h"
 
-const byte idxlut[256][8] = {
+const byte _gcry_mldsa_avx2_idxlut[256][8] = {
   { 0,  0,  0,  0,  0,  0,  0,  0},
   { 0,  0,  0,  0,  0,  0,  0,  0},
   { 1,  0,  0,  0,  0,  0,  0,  0},
@@ -266,7 +266,7 @@ const byte idxlut[256][8] = {
 #define REJ_UNIFORM_NBLOCKS ((768+STREAM128_BLOCKBYTES-1)/STREAM128_BLOCKBYTES)
 #define REJ_UNIFORM_BUFLEN (REJ_UNIFORM_NBLOCKS*STREAM128_BLOCKBYTES)
 
-unsigned int rej_uniform_avx(int32_t * restrict r, const byte *buf)
+unsigned int _gcry_mldsa_avx2_rej_uniform_avx(int32_t * restrict r, const byte *buf)
 {
   unsigned int ctr, pos;
   uint32_t good;
@@ -289,7 +289,7 @@ unsigned int rej_uniform_avx(int32_t * restrict r, const byte *buf)
 
     tmp = _mm256_sub_epi32(d, bound);
     good = _mm256_movemask_ps((__m256)tmp);
-    tmp = _mm256_cvtepu8_epi32(_mm_loadl_epi64((__m128i *)&idxlut[good]));
+    tmp = _mm256_cvtepu8_epi32(_mm_loadl_epi64((__m128i *)&_gcry_mldsa_avx2_idxlut[good]));
     d = _mm256_permutevar8x32_epi32(d, tmp);
 
     _mm256_storeu_si256((__m256i *)&r[ctr], d);
@@ -311,7 +311,7 @@ unsigned int rej_uniform_avx(int32_t * restrict r, const byte *buf)
   return ctr;
 }
 
-unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
+unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
   const size_t REJ_UNIFORM_ETA_BUFLEN  = ((136+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)*STREAM256_BLOCKBYTES;
 
   unsigned int ctr, pos;
@@ -337,7 +337,7 @@ unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
     good = _mm256_movemask_epi8(f1);
 
     g0 = _mm256_castsi256_si128(f0);
-    g1 = _mm_loadl_epi64((__m128i *)&idxlut[good & 0xFF]);
+    g1 = _mm_loadl_epi64((__m128i *)&_gcry_mldsa_avx2_idxlut[good & 0xFF]);
     g1 = _mm_shuffle_epi8(g0,g1);
     f1 = _mm256_cvtepi8_epi32(g1);
     f2 = _mm256_mulhrs_epi16(f1,v);
@@ -350,7 +350,7 @@ unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
 
     if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm_bsrli_si128(g0,8);
-    g1 = _mm_loadl_epi64((__m128i *)&idxlut[good & 0xFF]);
+    g1 = _mm_loadl_epi64((__m128i *)&_gcry_mldsa_avx2_idxlut[good & 0xFF]);
     g1 = _mm_shuffle_epi8(g0,g1);
     f1 = _mm256_cvtepi8_epi32(g1);
     f2 = _mm256_mulhrs_epi16(f1,v);
@@ -363,7 +363,7 @@ unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
 
     if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm256_extracti128_si256(f0,1);
-    g1 = _mm_loadl_epi64((__m128i *)&idxlut[good & 0xFF]);
+    g1 = _mm_loadl_epi64((__m128i *)&_gcry_mldsa_avx2_idxlut[good & 0xFF]);
     g1 = _mm_shuffle_epi8(g0,g1);
     f1 = _mm256_cvtepi8_epi32(g1);
     f2 = _mm256_mulhrs_epi16(f1,v);
@@ -376,7 +376,7 @@ unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
 
     if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm_bsrli_si128(g0,8);
-    g1 = _mm_loadl_epi64((__m128i *)&idxlut[good]);
+    g1 = _mm_loadl_epi64((__m128i *)&_gcry_mldsa_avx2_idxlut[good]);
     g1 = _mm_shuffle_epi8(g0,g1);
     f1 = _mm256_cvtepi8_epi32(g1);
     f2 = _mm256_mulhrs_epi16(f1,v);
@@ -404,7 +404,7 @@ unsigned int rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
   return ctr;
 }
 
-unsigned int rej_eta_avx_eta4(int32_t * restrict r, const byte *buf) {
+unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta4(int32_t * restrict r, const byte *buf) {
   const size_t REJ_UNIFORM_ETA_BUFLEN = ((227+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)*STREAM256_BLOCKBYTES;
 
   unsigned int ctr, pos;
@@ -428,7 +428,7 @@ unsigned int rej_eta_avx_eta4(int32_t * restrict r, const byte *buf) {
     good = _mm256_movemask_epi8(f1);
 
     g0 = _mm256_castsi256_si128(f0);
-    g1 = _mm_loadl_epi64((__m128i *)&idxlut[good & 0xFF]);
+    g1 = _mm_loadl_epi64((__m128i *)&_gcry_mldsa_avx2_idxlut[good & 0xFF]);
     g1 = _mm_shuffle_epi8(g0,g1);
     f1 = _mm256_cvtepi8_epi32(g1);
     _mm256_storeu_si256((__m256i *)&r[ctr],f1);
@@ -438,7 +438,7 @@ unsigned int rej_eta_avx_eta4(int32_t * restrict r, const byte *buf) {
 
     if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm_bsrli_si128(g0,8);
-    g1 = _mm_loadl_epi64((__m128i *)&idxlut[good & 0xFF]);
+    g1 = _mm_loadl_epi64((__m128i *)&_gcry_mldsa_avx2_idxlut[good & 0xFF]);
     g1 = _mm_shuffle_epi8(g0,g1);
     f1 = _mm256_cvtepi8_epi32(g1);
     _mm256_storeu_si256((__m256i *)&r[ctr],f1);
@@ -448,7 +448,7 @@ unsigned int rej_eta_avx_eta4(int32_t * restrict r, const byte *buf) {
 
     if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm256_extracti128_si256(f0,1);
-    g1 = _mm_loadl_epi64((__m128i *)&idxlut[good & 0xFF]);
+    g1 = _mm_loadl_epi64((__m128i *)&_gcry_mldsa_avx2_idxlut[good & 0xFF]);
     g1 = _mm_shuffle_epi8(g0,g1);
     f1 = _mm256_cvtepi8_epi32(g1);
     _mm256_storeu_si256((__m256i *)&r[ctr],f1);
@@ -458,7 +458,7 @@ unsigned int rej_eta_avx_eta4(int32_t * restrict r, const byte *buf) {
 
     if(ctr > GCRY_MLDSA_N - 8) break;
     g0 = _mm_bsrli_si128(g0,8);
-    g1 = _mm_loadl_epi64((__m128i *)&idxlut[good]);
+    g1 = _mm_loadl_epi64((__m128i *)&_gcry_mldsa_avx2_idxlut[good]);
     g1 = _mm_shuffle_epi8(g0,g1);
     f1 = _mm256_cvtepi8_epi32(g1);
     _mm256_storeu_si256((__m256i *)&r[ctr],f1);
