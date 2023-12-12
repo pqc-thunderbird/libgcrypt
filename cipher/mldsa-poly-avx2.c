@@ -303,13 +303,13 @@ static unsigned int rej_uniform(int32_t *a,
                                 unsigned int buflen)
 {
   unsigned int ctr, pos;
-  uint32_t t;
+  u32 t;
 
   ctr = pos = 0;
   while(ctr < len && pos + 3 <= buflen) {
     t  = buf[pos++];
-    t |= (uint32_t)buf[pos++] << 8;
-    t |= (uint32_t)buf[pos++] << 16;
+    t |= (u32)buf[pos++] << 8;
+    t |= (u32)buf[pos++] << 16;
     t &= 0x7FFFFF;
 
     if(t < GCRY_MLDSA_Q)
@@ -323,10 +323,10 @@ void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
                      byte *a2,
                      byte *a3,
                      const byte seed[32],
-                     uint16_t nonce0,
-                     uint16_t nonce1,
-                     uint16_t nonce2,
-                     uint16_t nonce3)
+                     u16 nonce0,
+                     u16 nonce1,
+                     u16 nonce2,
+                     u16 nonce3)
 {
   unsigned int ctr0, ctr1, ctr2, ctr3;
   ALIGNED_UINT8(REJ_UNIFORM_BUFLEN+8) buf[4];
@@ -386,7 +386,7 @@ static unsigned int rej_eta2(int32_t *a,
                             unsigned int buflen)
 {
   unsigned int ctr, pos;
-  uint32_t t0, t1;
+  u32 t0, t1;
 
   ctr = pos = 0;
   while(ctr < len && pos < buflen) {
@@ -410,7 +410,7 @@ static unsigned int rej_eta4(int32_t *a,
                             unsigned int buflen)
 {
   unsigned int ctr, pos;
-  uint32_t t0, t1;
+  u32 t0, t1;
 
   ctr = pos = 0;
   while(ctr < len && pos < buflen) {
@@ -430,10 +430,10 @@ void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa
                          gcry_mldsa_poly *a2,
                          gcry_mldsa_poly *a3,
                          const byte seed[64],
-                         uint16_t nonce0,
-                         uint16_t nonce1,
-                         uint16_t nonce2,
-                         uint16_t nonce3)
+                         u16 nonce0,
+                         u16 nonce1,
+                         u16 nonce2,
+                         u16 nonce3)
 {
   unsigned int ctr0, ctr1, ctr2, ctr3;
   size_t REJ_UNIFORM_ETA_BUFLEN;
@@ -515,31 +515,28 @@ void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa
   _gcry_mldsa_buf_al_destroy(&buf);
 }
 
-/*************************************************
-* Name:        _gcry_mldsa_avx2_poly_uniform_gamma1
-*
-* Description: Sample polynomial with uniformly random coefficients
-*              in [-(GAMMA1 - 1), GAMMA1] by unpacking output stream
-*              of SHAKE256(seed|nonce)
-*
-* Arguments:   - gcry_mldsa_poly *a: pointer to output polynomial
-*              - const byte seed[]: byte array with seed of length GCRY_MLDSA_CRHBYTES
-*              - uint16_t nonce: 16-bit nonce
-**************************************************/
-void _gcry_mldsa_avx2_poly_uniform_gamma1_preinit(gcry_mldsa_param_t *params, gcry_mldsa_poly *a, stream256_state *state)
+
+gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_poly *a, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce)
 {
+  gcry_err_code_t ec = 0;
+  gcry_md_hd_t md = NULL;
+
   const size_t POLY_UNIFORM_GAMMA1_NBLOCKS = (params->polyz_packedbytes+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
   /* _gcry_mldsa_avx2_polyz_unpack reads 14 additional bytes */
   ALIGNED_UINT8(POLY_UNIFORM_GAMMA1_NBLOCKS*STREAM256_BLOCKBYTES+14) buf;
-  stream256_squeezeblocks(buf.coeffs, POLY_UNIFORM_GAMMA1_NBLOCKS, state);
-  _gcry_mldsa_avx2_polyz_unpack(params, a, buf.coeffs);
-}
 
-void _gcry_mldsa_avx2_poly_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_poly *a, const byte seed[GCRY_MLDSA_CRHBYTES], uint16_t nonce)
-{
-  stream256_state state;
-  stream256_init(&state, seed, nonce);
-  _gcry_mldsa_avx2_poly_uniform_gamma1_preinit(params, a, &state);
+  ec = _gcry_mldsa_shake256_stream_init(&md, seed, nonce);
+  if (ec)
+    goto leave;
+  ec = _gcry_mldsa_shake256_squeeze_nblocks(md, POLY_UNIFORM_GAMMA1_NBLOCKS, buf.coeffs);
+  if (ec)
+    goto leave;
+
+  _gcry_mldsa_avx2_polyz_unpack(params, a, buf.coeffs);
+
+leave:
+  _gcry_md_close(md);
+  return ec;
 }
 
 void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a0,
@@ -547,10 +544,10 @@ void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a
                             byte *a2,
                             byte *a3,
                             const byte seed[64],
-                            uint16_t nonce0,
-                            uint16_t nonce1,
-                            uint16_t nonce2,
-                            uint16_t nonce3)
+                            u16 nonce0,
+                            u16 nonce1,
+                            u16 nonce2,
+                            u16 nonce3)
 {
   const size_t POLY_UNIFORM_GAMMA1_NBLOCKS = (params->polyz_packedbytes+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
   ALIGNED_UINT8(POLY_UNIFORM_GAMMA1_NBLOCKS*STREAM256_BLOCKBYTES+14) buf[4];
@@ -598,7 +595,7 @@ void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a
 **************************************************/
 void _gcry_mldsa_avx2_poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly * restrict c, const byte seed[GCRY_MLDSA_SEEDBYTES]) {
   unsigned int i, b, pos;
-  uint64_t signs;
+  u64 signs;
   ALIGNED_UINT8(SHAKE256_RATE) buf;
   keccak_state state;
 
@@ -745,10 +742,10 @@ void _gcry_mldsa_avx2_polyt1_unpack(gcry_mldsa_poly * restrict r, const byte a[G
   unsigned int i;
 
   for(i = 0; i < GCRY_MLDSA_N/4; ++i) {
-    r->coeffs[4*i+0] = ((a[5*i+0] >> 0) | ((uint32_t)a[5*i+1] << 8)) & 0x3FF;
-    r->coeffs[4*i+1] = ((a[5*i+1] >> 2) | ((uint32_t)a[5*i+2] << 6)) & 0x3FF;
-    r->coeffs[4*i+2] = ((a[5*i+2] >> 4) | ((uint32_t)a[5*i+3] << 4)) & 0x3FF;
-    r->coeffs[4*i+3] = ((a[5*i+3] >> 6) | ((uint32_t)a[5*i+4] << 2)) & 0x3FF;
+    r->coeffs[4*i+0] = ((a[5*i+0] >> 0) | ((u32)a[5*i+1] << 8)) & 0x3FF;
+    r->coeffs[4*i+1] = ((a[5*i+1] >> 2) | ((u32)a[5*i+2] << 6)) & 0x3FF;
+    r->coeffs[4*i+2] = ((a[5*i+2] >> 4) | ((u32)a[5*i+3] << 4)) & 0x3FF;
+    r->coeffs[4*i+3] = ((a[5*i+3] >> 6) | ((u32)a[5*i+4] << 2)) & 0x3FF;
   }
 }
 
@@ -763,7 +760,7 @@ void _gcry_mldsa_avx2_polyt1_unpack(gcry_mldsa_poly * restrict r, const byte a[G
 **************************************************/
 void _gcry_mldsa_avx2_polyt0_pack(byte r[GCRY_MLDSA_POLYT0_PACKEDBYTES], const gcry_mldsa_poly * restrict a) {
   unsigned int i;
-  uint32_t t[8];
+  u32 t[8];
 
   for(i = 0; i < GCRY_MLDSA_N/8; ++i) {
     t[0] = (1 << (GCRY_MLDSA_D-1)) - a->coeffs[8*i+0];
@@ -811,39 +808,39 @@ void _gcry_mldsa_avx2_polyt0_unpack(gcry_mldsa_poly * restrict r, const byte a[G
 
   for(i = 0; i < GCRY_MLDSA_N/8; ++i) {
     r->coeffs[8*i+0]  = a[13*i+0];
-    r->coeffs[8*i+0] |= (uint32_t)a[13*i+1] << 8;
+    r->coeffs[8*i+0] |= (u32)a[13*i+1] << 8;
     r->coeffs[8*i+0] &= 0x1FFF;
 
     r->coeffs[8*i+1]  = a[13*i+1] >> 5;
-    r->coeffs[8*i+1] |= (uint32_t)a[13*i+2] << 3;
-    r->coeffs[8*i+1] |= (uint32_t)a[13*i+3] << 11;
+    r->coeffs[8*i+1] |= (u32)a[13*i+2] << 3;
+    r->coeffs[8*i+1] |= (u32)a[13*i+3] << 11;
     r->coeffs[8*i+1] &= 0x1FFF;
 
     r->coeffs[8*i+2]  = a[13*i+3] >> 2;
-    r->coeffs[8*i+2] |= (uint32_t)a[13*i+4] << 6;
+    r->coeffs[8*i+2] |= (u32)a[13*i+4] << 6;
     r->coeffs[8*i+2] &= 0x1FFF;
 
     r->coeffs[8*i+3]  = a[13*i+4] >> 7;
-    r->coeffs[8*i+3] |= (uint32_t)a[13*i+5] << 1;
-    r->coeffs[8*i+3] |= (uint32_t)a[13*i+6] << 9;
+    r->coeffs[8*i+3] |= (u32)a[13*i+5] << 1;
+    r->coeffs[8*i+3] |= (u32)a[13*i+6] << 9;
     r->coeffs[8*i+3] &= 0x1FFF;
 
     r->coeffs[8*i+4]  = a[13*i+6] >> 4;
-    r->coeffs[8*i+4] |= (uint32_t)a[13*i+7] << 4;
-    r->coeffs[8*i+4] |= (uint32_t)a[13*i+8] << 12;
+    r->coeffs[8*i+4] |= (u32)a[13*i+7] << 4;
+    r->coeffs[8*i+4] |= (u32)a[13*i+8] << 12;
     r->coeffs[8*i+4] &= 0x1FFF;
 
     r->coeffs[8*i+5]  = a[13*i+8] >> 1;
-    r->coeffs[8*i+5] |= (uint32_t)a[13*i+9] << 7;
+    r->coeffs[8*i+5] |= (u32)a[13*i+9] << 7;
     r->coeffs[8*i+5] &= 0x1FFF;
 
     r->coeffs[8*i+6]  = a[13*i+9] >> 6;
-    r->coeffs[8*i+6] |= (uint32_t)a[13*i+10] << 2;
-    r->coeffs[8*i+6] |= (uint32_t)a[13*i+11] << 10;
+    r->coeffs[8*i+6] |= (u32)a[13*i+10] << 2;
+    r->coeffs[8*i+6] |= (u32)a[13*i+11] << 10;
     r->coeffs[8*i+6] &= 0x1FFF;
 
     r->coeffs[8*i+7]  = a[13*i+11] >> 3;
-    r->coeffs[8*i+7] |= (uint32_t)a[13*i+12] << 5;
+    r->coeffs[8*i+7] |= (u32)a[13*i+12] << 5;
     r->coeffs[8*i+7] &= 0x1FFF;
 
     r->coeffs[8*i+0] = (1 << (GCRY_MLDSA_D-1)) - r->coeffs[8*i+0];
@@ -869,7 +866,7 @@ void _gcry_mldsa_avx2_polyt0_unpack(gcry_mldsa_poly * restrict r, const byte a[G
 **************************************************/
 void _gcry_mldsa_avx2_polyz_pack(gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly * restrict a) {
   unsigned int i;
-  uint32_t t[4];
+  u32 t[4];
 
 if (params->gamma1 == (1 << 17))
 {
@@ -933,7 +930,7 @@ static void polyz_unpack_19(gcry_mldsa_poly * restrict r, const byte *a) {
   __m256i f;
   const __m256i shufbidx = _mm256_set_epi8(-1,11,10, 9,-1, 9, 8, 7,-1, 6, 5, 4,-1, 4, 3, 2,
                                            -1, 9, 8, 7,-1, 7, 6, 5,-1, 4, 3, 2,-1, 2, 1, 0);
-  const __m256i srlvdidx = _mm256_set1_epi64x((uint64_t)4 << 32);
+  const __m256i srlvdidx = _mm256_set1_epi64x((u64)4 << 32);
   const __m256i mask = _mm256_set1_epi32(0xFFFFF);
   const __m256i gamma1 = _mm256_set1_epi32(1 << 19);
 

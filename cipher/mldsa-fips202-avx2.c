@@ -13,18 +13,18 @@
 /*************************************************
 * Name:        load64
 *
-* Description: Load 8 bytes into uint64_t in little-endian order
+* Description: Load 8 bytes into u64 in little-endian order
 *
 * Arguments:   - const byte *x: pointer to input byte array
 *
 * Returns the loaded 64-bit unsigned integer
 **************************************************/
-static uint64_t load64(const byte x[8]) {
+static u64 load64(const byte x[8]) {
   unsigned int i;
-  uint64_t r = 0;
+  u64 r = 0;
 
   for(i=0;i<8;i++)
-    r |= (uint64_t)x[i] << 8*i;
+    r |= (u64)x[i] << 8*i;
 
   return r;
 }
@@ -35,9 +35,9 @@ static uint64_t load64(const byte x[8]) {
 * Description: Store a 64-bit integer to array of 8 bytes in little-endian order
 *
 * Arguments:   - byte *x: pointer to the output byte array (allocated)
-*              - uint64_t u: input 64-bit unsigned integer
+*              - u64 u: input 64-bit unsigned integer
 **************************************************/
-static void store64(byte x[8], uint64_t u) {
+static void store64(byte x[8], u64 u) {
   unsigned int i;
 
   for(i=0;i<8;i++)
@@ -45,31 +45,31 @@ static void store64(byte x[8], uint64_t u) {
 }
 
 /* Keccak round constants */
-const uint64_t KeccakF_RoundConstants[NROUNDS] = {
-  (uint64_t)0x0000000000000001ULL,
-  (uint64_t)0x0000000000008082ULL,
-  (uint64_t)0x800000000000808aULL,
-  (uint64_t)0x8000000080008000ULL,
-  (uint64_t)0x000000000000808bULL,
-  (uint64_t)0x0000000080000001ULL,
-  (uint64_t)0x8000000080008081ULL,
-  (uint64_t)0x8000000000008009ULL,
-  (uint64_t)0x000000000000008aULL,
-  (uint64_t)0x0000000000000088ULL,
-  (uint64_t)0x0000000080008009ULL,
-  (uint64_t)0x000000008000000aULL,
-  (uint64_t)0x000000008000808bULL,
-  (uint64_t)0x800000000000008bULL,
-  (uint64_t)0x8000000000008089ULL,
-  (uint64_t)0x8000000000008003ULL,
-  (uint64_t)0x8000000000008002ULL,
-  (uint64_t)0x8000000000000080ULL,
-  (uint64_t)0x000000000000800aULL,
-  (uint64_t)0x800000008000000aULL,
-  (uint64_t)0x8000000080008081ULL,
-  (uint64_t)0x8000000000008080ULL,
-  (uint64_t)0x0000000080000001ULL,
-  (uint64_t)0x8000000080008008ULL
+const u64 KeccakF_RoundConstants[NROUNDS] = {
+  (u64)0x0000000000000001ULL,
+  (u64)0x0000000000008082ULL,
+  (u64)0x800000000000808aULL,
+  (u64)0x8000000080008000ULL,
+  (u64)0x000000000000808bULL,
+  (u64)0x0000000080000001ULL,
+  (u64)0x8000000080008081ULL,
+  (u64)0x8000000000008009ULL,
+  (u64)0x000000000000008aULL,
+  (u64)0x0000000000000088ULL,
+  (u64)0x0000000080008009ULL,
+  (u64)0x000000008000000aULL,
+  (u64)0x000000008000808bULL,
+  (u64)0x800000000000008bULL,
+  (u64)0x8000000000008089ULL,
+  (u64)0x8000000000008003ULL,
+  (u64)0x8000000000008002ULL,
+  (u64)0x8000000000000080ULL,
+  (u64)0x000000000000800aULL,
+  (u64)0x800000008000000aULL,
+  (u64)0x8000000080008081ULL,
+  (u64)0x8000000000008080ULL,
+  (u64)0x0000000080000001ULL,
+  (u64)0x8000000080008008ULL
 };
 
 /*************************************************
@@ -77,24 +77,24 @@ const uint64_t KeccakF_RoundConstants[NROUNDS] = {
 *
 * Description: The Keccak F1600 Permutation
 *
-* Arguments:   - uint64_t *state: pointer to input/output Keccak state
+* Arguments:   - u64 *state: pointer to input/output Keccak state
 **************************************************/
-static void KeccakF1600_StatePermute(uint64_t state[25])
+static void KeccakF1600_StatePermute(u64 state[25])
 {
         int round;
 
-        uint64_t Aba, Abe, Abi, Abo, Abu;
-        uint64_t Aga, Age, Agi, Ago, Agu;
-        uint64_t Aka, Ake, Aki, Ako, Aku;
-        uint64_t Ama, Ame, Ami, Amo, Amu;
-        uint64_t Asa, Ase, Asi, Aso, Asu;
-        uint64_t BCa, BCe, BCi, BCo, BCu;
-        uint64_t Da, De, Di, Do, Du;
-        uint64_t Eba, Ebe, Ebi, Ebo, Ebu;
-        uint64_t Ega, Ege, Egi, Ego, Egu;
-        uint64_t Eka, Eke, Eki, Eko, Eku;
-        uint64_t Ema, Eme, Emi, Emo, Emu;
-        uint64_t Esa, Ese, Esi, Eso, Esu;
+        u64 Aba, Abe, Abi, Abo, Abu;
+        u64 Aga, Age, Agi, Ago, Agu;
+        u64 Aka, Ake, Aki, Ako, Aku;
+        u64 Ama, Ame, Ami, Amo, Amu;
+        u64 Asa, Ase, Asi, Aso, Asu;
+        u64 BCa, BCe, BCi, BCo, BCu;
+        u64 Da, De, Di, Do, Du;
+        u64 Eba, Ebe, Ebi, Ebo, Ebu;
+        u64 Ega, Ege, Egi, Ego, Egu;
+        u64 Eka, Eke, Eki, Eko, Eku;
+        u64 Ema, Eme, Emi, Emo, Emu;
+        u64 Esa, Ese, Esi, Eso, Esu;
 
         //copyFromState(A, state)
         Aba = state[ 0];
@@ -149,7 +149,7 @@ static void KeccakF1600_StatePermute(uint64_t state[25])
             Asu ^= Du;
             BCu = ROL(Asu, 14);
             Eba =   BCa ^((~BCe)&  BCi );
-            Eba ^= (uint64_t)KeccakF_RoundConstants[round];
+            Eba ^= (u64)KeccakF_RoundConstants[round];
             Ebe =   BCe ^((~BCi)&  BCo );
             Ebi =   BCi ^((~BCo)&  BCu );
             Ebo =   BCo ^((~BCu)&  BCa );
@@ -244,7 +244,7 @@ static void KeccakF1600_StatePermute(uint64_t state[25])
             Esu ^= Du;
             BCu = ROL(Esu, 14);
             Aba =   BCa ^((~BCe)&  BCi );
-            Aba ^= (uint64_t)KeccakF_RoundConstants[round+1];
+            Aba ^= (u64)KeccakF_RoundConstants[round+1];
             Abe =   BCe ^((~BCi)&  BCo );
             Abi =   BCi ^((~BCo)&  BCu );
             Abo =   BCo ^((~BCu)&  BCa );
@@ -348,9 +348,9 @@ static void KeccakF1600_StatePermute(uint64_t state[25])
 *
 * Description: Initializes the Keccak state.
 *
-* Arguments:   - uint64_t *s: pointer to Keccak state
+* Arguments:   - u64 *s: pointer to Keccak state
 **************************************************/
-static void keccak_init(uint64_t s[25])
+static void keccak_init(u64 s[25])
 {
   unsigned int i;
   for(i=0;i<25;i++)
@@ -362,7 +362,7 @@ static void keccak_init(uint64_t s[25])
 *
 * Description: Absorb step of Keccak; incremental.
 *
-* Arguments:   - uint64_t *s: pointer to Keccak state
+* Arguments:   - u64 *s: pointer to Keccak state
 *              - unsigned int pos: position in current block to be absorbed
 *              - unsigned int r: rate in bytes (e.g., 168 for SHAKE128)
 *              - const byte *in: pointer to input to be absorbed into s
@@ -370,7 +370,7 @@ static void keccak_init(uint64_t s[25])
 *
 * Returns new position pos in current block
 **************************************************/
-static unsigned int keccak_absorb(uint64_t s[25],
+static unsigned int keccak_absorb(u64 s[25],
                                   unsigned int pos,
                                   unsigned int r,
                                   const byte *in,
@@ -380,14 +380,14 @@ static unsigned int keccak_absorb(uint64_t s[25],
 
   while(pos+inlen >= r) {
     for(i=pos;i<r;i++)
-      s[i/8] ^= (uint64_t)*in++ << 8*(i%8);
+      s[i/8] ^= (u64)*in++ << 8*(i%8);
     inlen -= r-pos;
     KeccakF1600_StatePermute(s);
     pos = 0;
   }
 
   for(i=pos;i<pos+inlen;i++)
-    s[i/8] ^= (uint64_t)*in++ << 8*(i%8);
+    s[i/8] ^= (u64)*in++ << 8*(i%8);
 
   return i;
 }
@@ -397,14 +397,14 @@ static unsigned int keccak_absorb(uint64_t s[25],
 *
 * Description: Finalize absorb step.
 *
-* Arguments:   - uint64_t *s: pointer to Keccak state
+* Arguments:   - u64 *s: pointer to Keccak state
 *              - unsigned int pos: position in current block to be absorbed
 *              - unsigned int r: rate in bytes (e.g., 168 for SHAKE128)
 *              - byte p: domain separation byte
 **************************************************/
-static void keccak_finalize(uint64_t s[25], unsigned int pos, unsigned int r, byte p)
+static void keccak_finalize(u64 s[25], unsigned int pos, unsigned int r, byte p)
 {
-  s[pos/8] ^= (uint64_t)p << 8*(pos%8);
+  s[pos/8] ^= (u64)p << 8*(pos%8);
   s[r/8-1] ^= 1ULL << 63;
 }
 
@@ -417,7 +417,7 @@ static void keccak_finalize(uint64_t s[25], unsigned int pos, unsigned int r, by
 *
 * Arguments:   - byte *out: pointer to output
 *              - size_t outlen: number of bytes to be squeezed (written to out)
-*              - uint64_t *s: pointer to input/output Keccak state
+*              - u64 *s: pointer to input/output Keccak state
 *              - unsigned int pos: number of bytes in current block already squeezed
 *              - unsigned int r: rate in bytes (e.g., 168 for SHAKE128)
 *
@@ -425,7 +425,7 @@ static void keccak_finalize(uint64_t s[25], unsigned int pos, unsigned int r, by
 **************************************************/
 static unsigned int keccak_squeeze(byte *out,
                                    size_t outlen,
-                                   uint64_t s[25],
+                                   u64 s[25],
                                    unsigned int pos,
                                    unsigned int r)
 {
@@ -452,13 +452,13 @@ static unsigned int keccak_squeeze(byte *out,
 * Description: Absorb step of Keccak;
 *              non-incremental, starts by zeroeing the state.
 *
-* Arguments:   - uint64_t *s: pointer to (uninitialized) output Keccak state
+* Arguments:   - u64 *s: pointer to (uninitialized) output Keccak state
 *              - unsigned int r: rate in bytes (e.g., 168 for SHAKE128)
 *              - const byte *in: pointer to input to be absorbed into s
 *              - size_t inlen: length of input in bytes
 *              - byte p: domain-separation byte for different Keccak-derived functions
 **************************************************/
-static void keccak_absorb_once(uint64_t s[25],
+static void keccak_absorb_once(u64 s[25],
                                unsigned int r,
                                const byte *in,
                                size_t inlen,
@@ -478,9 +478,9 @@ static void keccak_absorb_once(uint64_t s[25],
   }
 
   for(i=0;i<inlen;i++)
-    s[i/8] ^= (uint64_t)in[i] << 8*(i%8);
+    s[i/8] ^= (u64)in[i] << 8*(i%8);
 
-  s[i/8] ^= (uint64_t)p << 8*(i%8);
+  s[i/8] ^= (u64)p << 8*(i%8);
   s[(r-1)/8] ^= 1ULL << 63;
 }
 
@@ -494,12 +494,12 @@ static void keccak_absorb_once(uint64_t s[25],
 *
 * Arguments:   - byte *out: pointer to output blocks
 *              - size_t nblocks: number of blocks to be squeezed (written to out)
-*              - uint64_t *s: pointer to input/output Keccak state
+*              - u64 *s: pointer to input/output Keccak state
 *              - unsigned int r: rate in bytes (e.g., 168 for SHAKE128)
 **************************************************/
 static void keccak_squeezeblocks(byte *out,
                                  size_t nblocks,
-                                 uint64_t s[25],
+                                 u64 s[25],
                                  unsigned int r)
 {
   unsigned int i;
@@ -745,7 +745,7 @@ void shake256(byte *out, size_t outlen, const byte *in, size_t inlen)
 void sha3_256(byte h[32], const byte *in, size_t inlen)
 {
   unsigned int i;
-  uint64_t s[25];
+  u64 s[25];
 
   keccak_absorb_once(s, SHA3_256_RATE, in, inlen, 0x06);
   KeccakF1600_StatePermute(s);
@@ -765,7 +765,7 @@ void sha3_256(byte h[32], const byte *in, size_t inlen)
 void sha3_512(byte h[64], const byte *in, size_t inlen)
 {
   unsigned int i;
-  uint64_t s[25];
+  u64 s[25];
 
   keccak_absorb_once(s, SHA3_512_RATE, in, inlen, 0x06);
   KeccakF1600_StatePermute(s);

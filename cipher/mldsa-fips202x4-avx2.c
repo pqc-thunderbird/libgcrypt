@@ -15,7 +15,7 @@ static void keccakx4_absorb_once(__m256i s[25],
                                  byte p)
 {
   size_t i;
-  uint64_t pos = 0;
+  u64 pos = 0;
   __m256i t, idx;
 
   for(i = 0; i < 25; ++i)
@@ -47,7 +47,7 @@ static void keccakx4_absorb_once(__m256i s[25],
     s[i] = _mm256_xor_si256(s[i], t);
   }
 
-  t = _mm256_set1_epi64x((uint64_t)p << 8*inlen);
+  t = _mm256_set1_epi64x((u64)p << 8*inlen);
   s[i] = _mm256_xor_si256(s[i], t);
   t = _mm256_set1_epi64x(1ULL << 63);
   s[r/8 - 1] = _mm256_xor_si256(s[r/8 - 1], t);

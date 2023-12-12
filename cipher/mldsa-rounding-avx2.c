@@ -143,8 +143,8 @@ unsigned int _gcry_mldsa_avx2_make_hint_avx(gcry_mldsa_param_t *params, byte hin
 {
   unsigned int i, n = 0;
   __m256i f0, f1, g0, g1;
-  uint32_t bad;
-  uint64_t idx;
+  u32 bad;
+  u64 idx;
   const __m256i low = _mm256_set1_epi32(-params->gamma2);
   const __m256i high = _mm256_set1_epi32(params->gamma2);
 
@@ -159,7 +159,7 @@ unsigned int _gcry_mldsa_avx2_make_hint_avx(gcry_mldsa_param_t *params, byte hin
 
     bad = _mm256_movemask_ps((__m256)g0);
     memcpy(&idx,_gcry_mldsa_avx2_idxlut[bad],8);
-    idx += (uint64_t)0x0808080808080808*i;
+    idx += (u64)0x0808080808080808*i;
     memcpy(&hint[n],&idx,8);
     n += _mm_popcnt_u32(bad);
   }

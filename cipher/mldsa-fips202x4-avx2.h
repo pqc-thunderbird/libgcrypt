@@ -29,7 +29,7 @@ typedef struct {
 } keccakx4_state;
 
 #define f1600x4 FIPS202X4_NAMESPACE(f1600x4)
-void f1600x4(__m256i *s, const uint64_t *rc);
+void f1600x4(__m256i *s, const u64 *rc);
 
 #define shake128x4_absorb_once FIPS202X4_NAMESPACE(shake128x4_absorb_once)
 void shake128x4_absorb_once(keccakx4_state *state,

@@ -269,7 +269,7 @@ const byte _gcry_mldsa_avx2_idxlut[256][8] = {
 unsigned int _gcry_mldsa_avx2_rej_uniform_avx(int32_t * restrict r, const byte *buf)
 {
   unsigned int ctr, pos;
-  uint32_t good;
+  u32 good;
   __m256i d, tmp;
   const __m256i bound = _mm256_set1_epi32(GCRY_MLDSA_Q);
   const __m256i mask  = _mm256_set1_epi32(0x7FFFFF);
@@ -277,7 +277,7 @@ unsigned int _gcry_mldsa_avx2_rej_uniform_avx(int32_t * restrict r, const byte *
                                         -1, 9, 8, 7,-1, 6, 5, 4,
                                         -1,11,10, 9,-1, 8, 7, 6,
                                         -1, 5, 4, 3,-1, 2, 1, 0);
-  uint32_t t;
+  u32 t;
 
   ctr = pos = 0;
   while(pos <= REJ_UNIFORM_BUFLEN - 24) {
@@ -300,8 +300,8 @@ unsigned int _gcry_mldsa_avx2_rej_uniform_avx(int32_t * restrict r, const byte *
 
   while(ctr < GCRY_MLDSA_N && pos <= REJ_UNIFORM_BUFLEN - 3) {
     t  = buf[pos++];
-    t |= (uint32_t)buf[pos++] << 8;
-    t |= (uint32_t)buf[pos++] << 16;
+    t |= (u32)buf[pos++] << 8;
+    t |= (u32)buf[pos++] << 16;
     t &= 0x7FFFFF;
 
     if(t < GCRY_MLDSA_Q)
@@ -315,7 +315,7 @@ unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta2(int32_t * restrict r, const byte 
   const size_t REJ_UNIFORM_ETA_BUFLEN  = ((136+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)*STREAM256_BLOCKBYTES;
 
   unsigned int ctr, pos;
-  uint32_t good;
+  u32 good;
   __m256i f0, f1, f2;
   __m128i g0, g1;
   const __m256i mask = _mm256_set1_epi8(15);
@@ -323,7 +323,7 @@ unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta2(int32_t * restrict r, const byte 
   const __m256i bound = mask;
   const __m256i v = _mm256_set1_epi32(-6560);
   const __m256i p = _mm256_set1_epi32(5);
-  uint32_t t0, t1;
+  u32 t0, t1;
 
   ctr = pos = 0;
   while(ctr <= GCRY_MLDSA_N - 8 && pos <= REJ_UNIFORM_ETA_BUFLEN - 16) {
@@ -408,13 +408,13 @@ unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta4(int32_t * restrict r, const byte 
   const size_t REJ_UNIFORM_ETA_BUFLEN = ((227+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)*STREAM256_BLOCKBYTES;
 
   unsigned int ctr, pos;
-  uint32_t good;
+  u32 good;
   __m256i f0, f1;
   __m128i g0, g1;
   const __m256i mask = _mm256_set1_epi8(15);
   const __m256i eta = _mm256_set1_epi8(4);
   const __m256i bound = _mm256_set1_epi8(9);
-  uint32_t t0, t1;
+  u32 t0, t1;
 
   ctr = pos = 0;
   while(ctr <= GCRY_MLDSA_N - 8 && pos <= REJ_UNIFORM_ETA_BUFLEN - 16) {

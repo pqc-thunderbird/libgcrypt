@@ -202,7 +202,7 @@ int _gcry_mldsa_avx2_sign(gcry_mldsa_param_t *params, byte *sig, size_t *siglen,
   byte *seedbuf = NULL;
   byte *rho, *tr, *key, *mu, *rhoprime, *hint;
   byte *hintbuf = NULL;
-  uint64_t nonce = 0;
+  u64 nonce = 0;
   gcry_mldsa_polybuf_al mat = {};
   gcry_mldsa_polybuf_al s1 = {};
   gcry_mldsa_polybuf_al z = {};

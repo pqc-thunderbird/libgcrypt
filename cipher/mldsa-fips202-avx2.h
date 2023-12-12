@@ -14,12 +14,12 @@
 #define FIPS202_NAMESPACE(s) pqcrystals_dilithium_fips202_avx2_##s
 
 typedef struct {
-  uint64_t s[25];
+  u64 s[25];
   unsigned int pos;
 } keccak_state;
 
 #define KeccakF_RoundConstants FIPS202_NAMESPACE(KeccakF_RoundConstants)
-extern const uint64_t KeccakF_RoundConstants[];
+extern const u64 KeccakF_RoundConstants[];
 
 #define shake128_init FIPS202_NAMESPACE(shake128_init)
 void shake128_init(keccak_state *state);
