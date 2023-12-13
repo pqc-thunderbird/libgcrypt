@@ -2,7 +2,6 @@
 #include <immintrin.h>
 #include <string.h>
 #include "config.h"
-#include "mldsa-align-avx2.h"
 #include "mldsa-poly-avx2.h"
 #include "mldsa-symmetric.h"
 #include "mldsa-polyvec-avx2.h"

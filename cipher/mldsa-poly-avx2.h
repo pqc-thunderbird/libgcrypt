@@ -2,12 +2,9 @@
 #define POLY_H
 
 #include <stdint.h>
-#include "mldsa-align-avx2.h"
 #include "mldsa-params.h"
 
 #include "mldsa-poly.h"
-
-typedef ALIGNED_INT32(GCRY_MLDSA_N) poly;
 
 void _gcry_mldsa_avx2_poly_reduce(gcry_mldsa_poly *a);
 void _gcry_mldsa_avx2_poly_caddq(gcry_mldsa_poly *a);

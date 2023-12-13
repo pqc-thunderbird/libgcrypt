@@ -1,12 +1,12 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
-#define _8XQ          0
-#define _8XQINV       8
-#define _8XDIV_QINV  16
-#define _8XDIV       24
-#define _ZETAS_QINV  32
-#define _ZETAS      328
+#define _8XQ 0
+#define _8XQINV 8
+#define _8XDIV_QINV 16
+#define _8XDIV 24
+#define _ZETAS_QINV 32
+#define _ZETAS 328
 
 /* The C ABI on MacOS exports all symbols with a leading
  * underscore. This means that any symbols we refer to from
@@ -25,9 +25,12 @@
 
 #ifndef __ASSEMBLER__
 
-#include "mldsa-align-avx2.h"
-
-typedef ALIGNED_INT32(624) qdata_t;
+#include <immintrin.h>
+typedef union
+{
+  s32 coeffs[624];
+  __m256i vec[(624 + 7) / 8];
+} qdata_t;
 
 extern const qdata_t qdata;
 

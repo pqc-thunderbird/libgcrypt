@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <string.h>
 #include "config.h"
-#include "mldsa-align-avx2.h"
 #include "mldsa-sign-avx2.h"
 #include "mldsa-packing-avx2.h"
 #include "mldsa-polyvec-avx2.h"

@@ -5,7 +5,7 @@
 
 #include "types.h"
 #include "mldsa-params.h"
-#include "mldsa-align-avx2.h"
+#include <immintrin.h>
 
 #include "g10lib.h"
 typedef struct
