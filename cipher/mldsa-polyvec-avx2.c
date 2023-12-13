@@ -78,31 +78,67 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand(gcry_mldsa_param_t *param
   gcry_mldsa_buf_al tmp = {};
   if (params->l == 4 && params->k == 4)
     {
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row0(params, &mat[0 * rowsize], NULL, rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row1(params, &mat[1 * rowsize], NULL, rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row2(params, &mat[2 * rowsize], NULL, rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], NULL, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0(params, &mat[0 * rowsize], NULL, rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row1(params, &mat[1 * rowsize], NULL, rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2(params, &mat[2 * rowsize], NULL, rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], NULL, rho);
+      if (ec)
+        goto leave;
     }
   else if (params->k == 6 && params->l == 5)
     {
       _gcry_mldsa_buf_al_create(&tmp, rowsize);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row0(params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row1(params, &mat[1 * rowsize], &mat[2 * rowsize], rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row2(params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], NULL, rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row4(params, &mat[4 * rowsize], &mat[5 * rowsize], rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row5(params, &mat[5 * rowsize], tmp.buf, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0(params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row1(params, &mat[1 * rowsize], &mat[2 * rowsize], rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2(params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], NULL, rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row4(params, &mat[4 * rowsize], &mat[5 * rowsize], rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row5(params, &mat[5 * rowsize], tmp.buf, rho);
+      if (ec)
+        goto leave;
     }
   else if (params->k == 8 && params->l == 7)
     {
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row0(params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row1(params, &mat[1 * rowsize], &mat[2 * rowsize], rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row2(params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], NULL, rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row4(params, &mat[4 * rowsize], &mat[5 * rowsize], rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row5(params, &mat[5 * rowsize], &mat[6 * rowsize], rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row6(params, &mat[6 * rowsize], &mat[7 * rowsize], rho);
-      _gcry_mldsa_avx2_polyvec_matrix_expand_row7(params, &mat[7 * rowsize], NULL, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0(params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row1(params, &mat[1 * rowsize], &mat[2 * rowsize], rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2(params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], NULL, rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row4(params, &mat[4 * rowsize], &mat[5 * rowsize], rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row5(params, &mat[5 * rowsize], &mat[6 * rowsize], rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row6(params, &mat[6 * rowsize], &mat[7 * rowsize], rho);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row7(params, &mat[7 * rowsize], NULL, rho);
+      if (ec)
+        goto leave;
     }
   else
     {
@@ -120,10 +156,13 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row0(gcry_mldsa_param_t *
                                            byte *rowb,
                                            const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
+  gcry_err_code_t ec = 0;
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->l == 4 && params->k == 4)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 0, 1, 2, 3);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 0, 1, 2, 3);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[0 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
@@ -131,8 +170,12 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row0(gcry_mldsa_param_t *
     }
   else if (params->k == 6 && params->l == 5)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 0, 1, 2, 3);
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[4 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], &rowb[2 * polysize], rho, 4, 256, 257, 258);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 0, 1, 2, 3);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[4 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], &rowb[2 * polysize], rho, 4, 256, 257, 258);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[0 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
@@ -144,8 +187,12 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row0(gcry_mldsa_param_t *
     }
   else if (params->k == 8 && params->l == 7)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 0, 1, 2, 3);
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[4 * polysize], &rowa[5 * polysize], &rowa[6 * polysize], &rowb[0 * polysize], rho, 4, 5, 6, 256);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 0, 1, 2, 3);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[4 * polysize], &rowa[5 * polysize], &rowa[6 * polysize], &rowb[0 * polysize], rho, 4, 5, 6, 256);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[0 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
@@ -157,9 +204,11 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row0(gcry_mldsa_param_t *
     }
   else
     {
-      return GPG_ERR_INV_STATE;
+      ec = GPG_ERR_INV_STATE;
     }
-  return 0;
+
+leave:
+  return ec;
 }
 
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row1(gcry_mldsa_param_t *params,
@@ -167,10 +216,13 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row1(gcry_mldsa_param_t *
                                            byte *rowb,
                                            const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
+  gcry_err_code_t ec = 0;
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->l == 4 && params->k == 4)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 256, 257, 258, 259);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 256, 257, 258, 259);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[0 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
@@ -178,7 +230,9 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row1(gcry_mldsa_param_t *
     }
   else if (params->k == 6 && params->l == 5)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[3 * polysize], &rowa[4 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], rho, 259, 260, 512, 513);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[3 * polysize], &rowa[4 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], rho, 259, 260, 512, 513);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[3 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[4 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowb[0 * polysize]);
@@ -186,8 +240,12 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row1(gcry_mldsa_param_t *
     }
   else if (params->k == 8 && params->l == 7)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], rho, 257, 258, 259, 260);
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[5 * polysize], &rowa[6 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], rho, 261, 262, 512, 513);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], rho, 257, 258, 259, 260);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[5 * polysize], &rowa[6 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], rho, 261, 262, 512, 513);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[3 * polysize]);
@@ -199,9 +257,11 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row1(gcry_mldsa_param_t *
     }
   else
     {
-      return GPG_ERR_INV_STATE;
+      ec = GPG_ERR_INV_STATE;
+      goto leave;
     }
-  return 0;
+leave:
+  return ec;
 }
 
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row2(gcry_mldsa_param_t *params,
@@ -209,11 +269,14 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row2(gcry_mldsa_param_t *
                                            byte *rowb,
                                            const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
+  gcry_err_code_t ec = 0;
   const size_t polysize = sizeof(gcry_mldsa_poly);
 
   if (params->l == 4 && params->k == 4)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 512, 513, 514, 515);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 512, 513, 514, 515);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[0 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
@@ -221,7 +284,9 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row2(gcry_mldsa_param_t *
     }
   else if (params->k == 6 && params->l == 5)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], &rowb[0 * polysize], rho, 514, 515, 516, 768);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], &rowb[0 * polysize], rho, 514, 515, 516, 768);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[3 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[4 * polysize]);
@@ -229,8 +294,12 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row2(gcry_mldsa_param_t *
     }
   else if (params->k == 8 && params->l == 7)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], &rowa[5 * polysize], rho, 514, 515, 516, 517);
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[6 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], &rowb[2 * polysize], rho, 518, 768, 769, 770);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], &rowa[5 * polysize], rho, 514, 515, 516, 517);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[6 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], &rowb[2 * polysize], rho, 518, 768, 769, 770);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[3 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[4 * polysize]);
@@ -242,9 +311,11 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row2(gcry_mldsa_param_t *
     }
   else
     {
-      return GPG_ERR_INV_STATE;
+      ec = GPG_ERR_INV_STATE;
+      goto leave;
     }
-  return 0;
+leave:
+  return ec;
 }
 
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row3(gcry_mldsa_param_t *params,
@@ -252,10 +323,13 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row3(gcry_mldsa_param_t *
                                            byte *rowb,
                                            const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
+  gcry_err_code_t ec = 0;
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->l == 4 && params->k == 4)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 768, 769, 770, 771);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 768, 769, 770, 771);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[0 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
@@ -263,7 +337,9 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row3(gcry_mldsa_param_t *
     }
   else if (params->k == 6 && params->l == 5)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], rho, 769, 770, 771, 772);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], rho, 769, 770, 771, 772);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[3 * polysize]);
@@ -271,7 +347,9 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row3(gcry_mldsa_param_t *
     }
   else if (params->k == 8 && params->l == 7)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[3 * polysize], &rowa[4 * polysize], &rowa[5 * polysize], &rowa[6 * polysize], rho, 771, 772, 773, 774);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[3 * polysize], &rowa[4 * polysize], &rowa[5 * polysize], &rowa[6 * polysize], rho, 771, 772, 773, 774);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[3 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[4 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[5 * polysize]);
@@ -279,9 +357,11 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row3(gcry_mldsa_param_t *
     }
   else
     {
-      return GPG_ERR_INV_STATE;
+      ec = GPG_ERR_INV_STATE;
+      goto leave;
     }
-  return 0;
+leave:
+  return ec;
 }
 
 
@@ -290,12 +370,17 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row4(gcry_mldsa_param_t *
                                            byte *rowb,
                                            const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
+  gcry_err_code_t ec = 0;
   const size_t polysize = sizeof(gcry_mldsa_poly);
 
   if (params->k == 6 && params->l == 5)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 1024, 1025, 1026, 1027);
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[4 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], &rowb[2 * polysize], rho, 1028, 1280, 1281, 1282);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 1024, 1025, 1026, 1027);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[4 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], &rowb[2 * polysize], rho, 1028, 1280, 1281, 1282);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[0 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
@@ -307,8 +392,12 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row4(gcry_mldsa_param_t *
     }
   else if (params->k == 8 && params->l == 7)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 1024, 1025, 1026, 1027);
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[4 * polysize], &rowa[5 * polysize], &rowa[6 * polysize], &rowb[0 * polysize], rho, 1028, 1029, 1030, 1280);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 1024, 1025, 1026, 1027);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[4 * polysize], &rowa[5 * polysize], &rowa[6 * polysize], &rowb[0 * polysize], rho, 1028, 1029, 1030, 1280);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[0 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
@@ -320,9 +409,12 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row4(gcry_mldsa_param_t *
     }
   else
     {
-      return GPG_ERR_INV_STATE;
+      ec = GPG_ERR_INV_STATE;
+      goto leave;
     }
-  return 0;
+
+leave:
+  return ec;
 }
 
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row5(gcry_mldsa_param_t *params,
@@ -330,17 +422,24 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row5(gcry_mldsa_param_t *
                                            byte *rowb,
                                            const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
+  gcry_err_code_t ec = 0;
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->k == 6 && params->l == 5)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[3 * polysize], &rowa[4 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], rho, 1283, 1284, 1536, 1537);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[3 * polysize], &rowa[4 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], rho, 1283, 1284, 1536, 1537);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[3 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[4 * polysize]);
     }
   else if (params->k == 8 && params->l == 7)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], rho, 1281, 1282, 1283, 1284);
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[5 * polysize], &rowa[6 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], rho, 1285, 1286, 1536, 1537);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], rho, 1281, 1282, 1283, 1284);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[5 * polysize], &rowa[6 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], rho, 1285, 1286, 1536, 1537);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[1 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[3 * polysize]);
@@ -352,9 +451,12 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row5(gcry_mldsa_param_t *
     }
   else
     {
-      return GPG_ERR_INV_STATE;
+      ec = GPG_ERR_INV_STATE;
+      goto leave;
     }
-  return 0;
+
+leave:
+  return ec;
 }
 
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row6(gcry_mldsa_param_t *params,
@@ -362,11 +464,16 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row6(gcry_mldsa_param_t *
                                 byte *rowb,
                                 const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
+  gcry_err_code_t ec = 0;
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->k == 8 && params->l == 7)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], &rowa[5 * polysize], rho, 1538, 1539, 1540, 1541);
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[6 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], &rowb[2 * polysize], rho, 1542, 1792, 1793, 1794);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], &rowa[5 * polysize], rho, 1538, 1539, 1540, 1541);
+      if (ec)
+        goto leave;
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[6 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], &rowb[2 * polysize], rho, 1542, 1792, 1793, 1794);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[2 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[3 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[4 * polysize]);
@@ -378,9 +485,12 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row6(gcry_mldsa_param_t *
     }
   else
     {
-      return GPG_ERR_INV_STATE;
+      ec = GPG_ERR_INV_STATE;
+      goto leave;
     }
-  return 0;
+
+leave:
+  return ec;
 }
 
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row7(gcry_mldsa_param_t *params,
@@ -388,10 +498,13 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row7(gcry_mldsa_param_t *
                                 byte *rowb,
                                 const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
+  gcry_err_code_t ec = 0;
   const size_t polysize = sizeof(gcry_mldsa_poly);
   if (params->k == 8 && params->l == 7)
     {
-      _gcry_mldsa_avx2_poly_uniform_4x(&rowa[3 * polysize], &rowa[4 * polysize], &rowa[5 * polysize], &rowa[6 * polysize], rho, 1795, 1796, 1797, 1798);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x(&rowa[3 * polysize], &rowa[4 * polysize], &rowa[5 * polysize], &rowa[6 * polysize], rho, 1795, 1796, 1797, 1798);
+      if (ec)
+        goto leave;
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[3 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[4 * polysize]);
       _gcry_mldsa_avx2_poly_nttunpack(&rowa[5 * polysize]);
@@ -399,9 +512,12 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row7(gcry_mldsa_param_t *
     }
   else
     {
-      return GPG_ERR_INV_STATE;
+      ec = GPG_ERR_INV_STATE;
+      goto leave;
     }
-  return 0;
+
+leave:
+  return ec;
 }
 
 void _gcry_mldsa_avx2_polyvec_matrix_pointwise_montgomery(gcry_mldsa_param_t *params, byte *t, const byte *mat, const byte *v)

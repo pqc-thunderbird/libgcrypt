@@ -26,7 +26,7 @@ void _gcry_mldsa_avx2_poly_use_hint(gcry_mldsa_param_t *params, gcry_mldsa_poly 
 int _gcry_mldsa_avx2_poly_chknorm(const gcry_mldsa_poly *a, s32 B);
 gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_poly *a, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce);
 
-void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
+gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
                      byte *a1,
                      byte *a2,
                      byte *a3,
@@ -35,7 +35,7 @@ void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
                      u16 nonce1,
                      u16 nonce2,
                      u16 nonce3);
-void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
+gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
                          gcry_mldsa_poly *a1,
                          gcry_mldsa_poly *a2,
                          gcry_mldsa_poly *a3,
@@ -44,7 +44,7 @@ void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa
                          u16 nonce1,
                          u16 nonce2,
                          u16 nonce3);
-void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a0,
+gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a0,
                             byte *a1,
                             byte *a2,
                             byte *a3,

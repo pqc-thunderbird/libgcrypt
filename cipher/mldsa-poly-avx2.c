@@ -317,7 +317,7 @@ static unsigned int rej_uniform(s32 *a,
   return ctr;
 }
 
-void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
+gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
                      byte *a1,
                      byte *a2,
                      byte *a3,
@@ -327,6 +327,7 @@ void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
                      u16 nonce2,
                      u16 nonce3)
 {
+  gcry_err_code_t ec = 0;
   unsigned int ctr0, ctr1, ctr2, ctr3;
   gcry_mldsa_buf_al buf = {};
   size_t offset_al;
@@ -334,9 +335,15 @@ void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
   size_t buf_elem_len = REJ_UNIFORM_BUFLEN + 8;
   /* make sure each sub structure starts memory aligned */
   offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
-  _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
   gcry_mldsa_keccakx4_state state;
   __m256i f;
+
+  ec = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
+  if (ec)
+  {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+  }
 
   f = _mm256_loadu_si256((__m256i *)seed);
   _mm256_store_si256((__m256i *)&buf.buf[0 * offset_al],f);
@@ -370,7 +377,9 @@ void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
     ctr3 += rej_uniform(((gcry_mldsa_poly*)a3)->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], GCRY_SHAKE128_RATE);
   }
 
+leave:
   _gcry_mldsa_buf_al_destroy(&buf);
+  return ec;
 }
 
 /*************************************************
@@ -432,7 +441,7 @@ static unsigned int rej_eta4(s32 *a,
   return ctr;
 }
 
-void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
+gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa_poly *a0,
                          gcry_mldsa_poly *a1,
                          gcry_mldsa_poly *a2,
                          gcry_mldsa_poly *a3,
@@ -442,6 +451,7 @@ void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa
                          u16 nonce2,
                          u16 nonce3)
 {
+  gcry_err_code_t ec = 0;
   unsigned int ctr0, ctr1, ctr2, ctr3;
   size_t REJ_UNIFORM_ETA_BUFLEN;
   size_t offset_al;
@@ -462,7 +472,12 @@ void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa
 
   /* make sure each sub structure starts memory aligned */
   offset_al = REJ_UNIFORM_ETA_BUFLEN + (128 - (REJ_UNIFORM_ETA_BUFLEN % 128));
-  _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
+  ec = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
+  if (ec)
+  {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+  }
 
 
   f = _mm256_loadu_si256((__m256i *)&seed[0]);
@@ -519,7 +534,9 @@ void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa
     }
   }
 
+leave:
   _gcry_mldsa_buf_al_destroy(&buf);
+  return ec;
 }
 
 
@@ -549,7 +566,7 @@ leave:
   return ec;
 }
 
-void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a0,
+gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a0,
                             byte *a1,
                             byte *a2,
                             byte *a3,
@@ -559,6 +576,7 @@ void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a
                             u16 nonce2,
                             u16 nonce3)
 {
+  gcry_err_code_t ec = 0;
   const size_t POLY_UNIFORM_GAMMA1_NBLOCKS = (params->polyz_packedbytes+GCRY_STREAM256_BLOCKBYTES-1)/GCRY_STREAM256_BLOCKBYTES;
   size_t buf_elem_len = POLY_UNIFORM_GAMMA1_NBLOCKS*GCRY_STREAM256_BLOCKBYTES+14;
   gcry_mldsa_buf_al buf = {};
@@ -566,9 +584,15 @@ void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a
 
   /* make sure each sub structure starts memory aligned */
   offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
-  _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
   gcry_mldsa_keccakx4_state state;
   __m256i f;
+
+  ec = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
+  if (ec)
+  {
+    ec = gpg_err_code_from_syserror();
+    goto leave;
+  }
 
   f = _mm256_loadu_si256((__m256i *)&seed[0]);
   _mm256_store_si256((__m256i *)&buf.buf[0 * offset_al],f);
@@ -598,7 +622,9 @@ void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a
   _gcry_mldsa_avx2_polyz_unpack(params, (gcry_mldsa_poly*)a2, &buf.buf[2 * offset_al]);
   _gcry_mldsa_avx2_polyz_unpack(params, (gcry_mldsa_poly*)a3, &buf.buf[3 * offset_al]);
 
+leave:
   _gcry_mldsa_buf_al_destroy(&buf);
+  return ec;
 }
 
 /*************************************************
