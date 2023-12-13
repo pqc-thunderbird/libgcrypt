@@ -7,8 +7,6 @@
 #include "mldsa-polyvec.h"
 #include "mldsa-poly.h"
 
-void _gcry_mldsa_challenge(gcry_mldsa_poly *c, const byte seed[GCRY_MLDSA_SEEDBYTES]);
-
 gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk);
 
 gcry_err_code_t _gcry_mldsa_sign(

@@ -515,7 +515,7 @@ leave:
 }
 
 /*************************************************
- * Name:        _gcry_mldsa_challenge
+ * Name:        _gcry_mldsa_poly_challenge
  *
  * Description: Implementation of H. Samples polynomial with params->tau nonzero
  *              coefficients in {-1,1} using the output stream of
