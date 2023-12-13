@@ -68,4 +68,13 @@ void _gcry_mldsa_avx2_polyz_unpack(gcry_mldsa_param_t *params, gcry_mldsa_poly *
 
 void _gcry_mldsa_avx2_polyw1_pack(gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly *a);
 
+
+void _gcry_mldsa_avx2_unpack_sk(gcry_mldsa_param_t *params, byte rho[GCRY_MLDSA_SEEDBYTES],
+               byte tr[GCRY_MLDSA_TRBYTES],
+               byte key[GCRY_MLDSA_SEEDBYTES],
+               byte *t0,
+               byte *s1,
+               byte *s2,
+               const byte *sk);
+
 #endif

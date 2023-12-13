@@ -4,7 +4,6 @@
 #include <string.h>
 #include "config.h"
 #include "mldsa-sign-avx2.h"
-#include "mldsa-packing-avx2.h"
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-polyvec.h"
 #include "mldsa-poly-avx2.h"
