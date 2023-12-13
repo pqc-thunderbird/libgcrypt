@@ -29,7 +29,7 @@ void _gcry_mldsa_avx2_poly_use_hint(gcry_mldsa_param_t *params, gcry_mldsa_poly 
 
 int _gcry_mldsa_avx2_poly_chknorm(const gcry_mldsa_poly *a, int32_t B);
 gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_poly *a, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce);
-void _gcry_mldsa_avx2_poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly *c, const byte seed[GCRY_MLDSA_SEEDBYTES]);
+gcry_err_code_t _gcry_mldsa_avx2_poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly *c, const byte seed[GCRY_MLDSA_SEEDBYTES]);
 
 void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
                      byte *a1,
