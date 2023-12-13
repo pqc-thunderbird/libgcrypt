@@ -1,5 +1,5 @@
-#ifndef SIGN_H
-#define SIGN_H
+#ifndef _GCRY_MLDSA_AVX2_SIGN_H
+#define _GCRY_MLDSA_AVX2_SIGN_H
 
 #include <stddef.h>
 #include <stdint.h>

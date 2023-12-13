@@ -1,5 +1,5 @@
-#ifndef CONSTS_H
-#define CONSTS_H
+#ifndef _GCRY_MLDSA_AVX2_CONSTS_H
+#define _GCRY_MLDSA_AVX2_CONSTS_H
 
 #define _8XQ 0
 #define _8XQINV 8

@@ -1,5 +1,5 @@
-#ifndef NTT_H
-#define NTT_H
+#ifndef _GCRY_MLDSA_AVX2_NTT_H
+#define _GCRY_MLDSA_AVX2_NTT_H
 
 #include <immintrin.h>
 

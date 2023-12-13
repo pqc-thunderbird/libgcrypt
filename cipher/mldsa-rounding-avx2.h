@@ -1,5 +1,5 @@
-#ifndef ROUNDING_H
-#define ROUNDING_H
+#ifndef _GCRY_MLDSA_AVX2_ROUNDING_H
+#define _GCRY_MLDSA_AVX2_ROUNDING_H
 
 #include <stdint.h>
 #include <immintrin.h>

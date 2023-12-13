@@ -1,5 +1,5 @@
-#ifndef POLYVEC_H
-#define POLYVEC_H
+#ifndef _GCRY_MLDSA_AVX2_POLYVEC_H
+#define _GCRY_MLDSA_AVX2_POLYVEC_H
 
 #include <stdint.h>
 #include "mldsa-params.h"

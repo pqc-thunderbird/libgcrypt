@@ -1,5 +1,5 @@
-#ifndef REJSAMPLE_H
-#define REJSAMPLE_H
+#ifndef _GCRY_MLDSA_AVX2_REJSAMPLE_H
+#define _GCRY_MLDSA_AVX2_REJSAMPLE_H
 
 #include <stdint.h>
 
