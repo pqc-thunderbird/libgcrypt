@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include "mldsa-align-avx2.h"
 #include "mldsa-params.h"
-#include "mldsa-symmetric-avx2.h"
 
 #include "mldsa-poly.h"
 
@@ -27,9 +26,8 @@ void _gcry_mldsa_avx2_poly_decompose(gcry_mldsa_param_t *params, gcry_mldsa_poly
 unsigned int _gcry_mldsa_avx2_poly_make_hint(gcry_mldsa_param_t *params, byte hint[GCRY_MLDSA_N], const gcry_mldsa_poly *a0, const gcry_mldsa_poly *a1);
 void _gcry_mldsa_avx2_poly_use_hint(gcry_mldsa_param_t *params, gcry_mldsa_poly *b, const gcry_mldsa_poly *a, const gcry_mldsa_poly *h);
 
-int _gcry_mldsa_avx2_poly_chknorm(const gcry_mldsa_poly *a, int32_t B);
+int _gcry_mldsa_avx2_poly_chknorm(const gcry_mldsa_poly *a, s32 B);
 gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1(gcry_mldsa_param_t *params, gcry_mldsa_poly *a, const byte seed[GCRY_MLDSA_CRHBYTES], u16 nonce);
-gcry_err_code_t _gcry_mldsa_avx2_poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly *c, const byte seed[GCRY_MLDSA_SEEDBYTES]);
 
 void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
                      byte *a1,

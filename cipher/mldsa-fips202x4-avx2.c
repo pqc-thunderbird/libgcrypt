@@ -2,8 +2,39 @@
 #include <stdint.h>
 #include <immintrin.h>
 #include <string.h>
-#include "mldsa-fips202-avx2.h"
+#include "config.h"
+#include "types.h"
 #include "mldsa-fips202x4-avx2.h"
+#include "mldsa-symmetric.h"
+
+/* Keccak round constants */
+#define NROUNDS 24
+const u64 KeccakF_RoundConstants[NROUNDS] = {
+  (u64)0x0000000000000001ULL,
+  (u64)0x0000000000008082ULL,
+  (u64)0x800000000000808aULL,
+  (u64)0x8000000080008000ULL,
+  (u64)0x000000000000808bULL,
+  (u64)0x0000000080000001ULL,
+  (u64)0x8000000080008081ULL,
+  (u64)0x8000000000008009ULL,
+  (u64)0x000000000000008aULL,
+  (u64)0x0000000000000088ULL,
+  (u64)0x0000000080008009ULL,
+  (u64)0x000000008000000aULL,
+  (u64)0x000000008000808bULL,
+  (u64)0x800000000000008bULL,
+  (u64)0x8000000000008089ULL,
+  (u64)0x8000000000008003ULL,
+  (u64)0x8000000000008002ULL,
+  (u64)0x8000000000000080ULL,
+  (u64)0x000000000000800aULL,
+  (u64)0x800000008000000aULL,
+  (u64)0x8000000080008081ULL,
+  (u64)0x8000000000008080ULL,
+  (u64)0x0000000080000001ULL,
+  (u64)0x8000000080008008ULL
+};
 
 static void keccakx4_absorb_once(__m256i s[25],
                                  unsigned int r,
@@ -30,7 +61,7 @@ static void keccakx4_absorb_once(__m256i s[25],
     }
     inlen -= r;
 
-    f1600x4(s, KeccakF_RoundConstants);
+    _gcry_mldsa_avx2_f1600x4(s, KeccakF_RoundConstants);
   }
 
   for(i = 0; i < inlen/8; ++i) {
@@ -65,7 +96,7 @@ static void keccakx4_squeezeblocks(byte *out0,
   __m128d t;
 
   while(nblocks > 0) {
-    f1600x4(s, KeccakF_RoundConstants);
+    _gcry_mldsa_avx2_f1600x4(s, KeccakF_RoundConstants);
     for(i=0; i < r/8; ++i) {
       t = _mm_castsi128_pd(_mm256_castsi256_si128(s[i]));
       _mm_storel_pd((__attribute__((__may_alias__)) double *)&out0[8*i], t);
@@ -83,47 +114,47 @@ static void keccakx4_squeezeblocks(byte *out0,
   }
 }
 
-void shake128x4_absorb_once(keccakx4_state *state,
+void _gcry_mldsa_avx2_shake128x4_absorb_once(gcry_mldsa_keccakx4_state *state,
                             const byte *in0,
                             const byte *in1,
                             const byte *in2,
                             const byte *in3,
                             size_t inlen)
 {
-  keccakx4_absorb_once(state->s, SHAKE128_RATE, in0, in1, in2, in3, inlen, 0x1F);
+  keccakx4_absorb_once(state->s, GCRY_SHAKE128_RATE, in0, in1, in2, in3, inlen, 0x1F);
 }
 
-void shake128x4_squeezeblocks(byte *out0,
+void _gcry_mldsa_avx2_shake128x4_squeezeblocks(byte *out0,
                               byte *out1,
                               byte *out2,
                               byte *out3,
                               size_t nblocks,
-                              keccakx4_state *state)
+                              gcry_mldsa_keccakx4_state *state)
 {
-  keccakx4_squeezeblocks(out0, out1, out2, out3, nblocks, SHAKE128_RATE, state->s);
+  keccakx4_squeezeblocks(out0, out1, out2, out3, nblocks, GCRY_SHAKE128_RATE, state->s);
 }
 
-void shake256x4_absorb_once(keccakx4_state *state,
+void _gcry_mldsa_avx2_shake256x4_absorb_once(gcry_mldsa_keccakx4_state *state,
                             const byte *in0,
                             const byte *in1,
                             const byte *in2,
                             const byte *in3,
                             size_t inlen)
 {
-  keccakx4_absorb_once(state->s, SHAKE256_RATE, in0, in1, in2, in3, inlen, 0x1F);
+  keccakx4_absorb_once(state->s, GCRY_SHAKE256_RATE, in0, in1, in2, in3, inlen, 0x1F);
 }
 
-void shake256x4_squeezeblocks(byte *out0,
+void _gcry_mldsa_avx2_shake256x4_squeezeblocks(byte *out0,
                               byte *out1,
                               byte *out2,
                               byte *out3,
                               size_t nblocks,
-                              keccakx4_state *state)
+                              gcry_mldsa_keccakx4_state *state)
 {
-  keccakx4_squeezeblocks(out0, out1, out2, out3, nblocks, SHAKE256_RATE, state->s);
+  keccakx4_squeezeblocks(out0, out1, out2, out3, nblocks, GCRY_SHAKE256_RATE, state->s);
 }
 
-void shake128x4(byte *out0,
+void _gcry_mldsa_avx2_shake128x4(byte *out0,
                 byte *out1,
                 byte *out2,
                 byte *out3,
@@ -135,21 +166,21 @@ void shake128x4(byte *out0,
                 size_t inlen)
 {
   unsigned int i;
-  size_t nblocks = outlen/SHAKE128_RATE;
-  byte t[4][SHAKE128_RATE];
-  keccakx4_state state;
+  size_t nblocks = outlen/GCRY_SHAKE128_RATE;
+  byte t[4][GCRY_SHAKE128_RATE];
+  gcry_mldsa_keccakx4_state state;
 
-  shake128x4_absorb_once(&state, in0, in1, in2, in3, inlen);
-  shake128x4_squeezeblocks(out0, out1, out2, out3, nblocks, &state);
+  _gcry_mldsa_avx2_shake128x4_absorb_once(&state, in0, in1, in2, in3, inlen);
+  _gcry_mldsa_avx2_shake128x4_squeezeblocks(out0, out1, out2, out3, nblocks, &state);
 
-  out0 += nblocks*SHAKE128_RATE;
-  out1 += nblocks*SHAKE128_RATE;
-  out2 += nblocks*SHAKE128_RATE;
-  out3 += nblocks*SHAKE128_RATE;
-  outlen -= nblocks*SHAKE128_RATE;
+  out0 += nblocks*GCRY_SHAKE128_RATE;
+  out1 += nblocks*GCRY_SHAKE128_RATE;
+  out2 += nblocks*GCRY_SHAKE128_RATE;
+  out3 += nblocks*GCRY_SHAKE128_RATE;
+  outlen -= nblocks*GCRY_SHAKE128_RATE;
 
   if(outlen) {
-    shake128x4_squeezeblocks(t[0], t[1], t[2], t[3], 1, &state);
+    _gcry_mldsa_avx2_shake128x4_squeezeblocks(t[0], t[1], t[2], t[3], 1, &state);
     for(i = 0; i < outlen; ++i) {
       out0[i] = t[0][i];
       out1[i] = t[1][i];
@@ -159,7 +190,7 @@ void shake128x4(byte *out0,
   }
 }
 
-void shake256x4(byte *out0,
+void _gcry_mldsa_avx2_shake256x4(byte *out0,
                 byte *out1,
                 byte *out2,
                 byte *out3,
@@ -171,21 +202,21 @@ void shake256x4(byte *out0,
                 size_t inlen)
 {
   unsigned int i;
-  size_t nblocks = outlen/SHAKE256_RATE;
-  byte t[4][SHAKE256_RATE];
-  keccakx4_state state;
+  size_t nblocks = outlen/GCRY_SHAKE256_RATE;
+  byte t[4][GCRY_SHAKE256_RATE];
+  gcry_mldsa_keccakx4_state state;
 
-  shake256x4_absorb_once(&state, in0, in1, in2, in3, inlen);
-  shake256x4_squeezeblocks(out0, out1, out2, out3, nblocks, &state);
+  _gcry_mldsa_avx2_shake256x4_absorb_once(&state, in0, in1, in2, in3, inlen);
+  _gcry_mldsa_avx2_shake256x4_squeezeblocks(out0, out1, out2, out3, nblocks, &state);
 
-  out0 += nblocks*SHAKE256_RATE;
-  out1 += nblocks*SHAKE256_RATE;
-  out2 += nblocks*SHAKE256_RATE;
-  out3 += nblocks*SHAKE256_RATE;
-  outlen -= nblocks*SHAKE256_RATE;
+  out0 += nblocks*GCRY_SHAKE256_RATE;
+  out1 += nblocks*GCRY_SHAKE256_RATE;
+  out2 += nblocks*GCRY_SHAKE256_RATE;
+  out3 += nblocks*GCRY_SHAKE256_RATE;
+  outlen -= nblocks*GCRY_SHAKE256_RATE;
 
   if(outlen) {
-    shake256x4_squeezeblocks(t[0], t[1], t[2], t[3], 1, &state);
+    _gcry_mldsa_avx2_shake256x4_squeezeblocks(t[0], t[1], t[2], t[3], 1, &state);
     for(i = 0; i < outlen; ++i) {
       out0[i] = t[0][i];
       out1[i] = t[1][i];

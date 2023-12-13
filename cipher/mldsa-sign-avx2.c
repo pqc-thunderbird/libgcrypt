@@ -9,8 +9,6 @@
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-polyvec.h"
 #include "mldsa-poly-avx2.h"
-#include "mldsa-symmetric-avx2.h"
-#include "mldsa-fips202-avx2.h"
 
 static inline void polyvec_matrix_expand_row(gcry_mldsa_param_t *params, byte **row, byte* buf, const byte rho[GCRY_MLDSA_SEEDBYTES], unsigned int i) {
   const size_t offset = params->l * sizeof(gcry_mldsa_poly);
@@ -313,7 +311,7 @@ else {
   if (ec)
     goto leave;
   _gcry_md_close(hd);
-  _gcry_mldsa_avx2_poly_challenge(params, &c, sig);
+  _gcry_mldsa_poly_challenge(params, &c, sig);
   _gcry_mldsa_avx2_poly_ntt(&c);
 
   /* Compute z, reject if it reveals secret */
@@ -441,7 +439,7 @@ int _gcry_mldsa_avx2_verify(gcry_mldsa_param_t *params, const byte *sig, size_t 
     goto leave;
 
   /* Expand challenge */
-  _gcry_mldsa_avx2_poly_challenge(params, (gcry_mldsa_poly*)c.buf, sig);
+  _gcry_mldsa_poly_challenge(params, (gcry_mldsa_poly*)c.buf, sig);
   _gcry_mldsa_avx2_poly_ntt((gcry_mldsa_poly*)c.buf);
 
   /* Unpack z; shortness follows from unpacking */

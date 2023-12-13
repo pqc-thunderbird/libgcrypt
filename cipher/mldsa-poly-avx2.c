@@ -4,18 +4,18 @@
 #include "config.h"
 #include "mldsa-align-avx2.h"
 #include "mldsa-poly-avx2.h"
+#include "mldsa-symmetric.h"
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-ntt-avx2.h"
 #include "mldsa-rounding-avx2.h"
 #include "mldsa-rejsample-avx2.h"
 #include "mldsa-consts-avx2.h"
-#include "mldsa-symmetric-avx2.h"
 #include "mldsa-fips202x4-avx2.h"
 #include "mldsa-polyvec.h"
 
 
-#define REJ_UNIFORM_NBLOCKS ((768+STREAM128_BLOCKBYTES-1)/STREAM128_BLOCKBYTES)
-#define REJ_UNIFORM_BUFLEN (REJ_UNIFORM_NBLOCKS*STREAM128_BLOCKBYTES)
+#define REJ_UNIFORM_NBLOCKS ((768+GCRY_STREAM128_BLOCKBYTES-1)/GCRY_STREAM128_BLOCKBYTES)
+#define REJ_UNIFORM_BUFLEN (REJ_UNIFORM_NBLOCKS*GCRY_STREAM128_BLOCKBYTES)
 
 #define _mm256_blendv_epi32(a,b,mask) \
   _mm256_castps_si256(_mm256_blendv_ps(_mm256_castsi256_ps(a), \
@@ -259,11 +259,11 @@ void _gcry_mldsa_avx2_poly_use_hint(gcry_mldsa_param_t *params, gcry_mldsa_poly 
 *              Assumes input polynomial to be reduced by _gcry_mldsa_avx2_poly_reduce().
 *
 * Arguments:   - const gcry_mldsa_poly *a: pointer to polynomial
-*              - int32_t B: norm bound
+*              - s32 B: norm bound
 *
 * Returns 0 if norm is strictly smaller than B <= (GCRY_MLDSA_Q-1)/8 and 1 otherwise.
 **************************************************/
-int _gcry_mldsa_avx2_poly_chknorm(const gcry_mldsa_poly *a, int32_t B) {
+int _gcry_mldsa_avx2_poly_chknorm(const gcry_mldsa_poly *a, s32 B) {
   unsigned int i;
   int r;
   __m256i f,t;
@@ -289,7 +289,7 @@ int _gcry_mldsa_avx2_poly_chknorm(const gcry_mldsa_poly *a, int32_t B) {
 * Description: Sample uniformly random coefficients in [0, GCRY_MLDSA_Q-1] by
 *              performing rejection sampling on array of random bytes.
 *
-* Arguments:   - int32_t *a: pointer to output array (allocated)
+* Arguments:   - s32 *a: pointer to output array (allocated)
 *              - unsigned int len: number of coefficients to be sampled
 *              - const byte *buf: array of random bytes
 *              - unsigned int buflen: length of array of random bytes
@@ -297,7 +297,7 @@ int _gcry_mldsa_avx2_poly_chknorm(const gcry_mldsa_poly *a, int32_t B) {
 * Returns number of sampled coefficients. Can be smaller than len if not enough
 * random bytes were given.
 **************************************************/
-static unsigned int rej_uniform(int32_t *a,
+static unsigned int rej_uniform(s32 *a,
                                 unsigned int len,
                                 const byte *buf,
                                 unsigned int buflen)
@@ -336,7 +336,7 @@ void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
   /* make sure each sub structure starts memory aligned */
   offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
   _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
-  keccakx4_state state;
+  gcry_mldsa_keccakx4_state state;
   __m256i f;
 
   f = _mm256_loadu_si256((__m256i *)seed);
@@ -354,8 +354,8 @@ void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
   buf.buf[3 * offset_al + GCRY_MLDSA_SEEDBYTES+0] = nonce3;
   buf.buf[3 * offset_al + GCRY_MLDSA_SEEDBYTES+1] = nonce3 >> 8;
 
-  shake128x4_absorb_once(&state, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], GCRY_MLDSA_SEEDBYTES + 2);
-  shake128x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], REJ_UNIFORM_NBLOCKS, &state);
+  _gcry_mldsa_avx2_shake128x4_absorb_once(&state, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], GCRY_MLDSA_SEEDBYTES + 2);
+  _gcry_mldsa_avx2_shake128x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], REJ_UNIFORM_NBLOCKS, &state);
 
   ctr0 = _gcry_mldsa_avx2_rej_uniform_avx(((gcry_mldsa_poly*)a0)->coeffs, &buf.buf[0 * offset_al]);
   ctr1 = _gcry_mldsa_avx2_rej_uniform_avx(((gcry_mldsa_poly*)a1)->coeffs, &buf.buf[1 * offset_al]);
@@ -363,12 +363,12 @@ void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
   ctr3 = _gcry_mldsa_avx2_rej_uniform_avx(((gcry_mldsa_poly*)a3)->coeffs, &buf.buf[3 * offset_al]);
 
   while(ctr0 < GCRY_MLDSA_N || ctr1 < GCRY_MLDSA_N || ctr2 < GCRY_MLDSA_N || ctr3 < GCRY_MLDSA_N) {
-    shake128x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 1, &state);
+    _gcry_mldsa_avx2_shake128x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 1, &state);
 
-    ctr0 += rej_uniform(((gcry_mldsa_poly*)a0)->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], SHAKE128_RATE);
-    ctr1 += rej_uniform(((gcry_mldsa_poly*)a1)->coeffs + ctr1, GCRY_MLDSA_N - ctr1, &buf.buf[1 * offset_al], SHAKE128_RATE);
-    ctr2 += rej_uniform(((gcry_mldsa_poly*)a2)->coeffs + ctr2, GCRY_MLDSA_N - ctr2, &buf.buf[2 * offset_al], SHAKE128_RATE);
-    ctr3 += rej_uniform(((gcry_mldsa_poly*)a3)->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], SHAKE128_RATE);
+    ctr0 += rej_uniform(((gcry_mldsa_poly*)a0)->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], GCRY_SHAKE128_RATE);
+    ctr1 += rej_uniform(((gcry_mldsa_poly*)a1)->coeffs + ctr1, GCRY_MLDSA_N - ctr1, &buf.buf[1 * offset_al], GCRY_SHAKE128_RATE);
+    ctr2 += rej_uniform(((gcry_mldsa_poly*)a2)->coeffs + ctr2, GCRY_MLDSA_N - ctr2, &buf.buf[2 * offset_al], GCRY_SHAKE128_RATE);
+    ctr3 += rej_uniform(((gcry_mldsa_poly*)a3)->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], GCRY_SHAKE128_RATE);
   }
 
   _gcry_mldsa_buf_al_destroy(&buf);
@@ -380,7 +380,7 @@ void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
 * Description: Sample uniformly random coefficients in [-ETA, ETA] by
 *              performing rejection sampling on array of random bytes.
 *
-* Arguments:   - int32_t *a: pointer to output array (allocated)
+* Arguments:   - s32 *a: pointer to output array (allocated)
 *              - unsigned int len: number of coefficients to be sampled
 *              - const byte *buf: array of random bytes
 *              - unsigned int buflen: length of array of random bytes
@@ -388,7 +388,7 @@ void _gcry_mldsa_avx2_poly_uniform_4x(byte *a0,
 * Returns number of sampled coefficients. Can be smaller than len if not enough
 * random bytes were given.
 **************************************************/
-static unsigned int rej_eta2(int32_t *a,
+static unsigned int rej_eta2(s32 *a,
                             unsigned int len,
                             const byte *buf,
                             unsigned int buflen)
@@ -412,7 +412,7 @@ static unsigned int rej_eta2(int32_t *a,
   }
   return ctr;
 }
-static unsigned int rej_eta4(int32_t *a,
+static unsigned int rej_eta4(s32 *a,
                             unsigned int len,
                             const byte *buf,
                             unsigned int buflen)
@@ -449,17 +449,17 @@ void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa
   size_t REJ_UNIFORM_ETA_NBLOCKS;
   gcry_mldsa_buf_al buf = {};
   __m256i f;
-  keccakx4_state state;
+  gcry_mldsa_keccakx4_state state;
 
   if(params->eta == 2)
   {
-    REJ_UNIFORM_ETA_NBLOCKS = (136+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
+    REJ_UNIFORM_ETA_NBLOCKS = (136+GCRY_STREAM256_BLOCKBYTES-1)/GCRY_STREAM256_BLOCKBYTES;
   }
   else {
-    REJ_UNIFORM_ETA_NBLOCKS = (227+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
+    REJ_UNIFORM_ETA_NBLOCKS = (227+GCRY_STREAM256_BLOCKBYTES-1)/GCRY_STREAM256_BLOCKBYTES;
   }
 
-  REJ_UNIFORM_ETA_BUFLEN = REJ_UNIFORM_ETA_NBLOCKS*STREAM256_BLOCKBYTES;
+  REJ_UNIFORM_ETA_BUFLEN = REJ_UNIFORM_ETA_NBLOCKS*GCRY_STREAM256_BLOCKBYTES;
 
   /* make sure each sub structure starts memory aligned */
   offset_al = REJ_UNIFORM_ETA_BUFLEN + (128 - (REJ_UNIFORM_ETA_BUFLEN % 128));
@@ -486,8 +486,8 @@ void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa
   buf.buf[3 * offset_al + 64] = nonce3;
   buf.buf[3 * offset_al + 65] = nonce3 >> 8;
 
-  shake256x4_absorb_once(&state, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 66);
-  shake256x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], REJ_UNIFORM_ETA_NBLOCKS, &state);
+  _gcry_mldsa_avx2_shake256x4_absorb_once(&state, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 66);
+  _gcry_mldsa_avx2_shake256x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], REJ_UNIFORM_ETA_NBLOCKS, &state);
 
   if(params->eta == 2)
   {
@@ -504,19 +504,19 @@ void _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params, gcry_mldsa
   }
 
   while(ctr0 < GCRY_MLDSA_N || ctr1 < GCRY_MLDSA_N || ctr2 < GCRY_MLDSA_N || ctr3 < GCRY_MLDSA_N) {
-    shake256x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 1, &state);
+    _gcry_mldsa_avx2_shake256x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 1, &state);
     if(params->eta == 2)
     {
-    ctr0 += rej_eta2(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], SHAKE256_RATE);
-    ctr1 += rej_eta2(a1->coeffs + ctr1, GCRY_MLDSA_N - ctr1, &buf.buf[1 * offset_al], SHAKE256_RATE);
-    ctr2 += rej_eta2(a2->coeffs + ctr2, GCRY_MLDSA_N - ctr2, &buf.buf[2 * offset_al], SHAKE256_RATE);
-    ctr3 += rej_eta2(a3->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], SHAKE256_RATE);
+    ctr0 += rej_eta2(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], GCRY_SHAKE256_RATE);
+    ctr1 += rej_eta2(a1->coeffs + ctr1, GCRY_MLDSA_N - ctr1, &buf.buf[1 * offset_al], GCRY_SHAKE256_RATE);
+    ctr2 += rej_eta2(a2->coeffs + ctr2, GCRY_MLDSA_N - ctr2, &buf.buf[2 * offset_al], GCRY_SHAKE256_RATE);
+    ctr3 += rej_eta2(a3->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], GCRY_SHAKE256_RATE);
     }
     else {
-    ctr0 += rej_eta4(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], SHAKE256_RATE);
-    ctr1 += rej_eta4(a1->coeffs + ctr1, GCRY_MLDSA_N - ctr1, &buf.buf[1 * offset_al], SHAKE256_RATE);
-    ctr2 += rej_eta4(a2->coeffs + ctr2, GCRY_MLDSA_N - ctr2, &buf.buf[2 * offset_al], SHAKE256_RATE);
-    ctr3 += rej_eta4(a3->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], SHAKE256_RATE);
+    ctr0 += rej_eta4(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], GCRY_SHAKE256_RATE);
+    ctr1 += rej_eta4(a1->coeffs + ctr1, GCRY_MLDSA_N - ctr1, &buf.buf[1 * offset_al], GCRY_SHAKE256_RATE);
+    ctr2 += rej_eta4(a2->coeffs + ctr2, GCRY_MLDSA_N - ctr2, &buf.buf[2 * offset_al], GCRY_SHAKE256_RATE);
+    ctr3 += rej_eta4(a3->coeffs + ctr3, GCRY_MLDSA_N - ctr3, &buf.buf[3 * offset_al], GCRY_SHAKE256_RATE);
     }
   }
 
@@ -529,11 +529,11 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1(gcry_mldsa_param_t *params,
   gcry_err_code_t ec = 0;
   gcry_md_hd_t md = NULL;
 
-  const size_t POLY_UNIFORM_GAMMA1_NBLOCKS = (params->polyz_packedbytes+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
+  const size_t POLY_UNIFORM_GAMMA1_NBLOCKS = (params->polyz_packedbytes+GCRY_STREAM256_BLOCKBYTES-1)/GCRY_STREAM256_BLOCKBYTES;
 
   gcry_mldsa_buf_al buf = {};
     /* _gcry_mldsa_avx2_polyz_unpack reads 14 additional bytes */
-  _gcry_mldsa_buf_al_create(&buf, POLY_UNIFORM_GAMMA1_NBLOCKS*STREAM256_BLOCKBYTES+14);
+  _gcry_mldsa_buf_al_create(&buf, POLY_UNIFORM_GAMMA1_NBLOCKS*GCRY_STREAM256_BLOCKBYTES+14);
 
   ec = _gcry_mldsa_shake256_stream_init(&md, seed, nonce);
   if (ec)
@@ -560,15 +560,15 @@ void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a
                             u16 nonce2,
                             u16 nonce3)
 {
-  const size_t POLY_UNIFORM_GAMMA1_NBLOCKS = (params->polyz_packedbytes+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES;
-  size_t buf_elem_len = POLY_UNIFORM_GAMMA1_NBLOCKS*STREAM256_BLOCKBYTES+14;
+  const size_t POLY_UNIFORM_GAMMA1_NBLOCKS = (params->polyz_packedbytes+GCRY_STREAM256_BLOCKBYTES-1)/GCRY_STREAM256_BLOCKBYTES;
+  size_t buf_elem_len = POLY_UNIFORM_GAMMA1_NBLOCKS*GCRY_STREAM256_BLOCKBYTES+14;
   gcry_mldsa_buf_al buf = {};
   size_t offset_al;
 
   /* make sure each sub structure starts memory aligned */
   offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
   _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
-  keccakx4_state state;
+  gcry_mldsa_keccakx4_state state;
   __m256i f;
 
   f = _mm256_loadu_si256((__m256i *)&seed[0]);
@@ -591,8 +591,8 @@ void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a
   buf.buf[3 * offset_al + 64] = nonce3;
   buf.buf[3 * offset_al + 65] = nonce3 >> 8;
 
-  shake256x4_absorb_once(&state, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 66);
-  shake256x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], POLY_UNIFORM_GAMMA1_NBLOCKS, &state);
+  _gcry_mldsa_avx2_shake256x4_absorb_once(&state, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 66);
+  _gcry_mldsa_avx2_shake256x4_squeezeblocks(&buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], POLY_UNIFORM_GAMMA1_NBLOCKS, &state);
 
   _gcry_mldsa_avx2_polyz_unpack(params, (gcry_mldsa_poly*)a0, &buf.buf[0 * offset_al]);
   _gcry_mldsa_avx2_polyz_unpack(params, (gcry_mldsa_poly*)a1, &buf.buf[1 * offset_al]);
@@ -600,58 +600,6 @@ void _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *params, byte *a
   _gcry_mldsa_avx2_polyz_unpack(params, (gcry_mldsa_poly*)a3, &buf.buf[3 * offset_al]);
 
   _gcry_mldsa_buf_al_destroy(&buf);
-}
-
-/*************************************************
-* Name:        _gcry_mldsa_avx2_challenge
-*
-* Description: Implementation of H. Samples polynomial with TAU nonzero
-*              coefficients in {-1,1} using the output stream of
-*              SHAKE256(seed).
-*
-* Arguments:   - gcry_mldsa_poly *c: pointer to output polynomial
-*              - const byte mu[]: byte array containing seed of length GCRY_MLDSA_SEEDBYTES
-**************************************************/
-gcry_err_code_t _gcry_mldsa_avx2_poly_challenge(gcry_mldsa_param_t *params, gcry_mldsa_poly * restrict c, const byte seed[GCRY_MLDSA_SEEDBYTES]) {
-  gcry_err_code_t ec = 0;
-  unsigned int i, b, pos;
-  u64 signs;
-  byte *buf = NULL;
-  if (!(buf = xtrymalloc_secure(SHAKE256_RATE)))
-  {
-    ec = gpg_error_from_syserror();
-    goto leave;
-  }
-
-  keccak_state state;
-
-  shake256_init(&state);
-  shake256_absorb(&state, seed, GCRY_MLDSA_SEEDBYTES);
-  shake256_finalize(&state);
-  shake256_squeezeblocks(buf, 1, &state);
-
-  memcpy(&signs, buf, 8);
-  pos = 8;
-
-  memset(c->vec, 0, sizeof(gcry_mldsa_poly));
-  for(i = GCRY_MLDSA_N-params->tau; i < GCRY_MLDSA_N; ++i) {
-    do {
-      if(pos >= SHAKE256_RATE) {
-        shake256_squeezeblocks(buf, 1, &state);
-        pos = 0;
-      }
-
-      b = buf[pos++];
-    } while(b > i);
-
-    c->coeffs[i] = c->coeffs[b];
-    c->coeffs[b] = 1 - 2*(signs & 1);
-    signs >>= 1;
-  }
-
-leave:
-  xfree(buf);
-  return ec;
 }
 
 /*************************************************

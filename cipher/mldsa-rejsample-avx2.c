@@ -1,8 +1,9 @@
 #include <stdint.h>
 #include <immintrin.h>
 #include "config.h"
+#include "types.h"
 #include "mldsa-rejsample-avx2.h"
-#include "mldsa-symmetric-avx2.h"
+#include "mldsa-symmetric.h"
 
 const byte _gcry_mldsa_avx2_idxlut[256][8] = {
   { 0,  0,  0,  0,  0,  0,  0,  0},
@@ -263,10 +264,10 @@ const byte _gcry_mldsa_avx2_idxlut[256][8] = {
   { 0,  1,  2,  3,  4,  5,  6,  7}
 };
 
-#define REJ_UNIFORM_NBLOCKS ((768+STREAM128_BLOCKBYTES-1)/STREAM128_BLOCKBYTES)
-#define REJ_UNIFORM_BUFLEN (REJ_UNIFORM_NBLOCKS*STREAM128_BLOCKBYTES)
+#define REJ_UNIFORM_NBLOCKS ((768+GCRY_STREAM128_BLOCKBYTES-1)/GCRY_STREAM128_BLOCKBYTES)
+#define REJ_UNIFORM_BUFLEN (REJ_UNIFORM_NBLOCKS*GCRY_STREAM128_BLOCKBYTES)
 
-unsigned int _gcry_mldsa_avx2_rej_uniform_avx(int32_t * restrict r, const byte *buf)
+unsigned int _gcry_mldsa_avx2_rej_uniform_avx(s32 * restrict r, const byte *buf)
 {
   unsigned int ctr, pos;
   u32 good;
@@ -311,8 +312,8 @@ unsigned int _gcry_mldsa_avx2_rej_uniform_avx(int32_t * restrict r, const byte *
   return ctr;
 }
 
-unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta2(int32_t * restrict r, const byte *buf) {
-  const size_t REJ_UNIFORM_ETA_BUFLEN  = ((136+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)*STREAM256_BLOCKBYTES;
+unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta2(s32 * restrict r, const byte *buf) {
+  const size_t REJ_UNIFORM_ETA_BUFLEN  = ((136+GCRY_STREAM256_BLOCKBYTES-1)/GCRY_STREAM256_BLOCKBYTES)*GCRY_STREAM256_BLOCKBYTES;
 
   unsigned int ctr, pos;
   u32 good;
@@ -404,8 +405,8 @@ unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta2(int32_t * restrict r, const byte 
   return ctr;
 }
 
-unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta4(int32_t * restrict r, const byte *buf) {
-  const size_t REJ_UNIFORM_ETA_BUFLEN = ((227+STREAM256_BLOCKBYTES-1)/STREAM256_BLOCKBYTES)*STREAM256_BLOCKBYTES;
+unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta4(s32 * restrict r, const byte *buf) {
+  const size_t REJ_UNIFORM_ETA_BUFLEN = ((227+GCRY_STREAM256_BLOCKBYTES-1)/GCRY_STREAM256_BLOCKBYTES)*GCRY_STREAM256_BLOCKBYTES;
 
   unsigned int ctr, pos;
   u32 good;

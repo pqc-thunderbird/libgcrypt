@@ -6,7 +6,7 @@
 
 #define ALIGNED_INT32(GCRY_MLDSA_N)        \
     union {                     \
-        int32_t coeffs[GCRY_MLDSA_N];      \
+        s32 coeffs[GCRY_MLDSA_N];      \
         __m256i vec[(GCRY_MLDSA_N+7)/8];   \
     }
 

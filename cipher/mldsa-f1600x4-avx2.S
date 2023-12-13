@@ -12,8 +12,8 @@ rho56:
 .byte 1,2,3,4,5,6,7,0,9,10,11,12,13,14,15,8,1,2,3,4,5,6,7,0,9,10,11,12,13,14,15,8
 
 .text
-.global cdecl(f1600x4)
-cdecl(f1600x4):
+.global cdecl(_gcry_mldsa_avx2_f1600x4)
+cdecl(_gcry_mldsa_avx2_f1600x4):
 vmovdqa		rho8(%rip), %ymm0
 movq		$6, %rax
 looptop:
