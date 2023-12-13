@@ -88,7 +88,7 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand(gcry_mldsa_param_t *param
       ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2(params, &mat[2 * rowsize], NULL, rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], NULL, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], rho);
       if (ec)
         goto leave;
     }
@@ -104,7 +104,7 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand(gcry_mldsa_param_t *param
       ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2(params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], NULL, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], rho);
       if (ec)
         goto leave;
       ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row4(params, &mat[4 * rowsize], &mat[5 * rowsize], rho);
@@ -125,7 +125,7 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand(gcry_mldsa_param_t *param
       ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2(params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], NULL, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3(params, &mat[3 * rowsize], rho);
       if (ec)
         goto leave;
       ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row4(params, &mat[4 * rowsize], &mat[5 * rowsize], rho);
@@ -137,7 +137,7 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand(gcry_mldsa_param_t *param
       ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row6(params, &mat[6 * rowsize], &mat[7 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row7(params, &mat[7 * rowsize], NULL, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row7(params, &mat[7 * rowsize], rho);
       if (ec)
         goto leave;
     }
@@ -334,7 +334,6 @@ leave:
 
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row3(gcry_mldsa_param_t *params,
                                                             byte *rowa,
-                                                            byte *rowb,
                                                             const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;
@@ -584,7 +583,6 @@ leave:
 
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row7(gcry_mldsa_param_t *params,
                                                             byte *rowa,
-                                                            byte *rowb,
                                                             const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;

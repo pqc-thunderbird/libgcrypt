@@ -107,7 +107,7 @@ s32 _gcry_mldsa_use_hint(gcry_mldsa_param_t *params, s32 a, unsigned int hint)
           return (a1 - 1) & 15;
         }
     }
-  else if (params->gamma2 == (GCRY_MLDSA_Q - 1) / 88)
+  else
     {
       if (a0 > 0)
         {

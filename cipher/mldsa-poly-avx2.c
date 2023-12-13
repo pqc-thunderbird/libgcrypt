@@ -348,11 +348,11 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(
 
   size_t buf_elem_len = REJ_UNIFORM_BUFLEN + 8;
   /* make sure each sub structure starts memory aligned */
-  offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
   gcry_mldsa_keccakx4_state state;
   __m256i f;
 
-  ec = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
+  offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
+  ec        = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
   if (ec)
     {
       ec = gpg_err_code_from_syserror();
@@ -637,11 +637,11 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *para
   size_t offset_al;
 
   /* make sure each sub structure starts memory aligned */
-  offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
   gcry_mldsa_keccakx4_state state;
   __m256i f;
 
-  ec = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
+  offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
+  ec        = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
   if (ec)
     {
       ec = gpg_err_code_from_syserror();

@@ -64,7 +64,6 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row2(gcry_mldsa_param_t *
                                                             const byte rho[GCRY_MLDSA_SEEDBYTES]);
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row3(gcry_mldsa_param_t *params,
                                                             byte *rowa,
-                                                            byte *rowb,
                                                             const byte rho[GCRY_MLDSA_SEEDBYTES]);
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row4(gcry_mldsa_param_t *params,
                                                             byte *rowa,
@@ -80,7 +79,6 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row6(gcry_mldsa_param_t *
                                                             const byte rho[GCRY_MLDSA_SEEDBYTES]);
 gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row7(gcry_mldsa_param_t *params,
                                                             byte *rowa,
-                                                            byte *rowb,
                                                             const byte rho[GCRY_MLDSA_SEEDBYTES]);
 
 void _gcry_mldsa_avx2_polyvec_matrix_pointwise_montgomery(gcry_mldsa_param_t *params,
