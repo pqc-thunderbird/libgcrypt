@@ -6,7 +6,6 @@
 #include "mldsa-polyvec.h"
 #include "mldsa-poly.h"
 #include "mldsa-symmetric.h"
-#include "mldsa-api-avx2.h"
 #include "g10lib.h"
 
 /*************************************************
