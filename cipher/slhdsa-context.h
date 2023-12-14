@@ -3,6 +3,7 @@
 
 #include <config.h>
 #include "types.h"
+#include "avx2-immintrin-support.h"
 #include "g10lib.h"
 
 typedef struct
@@ -61,6 +62,10 @@ typedef struct
   byte offset_tree_index; /* The start of the 4 byte field used to specify the node in the FORS or Merkle tree */
 
   byte is_sha2; /* Boolean: is a SHA2 parameter set (SHAKE otherwise) */
+
+#ifdef USE_AVX2
+  byte use_avx2;
+#endif
 } _gcry_slhdsa_param_t;
 
 #endif

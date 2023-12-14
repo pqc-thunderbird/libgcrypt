@@ -6,6 +6,7 @@
 #include "cipher.h"
 #include "pubkey-internal.h"
 #include "slhdsa-context.h"
+#include "avx2-immintrin-support.h"
 #include "slhdsa-api.h"
 
 static unsigned int
@@ -121,6 +122,9 @@ static void gcry_slhdsa_param_destroy(_gcry_slhdsa_param_t *param)
 static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param_t *param, slhdsa_paramset paramset)
 {
   gcry_err_code_t ec      = 0;
+#ifdef USE_AVX2
+  unsigned int hwfeatures;
+#endif
   param->pub_seed         = NULL;
   param->sk_seed          = NULL;
   param->state_seeded     = NULL;
@@ -300,6 +304,11 @@ static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param
       param->offset_tree_hgt   = 27;
       param->offset_tree_index = 28;
     }
+
+#ifdef USE_AVX2
+  hwfeatures = _gcry_get_hw_features ();
+  param->use_avx2 = !!(hwfeatures & HWF_INTEL_AVX2);
+#endif
 
 leave:
   if (ec)
