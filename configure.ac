@@ -823,6 +823,7 @@ AC_SEARCH_LIBS(setsockopt, [nsl])
 ##################################
 
 AC_CHECK_HEADERS(unistd.h sys/auxv.h sys/random.h sys/sysctl.h)
+AC_CHECK_HEADER(immintrin.h, [have_immintrin=yes], [have_immintrin=no])
 
 
 ##########################################
@@ -2344,6 +2345,11 @@ if test "$gcry_cv_gcc_inline_asm_s390x_vx" = "yes" ; then
      [Defined if inline assembler supports zSeries vector instructions])
 fi
 
+
+if test "$have_immintrin" = "yes" ; then
+   AC_DEFINE(HAVE_IMMINTRIN_H,1,
+     [Defined if immintrin.h is available])
+fi
 
 #######################################
 #### Checks for library functions. ####
