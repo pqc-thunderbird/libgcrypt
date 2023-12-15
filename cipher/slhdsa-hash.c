@@ -52,6 +52,13 @@ gcry_err_code_t _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
   /* absorb public seed */
   if (ctx->is_sha2)
     {
+#ifdef USE_AVX2
+      if (ctx->use_avx2)
+        {
+          /* also initialize the avx2 fields */
+          initialize_hash_function_sha_avx2(ctx);
+        }
+#endif
       return initialize_hash_function_sha2(ctx);
     }
   return 0;
