@@ -11,11 +11,10 @@
 #include "g10lib.h"
 #include "mgf.h"
 
-
-#define SLHDSA_SHA256_BLOCK_BYTES 64
-#define SLHDSA_SHA256_OUTPUT_BYTES 32 /* This does not necessarily equal SLHDSA_N */
-#define SLHDSA_SHA512_BLOCK_BYTES 128
-#define SLHDSA_SHA512_OUTPUT_BYTES 64
+#ifdef USE_AVX2
+#include "slhdsa-sha256x8.h"
+#include "slhdsa-sha512x4.h"
+#endif
 
 static gcry_err_code_t initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx);
 static gcry_err_code_t gen_message_random_sha2(unsigned char *R,
@@ -55,6 +54,7 @@ gcry_err_code_t _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
     {
       return initialize_hash_function_sha2(ctx);
     }
+  return 0;
 }
 
 /*
@@ -139,7 +139,7 @@ void _gcry_slhdsa_prf_addrx8_sha2(unsigned char *out0,
       outbufx8 + 7 * SLHDSA_SHA256_OUTPUT_BYTES,
 
       /* seed */
-      ctx->state_seeded,
+      ctx->state_seeded_avx2,
       512,
 
       /* in */

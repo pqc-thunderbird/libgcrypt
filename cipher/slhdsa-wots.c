@@ -84,7 +84,7 @@ static gcry_err_code_t gen_chains(unsigned char *out,
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  empty = xtrycalloc_secure(ctx->n, 0);
+  empty = xtrycalloc_secure(1, ctx->n);
   if (!empty)
     {
       ec = gpg_err_code_from_syserror();
@@ -161,25 +161,25 @@ static gcry_err_code_t gen_chains(unsigned char *out,
               _gcry_slhdsa_set_hash_addr(ctx, addrs + j * 8, k + start[idxs[i + j]]);
             }
 
-          thashx8(bufs[0],
-                  bufs[1],
-                  bufs[2],
-                  bufs[3],
-                  bufs[4],
-                  bufs[5],
-                  bufs[6],
-                  bufs[7],
-                  bufs[0],
-                  bufs[1],
-                  bufs[2],
-                  bufs[3],
-                  bufs[4],
-                  bufs[5],
-                  bufs[6],
-                  bufs[7],
-                  1,
-                  ctx,
-                  addrs);
+          gcry_slhdsa_thash_sha2_avx2(bufs[0],
+                                      bufs[1],
+                                      bufs[2],
+                                      bufs[3],
+                                      bufs[4],
+                                      bufs[5],
+                                      bufs[6],
+                                      bufs[7],
+                                      bufs[0],
+                                      bufs[1],
+                                      bufs[2],
+                                      bufs[3],
+                                      bufs[4],
+                                      bufs[5],
+                                      bufs[6],
+                                      bufs[7],
+                                      1,
+                                      ctx,
+                                      addrs);
         }
     }
 leave:
@@ -446,48 +446,48 @@ gcry_err_code_t wots_gen_leafx8(unsigned char *dest, const _gcry_slhdsa_param_t 
             {
               _gcry_slhdsa_set_hash_addr(ctx, leaf_addr + j * 8, k);
             }
-          thashx8(buffer + 0 * wots_offset,
-                  buffer + 1 * wots_offset,
-                  buffer + 2 * wots_offset,
-                  buffer + 3 * wots_offset,
-                  buffer + 4 * wots_offset,
-                  buffer + 5 * wots_offset,
-                  buffer + 6 * wots_offset,
-                  buffer + 7 * wots_offset,
-                  buffer + 0 * wots_offset,
-                  buffer + 1 * wots_offset,
-                  buffer + 2 * wots_offset,
-                  buffer + 3 * wots_offset,
-                  buffer + 4 * wots_offset,
-                  buffer + 5 * wots_offset,
-                  buffer + 6 * wots_offset,
-                  buffer + 7 * wots_offset,
-                  1,
-                  ctx,
-                  leaf_addr);
+          gcry_slhdsa_thash_sha2_avx2(buffer + 0 * wots_offset,
+                                      buffer + 1 * wots_offset,
+                                      buffer + 2 * wots_offset,
+                                      buffer + 3 * wots_offset,
+                                      buffer + 4 * wots_offset,
+                                      buffer + 5 * wots_offset,
+                                      buffer + 6 * wots_offset,
+                                      buffer + 7 * wots_offset,
+                                      buffer + 0 * wots_offset,
+                                      buffer + 1 * wots_offset,
+                                      buffer + 2 * wots_offset,
+                                      buffer + 3 * wots_offset,
+                                      buffer + 4 * wots_offset,
+                                      buffer + 5 * wots_offset,
+                                      buffer + 6 * wots_offset,
+                                      buffer + 7 * wots_offset,
+                                      1,
+                                      ctx,
+                                      leaf_addr);
         }
     }
 
   /* Do the final thash to generate the public keys */
-  thashx8(dest + 0 * ctx->n,
-          dest + 1 * ctx->n,
-          dest + 2 * ctx->n,
-          dest + 3 * ctx->n,
-          dest + 4 * ctx->n,
-          dest + 5 * ctx->n,
-          dest + 6 * ctx->n,
-          dest + 7 * ctx->n,
-          pk_buffer + 0 * wots_offset,
-          pk_buffer + 1 * wots_offset,
-          pk_buffer + 2 * wots_offset,
-          pk_buffer + 3 * wots_offset,
-          pk_buffer + 4 * wots_offset,
-          pk_buffer + 5 * wots_offset,
-          pk_buffer + 6 * wots_offset,
-          pk_buffer + 7 * wots_offset,
-          ctx->WOTS_len,
-          ctx,
-          pk_addr);
+  gcry_slhdsa_thash_sha2_avx2(dest + 0 * ctx->n,
+                              dest + 1 * ctx->n,
+                              dest + 2 * ctx->n,
+                              dest + 3 * ctx->n,
+                              dest + 4 * ctx->n,
+                              dest + 5 * ctx->n,
+                              dest + 6 * ctx->n,
+                              dest + 7 * ctx->n,
+                              pk_buffer + 0 * wots_offset,
+                              pk_buffer + 1 * wots_offset,
+                              pk_buffer + 2 * wots_offset,
+                              pk_buffer + 3 * wots_offset,
+                              pk_buffer + 4 * wots_offset,
+                              pk_buffer + 5 * wots_offset,
+                              pk_buffer + 6 * wots_offset,
+                              pk_buffer + 7 * wots_offset,
+                              ctx->WOTS_len,
+                              ctx,
+                              pk_addr);
 
 leave:
   xfree(pk_buffer);

@@ -41,7 +41,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx1(unsigned char *root,
   u32 max_idx = (u32)((1 << tree_height) - 1);
 
   /* This is where we keep the intermediate nodes */
-  byte *stack            = NULL;
+  byte *stack   = NULL;
   byte *current = NULL;
 
   stack = xtrymalloc_secure(tree_height * ctx->n);
@@ -135,21 +135,23 @@ leave:
 
 
 #ifdef USE_AVX2
-gcry_err_code_t _gcry_slhdsa_treehashx8(
-    unsigned char *root,
-    unsigned char *auth_path,
-    const _gcry_slhdsa_param_t *ctx,
-    uint32_t leaf_idx,
-    uint32_t idx_offset,
-    uint32_t tree_height,
-    gcry_err_code_t (*gen_leafx8)(unsigned char * /* Where to write the leaves */, const _gcry_slhdsa_param_t * , u32 idx, void *info),
-    uint32_t tree_addrx8[8 * 8],
-    void *info)
+gcry_err_code_t _gcry_slhdsa_treehashx8(unsigned char *root,
+                                        unsigned char *auth_path,
+                                        const _gcry_slhdsa_param_t *ctx,
+                                        uint32_t leaf_idx,
+                                        uint32_t idx_offset,
+                                        uint32_t tree_height,
+                                        gcry_err_code_t (*gen_leafx8)(unsigned char * /* Where to write the leaves */,
+                                                                      const _gcry_slhdsa_param_t *,
+                                                                      u32 idx,
+                                                                      void *info),
+                                        uint32_t tree_addrx8[8 * 8],
+                                        void *info)
 {
   gcry_err_code_t ec = 0;
   /* This is where we keep the intermediate nodes */
-  byte *stackx8            = NULL;
-  byte *current = NULL;
+  byte *stackx8     = NULL;
+  byte *current     = NULL;
   uint32_t left_adj = 0, prev_left_adj = 0; /* When we're doing the top 3 */
                                             /* levels, the left-most part of the tree isn't at the beginning */
                                             /* of current[].  These give the offset of the actual start */
@@ -238,28 +240,29 @@ gcry_err_code_t _gcry_slhdsa_treehashx8(
           for (j = 0; j < 8; j++)
             {
               _gcry_slhdsa_set_tree_height(ctx, tree_addrx8 + j * 8, h + 1);
-              _gcry_slhdsa_set_tree_index(ctx, tree_addrx8 + j * 8, (8 / 2) * (internal_idx & ~1) + j - left_adj + internal_idx_offset);
+              _gcry_slhdsa_set_tree_index(
+                  ctx, tree_addrx8 + j * 8, (8 / 2) * (internal_idx & ~1) + j - left_adj + internal_idx_offset);
             }
           left = &stackx8[h * 8 * ctx->n];
-          thashx8(&current[0 * ctx->n],
-                  &current[1 * ctx->n],
-                  &current[2 * ctx->n],
-                  &current[3 * ctx->n],
-                  &current[4 * ctx->n],
-                  &current[5 * ctx->n],
-                  &current[6 * ctx->n],
-                  &current[7 * ctx->n],
-                  &left[0 * ctx->n],
-                  &left[2 * ctx->n],
-                  &left[4 * ctx->n],
-                  &left[6 * ctx->n],
-                  &current[0 * ctx->n],
-                  &current[2 * ctx->n],
-                  &current[4 * ctx->n],
-                  &current[6 * ctx->n],
-                  2,
-                  ctx,
-                  tree_addrx8);
+          gcry_slhdsa_thash_sha2_avx2(&current[0 * ctx->n],
+                                      &current[1 * ctx->n],
+                                      &current[2 * ctx->n],
+                                      &current[3 * ctx->n],
+                                      &current[4 * ctx->n],
+                                      &current[5 * ctx->n],
+                                      &current[6 * ctx->n],
+                                      &current[7 * ctx->n],
+                                      &left[0 * ctx->n],
+                                      &left[2 * ctx->n],
+                                      &left[4 * ctx->n],
+                                      &left[6 * ctx->n],
+                                      &current[0 * ctx->n],
+                                      &current[2 * ctx->n],
+                                      &current[4 * ctx->n],
+                                      &current[6 * ctx->n],
+                                      2,
+                                      ctx,
+                                      tree_addrx8);
         }
 
       /* We've hit a left child; save the current for when we get the */

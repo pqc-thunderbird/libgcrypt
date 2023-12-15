@@ -65,6 +65,9 @@ typedef struct
 
 #ifdef USE_AVX2
   byte use_avx2;
+
+  byte state_seeded_avx2[40];     /* seeded SHA256 state used during avx2 computation */
+  byte state_seeded_512_avx2[72]; /* seeded SHA512 state used during avx2 computation */
 #endif
 } _gcry_slhdsa_param_t;
 

@@ -5,6 +5,11 @@
 #include "avx2-immintrin-support.h"
 #include "slhdsa-context.h"
 
+#define SLHDSA_SHA256_BLOCK_BYTES 64
+#define SLHDSA_SHA256_OUTPUT_BYTES 32 /* This does not necessarily equal SLHDSA_N */
+#define SLHDSA_SHA512_BLOCK_BYTES 128
+#define SLHDSA_SHA512_OUTPUT_BYTES 64
+
 gcry_err_code_t _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx);
 
 gcry_err_code_t _gcry_slhdsa_prf_addr(unsigned char *out, const _gcry_slhdsa_param_t *ctx, const u32 addr[8]);

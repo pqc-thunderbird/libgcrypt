@@ -1,5 +1,5 @@
-#if !defined(MERKLE_H_)
-#define MERKLE_H_
+#ifndef SLHDSA_MERKLE_H
+#define SLHDSA_MERKLE_H
 
 #include "config.h"
 

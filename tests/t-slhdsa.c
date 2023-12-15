@@ -43,15 +43,6 @@
 #include <errno.h>
 #include <ctype.h>
 
-
-#define digitp(p) (*(p) >= '0' && *(p) <= '9')
-#define hexdigitp(a) (digitp(a) || (*(a) >= 'A' && *(a) <= 'F') || (*(a) >= 'a' && *(a) <= 'f'))
-#define xtoi_1(p) (*(p) <= '9' ? (*(p) - '0') : *(p) <= 'F' ? (*(p) - 'A' + 10) : (*(p) - 'a' + 10))
-#define xtoi_2(p) ((xtoi_1(p) * 16) + xtoi_1((p) + 1))
-#define xmalloc(a) gcry_xmalloc((a))
-#define xcalloc(a, b) gcry_xcalloc((a), (b))
-#define xstrdup(a) gcry_xstrdup((a))
-#define xfree(a) gcry_free((a))
 #define pass()                                                                                                         \
   do                                                                                                                   \
     {                                                                                                                  \
