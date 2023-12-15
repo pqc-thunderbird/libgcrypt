@@ -4,6 +4,8 @@
 #include "types.h"
 #include <string.h>
 
+#include "avx2-immintrin-support.h"
+
 #include "slhdsa-fors.h"
 #include "slhdsa-utils.h"
 #include "slhdsa-utilsx1.h"
@@ -18,6 +20,29 @@ static gcry_err_code_t fors_gen_sk(unsigned char *sk, const _gcry_slhdsa_param_t
   return _gcry_slhdsa_prf_addr(sk, ctx, fors_leaf_addr);
 }
 
+#ifdef USE_AVX2
+static void fors_gen_skx8(unsigned char *sk0,
+                          unsigned char *sk1,
+                          unsigned char *sk2,
+                          unsigned char *sk3,
+                          unsigned char *sk4,
+                          unsigned char *sk5,
+                          unsigned char *sk6,
+                          unsigned char *sk7,
+                          const _gcry_slhdsa_param_t *ctx,
+                          uint32_t fors_leaf_addrx8[8 * 8])
+{
+  if (ctx->is_sha2)
+    {
+      _gcry_slhdsa_prf_addrx8_sha2(sk0, sk1, sk2, sk3, sk4, sk5, sk6, sk7, ctx, fors_leaf_addrx8);
+    }
+  else
+    {
+      // TODO
+    }
+}
+#endif
+
 static gcry_err_code_t fors_sk_to_leaf(unsigned char *leaf,
                                        const unsigned char *sk,
                                        const _gcry_slhdsa_param_t *ctx,
@@ -26,9 +51,55 @@ static gcry_err_code_t fors_sk_to_leaf(unsigned char *leaf,
   return _gcry_slhdsa_thash(leaf, sk, 1, ctx, fors_leaf_addr);
 }
 
+#ifdef USE_AVX2
+static void fors_sk_to_leafx8(unsigned char *leaf0,
+                              unsigned char *leaf1,
+                              unsigned char *leaf2,
+                              unsigned char *leaf3,
+                              unsigned char *leaf4,
+                              unsigned char *leaf5,
+                              unsigned char *leaf6,
+                              unsigned char *leaf7,
+                              const unsigned char *sk0,
+                              const unsigned char *sk1,
+                              const unsigned char *sk2,
+                              const unsigned char *sk3,
+                              const unsigned char *sk4,
+                              const unsigned char *sk5,
+                              const unsigned char *sk6,
+                              const unsigned char *sk7,
+                              const _gcry_slhdsa_param_t *ctx,
+                              uint32_t fors_leaf_addrx8[8 * 8])
+{
+  thashx8(leaf0,
+          leaf1,
+          leaf2,
+          leaf3,
+          leaf4,
+          leaf5,
+          leaf6,
+          leaf7,
+          sk0,
+          sk1,
+          sk2,
+          sk3,
+          sk4,
+          sk5,
+          sk6,
+          sk7,
+          1,
+          ctx,
+          fors_leaf_addrx8);
+}
+#endif
+
 struct fors_gen_leaf_info
 {
+#ifdef USE_AVX2
+  u32 leaf_addrx[8 * 8];
+#else
   u32 leaf_addrx[8];
+#endif
 };
 
 static gcry_err_code_t fors_gen_leafx1(unsigned char *leaf, const _gcry_slhdsa_param_t *ctx, u32 addr_idx, void *info)
@@ -50,6 +121,61 @@ static gcry_err_code_t fors_gen_leafx1(unsigned char *leaf, const _gcry_slhdsa_p
 leave:
   return ec;
 }
+
+#ifdef USE_AVX2
+static gcry_err_code_t fors_gen_leafx8(unsigned char *leaf, const _gcry_slhdsa_param_t *ctx, u32 addr_idx, void *info)
+{
+  gcry_err_code_t ec                   = 0;
+  struct fors_gen_leaf_info *fors_info = info;
+  u32 *fors_leaf_addrx8                = fors_info->leaf_addrx;
+  unsigned int j;
+
+  /* Only set the parts that the caller doesn't set */
+  for (j = 0; j < 8; j++)
+    {
+      _gcry_slhdsa_set_tree_index(ctx, fors_leaf_addrx8 + j * 8, addr_idx + j);
+      _gcry_slhdsa_set_type(ctx, fors_leaf_addrx8 + j * 8, SLHDSA_ADDR_TYPE_FORSPRF);
+    }
+
+  fors_gen_skx8(leaf + 0 * ctx->n,
+                leaf + 1 * ctx->n,
+                leaf + 2 * ctx->n,
+                leaf + 3 * ctx->n,
+                leaf + 4 * ctx->n,
+                leaf + 5 * ctx->n,
+                leaf + 6 * ctx->n,
+                leaf + 7 * ctx->n,
+                ctx,
+                fors_leaf_addrx8);
+
+  for (j = 0; j < 8; j++)
+    {
+      _gcry_slhdsa_set_type(ctx, fors_leaf_addrx8 + j * 8, SLHDSA_ADDR_TYPE_FORSTREE);
+    }
+
+  fors_sk_to_leafx8(leaf + 0 * ctx->n,
+                    leaf + 1 * ctx->n,
+                    leaf + 2 * ctx->n,
+                    leaf + 3 * ctx->n,
+                    leaf + 4 * ctx->n,
+                    leaf + 5 * ctx->n,
+                    leaf + 6 * ctx->n,
+                    leaf + 7 * ctx->n,
+                    leaf + 0 * ctx->n,
+                    leaf + 1 * ctx->n,
+                    leaf + 2 * ctx->n,
+                    leaf + 3 * ctx->n,
+                    leaf + 4 * ctx->n,
+                    leaf + 5 * ctx->n,
+                    leaf + 6 * ctx->n,
+                    leaf + 7 * ctx->n,
+                    ctx,
+                    fors_leaf_addrx8);
+
+leave:
+  return ec;
+}
+#endif
 
 /**
  * Interprets m as ctx->FORS_height-bit unsigned integers.
@@ -82,10 +208,14 @@ gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig,
                                        const _gcry_slhdsa_param_t *ctx,
                                        const u32 fors_addr[8])
 {
-  gcry_err_code_t ec                  = 0;
-  u32 *indices                        = NULL;
-  unsigned char *roots                = NULL;
-  u32 fors_tree_addr[8]               = {0};
+  gcry_err_code_t ec   = 0;
+  u32 *indices         = NULL;
+  unsigned char *roots = NULL;
+#ifdef USE_AVX2
+  u32 fors_tree_addr[8 * 8] = {0};
+#else
+  u32 fors_tree_addr[8] = {0};
+#endif
   struct fors_gen_leaf_info fors_info = {0};
   u32 *fors_leaf_addr                 = fors_info.leaf_addrx;
   u32 fors_pk_addr[8]                 = {0};
@@ -105,8 +235,22 @@ gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig,
       goto leave;
     }
 
-  _gcry_slhdsa_copy_keypair_addr(ctx, fors_tree_addr, fors_addr);
-  _gcry_slhdsa_copy_keypair_addr(ctx, fors_leaf_addr, fors_addr);
+#ifdef USE_AVX2
+  if (ctx->use_avx2)
+    {
+      for (i = 0; i < 8; i++)
+        {
+          _gcry_slhdsa_copy_keypair_addr(ctx, fors_tree_addr + 8 * i, fors_addr);
+          _gcry_slhdsa_set_type(ctx, fors_tree_addr + 8 * i, SLHDSA_ADDR_TYPE_FORSTREE);
+          _gcry_slhdsa_copy_keypair_addr(ctx, fors_leaf_addr + 8 * i, fors_addr);
+        }
+    }
+  else
+#endif
+    {
+      _gcry_slhdsa_copy_keypair_addr(ctx, fors_tree_addr, fors_addr);
+      _gcry_slhdsa_copy_keypair_addr(ctx, fors_leaf_addr, fors_addr);
+    }
 
   _gcry_slhdsa_copy_keypair_addr(ctx, fors_pk_addr, fors_addr);
   _gcry_slhdsa_set_type(ctx, fors_pk_addr, SLHDSA_ADDR_TYPE_FORSPK);
@@ -129,16 +273,32 @@ gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig,
       sig += ctx->n;
 
       /* Compute the authentication path for this leaf node. */
-      treehashx1(roots + i * ctx->n,
-                 sig,
-                 ctx,
-                 indices[i],
-                 idx_offset,
-                 ctx->FORS_height,
-                 fors_gen_leafx1,
-                 fors_tree_addr,
-                 &fors_info);
-
+#ifdef USE_AVX2
+      if (ctx->use_avx2)
+        {
+          _gcry_slhdsa_treehashx8(roots + i * ctx->n,
+                                  sig,
+                                  ctx,
+                                  indices[i],
+                                  idx_offset,
+                                  ctx->FORS_height,
+                                  fors_gen_leafx8,
+                                  fors_tree_addr,
+                                  &fors_info);
+        }
+      else
+#endif
+        {
+          _gcry_slhdsa_treehashx1(roots + i * ctx->n,
+                                  sig,
+                                  ctx,
+                                  indices[i],
+                                  idx_offset,
+                                  ctx->FORS_height,
+                                  fors_gen_leafx1,
+                                  fors_tree_addr,
+                                  &fors_info);
+        }
       sig += ctx->n * ctx->FORS_height;
     }
 

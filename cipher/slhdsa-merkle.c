@@ -44,7 +44,8 @@ gcry_err_code_t _gcry_slhdsa_merkle_sign(
 
   info.wots_sign_leaf = idx_leaf;
 
-  ec = treehashx1(root, auth_path, ctx, idx_leaf, 0, ctx->tree_height, _gcry_slhdsa_wots_gen_leafx1, tree_addr, &info);
+  ec = _gcry_slhdsa_treehashx1(
+      root, auth_path, ctx, idx_leaf, 0, ctx->tree_height, _gcry_slhdsa_wots_gen_leafx1, tree_addr, &info);
   if (ec)
     goto leave;
 

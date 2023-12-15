@@ -265,7 +265,16 @@ gcry_err_code_t _gcry_slhdsa_verify(
       /* The WOTS public key is only correct if the signature was correct. */
       /* Initially, root is the FORS pk, but on subsequent iterations it is
          the root of the subtree below the currently processed subtree. */
-      ec = _gcry_slhdsa_wots_pk_from_sig(wots_pk, sig, root, ctx, wots_addr);
+#ifdef USE_AVX2
+      if (ctx->use_avx2)
+        {
+          ec = _gcry_slhdsa_wots_pk_from_sig_avx2(wots_pk, sig, root, ctx, wots_addr);
+        }
+      else
+#endif
+        {
+          ec = _gcry_slhdsa_wots_pk_from_sig(wots_pk, sig, root, ctx, wots_addr);
+        }
       if (ec)
         goto leave;
       sig += ctx->WOTS_bytes;

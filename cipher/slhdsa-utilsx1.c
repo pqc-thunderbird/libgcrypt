@@ -23,18 +23,18 @@
  *
  * This works by using the standard Merkle tree building algorithm,
  */
-gcry_err_code_t treehashx1(unsigned char *root,
-                           unsigned char *auth_path,
-                           const _gcry_slhdsa_param_t *ctx,
-                           u32 leaf_idx,
-                           u32 idx_offset,
-                           u32 tree_height,
-                           gcry_err_code_t (*gen_leaf)(unsigned char * /* Where to write the leaves */,
-                                                       const _gcry_slhdsa_param_t * /* ctx */,
-                                                       u32 idx,
-                                                       void *info),
-                           u32 tree_addr[8],
-                           void *info)
+gcry_err_code_t _gcry_slhdsa_treehashx1(unsigned char *root,
+                                        unsigned char *auth_path,
+                                        const _gcry_slhdsa_param_t *ctx,
+                                        u32 leaf_idx,
+                                        u32 idx_offset,
+                                        u32 tree_height,
+                                        gcry_err_code_t (*gen_leaf)(unsigned char * /* Where to write the leaves */,
+                                                                    const _gcry_slhdsa_param_t * /* ctx */,
+                                                                    u32 idx,
+                                                                    void *info),
+                                        u32 tree_addr[8],
+                                        void *info)
 {
   gcry_err_code_t ec = 0;
   u32 idx;
@@ -42,7 +42,7 @@ gcry_err_code_t treehashx1(unsigned char *root,
 
   /* This is where we keep the intermediate nodes */
   byte *stack            = NULL;
-  unsigned char *current = NULL;
+  byte *current = NULL;
 
   stack = xtrymalloc_secure(tree_height * ctx->n);
   if (!stack)
@@ -132,3 +132,144 @@ leave:
   xfree(current);
   return ec;
 }
+
+
+#ifdef USE_AVX2
+gcry_err_code_t _gcry_slhdsa_treehashx8(
+    unsigned char *root,
+    unsigned char *auth_path,
+    const _gcry_slhdsa_param_t *ctx,
+    uint32_t leaf_idx,
+    uint32_t idx_offset,
+    uint32_t tree_height,
+    gcry_err_code_t (*gen_leafx8)(unsigned char * /* Where to write the leaves */, const _gcry_slhdsa_param_t * , u32 idx, void *info),
+    uint32_t tree_addrx8[8 * 8],
+    void *info)
+{
+  gcry_err_code_t ec = 0;
+  /* This is where we keep the intermediate nodes */
+  byte *stackx8            = NULL;
+  byte *current = NULL;
+  uint32_t left_adj = 0, prev_left_adj = 0; /* When we're doing the top 3 */
+                                            /* levels, the left-most part of the tree isn't at the beginning */
+                                            /* of current[].  These give the offset of the actual start */
+
+  uint32_t idx;
+  uint32_t max_idx = (1 << (tree_height - 3)) - 1;
+
+  stackx8 = xtrymalloc_secure(8 * tree_height * ctx->n);
+  if (!stackx8)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+
+  for (idx = 0;; idx++)
+    {
+      uint32_t internal_idx_offset = idx_offset;
+      uint32_t internal_idx        = idx;
+      uint32_t internal_leaf       = leaf_idx;
+      uint32_t h; /* The height we are in the Merkle tree */
+
+      xfree(current); /* free for previous loop iteration */
+      current = xtrymalloc_secure(8 * ctx->n);
+      if (!current)
+        {
+          ec = gpg_err_code_from_syserror();
+          goto leave;
+        }
+      gen_leafx8(current, ctx, 8 * idx + idx_offset, info);
+
+      /* Now combine the freshly generated right node with previously */
+      /* generated left ones */
+      for (h = 0;; h++, internal_idx >>= 1, internal_leaf >>= 1)
+        {
+          int j;
+          unsigned char *left = NULL;
+          /* Special processing if we're at the top of the tree */
+          if (h >= tree_height - 3)
+            {
+              if (h == tree_height)
+                {
+                  /* We hit the root; return it */
+                  memcpy(root, &current[7 * ctx->n], ctx->n);
+                  goto leave;
+                }
+              /* The tree indexing logic is a bit off in this case */
+              /* Adjust it so that the left-most node of the part of */
+              /* the tree that we're processing has index 0 */
+              prev_left_adj = left_adj;
+              left_adj      = 8 - (1 << (tree_height - h - 1));
+            }
+
+          /* Check if we hit the top of the tree */
+          if (h == tree_height)
+            {
+              /* We hit the root; return it */
+              memcpy(root, &current[7 * ctx->n], ctx->n);
+              goto leave;
+            }
+
+          /*
+           * Check if one of the nodes we have is a part of the
+           * authentication path; if it is, write it out
+           */
+          if ((((internal_idx << 3) ^ internal_leaf) & ~0x7) == 0)
+            {
+              memcpy(&auth_path[h * ctx->n], &current[(((internal_leaf & 7) ^ 1) + prev_left_adj) * ctx->n], ctx->n);
+            }
+
+          /*
+           * Check if we're at a left child; if so, stop going up the stack
+           * Exception: if we've reached the end of the tree, keep on going
+           * (so we combine the last 8 nodes into the one root node in three
+           * more iterations)
+           */
+          if ((internal_idx & 1) == 0 && idx < max_idx)
+            {
+              break;
+            }
+
+          /* Ok, we're at a right node (or doing the top 3 levels) */
+          /* Now combine the left and right logical nodes together */
+
+          /* Set the address of the node we're creating. */
+          internal_idx_offset >>= 1;
+          for (j = 0; j < 8; j++)
+            {
+              _gcry_slhdsa_set_tree_height(ctx, tree_addrx8 + j * 8, h + 1);
+              _gcry_slhdsa_set_tree_index(ctx, tree_addrx8 + j * 8, (8 / 2) * (internal_idx & ~1) + j - left_adj + internal_idx_offset);
+            }
+          left = &stackx8[h * 8 * ctx->n];
+          thashx8(&current[0 * ctx->n],
+                  &current[1 * ctx->n],
+                  &current[2 * ctx->n],
+                  &current[3 * ctx->n],
+                  &current[4 * ctx->n],
+                  &current[5 * ctx->n],
+                  &current[6 * ctx->n],
+                  &current[7 * ctx->n],
+                  &left[0 * ctx->n],
+                  &left[2 * ctx->n],
+                  &left[4 * ctx->n],
+                  &left[6 * ctx->n],
+                  &current[0 * ctx->n],
+                  &current[2 * ctx->n],
+                  &current[4 * ctx->n],
+                  &current[6 * ctx->n],
+                  2,
+                  ctx,
+                  tree_addrx8);
+        }
+
+      /* We've hit a left child; save the current for when we get the */
+      /* corresponding right right */
+      memcpy(&stackx8[h * 8 * ctx->n], current, 8 * ctx->n);
+    }
+
+leave:
+  xfree(stackx8);
+  xfree(current);
+  return ec;
+}
+#endif
