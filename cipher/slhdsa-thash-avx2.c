@@ -62,11 +62,17 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_sha2(unsigned char *out0,
 {
   gcry_err_code_t ec = 0;
   byte *bufx8        = NULL;
-  unsigned char outbufx8[8 * SLHDSA_SHA256_OUTPUT_BYTES]; // TODO
+  byte *outbufx8        = NULL;
   unsigned int i;
 
   bufx8 = xtrymalloc_secure(8 * (ctx->addr_bytes + inblocks * ctx->n));
   if (!bufx8)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+  outbufx8 = xtrymalloc_secure(8 * SLHDSA_SHA256_OUTPUT_BYTES);
+  if (!outbufx8)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
@@ -151,6 +157,7 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_sha2(unsigned char *out0,
 
 leave:
   xfree(bufx8);
+  xfree(outbufx8);
   return ec;
 }
 

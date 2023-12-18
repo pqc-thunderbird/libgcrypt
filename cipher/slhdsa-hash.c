@@ -312,7 +312,7 @@ static gcry_err_code_t gen_message_random_sha2(unsigned char *R,
   gcry_err_code_t ec = 0;
   int hmac_shaX_algo;
   gcry_mac_hd_t hd = NULL;
-  size_t outlen;
+  unsigned int outlen;
   unsigned char *tmpmac = NULL;
 
   if (ctx->do_use_sha512)
@@ -340,7 +340,8 @@ static gcry_err_code_t gen_message_random_sha2(unsigned char *R,
   if (ec)
     goto leave;
 
-  tmpmac = xtrymalloc(_gcry_mac_get_algo_maclen(hmac_shaX_algo));
+  outlen = _gcry_mac_get_algo_maclen(hmac_shaX_algo);
+  tmpmac = xtrymalloc(outlen);
   if (!tmpmac)
     {
       ec = gpg_err_code_from_syserror();
