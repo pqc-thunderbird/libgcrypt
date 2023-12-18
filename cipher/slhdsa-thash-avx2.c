@@ -62,7 +62,7 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_sha2(unsigned char *out0,
 {
   gcry_err_code_t ec = 0;
   byte *bufx8        = NULL;
-  byte *outbufx8        = NULL;
+  byte *outbufx8     = NULL;
   unsigned int i;
 
   bufx8 = xtrymalloc_secure(8 * (ctx->addr_bytes + inblocks * ctx->n));
@@ -82,25 +82,25 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_sha2(unsigned char *out0,
     {
       if (inblocks > 1)
         {
-          thashx8_512(out0,
-                      out1,
-                      out2,
-                      out3,
-                      out4,
-                      out5,
-                      out6,
-                      out7,
-                      in0,
-                      in1,
-                      in2,
-                      in3,
-                      in4,
-                      in5,
-                      in6,
-                      in7,
-                      inblocks,
-                      ctx,
-                      addrx8);
+          ec = thashx8_512(out0,
+                           out1,
+                           out2,
+                           out3,
+                           out4,
+                           out5,
+                           out6,
+                           out7,
+                           in0,
+                           in1,
+                           in2,
+                           in3,
+                           in4,
+                           in5,
+                           in6,
+                           in7,
+                           inblocks,
+                           ctx,
+                           addrx8);
           goto leave;
         }
     }
