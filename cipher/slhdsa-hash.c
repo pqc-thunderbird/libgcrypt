@@ -113,7 +113,7 @@ leave:
 /*
  * 8-way parallel version of _gcry_slhdsa_prf_addr; takes 8x as much input and output
  */
-void _gcry_slhdsa_prf_addrx8_sha2(unsigned char *out0,
+void _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
                                   unsigned char *out1,
                                   unsigned char *out2,
                                   unsigned char *out3,
@@ -170,6 +170,58 @@ void _gcry_slhdsa_prf_addrx8_sha2(unsigned char *out0,
   memcpy(out6, outbufx8 + 6 * SLHDSA_SHA256_OUTPUT_BYTES, ctx->n);
   memcpy(out7, outbufx8 + 7 * SLHDSA_SHA256_OUTPUT_BYTES, ctx->n);
 }
+
+void _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
+                unsigned char *out1,
+                unsigned char *out2,
+                unsigned char *out3,
+                const _gcry_slhdsa_param_t *ctx,
+                const uint32_t addrx4[4*8]) {
+    /* As we write and read only a few quadwords, it is more efficient to
+     * build and extract from the fourway SHAKE256 state by hand. */
+    __m256i state[25];
+
+    for (int i = 0; i < ctx->n/8; i++) {
+        state[i] = _mm256_set1_epi64x(((int64_t*)ctx->pub_seed)[i]);
+    }
+    for (int i = 0; i < 4; i++) {
+        state[ctx->n/8+i] = _mm256_set_epi32(
+            addrx4[3*8+1+2*i],
+            addrx4[3*8+2*i],
+            addrx4[2*8+1+2*i],
+            addrx4[2*8+2*i],
+            addrx4[8+1+2*i],
+            addrx4[8+2*i],
+            addrx4[1+2*i],
+            addrx4[2*i]
+        );
+    }
+    for (int i = 0; i < ctx->n/8; i++) {
+        state[ctx->n/8+i+4] = _mm256_set1_epi64x(((int64_t*)ctx->sk_seed)[i]);
+    }
+
+    /* SHAKE domain separator and padding. */
+    state[ctx->n/4+4] = _mm256_set1_epi64x(0x1f);
+    for (int i = ctx->n/4+5; i < 16; i++) {
+        state[i] = _mm256_set1_epi64x(0);
+    }
+    // shift unsigned and then cast to avoid UB
+    state[16] = _mm256_set1_epi64x((long long)(0x80ULL << 56));
+
+    for (int i = 17; i < 25; i++) {
+        state[i] = _mm256_set1_epi64x(0);
+    }
+
+    KeccakP1600times4_PermuteAll_24rounds(&state[0]);
+
+    for (int i = 0; i < ctx->n/8; i++) {
+        ((int64_t*)out0)[i] = _mm256_extract_epi64(state[i], 0);
+        ((int64_t*)out1)[i] = _mm256_extract_epi64(state[i], 1);
+        ((int64_t*)out2)[i] = _mm256_extract_epi64(state[i], 2);
+        ((int64_t*)out3)[i] = _mm256_extract_epi64(state[i], 3);
+    }
+}
+
 #endif
 
 gcry_err_code_t _gcry_slhdsa_gen_message_random(unsigned char *R,

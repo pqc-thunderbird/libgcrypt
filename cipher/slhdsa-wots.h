@@ -36,13 +36,21 @@ gcry_err_code_t _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx,
 
 
 #ifdef USE_AVX2
-struct _grcy_slhdsa_leaf_info_x8_t {
+struct _gcry_slhdsa_leaf_info_x8_t {
     unsigned char *wots_sig;
     uint32_t wots_sign_leaf; /* The index of the WOTS we're using to sign */
     uint32_t *wots_steps;
     uint32_t leaf_addr[8*8];
     uint32_t pk_addr[8*8];
 };
-gcry_err_code_t wots_gen_leafx8(unsigned char *dest, const _gcry_slhdsa_param_t *ctx, uint32_t leaf_idx, void *v_info);
+struct _gcry_slhdsa_leaf_info_x4_t {
+    unsigned char *wots_sig;
+    uint32_t wots_sign_leaf; /* The index of the WOTS we're using to sign */
+    uint32_t *wots_steps;
+    uint32_t leaf_addr[4*8];
+    uint32_t pk_addr[4*8];
+};
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8(unsigned char *dest, const _gcry_slhdsa_param_t *ctx, uint32_t leaf_idx, void *v_info);
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(unsigned char *dest, const _gcry_slhdsa_param_t *ctx, uint32_t leaf_idx, void *v_info);
 #endif
 #endif

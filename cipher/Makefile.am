@@ -157,7 +157,7 @@ EXTRA_libcipher_la_SOURCES = \
 	slhdsa-hash_shake.c \
 	slhdsa.c \
 	slhdsa-thash.c slhdsa-thash-avx2.c slhdsa-thash-avx2.h \
-	slhdsa-sha256x8.c slhdsa-sha256x8.h slhdsa-sha512x4.c slhdsa-sha512x4.h
+	slhdsa-sha256x8.c slhdsa-sha256x8.h slhdsa-sha512x4.c slhdsa-sha512x4.h slhdsa-fips202x4.c slhdsa-fips202x4.h
 
 gost28147.lo: gost-sb.h
 gost-sb.h: gost-s-box$(EXEEXT_FOR_BUILD)

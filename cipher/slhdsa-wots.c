@@ -66,11 +66,10 @@ static gcry_err_code_t gen_chains(unsigned char *out,
   uint32_t addrs[8 * 8];
 
   int l;
-  // uint16_t counts[ctx->WOTS_w] = { 0 };
-  // uint16_t idxs[ctx->WOTS_len];
   byte *counts = NULL;
   byte *idxs   = NULL;
   uint16_t total, newTotal;
+  const size_t x4_or_x8 = ctx->is_sha2 ? 8 : 4;
 
   counts = xtrymalloc_secure(ctx->WOTS_w * sizeof(uint16_t));
   if (!counts)
@@ -92,7 +91,7 @@ static gcry_err_code_t gen_chains(unsigned char *out,
     }
 
   /* set addrs = {addr, addr, ..., addr} */
-  for (j = 0; j < 8; j++)
+  for (j = 0; j < x4_or_x8; j++)
     {
       memcpy(addrs + j * 8, addr, sizeof(uint32_t) * 8);
     }
@@ -119,9 +118,9 @@ static gcry_err_code_t gen_chains(unsigned char *out,
     }
 
   /* We got our work cut out for us: do it! */
-  for (i = 0; i < ctx->WOTS_len; i += 8)
+  for (i = 0; i < ctx->WOTS_len; i += x4_or_x8)
     {
-      for (j = 0; j < 8 && i + j < ctx->WOTS_len; j++)
+      for (j = 0; j < x4_or_x8 && i + j < ctx->WOTS_len; j++)
         {
           idx = idxs[i + j];
           _gcry_slhdsa_set_chain_addr(ctx, addrs + j * 8, idx);
@@ -132,7 +131,7 @@ static gcry_err_code_t gen_chains(unsigned char *out,
        * chain is the longest and the last one is the shortest.  We keep
        * an eye on whether the last chain is done and then on the one before,
        * et cetera. */
-      watching = 7;
+      watching = ctx->is_sha2 ? 7 : 3;
       done     = 0;
       while (i + watching >= ctx->WOTS_len)
         {
@@ -161,25 +160,42 @@ static gcry_err_code_t gen_chains(unsigned char *out,
               _gcry_slhdsa_set_hash_addr(ctx, addrs + j * 8, k + start[idxs[i + j]]);
             }
 
-          gcry_slhdsa_thash_sha2_avx2(bufs[0],
-                                      bufs[1],
-                                      bufs[2],
-                                      bufs[3],
-                                      bufs[4],
-                                      bufs[5],
-                                      bufs[6],
-                                      bufs[7],
-                                      bufs[0],
-                                      bufs[1],
-                                      bufs[2],
-                                      bufs[3],
-                                      bufs[4],
-                                      bufs[5],
-                                      bufs[6],
-                                      bufs[7],
-                                      1,
-                                      ctx,
-                                      addrs);
+          if (ctx->is_sha2)
+            {
+              _gcry_slhdsa_thash_avx2_sha2(bufs[0],
+                                           bufs[1],
+                                           bufs[2],
+                                           bufs[3],
+                                           bufs[4],
+                                           bufs[5],
+                                           bufs[6],
+                                           bufs[7],
+                                           bufs[0],
+                                           bufs[1],
+                                           bufs[2],
+                                           bufs[3],
+                                           bufs[4],
+                                           bufs[5],
+                                           bufs[6],
+                                           bufs[7],
+                                           1,
+                                           ctx,
+                                           addrs);
+            }
+          else
+            {
+              _gcry_slhdsa_thash_avx2_shake(bufs[0],
+                                            bufs[1],
+                                            bufs[2],
+                                            bufs[3],
+                                            bufs[0],
+                                            bufs[1],
+                                            bufs[2],
+                                            bufs[3],
+                                            1,
+                                            ctx,
+                                            addrs);
+            }
         }
     }
 leave:
@@ -351,10 +367,10 @@ leave:
  * It also generates the WOTS signature if leaf_info indicates
  * that we're signing with one of these WOTS keys
  */
-gcry_err_code_t wots_gen_leafx8(unsigned char *dest, const _gcry_slhdsa_param_t *ctx, uint32_t leaf_idx, void *v_info)
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8(unsigned char *dest, const _gcry_slhdsa_param_t *ctx, uint32_t leaf_idx, void *v_info)
 {
   gcry_err_code_t ec                       = 0;
-  struct _grcy_slhdsa_leaf_info_x8_t *info = v_info;
+  struct _gcry_slhdsa_leaf_info_x8_t *info = v_info;
   uint32_t *leaf_addr                      = info->leaf_addr;
   uint32_t *pk_addr                        = info->pk_addr;
   unsigned int i, j, k;
@@ -404,23 +420,17 @@ gcry_err_code_t wots_gen_leafx8(unsigned char *dest, const _gcry_slhdsa_param_t 
           _gcry_slhdsa_set_hash_addr(ctx, leaf_addr + j * 8, 0);
           _gcry_slhdsa_set_type(ctx, leaf_addr + j * 8, SLHDSA_ADDR_TYPE_WOTSPRF);
         }
-      if (ctx->is_sha2)
-        {
-          _gcry_slhdsa_prf_addrx8_sha2(buffer + 0 * wots_offset,
-                                       buffer + 1 * wots_offset,
-                                       buffer + 2 * wots_offset,
-                                       buffer + 3 * wots_offset,
-                                       buffer + 4 * wots_offset,
-                                       buffer + 5 * wots_offset,
-                                       buffer + 6 * wots_offset,
-                                       buffer + 7 * wots_offset,
-                                       ctx,
-                                       leaf_addr);
-        }
-      else
-        {
-          // TODO
-        }
+
+      _gcry_slhdsa_prf_avx2_sha2(buffer + 0 * wots_offset,
+                                 buffer + 1 * wots_offset,
+                                 buffer + 2 * wots_offset,
+                                 buffer + 3 * wots_offset,
+                                 buffer + 4 * wots_offset,
+                                 buffer + 5 * wots_offset,
+                                 buffer + 6 * wots_offset,
+                                 buffer + 7 * wots_offset,
+                                 ctx,
+                                 leaf_addr);
 
       for (j = 0; j < 8; j++)
         {
@@ -446,48 +456,170 @@ gcry_err_code_t wots_gen_leafx8(unsigned char *dest, const _gcry_slhdsa_param_t 
             {
               _gcry_slhdsa_set_hash_addr(ctx, leaf_addr + j * 8, k);
             }
-          gcry_slhdsa_thash_sha2_avx2(buffer + 0 * wots_offset,
-                                      buffer + 1 * wots_offset,
-                                      buffer + 2 * wots_offset,
-                                      buffer + 3 * wots_offset,
-                                      buffer + 4 * wots_offset,
-                                      buffer + 5 * wots_offset,
-                                      buffer + 6 * wots_offset,
-                                      buffer + 7 * wots_offset,
-                                      buffer + 0 * wots_offset,
-                                      buffer + 1 * wots_offset,
-                                      buffer + 2 * wots_offset,
-                                      buffer + 3 * wots_offset,
-                                      buffer + 4 * wots_offset,
-                                      buffer + 5 * wots_offset,
-                                      buffer + 6 * wots_offset,
-                                      buffer + 7 * wots_offset,
-                                      1,
-                                      ctx,
-                                      leaf_addr);
+          _gcry_slhdsa_thash_avx2_sha2(buffer + 0 * wots_offset,
+                                       buffer + 1 * wots_offset,
+                                       buffer + 2 * wots_offset,
+                                       buffer + 3 * wots_offset,
+                                       buffer + 4 * wots_offset,
+                                       buffer + 5 * wots_offset,
+                                       buffer + 6 * wots_offset,
+                                       buffer + 7 * wots_offset,
+                                       buffer + 0 * wots_offset,
+                                       buffer + 1 * wots_offset,
+                                       buffer + 2 * wots_offset,
+                                       buffer + 3 * wots_offset,
+                                       buffer + 4 * wots_offset,
+                                       buffer + 5 * wots_offset,
+                                       buffer + 6 * wots_offset,
+                                       buffer + 7 * wots_offset,
+                                       1,
+                                       ctx,
+                                       leaf_addr);
         }
     }
 
   /* Do the final thash to generate the public keys */
-  gcry_slhdsa_thash_sha2_avx2(dest + 0 * ctx->n,
-                              dest + 1 * ctx->n,
-                              dest + 2 * ctx->n,
-                              dest + 3 * ctx->n,
-                              dest + 4 * ctx->n,
-                              dest + 5 * ctx->n,
-                              dest + 6 * ctx->n,
-                              dest + 7 * ctx->n,
-                              pk_buffer + 0 * wots_offset,
-                              pk_buffer + 1 * wots_offset,
-                              pk_buffer + 2 * wots_offset,
-                              pk_buffer + 3 * wots_offset,
-                              pk_buffer + 4 * wots_offset,
-                              pk_buffer + 5 * wots_offset,
-                              pk_buffer + 6 * wots_offset,
-                              pk_buffer + 7 * wots_offset,
-                              ctx->WOTS_len,
-                              ctx,
-                              pk_addr);
+  _gcry_slhdsa_thash_avx2_sha2(dest + 0 * ctx->n,
+                               dest + 1 * ctx->n,
+                               dest + 2 * ctx->n,
+                               dest + 3 * ctx->n,
+                               dest + 4 * ctx->n,
+                               dest + 5 * ctx->n,
+                               dest + 6 * ctx->n,
+                               dest + 7 * ctx->n,
+                               pk_buffer + 0 * wots_offset,
+                               pk_buffer + 1 * wots_offset,
+                               pk_buffer + 2 * wots_offset,
+                               pk_buffer + 3 * wots_offset,
+                               pk_buffer + 4 * wots_offset,
+                               pk_buffer + 5 * wots_offset,
+                               pk_buffer + 6 * wots_offset,
+                               pk_buffer + 7 * wots_offset,
+                               ctx->WOTS_len,
+                               ctx,
+                               pk_addr);
+
+leave:
+  xfree(pk_buffer);
+  return ec;
+}
+
+
+/*
+ * This generates 4 sequential WOTS public keys
+ * It also generates the WOTS signature if leaf_info indicates
+ * that we're signing with one of these WOTS keys
+ */
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(unsigned char *dest, const _gcry_slhdsa_param_t *ctx, uint32_t leaf_idx, void *v_info)
+{
+  gcry_err_code_t ec                       = 0;
+  struct _gcry_slhdsa_leaf_info_x4_t *info = v_info;
+  uint32_t *leaf_addr                      = info->leaf_addr;
+  uint32_t *pk_addr                        = info->pk_addr;
+  unsigned int i, j, k;
+  unsigned char *pk_buffer = NULL;
+  unsigned wots_offset     = ctx->WOTS_bytes;
+  unsigned char *buffer;
+  uint32_t wots_k_mask;
+  unsigned wots_sign_index;
+
+  pk_buffer = xtrymalloc_secure(4 * ctx->WOTS_bytes);
+  if (!pk_buffer)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+
+  if (((leaf_idx ^ info->wots_sign_leaf) & ~3) == 0)
+    {
+      /* We're traversing the leaf that's signing; generate the WOTS */
+      /* signature */
+      wots_k_mask     = 0;
+      wots_sign_index = info->wots_sign_leaf & 3; /* Which of of the 4 */
+                                                  /* 4 slots do the signatures come from */
+    }
+  else
+    {
+      /* Nope, we're just generating pk's; turn off the signature logic */
+      wots_k_mask     = (uint32_t)~0;
+      wots_sign_index = 0;
+    }
+
+  for (j = 0; j < 4; j++)
+    {
+      _gcry_slhdsa_set_keypair_addr(ctx, leaf_addr + j * 8, leaf_idx + j);
+      _gcry_slhdsa_set_keypair_addr(ctx, pk_addr + j * 8, leaf_idx + j);
+    }
+
+  for (i = 0, buffer = pk_buffer; i < ctx->WOTS_len; i++, buffer += ctx->n)
+    {
+      uint32_t wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k to */
+      /* the step if we're generating a signature, ~0 if we're not */
+
+      /* Start with the secret seed */
+      for (j = 0; j < 4; j++)
+        {
+          _gcry_slhdsa_set_chain_addr(ctx, leaf_addr + j * 8, i);
+          _gcry_slhdsa_set_hash_addr(ctx, leaf_addr + j * 8, 0);
+          _gcry_slhdsa_set_type(ctx, leaf_addr + j * 8, SLHDSA_ADDR_TYPE_WOTSPRF);
+        }
+      _gcry_slhdsa_prf_avx2_shake(buffer + 0 * wots_offset,
+                                  buffer + 1 * wots_offset,
+                                  buffer + 2 * wots_offset,
+                                  buffer + 3 * wots_offset,
+                                  ctx,
+                                  leaf_addr);
+
+      for (j = 0; j < 4; j++)
+        {
+          _gcry_slhdsa_set_type(ctx, leaf_addr + j * 8, SLHDSA_ADDR_TYPE_WOTS);
+        }
+
+      /* Iterate down the WOTS chain */
+      for (k = 0;; k++)
+        {
+          /* Check if one of the values we have needs to be saved as a */
+          /* part of the WOTS signature */
+          if (k == wots_k)
+            {
+              memcpy(info->wots_sig + i * ctx->n, buffer + wots_sign_index * wots_offset, ctx->n);
+            }
+
+          /* Check if we hit the top of the chain */
+          if (k == ctx->WOTS_w - 1)
+            break;
+
+          /* Iterate one step on all 4 chains */
+          for (j = 0; j < 4; j++)
+            {
+              _gcry_slhdsa_set_hash_addr(ctx, leaf_addr + j * 8, k);
+            }
+          _gcry_slhdsa_thash_avx2_shake(buffer + 0 * wots_offset,
+                                        buffer + 1 * wots_offset,
+                                        buffer + 2 * wots_offset,
+                                        buffer + 3 * wots_offset,
+                                        buffer + 0 * wots_offset,
+                                        buffer + 1 * wots_offset,
+                                        buffer + 2 * wots_offset,
+                                        buffer + 3 * wots_offset,
+                                        1,
+                                        ctx,
+                                        leaf_addr);
+        }
+    }
+
+  /* Do the final thash to generate the public keys */
+  _gcry_slhdsa_thash_avx2_shake(dest + 0 * ctx->n,
+                                dest + 1 * ctx->n,
+                                dest + 2 * ctx->n,
+                                dest + 3 * ctx->n,
+                                pk_buffer + 0 * wots_offset,
+                                pk_buffer + 1 * wots_offset,
+                                pk_buffer + 2 * wots_offset,
+                                pk_buffer + 3 * wots_offset,
+                                ctx->WOTS_len,
+                                ctx,
+                                pk_addr);
 
 leave:
   xfree(pk_buffer);
