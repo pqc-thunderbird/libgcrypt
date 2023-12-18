@@ -45,7 +45,7 @@
 #endif
 
 #define MINIMUM_POOL_SIZE 16384
-#define STANDARD_POOL_SIZE 65536
+#define STANDARD_POOL_SIZE (4*65536)
 #define DEFAULT_PAGE_SIZE 4096
 
 typedef struct memblock

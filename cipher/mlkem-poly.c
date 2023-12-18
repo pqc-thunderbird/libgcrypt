@@ -233,7 +233,7 @@ _gcry_mlkem_poly_tomsg (unsigned char msg[GCRY_MLKEM_INDCPA_MSGBYTES],
                         const gcry_mlkem_poly *a)
 {
   unsigned int i, j;
-  u16 t;
+  u32 t;
 
   for (i = 0; i < GCRY_MLKEM_N / 8; i++)
     {
@@ -241,8 +241,15 @@ _gcry_mlkem_poly_tomsg (unsigned char msg[GCRY_MLKEM_INDCPA_MSGBYTES],
       for (j = 0; j < 8; j++)
         {
           t = a->coeffs[8 * i + j];
-          t += ((s16)t >> 15) & GCRY_MLKEM_Q;
-          t = (((t << 1) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q) & 1;
+          // fixing potential for the compiler to introduce a division operation:
+          // https://github.com/pq-crystals/kyber/commit/dda29cc63af721981ee2c831cf00822e69be3220
+          // t += ((s16)t >> 15) & GCRY_MLKEM_Q;
+          // t = (((t << 1) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q) & 1;
+          t <<= 1;
+          t += 1665;
+          t *= 80635;
+          t >>= 28;
+          t &= 1;
           msg[i] |= t << j;
         }
     }

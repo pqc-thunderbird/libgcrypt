@@ -232,10 +232,10 @@ extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
   gcry_mpi_t sk     = NULL;
   gpg_err_code_t ec = 0;
   size_t nwritten   = 0;
+  size_t data_len = 0;
 
   *data_p = 0;
 
-  size_t data_len = 0;
 
   ec = sexp_extract_param (keyparms, NULL, label, &sk, NULL);
   if (ec)
@@ -342,8 +342,7 @@ mlkem_check_secret_key (gcry_sexp_t keyparms)
       shared_secret_2[GCRY_MLKEM_SSBYTES];
   unsigned char *private_key = NULL, *ciphertext = NULL;
   unsigned char *public_key     = NULL;
-  size_t private_key_size_bytes = 0, public_key_size_bytes = 0,
-         ciphertext_size_bytes = 0;
+  size_t private_key_size_bytes = 0;
 
   gcry_mlkem_param_t param;
 
@@ -622,8 +621,8 @@ mlkem_get_nbits (gcry_sexp_t parms)
   gcry_sexp_t l1;
   unsigned int bit_strength, bit_length;
   gcry_mpi_t p;
-  unsigned char* dbg_buf;
-  size_t dbg_buf_size;
+  //unsigned char* dbg_buf;
+  //size_t dbg_buf_size;
   l1 = sexp_find_token (parms, "p", 1);
   if (!l1)
     return 0; /* Parameter N not found.  */
