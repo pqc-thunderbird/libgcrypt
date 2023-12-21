@@ -297,7 +297,7 @@ private_key_from_sexp (const gcry_sexp_t keyparms,
                        const gcry_mlkem_param_t *param)
 {
   return extract_opaque_mpi_from_sexp (
-      keyparms, "/s", sk_p, sk_len_p, param != NULL ? &param->secret_key_bytes: (u16*) NULL, _gcry_malloc_secure);
+      keyparms, "/z", sk_p, sk_len_p, param != NULL ? &param->secret_key_bytes: (u16*) NULL, _gcry_malloc_secure);
 }
 
 
@@ -329,7 +329,7 @@ public_key_from_sexp (const gcry_sexp_t keyparms,
 {
 
   return extract_opaque_mpi_from_sexp (
-      keyparms, "/p", pk_p, pk_len_p, param != NULL ? &param->public_key_bytes : (u16*) NULL, _gcry_malloc);
+      keyparms, "/y", pk_p, pk_len_p, param != NULL ? &param->public_key_bytes : (u16*) NULL, _gcry_malloc);
 }
 
 
@@ -443,9 +443,9 @@ mlkem_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
                        NULL,
                        "(key-data"
                        " (public-key"
-                       "  (mlkem(p%M) ))"
+                       "  (mlkem(y%M) ))"
                        " (private-key"
-                       "  (mlkem(p%M)(s%M) )))",
+                       "  (mlkem(y%M)(z%M) )))",
                        pk_mpi,
                        pk_mpi,
                        sk_mpi,
@@ -592,6 +592,9 @@ mlkem_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 
 
   /* Extract the key Ciphertext from the SEXP.  */
+  /* TODO: remove debug dump: */
+  _gcry_sexp_dump(s_data);
+
   ec = ciphertext_from_sexp (s_data, &ciphertext, NULL, &param);
   if (ec)
     {
@@ -623,7 +626,7 @@ mlkem_get_nbits (gcry_sexp_t parms)
   gcry_mpi_t p;
   //unsigned char* dbg_buf;
   //size_t dbg_buf_size;
-  l1 = sexp_find_token (parms, "p", 1);
+  l1 = sexp_find_token (parms, "y", 1);
   if (!l1)
     return 0; /* Parameter N not found.  */
 
@@ -649,7 +652,7 @@ compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparam)
   const char *data;
   size_t datalen;
 
-  l1 = sexp_find_token (keyparam, "p", 1);
+  l1 = sexp_find_token (keyparam, "y", 1);
   if (!l1)
     return GPG_ERR_NO_OBJ;
 
@@ -680,8 +683,8 @@ gcry_pk_spec_t _gcry_pubkey_spec_mlkem = {
     (GCRY_PK_USAGE_ENCAP),
     "ML-KEM-ipd", /* following the naming scheme given at https://github.com/ietf-wg-pquip/state-of-protocols-and-pqc#user-content-algorithm-names */
     mlkem_names,
-    "p",
-    "s",
+    "y",
+    "z",
     "a",
     "",
     "", /* elements of pub-key, sec-key, ciphertext, signature, key-grip */
