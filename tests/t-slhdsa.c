@@ -227,10 +227,7 @@ static unsigned char *fill_bin_buf_from_hex_line(size_t *r_length, const char ta
  * TODO: include test-utils.h when merging with kyber branch
  */
 
-/* TODO: flags eddsa is unnatural, we should define our own flag or use another better matching flag that ensures opaque
- * MPIs */
-const char SLHDSA_MESSAGE_TMPL[] = "(data (flags eddsa) (value %b))";
-
+const char SLHDSA_MESSAGE_TMPL[] = "(data (flags raw_opaque) (value %b))";
 
 static int check_slhdsa_roundtrip(size_t n_tests)
 {
