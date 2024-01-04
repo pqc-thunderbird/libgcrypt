@@ -1,5 +1,5 @@
-#ifndef SLHDSA_THASH_H
-#define SLHDSA_THASH_H
+#ifndef SLHDSA_THASH_AVX2_H
+#define SLHDSA_THASH_AVX2_H
 
 #include "config.h"
 #include "avx2-immintrin-support.h"

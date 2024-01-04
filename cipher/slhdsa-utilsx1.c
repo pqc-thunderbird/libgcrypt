@@ -6,6 +6,10 @@
 #include "slhdsa-utilsx1.h"
 #include "slhdsa-thash.h"
 #include "slhdsa-address.h"
+#include "avx2-immintrin-support.h"
+#ifdef USE_AVX2
+#include "slhdsa-thash-avx2.h"
+#endif
 
 #include "g10lib.h"
 
@@ -330,6 +334,8 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(unsigned char *root,
       gen_leafx4(current, ctx, 4 * idx + idx_offset, info);
       for (h = 0;; h++, internal_idx >>= 1, internal_leaf >>= 1)
         {
+          unsigned char *left = NULL;
+          int j;
 
           /* Special processing if we're at the top of the tree */
           if (h >= tree_height - 2)
@@ -379,7 +385,6 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(unsigned char *root,
           /* Now combine the left and right logical nodes together */
 
           /* Set the address of the node we're creating. */
-          int j;
           internal_idx_offset >>= 1;
           for (j = 0; j < 4; j++)
             {
@@ -387,7 +392,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(unsigned char *root,
               _gcry_slhdsa_set_tree_index(
                   ctx, tree_addrx4 + j * 8, (4 / 2) * (internal_idx & ~1) + j - left_adj + internal_idx_offset);
             }
-          unsigned char *left = &stackx4[h * 4 * ctx->n];
+          left = &stackx4[h * 4 * ctx->n];
           _gcry_slhdsa_thash_avx2_shake(&current[0 * ctx->n],
                                         &current[1 * ctx->n],
                                         &current[2 * ctx->n],

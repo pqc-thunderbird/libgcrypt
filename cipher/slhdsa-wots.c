@@ -10,6 +10,10 @@
 #include "slhdsa-wots.h"
 #include "slhdsa-wotsx1.h"
 #include "slhdsa-address.h"
+#include "avx2-immintrin-support.h"
+#ifdef USE_AVX2
+#include "slhdsa-thash-avx2.h"
+#endif
 
 #include "g10lib.h"
 
