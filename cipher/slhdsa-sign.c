@@ -71,6 +71,7 @@ gcry_err_code_t _gcry_slhdsa_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *p
   ec = _gcry_slhdsa_seed_keypair(ctx, pk, sk, seed);
 
 leave:
+  xfree(seed);
   return ec;
 }
 
