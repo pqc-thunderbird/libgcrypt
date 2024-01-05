@@ -212,17 +212,17 @@ gcry_err_code_t thashx8_512(unsigned char *out0,
   memcpy(bufx8 + ctx->addr_bytes + 6 * (ctx->addr_bytes + inblocks * ctx->n), in6, inblocks * ctx->n);
   memcpy(bufx8 + ctx->addr_bytes + 7 * (ctx->addr_bytes + inblocks * ctx->n), in7, inblocks * ctx->n);
 
-  sha512x4_seeded(outbuf + 0 * SLHDSA_SHA512_OUTPUT_BYTES,
-                  outbuf + 1 * SLHDSA_SHA512_OUTPUT_BYTES,
-                  outbuf + 2 * SLHDSA_SHA512_OUTPUT_BYTES,
-                  outbuf + 3 * SLHDSA_SHA512_OUTPUT_BYTES,
-                  ctx->state_seeded_512_avx2,                        /* seed */
-                  1024,                                              /* seed length */
-                  bufx8 + 0 * (ctx->addr_bytes + inblocks * ctx->n), /* in */
-                  bufx8 + 1 * (ctx->addr_bytes + inblocks * ctx->n),
-                  bufx8 + 2 * (ctx->addr_bytes + inblocks * ctx->n),
-                  bufx8 + 3 * (ctx->addr_bytes + inblocks * ctx->n),
-                  ctx->addr_bytes + inblocks * ctx->n /* len */
+  _gcry_slhdsa_sha512x4_seeded(outbuf + 0 * SLHDSA_SHA512_OUTPUT_BYTES,
+                               outbuf + 1 * SLHDSA_SHA512_OUTPUT_BYTES,
+                               outbuf + 2 * SLHDSA_SHA512_OUTPUT_BYTES,
+                               outbuf + 3 * SLHDSA_SHA512_OUTPUT_BYTES,
+                               ctx->state_seeded_512_avx2,                        /* seed */
+                               1024,                                              /* seed length */
+                               bufx8 + 0 * (ctx->addr_bytes + inblocks * ctx->n), /* in */
+                               bufx8 + 1 * (ctx->addr_bytes + inblocks * ctx->n),
+                               bufx8 + 2 * (ctx->addr_bytes + inblocks * ctx->n),
+                               bufx8 + 3 * (ctx->addr_bytes + inblocks * ctx->n),
+                               ctx->addr_bytes + inblocks * ctx->n /* len */
   );
 
   memcpy(out0, outbuf + 0 * SLHDSA_SHA512_OUTPUT_BYTES, ctx->n);
@@ -230,17 +230,17 @@ gcry_err_code_t thashx8_512(unsigned char *out0,
   memcpy(out2, outbuf + 2 * SLHDSA_SHA512_OUTPUT_BYTES, ctx->n);
   memcpy(out3, outbuf + 3 * SLHDSA_SHA512_OUTPUT_BYTES, ctx->n);
 
-  sha512x4_seeded(outbuf + 0 * SLHDSA_SHA512_OUTPUT_BYTES,
-                  outbuf + 1 * SLHDSA_SHA512_OUTPUT_BYTES,
-                  outbuf + 2 * SLHDSA_SHA512_OUTPUT_BYTES,
-                  outbuf + 3 * SLHDSA_SHA512_OUTPUT_BYTES,
-                  ctx->state_seeded_512_avx2,                        /* seed */
-                  1024,                                              /* seed length */
-                  bufx8 + 4 * (ctx->addr_bytes + inblocks * ctx->n), /* in */
-                  bufx8 + 5 * (ctx->addr_bytes + inblocks * ctx->n),
-                  bufx8 + 6 * (ctx->addr_bytes + inblocks * ctx->n),
-                  bufx8 + 7 * (ctx->addr_bytes + inblocks * ctx->n),
-                  ctx->addr_bytes + inblocks * ctx->n /* len */
+  _gcry_slhdsa_sha512x4_seeded(outbuf + 0 * SLHDSA_SHA512_OUTPUT_BYTES,
+                               outbuf + 1 * SLHDSA_SHA512_OUTPUT_BYTES,
+                               outbuf + 2 * SLHDSA_SHA512_OUTPUT_BYTES,
+                               outbuf + 3 * SLHDSA_SHA512_OUTPUT_BYTES,
+                               ctx->state_seeded_512_avx2,                        /* seed */
+                               1024,                                              /* seed length */
+                               bufx8 + 4 * (ctx->addr_bytes + inblocks * ctx->n), /* in */
+                               bufx8 + 5 * (ctx->addr_bytes + inblocks * ctx->n),
+                               bufx8 + 6 * (ctx->addr_bytes + inblocks * ctx->n),
+                               bufx8 + 7 * (ctx->addr_bytes + inblocks * ctx->n),
+                               ctx->addr_bytes + inblocks * ctx->n /* len */
   );
 
   memcpy(out4, outbuf + 0 * SLHDSA_SHA512_OUTPUT_BYTES, ctx->n);
@@ -276,8 +276,8 @@ void initialize_hash_function_sha_avx2(const _gcry_slhdsa_param_t *ctx)
   sha256_inc_blocks(ctx->state_seeded_avx2, block, 1);
   if (ctx->do_use_sha512)
     {
-      sha512_inc_init(ctx->state_seeded_512_avx2);
-      sha512_inc_blocks(ctx->state_seeded_512_avx2, block, 1);
+      _gcry_slhdsa_sha512_inc_init(ctx->state_seeded_512_avx2);
+      _gcry_slhdsa_sha512_inc_blocks(ctx->state_seeded_512_avx2, block, 1);
     }
 }
 
@@ -347,7 +347,7 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_shake(unsigned char *out0,
           state[i] = _mm256_set1_epi64x(0);
         }
 
-      KeccakP1600times4_PermuteAll_24rounds(&state[0]);
+      _gcry_slhdsa_KeccakP1600times4_PermuteAll_24rounds(&state[0]);
 
       for (int i = 0; i < ctx->n / 8; i++)
         {
@@ -397,7 +397,8 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_shake(unsigned char *out0,
       memcpy(buf2 + ctx->n + ctx->addr_bytes, in2, inblocks * ctx->n);
       memcpy(buf3 + ctx->n + ctx->addr_bytes, in3, inblocks * ctx->n);
 
-      shake256x4(out0, out1, out2, out3, ctx->n, buf0, buf1, buf2, buf3, ctx->n + ctx->addr_bytes + inblocks * ctx->n);
+      _gcry_slhdsa_shake256x4(
+          out0, out1, out2, out3, ctx->n, buf0, buf1, buf2, buf3, ctx->n + ctx->addr_bytes + inblocks * ctx->n);
     }
 
 leave:

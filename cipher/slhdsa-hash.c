@@ -231,7 +231,7 @@ gcry_err_code_t _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
       state[i] = _mm256_set1_epi64x(0);
     }
 
-  KeccakP1600times4_PermuteAll_24rounds(&state[0]);
+  _gcry_slhdsa_KeccakP1600times4_PermuteAll_24rounds(&state[0]);
 
   for (int i = 0; i < ctx->n / 8; i++)
     {

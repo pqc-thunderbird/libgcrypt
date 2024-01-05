@@ -63,7 +63,7 @@ static void keccak_absorb4x(__m256i *s,
           ss[4 * i + 3] ^= load64(m3 + 8 * i);
         }
 
-      KeccakP1600times4_PermuteAll_24rounds(s);
+      _gcry_slhdsa_KeccakP1600times4_PermuteAll_24rounds(s);
       mlen -= r;
       m0 += r;
       m1 += r;
@@ -120,7 +120,7 @@ static void keccak_squeezeblocks4x(unsigned char *h0,
 
   while (nblocks > 0)
     {
-      KeccakP1600times4_PermuteAll_24rounds(s);
+      _gcry_slhdsa_KeccakP1600times4_PermuteAll_24rounds(s);
       for (i = 0; i < (r >> 3); i++)
         {
           store64(h0 + 8 * i, ss[4 * i + 0]);
@@ -137,16 +137,16 @@ static void keccak_squeezeblocks4x(unsigned char *h0,
 }
 
 
-void shake128x4(unsigned char *out0,
-                unsigned char *out1,
-                unsigned char *out2,
-                unsigned char *out3,
-                unsigned long long outlen,
-                unsigned char *in0,
-                unsigned char *in1,
-                unsigned char *in2,
-                unsigned char *in3,
-                unsigned long long inlen)
+void _gcry_slhdsa_shake128x4(unsigned char *out0,
+                             unsigned char *out1,
+                             unsigned char *out2,
+                             unsigned char *out3,
+                             unsigned long long outlen,
+                             unsigned char *in0,
+                             unsigned char *in1,
+                             unsigned char *in2,
+                             unsigned char *in3,
+                             unsigned long long inlen)
 {
   __m256i s[25];
   unsigned char t0[SHAKE128_RATE];
@@ -184,16 +184,16 @@ void shake128x4(unsigned char *out0,
 }
 
 
-void shake256x4(unsigned char *out0,
-                unsigned char *out1,
-                unsigned char *out2,
-                unsigned char *out3,
-                unsigned long long outlen,
-                unsigned char *in0,
-                unsigned char *in1,
-                unsigned char *in2,
-                unsigned char *in3,
-                unsigned long long inlen)
+void _gcry_slhdsa_shake256x4(unsigned char *out0,
+                             unsigned char *out1,
+                             unsigned char *out2,
+                             unsigned char *out3,
+                             unsigned long long outlen,
+                             unsigned char *in0,
+                             unsigned char *in1,
+                             unsigned char *in2,
+                             unsigned char *in3,
+                             unsigned long long inlen)
 {
   __m256i s[25];
   unsigned char t0[SHAKE256_RATE];
@@ -568,7 +568,7 @@ static const UINT64 rho56[4] = {0x0007060504030201, 0x080F0E0D0C0B0A09, 0x101716
                                               thetaRhoPiChiIotaPrepareTheta(21, E, A)                                  \
                                                   thetaRhoPiChiIotaPrepareTheta(22, A, E) thetaRhoPiChiIota(23, E, A)
 
-void KeccakP1600times4_PermuteAll_24rounds(__m256i *states)
+void _gcry_slhdsa_KeccakP1600times4_PermuteAll_24rounds(__m256i *states)
 {
   __m256i *statesAsLanes = states;
   __m256i Aba, Abe, Abi, Abo, Abu;

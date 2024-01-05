@@ -361,17 +361,17 @@ static void _sha512x4(sha512ctx4x *ctx,
   memcpy(out3, out, 64);
 }
 
-void sha512x4_seeded(unsigned char *out0,
-                     unsigned char *out1,
-                     unsigned char *out2,
-                     unsigned char *out3,
-                     const unsigned char *seed,
-                     unsigned long long seedlen,
-                     const unsigned char *in0,
-                     const unsigned char *in1,
-                     const unsigned char *in2,
-                     const unsigned char *in3,
-                     unsigned long long inlen)
+void _gcry_slhdsa_sha512x4_seeded(unsigned char *out0,
+                                  unsigned char *out1,
+                                  unsigned char *out2,
+                                  unsigned char *out3,
+                                  const unsigned char *seed,
+                                  unsigned long long seedlen,
+                                  const unsigned char *in0,
+                                  const unsigned char *in1,
+                                  const unsigned char *in2,
+                                  const unsigned char *in3,
+                                  unsigned long long inlen)
 {
   sha512ctx4x ctx;
   unsigned long i;
@@ -681,7 +681,7 @@ static int crypto_hashblocks_sha512(unsigned char *statebytes, const unsigned ch
   return inlen;
 }
 
-void sha512_inc_init(uint8_t *state)
+void _gcry_slhdsa_sha512_inc_init(uint8_t *state)
 {
   for (size_t i = 0; i < 64; ++i)
     {
@@ -693,7 +693,7 @@ void sha512_inc_init(uint8_t *state)
     }
 }
 
-void sha512_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks)
+void _gcry_slhdsa_sha512_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks)
 {
   uint64_t bytes = load_bigendian_64(state + 64);
 
