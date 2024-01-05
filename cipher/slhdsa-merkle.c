@@ -4,9 +4,8 @@
 #include <string.h>
 
 #include "slhdsa-utils.h"
-#include "slhdsa-utilsx1.h"
+#include "slhdsa-treehash.h"
 #include "slhdsa-wots.h"
-#include "slhdsa-wotsx1.h"
 #include "slhdsa-merkle.h"
 #include "slhdsa-address.h"
 

@@ -152,8 +152,8 @@ EXTRA_libcipher_la_SOURCES = \
 	blake2.c \
 	blake2b-amd64-avx2.S blake2b-amd64-avx512.S \
 	blake2s-amd64-avx.S blake2s-amd64-avx512.S \
-	slhdsa-address.c slhdsa-merkle.c slhdsa-wots.c slhdsa-wotsx1.c slhdsa-utils.c slhdsa-utilsx1.c slhdsa-fors.c slhdsa-sign.c \
-	slhdsa-params.h slhdsa-address.h slhdsa-merkle.h slhdsa-wots.h slhdsa-wotsx1.h slhdsa-utils.h slhdsa-utilsx1.h slhdsa-fors.h slhdsa-api.h slhdsa-hash.h slhdsa-thash.h \
+	slhdsa-address.c slhdsa-merkle.c slhdsa-wots.c slhdsa-utils.c slhdsa-treehash.c slhdsa-fors.c slhdsa-sign.c \
+	slhdsa-params.h slhdsa-address.h slhdsa-merkle.h slhdsa-wots.h slhdsa-utils.h slhdsa-treehash.h slhdsa-fors.h slhdsa-api.h slhdsa-hash.h slhdsa-thash.h \
 	slhdsa-hash_shake.c \
 	slhdsa.c \
 	slhdsa-thash.c \

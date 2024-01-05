@@ -6,7 +6,7 @@
 
 #include "slhdsa-fors.h"
 #include "slhdsa-utils.h"
-#include "slhdsa-utilsx1.h"
+#include "slhdsa-treehash.h"
 #include "slhdsa-hash.h"
 #include "slhdsa-thash.h"
 #include "slhdsa-address.h"

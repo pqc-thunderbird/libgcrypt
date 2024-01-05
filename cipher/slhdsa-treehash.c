@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "slhdsa-utils.h"
-#include "slhdsa-utilsx1.h"
+#include "slhdsa-treehash.h"
 #include "slhdsa-thash.h"
 #include "slhdsa-address.h"
 #include "avx2-immintrin-support.h"
