@@ -16,6 +16,9 @@ typedef struct SHA512state4x
   unsigned long long msglen;
 } sha512ctx4x;
 
+void sha512_inc_init(uint8_t *state);
+
+void sha512_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks);
 
 void sha512x4_seeded(unsigned char *out0,
                      unsigned char *out1,

@@ -157,9 +157,26 @@ gcry_err_code_t _gcry_slhdsa_signature(
       _gcry_slhdsa_copy_subtree_addr(ctx, wots_addr, tree_addr);
       _gcry_slhdsa_set_keypair_addr(ctx, wots_addr, idx_leaf);
 
-      ec = _gcry_slhdsa_merkle_sign(sig, root, ctx, wots_addr, tree_addr, idx_leaf);
+#ifdef USE_AVX2
+      if (ctx->use_avx2)
+        {
+          if (ctx->is_sha2)
+            {
+              ec = _gcry_slhdsa_merkle_sign_avx_sha2(sig, root, ctx, wots_addr, tree_addr, idx_leaf);
+            }
+          else
+            {
+              ec = _gcry_slhdsa_merkle_sign_avx_shake(sig, root, ctx, wots_addr, tree_addr, idx_leaf);
+            }
+        }
+      else
+#endif
+        {
+          ec = _gcry_slhdsa_merkle_sign(sig, root, ctx, wots_addr, tree_addr, idx_leaf);
+        }
       if (ec)
         goto leave;
+
       sig += ctx->WOTS_bytes + ctx->tree_height * ctx->n;
 
       /* Update the indices for the next layer. */

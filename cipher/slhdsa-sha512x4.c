@@ -83,24 +83,6 @@ static void transpose(u256 s[4])
   s[3] = _mm256_permute2x128_si256(tmp[1], tmp[3], 0x31);
 }
 
-
-static void sha512_init4x(sha512ctx4x *ctx)
-{
-#define SET4(x) _mm256_set_epi64x(x, x, x, x)
-  ctx->s[0] = SET4(0x6a09e667f3bcc908ULL);
-  ctx->s[1] = SET4(0xbb67ae8584caa73bULL);
-  ctx->s[2] = SET4(0x3c6ef372fe94f82bULL);
-  ctx->s[3] = SET4(0xa54ff53a5f1d36f1ULL);
-  ctx->s[4] = SET4(0x510e527fade682d1ULL);
-  ctx->s[5] = SET4(0x9b05688c2b3e6c1fULL);
-  ctx->s[6] = SET4(0x1f83d9abfb41bd6bULL);
-  ctx->s[7] = SET4(0x5be0cd19137e2179ULL);
-#undef SET4
-
-  ctx->datalen = 0;
-  ctx->msglen  = 0;
-}
-
 #define XOR _mm256_xor_si256
 #define OR _mm256_or_si256
 #define AND _mm256_and_si256
