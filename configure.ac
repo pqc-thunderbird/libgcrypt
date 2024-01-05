@@ -3056,7 +3056,7 @@ if test "$found" = "1" ; then
   # TODO: correctly integrate avx2
   CFLAGS="$CFLAGS -mavx2"
 
-  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS slhdsa.lo slhdsa-address.lo slhdsa-merkle.lo slhdsa-wots.lo slhdsa-wotsx1.lo slhdsa-utils.lo slhdsa-utilsx1.lo slhdsa-fors.lo slhdsa-sign.lo slhdsa-hash.lo slhdsa-thash-avx2.lo slhdsa-thash.lo slhdsa-sha512x4.lo slhdsa-fips202x4.lo slhdsa-sha256x8.lo"
+  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS slhdsa.lo slhdsa-address.lo slhdsa-merkle.lo slhdsa-wots.lo slhdsa-wotsx1.lo slhdsa-utils.lo slhdsa-utilsx1.lo slhdsa-fors.lo slhdsa-sign.lo slhdsa-hash.lo slhdsa-thash.lo slhdsa-sha512x4.lo slhdsa-fips202x4.lo slhdsa-sha256x8.lo"
    AC_DEFINE(USE_SLHDSA, 1, [Defined if this module should be included])
 fi
 

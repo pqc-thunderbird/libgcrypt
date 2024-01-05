@@ -144,7 +144,7 @@ gcry_err_code_t _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
       memcpy(bufx8 + j * (ctx->n + ctx->addr_bytes) + ctx->addr_bytes, ctx->sk_seed, ctx->n);
     }
 
-  sha256x8_seeded(
+  _gcry_slhdsa_sha256x8_seeded(
       /* out */
       outbufx8 + 0 * SLHDSA_SHA256_OUTPUT_BYTES,
       outbufx8 + 1 * SLHDSA_SHA256_OUTPUT_BYTES,

@@ -10,6 +10,14 @@
 
 typedef uint64_t u64;
 typedef __m256i u256;
+typedef struct SHA512state4x
+{
+  __m256i s[8];
+  unsigned char msgblocks[4 * 128];
+  int datalen;
+  unsigned long long msglen;
+} sha512ctx4x;
+
 
 static void sha512_transform4x(sha512ctx4x *ctx,
                                const unsigned char *d0,

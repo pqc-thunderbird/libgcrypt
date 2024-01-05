@@ -3,18 +3,10 @@
 
 #include "avx2-immintrin-support.h"
 #include "slhdsa-hash.h"
+#include <stdint.h>
 
 #ifdef USE_AVX2
 #include "immintrin.h"
-#include <stdint.h>
-
-typedef struct SHA512state4x
-{
-  __m256i s[8];
-  unsigned char msgblocks[4 * 128];
-  int datalen;
-  unsigned long long msglen;
-} sha512ctx4x;
 
 void _gcry_slhdsa_sha512_inc_init(uint8_t *state);
 

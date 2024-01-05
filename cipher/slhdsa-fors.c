@@ -4,11 +4,6 @@
 #include "types.h"
 #include <string.h>
 
-#include "avx2-immintrin-support.h"
-#ifdef USE_AVX2
-#include "slhdsa-thash-avx2.h"
-#endif
-
 #include "slhdsa-fors.h"
 #include "slhdsa-utils.h"
 #include "slhdsa-utilsx1.h"

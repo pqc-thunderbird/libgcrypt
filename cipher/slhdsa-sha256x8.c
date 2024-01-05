@@ -9,8 +9,100 @@
 
 #ifdef USE_AVX2
 
+static const unsigned int RC[]
+    = {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+       0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+       0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+       0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+       0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+       0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+       0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+       0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
+
+#define u32 uint32_t
+#define u256 __m256i
+
+#define XOR _mm256_xor_si256
+#define OR _mm256_or_si256
+#define AND _mm256_and_si256
+#define ADD32 _mm256_add_epi32
+#define NOT(x) _mm256_xor_si256(x, _mm256_set_epi32(-1, -1, -1, -1, -1, -1, -1, -1))
+
+#define LOAD(src) _mm256_loadu_si256((__m256i *)(src))
+#define STORE(dest, src) _mm256_storeu_si256((__m256i *)(dest), src)
+
+#define BYTESWAP(x)                                                                                                    \
+  _mm256_shuffle_epi8(x,                                                                                               \
+                      _mm256_set_epi8(0xc,                                                                             \
+                                      0xd,                                                                             \
+                                      0xe,                                                                             \
+                                      0xf,                                                                             \
+                                      0x8,                                                                             \
+                                      0x9,                                                                             \
+                                      0xa,                                                                             \
+                                      0xb,                                                                             \
+                                      0x4,                                                                             \
+                                      0x5,                                                                             \
+                                      0x6,                                                                             \
+                                      0x7,                                                                             \
+                                      0x0,                                                                             \
+                                      0x1,                                                                             \
+                                      0x2,                                                                             \
+                                      0x3,                                                                             \
+                                      0xc,                                                                             \
+                                      0xd,                                                                             \
+                                      0xe,                                                                             \
+                                      0xf,                                                                             \
+                                      0x8,                                                                             \
+                                      0x9,                                                                             \
+                                      0xa,                                                                             \
+                                      0xb,                                                                             \
+                                      0x4,                                                                             \
+                                      0x5,                                                                             \
+                                      0x6,                                                                             \
+                                      0x7,                                                                             \
+                                      0x0,                                                                             \
+                                      0x1,                                                                             \
+                                      0x2,                                                                             \
+                                      0x3))
+
+#define SHIFTR32(x, y) _mm256_srli_epi32(x, y)
+#define SHIFTL32(x, y) _mm256_slli_epi32(x, y)
+
+#define ROTR32(x, y) OR(SHIFTR32(x, y), SHIFTL32(x, 32 - y))
+#define ROTL32(x, y) OR(SHIFTL32(x, y), SHIFTR32(x, 32 - y))
+
+#define XOR3(a, b, c) XOR(XOR(a, b), c)
+
+#define ADD3_32(a, b, c) ADD32(ADD32(a, b), c)
+#define ADD4_32(a, b, c, d) ADD32(ADD32(ADD32(a, b), c), d)
+#define ADD5_32(a, b, c, d, e) ADD32(ADD32(ADD32(ADD32(a, b), c), d), e)
+
+#define MAJ_AVX(a, b, c) XOR3(AND(a, b), AND(a, c), AND(b, c))
+#define CH_AVX(a, b, c) XOR(AND(a, b), AND(NOT(a), c))
+
+#define SIGMA1_AVX(x) XOR3(ROTR32(x, 6), ROTR32(x, 11), ROTR32(x, 25))
+#define SIGMA0_AVX(x) XOR3(ROTR32(x, 2), ROTR32(x, 13), ROTR32(x, 22))
+
+#define WSIGMA1_AVX(x) XOR3(ROTR32(x, 17), ROTR32(x, 19), SHIFTR32(x, 10))
+#define WSIGMA0_AVX(x) XOR3(ROTR32(x, 7), ROTR32(x, 18), SHIFTR32(x, 3))
+
+#define SHA256ROUND_AVX(a, b, c, d, e, f, g, h, rc, w)                                                                 \
+  T0 = ADD5_32(h, SIGMA1_AVX(e), CH_AVX(e, f, g), _mm256_set1_epi32(RC[rc]), w);                                       \
+  d  = ADD32(d, T0);                                                                                                   \
+  T1 = ADD32(SIGMA0_AVX(a), MAJ_AVX(a, b, c));                                                                         \
+  h  = ADD32(T0, T1);
+
+typedef struct SHA256state
+{
+  u256 s[8];
+  unsigned char msgblocks[8 * 64];
+  int datalen;
+  unsigned long long msglen;
+} sha256ctx;
+
 // Transpose 8 vectors containing 32-bit values
-void transpose(u256 s[8])
+static void transpose(u256 s[8])
 {
   u256 tmp0[8];
   u256 tmp1[8];
@@ -40,115 +132,7 @@ void transpose(u256 s[8])
   s[7]    = _mm256_permute2x128_si256(tmp1[3], tmp1[7], 0x31);
 }
 
-void sha256_init8x(sha256ctx *ctx)
-{
-  ctx->s[0] = _mm256_set_epi32(
-      0x6a09e667, 0x6a09e667, 0x6a09e667, 0x6a09e667, 0x6a09e667, 0x6a09e667, 0x6a09e667, 0x6a09e667);
-  ctx->s[1] = _mm256_set_epi32(
-      0xbb67ae85, 0xbb67ae85, 0xbb67ae85, 0xbb67ae85, 0xbb67ae85, 0xbb67ae85, 0xbb67ae85, 0xbb67ae85);
-  ctx->s[2] = _mm256_set_epi32(
-      0x3c6ef372, 0x3c6ef372, 0x3c6ef372, 0x3c6ef372, 0x3c6ef372, 0x3c6ef372, 0x3c6ef372, 0x3c6ef372);
-  ctx->s[3] = _mm256_set_epi32(
-      0xa54ff53a, 0xa54ff53a, 0xa54ff53a, 0xa54ff53a, 0xa54ff53a, 0xa54ff53a, 0xa54ff53a, 0xa54ff53a);
-  ctx->s[4] = _mm256_set_epi32(
-      0x510e527f, 0x510e527f, 0x510e527f, 0x510e527f, 0x510e527f, 0x510e527f, 0x510e527f, 0x510e527f);
-  ctx->s[5] = _mm256_set_epi32(
-      0x9b05688c, 0x9b05688c, 0x9b05688c, 0x9b05688c, 0x9b05688c, 0x9b05688c, 0x9b05688c, 0x9b05688c);
-  ctx->s[6] = _mm256_set_epi32(
-      0x1f83d9ab, 0x1f83d9ab, 0x1f83d9ab, 0x1f83d9ab, 0x1f83d9ab, 0x1f83d9ab, 0x1f83d9ab, 0x1f83d9ab);
-  ctx->s[7] = _mm256_set_epi32(
-      0x5be0cd19, 0x5be0cd19, 0x5be0cd19, 0x5be0cd19, 0x5be0cd19, 0x5be0cd19, 0x5be0cd19, 0x5be0cd19);
-
-  ctx->datalen = 0;
-  ctx->msglen  = 0;
-}
-
-void sha256_final8x(sha256ctx *ctx,
-                    unsigned char *out0,
-                    unsigned char *out1,
-                    unsigned char *out2,
-                    unsigned char *out3,
-                    unsigned char *out4,
-                    unsigned char *out5,
-                    unsigned char *out6,
-                    unsigned char *out7)
-{
-  unsigned int i, curlen;
-
-  // Padding
-  if (ctx->datalen < 56)
-    {
-      for (i = 0; i < 8; ++i)
-        {
-          curlen                            = ctx->datalen;
-          ctx->msgblocks[64 * i + curlen++] = 0x80;
-          while (curlen < 64)
-            {
-              ctx->msgblocks[64 * i + curlen++] = 0x00;
-            }
-        }
-    }
-  else
-    {
-      for (i = 0; i < 8; ++i)
-        {
-          curlen                            = ctx->datalen;
-          ctx->msgblocks[64 * i + curlen++] = 0x80;
-          while (curlen < 64)
-            {
-              ctx->msgblocks[64 * i + curlen++] = 0x00;
-            }
-        }
-      sha256_transform8x(ctx,
-                         &ctx->msgblocks[64 * 0],
-                         &ctx->msgblocks[64 * 1],
-                         &ctx->msgblocks[64 * 2],
-                         &ctx->msgblocks[64 * 3],
-                         &ctx->msgblocks[64 * 4],
-                         &ctx->msgblocks[64 * 5],
-                         &ctx->msgblocks[64 * 6],
-                         &ctx->msgblocks[64 * 7]);
-      memset(ctx->msgblocks, 0, 8 * 64);
-    }
-
-  // Add length of the message to each block
-  ctx->msglen += ctx->datalen * 8;
-  for (i = 0; i < 8; i++)
-    {
-      ctx->msgblocks[64 * i + 63] = ctx->msglen;
-      ctx->msgblocks[64 * i + 62] = ctx->msglen >> 8;
-      ctx->msgblocks[64 * i + 61] = ctx->msglen >> 16;
-      ctx->msgblocks[64 * i + 60] = ctx->msglen >> 24;
-      ctx->msgblocks[64 * i + 59] = ctx->msglen >> 32;
-      ctx->msgblocks[64 * i + 58] = ctx->msglen >> 40;
-      ctx->msgblocks[64 * i + 57] = ctx->msglen >> 48;
-      ctx->msgblocks[64 * i + 56] = ctx->msglen >> 56;
-    }
-  sha256_transform8x(ctx,
-                     &ctx->msgblocks[64 * 0],
-                     &ctx->msgblocks[64 * 1],
-                     &ctx->msgblocks[64 * 2],
-                     &ctx->msgblocks[64 * 3],
-                     &ctx->msgblocks[64 * 4],
-                     &ctx->msgblocks[64 * 5],
-                     &ctx->msgblocks[64 * 6],
-                     &ctx->msgblocks[64 * 7]);
-
-  // Compute final hash output
-  transpose(ctx->s);
-
-  // Store Hash value
-  STORE(out0, BYTESWAP(ctx->s[0]));
-  STORE(out1, BYTESWAP(ctx->s[1]));
-  STORE(out2, BYTESWAP(ctx->s[2]));
-  STORE(out3, BYTESWAP(ctx->s[3]));
-  STORE(out4, BYTESWAP(ctx->s[4]));
-  STORE(out5, BYTESWAP(ctx->s[5]));
-  STORE(out6, BYTESWAP(ctx->s[6]));
-  STORE(out7, BYTESWAP(ctx->s[7]));
-}
-
-void sha256_transform8x(sha256ctx *ctx,
+static void sha256_transform8x(sha256ctx *ctx,
                         const unsigned char *data0,
                         const unsigned char *data1,
                         const unsigned char *data2,
@@ -315,6 +299,90 @@ void sha256_transform8x(sha256ctx *ctx,
   ctx->s[7] = ADD32(s[7], ctx->s[7]);
 }
 
+static void sha256_final8x(sha256ctx *ctx,
+                    unsigned char *out0,
+                    unsigned char *out1,
+                    unsigned char *out2,
+                    unsigned char *out3,
+                    unsigned char *out4,
+                    unsigned char *out5,
+                    unsigned char *out6,
+                    unsigned char *out7)
+{
+  unsigned int i, curlen;
+
+  // Padding
+  if (ctx->datalen < 56)
+    {
+      for (i = 0; i < 8; ++i)
+        {
+          curlen                            = ctx->datalen;
+          ctx->msgblocks[64 * i + curlen++] = 0x80;
+          while (curlen < 64)
+            {
+              ctx->msgblocks[64 * i + curlen++] = 0x00;
+            }
+        }
+    }
+  else
+    {
+      for (i = 0; i < 8; ++i)
+        {
+          curlen                            = ctx->datalen;
+          ctx->msgblocks[64 * i + curlen++] = 0x80;
+          while (curlen < 64)
+            {
+              ctx->msgblocks[64 * i + curlen++] = 0x00;
+            }
+        }
+      sha256_transform8x(ctx,
+                         &ctx->msgblocks[64 * 0],
+                         &ctx->msgblocks[64 * 1],
+                         &ctx->msgblocks[64 * 2],
+                         &ctx->msgblocks[64 * 3],
+                         &ctx->msgblocks[64 * 4],
+                         &ctx->msgblocks[64 * 5],
+                         &ctx->msgblocks[64 * 6],
+                         &ctx->msgblocks[64 * 7]);
+      memset(ctx->msgblocks, 0, 8 * 64);
+    }
+
+  // Add length of the message to each block
+  ctx->msglen += ctx->datalen * 8;
+  for (i = 0; i < 8; i++)
+    {
+      ctx->msgblocks[64 * i + 63] = ctx->msglen;
+      ctx->msgblocks[64 * i + 62] = ctx->msglen >> 8;
+      ctx->msgblocks[64 * i + 61] = ctx->msglen >> 16;
+      ctx->msgblocks[64 * i + 60] = ctx->msglen >> 24;
+      ctx->msgblocks[64 * i + 59] = ctx->msglen >> 32;
+      ctx->msgblocks[64 * i + 58] = ctx->msglen >> 40;
+      ctx->msgblocks[64 * i + 57] = ctx->msglen >> 48;
+      ctx->msgblocks[64 * i + 56] = ctx->msglen >> 56;
+    }
+  sha256_transform8x(ctx,
+                     &ctx->msgblocks[64 * 0],
+                     &ctx->msgblocks[64 * 1],
+                     &ctx->msgblocks[64 * 2],
+                     &ctx->msgblocks[64 * 3],
+                     &ctx->msgblocks[64 * 4],
+                     &ctx->msgblocks[64 * 5],
+                     &ctx->msgblocks[64 * 6],
+                     &ctx->msgblocks[64 * 7]);
+
+  // Compute final hash output
+  transpose(ctx->s);
+
+  // Store Hash value
+  STORE(out0, BYTESWAP(ctx->s[0]));
+  STORE(out1, BYTESWAP(ctx->s[1]));
+  STORE(out2, BYTESWAP(ctx->s[2]));
+  STORE(out3, BYTESWAP(ctx->s[3]));
+  STORE(out4, BYTESWAP(ctx->s[4]));
+  STORE(out5, BYTESWAP(ctx->s[5]));
+  STORE(out6, BYTESWAP(ctx->s[6]));
+  STORE(out7, BYTESWAP(ctx->s[7]));
+}
 
 static uint32_t load_bigendian_32(const uint8_t *x)
 {
@@ -364,7 +432,7 @@ static void _sha256x8(sha256ctx *ctx,
   sha256_final8x(ctx, out0, out1, out2, out3, out4, out5, out6, out7);
 }
 
-void sha256x8_seeded(unsigned char *out0,
+void _gcry_slhdsa_sha256x8_seeded(unsigned char *out0,
                      unsigned char *out1,
                      unsigned char *out2,
                      unsigned char *out3,
@@ -385,7 +453,6 @@ void sha256x8_seeded(unsigned char *out0,
                      unsigned long long inlen)
 {
   uint32_t t;
-
   sha256ctx ctx;
 
   for (size_t i = 0; i < 8; i++)
@@ -396,31 +463,6 @@ void sha256x8_seeded(unsigned char *out0,
 
   ctx.datalen = 0;
   ctx.msglen  = seedlen;
-
-  _sha256x8(&ctx, out0, out1, out2, out3, out4, out5, out6, out7, in0, in1, in2, in3, in4, in5, in6, in7, inlen);
-}
-
-/* This provides a wrapper around the internals of 8x parallel SHA256 */
-void sha256x8(unsigned char *out0,
-              unsigned char *out1,
-              unsigned char *out2,
-              unsigned char *out3,
-              unsigned char *out4,
-              unsigned char *out5,
-              unsigned char *out6,
-              unsigned char *out7,
-              const unsigned char *in0,
-              const unsigned char *in1,
-              const unsigned char *in2,
-              const unsigned char *in3,
-              const unsigned char *in4,
-              const unsigned char *in5,
-              const unsigned char *in6,
-              const unsigned char *in7,
-              unsigned long long inlen)
-{
-  sha256ctx ctx;
-  sha256_init8x(&ctx);
 
   _sha256x8(&ctx, out0, out1, out2, out3, out4, out5, out6, out7, in0, in1, in2, in3, in4, in5, in6, in7, inlen);
 }
@@ -668,7 +710,7 @@ static size_t crypto_hashblocks_sha256(uint8_t *statebytes, const uint8_t *in, s
   return inlen;
 }
 
-void sha256_inc_init(uint8_t *state)
+void _gcry_slhdsa_sha256_inc_init(uint8_t *state)
 {
   for (size_t i = 0; i < 32; ++i)
     {
@@ -680,7 +722,7 @@ void sha256_inc_init(uint8_t *state)
     }
 }
 
-void sha256_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks)
+void _gcry_slhdsa_sha256_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks)
 {
   uint64_t bytes = load_bigendian_64(state + 32);
 
