@@ -14,6 +14,7 @@
 #ifdef USE_AVX2
 #include "slhdsa-sha256x8.h"
 #include "slhdsa-sha512x4.h"
+#include "slhdsa-fips202x4.h"
 #endif
 
 static gcry_err_code_t initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx);
@@ -63,6 +64,35 @@ gcry_err_code_t _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
     }
   return 0;
 }
+
+/**
+ * Absorb the constant pub_seed using one round of the compression function
+ * This initializes state_seeded and state_seeded_512, which can then be
+ * reused in thash
+ **/
+void initialize_hash_function_sha_avx2(_gcry_slhdsa_param_t *ctx)
+{
+  uint8_t block[SLHDSA_SHA512_BLOCK_BYTES];
+  size_t i;
+
+  for (i = 0; i < ctx->n; ++i)
+    {
+      block[i] = ctx->pub_seed[i];
+    }
+  for (i = ctx->n; i < SLHDSA_SHA512_BLOCK_BYTES; ++i)
+    {
+      block[i] = 0;
+    }
+
+  _gcry_slhdsa_sha256_inc_init(ctx->state_seeded_avx2);
+  _gcry_slhdsa_sha256_inc_blocks(ctx->state_seeded_avx2, block, 1);
+  if (ctx->do_use_sha512)
+    {
+      _gcry_slhdsa_sha512_inc_init(ctx->state_seeded_512_avx2);
+      _gcry_slhdsa_sha512_inc_blocks(ctx->state_seeded_512_avx2, block, 1);
+    }
+}
+
 
 /*
  * Computes PRF(pk_seed, sk_seed, addr).
@@ -185,16 +215,15 @@ leave:
   return ec;
 }
 
-gcry_err_code_t _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
-                                            unsigned char *out1,
-                                            unsigned char *out2,
-                                            unsigned char *out3,
-                                            const _gcry_slhdsa_param_t *ctx,
-                                            const uint32_t addrx4[4 * 8])
+void _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
+                                 unsigned char *out1,
+                                 unsigned char *out2,
+                                 unsigned char *out3,
+                                 const _gcry_slhdsa_param_t *ctx,
+                                 const uint32_t addrx4[4 * 8])
 {
   /* As we write and read only a few quadwords, it is more efficient to
    * build and extract from the fourway SHAKE256 state by hand. */
-  gcry_err_code_t ec = 0;
   __m256i state[25];
 
   for (int i = 0; i < ctx->n / 8; i++)
@@ -240,9 +269,6 @@ gcry_err_code_t _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
       ((int64_t *)out2)[i] = _mm256_extract_epi64(state[i], 2);
       ((int64_t *)out3)[i] = _mm256_extract_epi64(state[i], 3);
     }
-
-leave:
-  return ec;
 }
 
 #endif
@@ -335,7 +361,7 @@ static gcry_err_code_t gen_message_random_sha2(unsigned char *R,
   gcry_err_code_t ec = 0;
   int hmac_shaX_algo;
   gcry_mac_hd_t hd = NULL;
-  unsigned int outlen;
+  size_t outlen;
   unsigned char *tmpmac = NULL;
 
   if (ctx->do_use_sha512)

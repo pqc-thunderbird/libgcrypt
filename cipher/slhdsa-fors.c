@@ -19,16 +19,16 @@ static gcry_err_code_t fors_gen_sk(unsigned char *sk, const _gcry_slhdsa_param_t
 }
 
 #ifdef USE_AVX2
-static void fors_gen_sk_avx2(unsigned char *sk0,
-                             unsigned char *sk1,
-                             unsigned char *sk2,
-                             unsigned char *sk3,
-                             unsigned char *sk4,
-                             unsigned char *sk5,
-                             unsigned char *sk6,
-                             unsigned char *sk7,
-                             const _gcry_slhdsa_param_t *ctx,
-                             uint32_t *fors_leaf_addr)
+static gcry_err_code_t fors_gen_sk_avx2(unsigned char *sk0,
+                                        unsigned char *sk1,
+                                        unsigned char *sk2,
+                                        unsigned char *sk3,
+                                        unsigned char *sk4,
+                                        unsigned char *sk5,
+                                        unsigned char *sk6,
+                                        unsigned char *sk7,
+                                        const _gcry_slhdsa_param_t *ctx,
+                                        uint32_t *fors_leaf_addr)
 {
   if (ctx->is_sha2)
     {
@@ -36,7 +36,8 @@ static void fors_gen_sk_avx2(unsigned char *sk0,
     }
   else
     {
-      return _gcry_slhdsa_prf_avx2_shake(sk0, sk1, sk2, sk3, ctx, fors_leaf_addr);
+      _gcry_slhdsa_prf_avx2_shake(sk0, sk1, sk2, sk3, ctx, fors_leaf_addr);
+      return 0;
     }
 }
 #endif
@@ -50,50 +51,50 @@ static gcry_err_code_t fors_sk_to_leaf(unsigned char *leaf,
 }
 
 #ifdef USE_AVX2
-static void fors_sk_to_leafx_avx2(unsigned char *leaf0,
-                                  unsigned char *leaf1,
-                                  unsigned char *leaf2,
-                                  unsigned char *leaf3,
-                                  unsigned char *leaf4,
-                                  unsigned char *leaf5,
-                                  unsigned char *leaf6,
-                                  unsigned char *leaf7,
-                                  const unsigned char *sk0,
-                                  const unsigned char *sk1,
-                                  const unsigned char *sk2,
-                                  const unsigned char *sk3,
-                                  const unsigned char *sk4,
-                                  const unsigned char *sk5,
-                                  const unsigned char *sk6,
-                                  const unsigned char *sk7,
-                                  const _gcry_slhdsa_param_t *ctx,
-                                  uint32_t *fors_leaf_addr)
+static gcry_err_code_t fors_sk_to_leafx_avx2(unsigned char *leaf0,
+                                             unsigned char *leaf1,
+                                             unsigned char *leaf2,
+                                             unsigned char *leaf3,
+                                             unsigned char *leaf4,
+                                             unsigned char *leaf5,
+                                             unsigned char *leaf6,
+                                             unsigned char *leaf7,
+                                             const unsigned char *sk0,
+                                             const unsigned char *sk1,
+                                             const unsigned char *sk2,
+                                             const unsigned char *sk3,
+                                             const unsigned char *sk4,
+                                             const unsigned char *sk5,
+                                             const unsigned char *sk6,
+                                             const unsigned char *sk7,
+                                             const _gcry_slhdsa_param_t *ctx,
+                                             uint32_t *fors_leaf_addr)
 {
   if (ctx->is_sha2)
     {
-      _gcry_slhdsa_thash_avx2_sha2(leaf0,
-                                   leaf1,
-                                   leaf2,
-                                   leaf3,
-                                   leaf4,
-                                   leaf5,
-                                   leaf6,
-                                   leaf7,
-                                   sk0,
-                                   sk1,
-                                   sk2,
-                                   sk3,
-                                   sk4,
-                                   sk5,
-                                   sk6,
-                                   sk7,
-                                   1,
-                                   ctx,
-                                   fors_leaf_addr);
+      return _gcry_slhdsa_thash_avx2_sha2(leaf0,
+                                          leaf1,
+                                          leaf2,
+                                          leaf3,
+                                          leaf4,
+                                          leaf5,
+                                          leaf6,
+                                          leaf7,
+                                          sk0,
+                                          sk1,
+                                          sk2,
+                                          sk3,
+                                          sk4,
+                                          sk5,
+                                          sk6,
+                                          sk7,
+                                          1,
+                                          ctx,
+                                          fors_leaf_addr);
     }
   else
     {
-      _gcry_slhdsa_thash_avx2_shake(leaf0, leaf1, leaf2, leaf3, sk0, sk1, sk2, sk3, 1, ctx, fors_leaf_addr);
+      return _gcry_slhdsa_thash_avx2_shake(leaf0, leaf1, leaf2, leaf3, sk0, sk1, sk2, sk3, 1, ctx, fors_leaf_addr);
     }
 }
 #endif
@@ -145,16 +146,19 @@ static gcry_err_code_t fors_gen_leaf_avx2_sha2(unsigned char *leaf,
       _gcry_slhdsa_set_type(ctx, fors_leaf_addrx8 + j * 8, SLHDSA_ADDR_TYPE_FORSPRF);
     }
 
-  fors_gen_sk_avx2(leaf + 0 * ctx->n,
-                   leaf + 1 * ctx->n,
-                   leaf + 2 * ctx->n,
-                   leaf + 3 * ctx->n,
-                   leaf + 4 * ctx->n,
-                   leaf + 5 * ctx->n,
-                   leaf + 6 * ctx->n,
-                   leaf + 7 * ctx->n,
-                   ctx,
-                   fors_leaf_addrx8);
+  ec = fors_gen_sk_avx2(leaf + 0 * ctx->n,
+                        leaf + 1 * ctx->n,
+                        leaf + 2 * ctx->n,
+                        leaf + 3 * ctx->n,
+                        leaf + 4 * ctx->n,
+                        leaf + 5 * ctx->n,
+                        leaf + 6 * ctx->n,
+                        leaf + 7 * ctx->n,
+                        ctx,
+                        fors_leaf_addrx8);
+
+  if (ec)
+    goto leave;
 
   for (j = 0; j < 8; j++)
     {
@@ -189,6 +193,7 @@ static gcry_err_code_t fors_gen_leaf_avx2_shake(unsigned char *leaf,
                                                 uint32_t addr_idx,
                                                 void *info)
 {
+  gcry_err_code_t ec                   = 0;
   struct fors_gen_leaf_info *fors_info = info;
   uint32_t *fors_leaf_addrx4           = fors_info->leaf_addrx;
   unsigned int j;
@@ -200,31 +205,7 @@ static gcry_err_code_t fors_gen_leaf_avx2_shake(unsigned char *leaf,
       _gcry_slhdsa_set_type(ctx, fors_leaf_addrx4 + j * 8, SLHDSA_ADDR_TYPE_FORSPRF);
     }
 
-  fors_gen_sk_avx2(leaf + 0 * ctx->n,
-                   leaf + 1 * ctx->n,
-                   leaf + 2 * ctx->n,
-                   leaf + 3 * ctx->n,
-                   NULL,
-                   NULL,
-                   NULL,
-                   NULL,
-                   ctx,
-                   fors_leaf_addrx4);
-
-  for (j = 0; j < 4; j++)
-    {
-      _gcry_slhdsa_set_type(ctx, fors_leaf_addrx4 + j * 8, SLHDSA_ADDR_TYPE_FORSTREE);
-    }
-
-  fors_sk_to_leafx_avx2(leaf + 0 * ctx->n,
-                        leaf + 1 * ctx->n,
-                        leaf + 2 * ctx->n,
-                        leaf + 3 * ctx->n,
-                        NULL,
-                        NULL,
-                        NULL,
-                        NULL,
-                        leaf + 0 * ctx->n,
+  ec = fors_gen_sk_avx2(leaf + 0 * ctx->n,
                         leaf + 1 * ctx->n,
                         leaf + 2 * ctx->n,
                         leaf + 3 * ctx->n,
@@ -234,6 +215,36 @@ static gcry_err_code_t fors_gen_leaf_avx2_shake(unsigned char *leaf,
                         NULL,
                         ctx,
                         fors_leaf_addrx4);
+
+  if (ec)
+    goto leave;
+
+  for (j = 0; j < 4; j++)
+    {
+      _gcry_slhdsa_set_type(ctx, fors_leaf_addrx4 + j * 8, SLHDSA_ADDR_TYPE_FORSTREE);
+    }
+
+  ec = fors_sk_to_leafx_avx2(leaf + 0 * ctx->n,
+                             leaf + 1 * ctx->n,
+                             leaf + 2 * ctx->n,
+                             leaf + 3 * ctx->n,
+                             NULL,
+                             NULL,
+                             NULL,
+                             NULL,
+                             leaf + 0 * ctx->n,
+                             leaf + 1 * ctx->n,
+                             leaf + 2 * ctx->n,
+                             leaf + 3 * ctx->n,
+                             NULL,
+                             NULL,
+                             NULL,
+                             NULL,
+                             ctx,
+                             fors_leaf_addrx4);
+
+leave:
+  return ec;
 }
 #endif
 

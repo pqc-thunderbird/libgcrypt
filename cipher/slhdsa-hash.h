@@ -32,22 +32,24 @@ gcry_err_code_t _gcry_slhdsa_hash_message(unsigned char *digest,
 
 #ifdef USE_AVX2
 gcry_err_code_t _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
-                                  unsigned char *out1,
-                                  unsigned char *out2,
-                                  unsigned char *out3,
-                                  unsigned char *out4,
-                                  unsigned char *out5,
-                                  unsigned char *out6,
-                                  unsigned char *out7,
-                                  const _gcry_slhdsa_param_t *ctx,
-                                  const uint32_t addrx8[8 * 8]);
+                                           unsigned char *out1,
+                                           unsigned char *out2,
+                                           unsigned char *out3,
+                                           unsigned char *out4,
+                                           unsigned char *out5,
+                                           unsigned char *out6,
+                                           unsigned char *out7,
+                                           const _gcry_slhdsa_param_t *ctx,
+                                           const uint32_t addrx8[8 * 8]);
 
-gcry_err_code_t _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
-                unsigned char *out1,
-                unsigned char *out2,
-                unsigned char *out3,
-                const _gcry_slhdsa_param_t *ctx,
-                const uint32_t addrx4[4*8]);
+void initialize_hash_function_sha_avx2(_gcry_slhdsa_param_t *ctx);
+
+void _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
+                                 unsigned char *out1,
+                                 unsigned char *out2,
+                                 unsigned char *out3,
+                                 const _gcry_slhdsa_param_t *ctx,
+                                 const uint32_t addrx4[4 * 8]);
 #endif
 
 #endif

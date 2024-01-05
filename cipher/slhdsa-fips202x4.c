@@ -590,8 +590,6 @@ void _gcry_slhdsa_KeccakP1600times4_PermuteAll_24rounds(__m256i *states)
   __m256i Ema, Eme, Emi, Emo, Emu;
   __m256i Esa, Ese, Esi, Eso, Esu;
 
-  unsigned int i;
-
   copyFromState(A, statesAsLanes) rounds24 copyToState(statesAsLanes, A)
 }
 #endif

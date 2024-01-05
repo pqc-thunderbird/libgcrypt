@@ -303,33 +303,6 @@ leave:
   return ec;
 }
 
-/**
- * Absorb the constant pub_seed using one round of the compression function
- * This initializes state_seeded and state_seeded_512, which can then be
- * reused in thash
- **/
-void initialize_hash_function_sha_avx2(const _gcry_slhdsa_param_t *ctx)
-{
-  uint8_t block[SLHDSA_SHA512_BLOCK_BYTES];
-  size_t i;
-
-  for (i = 0; i < ctx->n; ++i)
-    {
-      block[i] = ctx->pub_seed[i];
-    }
-  for (i = ctx->n; i < SLHDSA_SHA512_BLOCK_BYTES; ++i)
-    {
-      block[i] = 0;
-    }
-
-  _gcry_slhdsa_sha256_inc_init(ctx->state_seeded_avx2);
-  _gcry_slhdsa_sha256_inc_blocks(ctx->state_seeded_avx2, block, 1);
-  if (ctx->do_use_sha512)
-    {
-      _gcry_slhdsa_sha512_inc_init(ctx->state_seeded_512_avx2);
-      _gcry_slhdsa_sha512_inc_blocks(ctx->state_seeded_512_avx2, block, 1);
-    }
-}
 
 /*
  * shake

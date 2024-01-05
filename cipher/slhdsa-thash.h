@@ -10,6 +10,7 @@
 gcry_err_code_t _gcry_slhdsa_thash(
     unsigned char *out, const unsigned char *in, unsigned int inblocks, const _gcry_slhdsa_param_t *ctx, u32 addr[8]);
 
+
 #ifdef USE_AVX2
 gcry_err_code_t _gcry_slhdsa_thash_avx2_sha2(unsigned char *out0,
                                              unsigned char *out1,
