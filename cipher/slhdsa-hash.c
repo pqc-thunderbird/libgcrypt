@@ -113,7 +113,7 @@ leave:
 /*
  * 8-way parallel version of _gcry_slhdsa_prf_addr; takes 8x as much input and output
  */
-void _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
+gcry_err_code_t _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
                                   unsigned char *out1,
                                   unsigned char *out2,
                                   unsigned char *out3,
@@ -124,14 +124,20 @@ void _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
                                   const _gcry_slhdsa_param_t *ctx,
                                   const uint32_t addrx8[8 * 8])
 {
-  unsigned char bufx8[8 * (ctx->n + ctx->addr_bytes)];
+  gcry_err_code_t ec = 0;
+  gcry_slhdsa_buf_al bufx8 = {};
+
   unsigned char outbufx8[8 * SLHDSA_SHA256_OUTPUT_BYTES];
   unsigned int j;
 
+  ec = _gcry_slhdsa_buf_al_create(&bufx8, 8 * (ctx->n + ctx->addr_bytes));
+  if (ec)
+    goto leave;
+
   for (j = 0; j < 8; j++)
     {
-      memcpy(bufx8 + j * (ctx->n + ctx->addr_bytes), addrx8 + j * 8, ctx->addr_bytes);
-      memcpy(bufx8 + j * (ctx->n + ctx->addr_bytes) + ctx->addr_bytes, ctx->sk_seed, ctx->n);
+      memcpy(bufx8.buf + j * (ctx->n + ctx->addr_bytes), addrx8 + j * 8, ctx->addr_bytes);
+      memcpy(bufx8.buf + j * (ctx->n + ctx->addr_bytes) + ctx->addr_bytes, ctx->sk_seed, ctx->n);
     }
 
   sha256x8_seeded(
@@ -150,14 +156,14 @@ void _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
       512,
 
       /* in */
-      bufx8 + 0 * (ctx->addr_bytes + ctx->n),
-      bufx8 + 1 * (ctx->addr_bytes + ctx->n),
-      bufx8 + 2 * (ctx->addr_bytes + ctx->n),
-      bufx8 + 3 * (ctx->addr_bytes + ctx->n),
-      bufx8 + 4 * (ctx->addr_bytes + ctx->n),
-      bufx8 + 5 * (ctx->addr_bytes + ctx->n),
-      bufx8 + 6 * (ctx->addr_bytes + ctx->n),
-      bufx8 + 7 * (ctx->addr_bytes + ctx->n),
+      bufx8.buf + 0 * (ctx->addr_bytes + ctx->n),
+      bufx8.buf + 1 * (ctx->addr_bytes + ctx->n),
+      bufx8.buf + 2 * (ctx->addr_bytes + ctx->n),
+      bufx8.buf + 3 * (ctx->addr_bytes + ctx->n),
+      bufx8.buf + 4 * (ctx->addr_bytes + ctx->n),
+      bufx8.buf + 5 * (ctx->addr_bytes + ctx->n),
+      bufx8.buf + 6 * (ctx->addr_bytes + ctx->n),
+      bufx8.buf + 7 * (ctx->addr_bytes + ctx->n),
       ctx->addr_bytes + ctx->n /* len */
   );
 
@@ -169,9 +175,13 @@ void _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
   memcpy(out5, outbufx8 + 5 * SLHDSA_SHA256_OUTPUT_BYTES, ctx->n);
   memcpy(out6, outbufx8 + 6 * SLHDSA_SHA256_OUTPUT_BYTES, ctx->n);
   memcpy(out7, outbufx8 + 7 * SLHDSA_SHA256_OUTPUT_BYTES, ctx->n);
+
+leave:
+  _gcry_slhdsa_buf_al_destroy(&bufx8);
+  return ec;
 }
 
-void _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
+gcry_err_code_t _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
                 unsigned char *out1,
                 unsigned char *out2,
                 unsigned char *out3,
