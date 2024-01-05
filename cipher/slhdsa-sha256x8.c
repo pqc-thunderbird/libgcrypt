@@ -19,7 +19,7 @@ static const unsigned int RC[]
        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
 
-#define u32 uint32_t
+#define u32 u32
 #define u256 __m256i
 
 #define XOR _mm256_xor_si256
@@ -96,7 +96,7 @@ static const unsigned int RC[]
 typedef struct SHA256state
 {
   u256 s[8];
-  unsigned char msgblocks[8 * 64];
+  byte msgblocks[8 * 64];
   int datalen;
   unsigned long long msglen;
 } sha256ctx;
@@ -133,14 +133,14 @@ static void transpose(u256 s[8])
 }
 
 static void sha256_transform8x(sha256ctx *ctx,
-                        const unsigned char *data0,
-                        const unsigned char *data1,
-                        const unsigned char *data2,
-                        const unsigned char *data3,
-                        const unsigned char *data4,
-                        const unsigned char *data5,
-                        const unsigned char *data6,
-                        const unsigned char *data7)
+                               const byte *data0,
+                               const byte *data1,
+                               const byte *data2,
+                               const byte *data3,
+                               const byte *data4,
+                               const byte *data5,
+                               const byte *data6,
+                               const byte *data7)
 {
   u256 s[8], w[64], T0, T1;
 
@@ -299,15 +299,8 @@ static void sha256_transform8x(sha256ctx *ctx,
   ctx->s[7] = ADD32(s[7], ctx->s[7]);
 }
 
-static void sha256_final8x(sha256ctx *ctx,
-                    unsigned char *out0,
-                    unsigned char *out1,
-                    unsigned char *out2,
-                    unsigned char *out3,
-                    unsigned char *out4,
-                    unsigned char *out5,
-                    unsigned char *out6,
-                    unsigned char *out7)
+static void sha256_final8x(
+    sha256ctx *ctx, byte *out0, byte *out1, byte *out2, byte *out3, byte *out4, byte *out5, byte *out6, byte *out7)
 {
   unsigned int i, curlen;
 
@@ -384,29 +377,29 @@ static void sha256_final8x(sha256ctx *ctx,
   STORE(out7, BYTESWAP(ctx->s[7]));
 }
 
-static uint32_t load_bigendian_32(const uint8_t *x)
+static u32 load_bigendian_32(const byte *x)
 {
-  return (uint32_t)(x[3]) | (((uint32_t)(x[2])) << 8) | (((uint32_t)(x[1])) << 16) | (((uint32_t)(x[0])) << 24);
+  return (u32)(x[3]) | (((u32)(x[2])) << 8) | (((u32)(x[1])) << 16) | (((u32)(x[0])) << 24);
 }
 
 // Performs sha256x8 on an initialized (and perhaps seeded) state.
 static void _sha256x8(sha256ctx *ctx,
-                      unsigned char *out0,
-                      unsigned char *out1,
-                      unsigned char *out2,
-                      unsigned char *out3,
-                      unsigned char *out4,
-                      unsigned char *out5,
-                      unsigned char *out6,
-                      unsigned char *out7,
-                      const unsigned char *in0,
-                      const unsigned char *in1,
-                      const unsigned char *in2,
-                      const unsigned char *in3,
-                      const unsigned char *in4,
-                      const unsigned char *in5,
-                      const unsigned char *in6,
-                      const unsigned char *in7,
+                      byte *out0,
+                      byte *out1,
+                      byte *out2,
+                      byte *out3,
+                      byte *out4,
+                      byte *out5,
+                      byte *out6,
+                      byte *out7,
+                      const byte *in0,
+                      const byte *in1,
+                      const byte *in2,
+                      const byte *in3,
+                      const byte *in4,
+                      const byte *in5,
+                      const byte *in6,
+                      const byte *in7,
                       unsigned long long inlen)
 {
   unsigned long long i = 0;
@@ -432,27 +425,27 @@ static void _sha256x8(sha256ctx *ctx,
   sha256_final8x(ctx, out0, out1, out2, out3, out4, out5, out6, out7);
 }
 
-void _gcry_slhdsa_sha256x8_seeded(unsigned char *out0,
-                     unsigned char *out1,
-                     unsigned char *out2,
-                     unsigned char *out3,
-                     unsigned char *out4,
-                     unsigned char *out5,
-                     unsigned char *out6,
-                     unsigned char *out7,
-                     const unsigned char *seed,
-                     unsigned long long seedlen,
-                     const unsigned char *in0,
-                     const unsigned char *in1,
-                     const unsigned char *in2,
-                     const unsigned char *in3,
-                     const unsigned char *in4,
-                     const unsigned char *in5,
-                     const unsigned char *in6,
-                     const unsigned char *in7,
-                     unsigned long long inlen)
+void _gcry_slhdsa_sha256x8_seeded(byte *out0,
+                                  byte *out1,
+                                  byte *out2,
+                                  byte *out3,
+                                  byte *out4,
+                                  byte *out5,
+                                  byte *out6,
+                                  byte *out7,
+                                  const byte *seed,
+                                  unsigned long long seedlen,
+                                  const byte *in0,
+                                  const byte *in1,
+                                  const byte *in2,
+                                  const byte *in3,
+                                  const byte *in4,
+                                  const byte *in5,
+                                  const byte *in6,
+                                  const byte *in7,
+                                  unsigned long long inlen)
 {
-  uint32_t t;
+  u32 t;
   sha256ctx ctx;
 
   for (size_t i = 0; i < 8; i++)
@@ -511,60 +504,59 @@ void _gcry_slhdsa_sha256x8_seeded(unsigned char *out0,
   b  = a;                                                                                                              \
   a  = T1 + T2;
 
-static uint64_t load_bigendian_64(const uint8_t *x)
+static u64 load_bigendian_64(const byte *x)
 {
-  return (uint64_t)(x[7]) | (((uint64_t)(x[6])) << 8) | (((uint64_t)(x[5])) << 16) | (((uint64_t)(x[4])) << 24)
-         | (((uint64_t)(x[3])) << 32) | (((uint64_t)(x[2])) << 40) | (((uint64_t)(x[1])) << 48)
-         | (((uint64_t)(x[0])) << 56);
+  return (u64)(x[7]) | (((u64)(x[6])) << 8) | (((u64)(x[5])) << 16) | (((u64)(x[4])) << 24) | (((u64)(x[3])) << 32)
+         | (((u64)(x[2])) << 40) | (((u64)(x[1])) << 48) | (((u64)(x[0])) << 56);
 }
 
-static void store_bigendian_32(uint8_t *x, uint64_t u)
+static void store_bigendian_32(byte *x, u64 u)
 {
-  x[3] = (uint8_t)u;
+  x[3] = (byte)u;
   u >>= 8;
-  x[2] = (uint8_t)u;
+  x[2] = (byte)u;
   u >>= 8;
-  x[1] = (uint8_t)u;
+  x[1] = (byte)u;
   u >>= 8;
-  x[0] = (uint8_t)u;
+  x[0] = (byte)u;
 }
 
-static void store_bigendian_64(uint8_t *x, uint64_t u)
+static void store_bigendian_64(byte *x, u64 u)
 {
-  x[7] = (uint8_t)u;
+  x[7] = (byte)u;
   u >>= 8;
-  x[6] = (uint8_t)u;
+  x[6] = (byte)u;
   u >>= 8;
-  x[5] = (uint8_t)u;
+  x[5] = (byte)u;
   u >>= 8;
-  x[4] = (uint8_t)u;
+  x[4] = (byte)u;
   u >>= 8;
-  x[3] = (uint8_t)u;
+  x[3] = (byte)u;
   u >>= 8;
-  x[2] = (uint8_t)u;
+  x[2] = (byte)u;
   u >>= 8;
-  x[1] = (uint8_t)u;
+  x[1] = (byte)u;
   u >>= 8;
-  x[0] = (uint8_t)u;
+  x[0] = (byte)u;
 }
 
-static const uint8_t iv_256[32]
+static const byte iv_256[32]
     = {0x6a, 0x09, 0xe6, 0x67, 0xbb, 0x67, 0xae, 0x85, 0x3c, 0x6e, 0xf3, 0x72, 0xa5, 0x4f, 0xf5, 0x3a,
        0x51, 0x0e, 0x52, 0x7f, 0x9b, 0x05, 0x68, 0x8c, 0x1f, 0x83, 0xd9, 0xab, 0x5b, 0xe0, 0xcd, 0x19};
 
-static size_t crypto_hashblocks_sha256(uint8_t *statebytes, const uint8_t *in, size_t inlen)
+static size_t crypto_hashblocks_sha256(byte *statebytes, const byte *in, size_t inlen)
 {
-  uint32_t state[8];
-  uint32_t a;
-  uint32_t b;
-  uint32_t c;
-  uint32_t d;
-  uint32_t e;
-  uint32_t f;
-  uint32_t g;
-  uint32_t h;
-  uint32_t T1;
-  uint32_t T2;
+  u32 state[8];
+  u32 a;
+  u32 b;
+  u32 c;
+  u32 d;
+  u32 e;
+  u32 f;
+  u32 g;
+  u32 h;
+  u32 T1;
+  u32 T2;
 
   a        = load_bigendian_32(statebytes + 0);
   state[0] = a;
@@ -585,22 +577,22 @@ static size_t crypto_hashblocks_sha256(uint8_t *statebytes, const uint8_t *in, s
 
   while (inlen >= 64)
     {
-      uint32_t w0  = load_bigendian_32(in + 0);
-      uint32_t w1  = load_bigendian_32(in + 4);
-      uint32_t w2  = load_bigendian_32(in + 8);
-      uint32_t w3  = load_bigendian_32(in + 12);
-      uint32_t w4  = load_bigendian_32(in + 16);
-      uint32_t w5  = load_bigendian_32(in + 20);
-      uint32_t w6  = load_bigendian_32(in + 24);
-      uint32_t w7  = load_bigendian_32(in + 28);
-      uint32_t w8  = load_bigendian_32(in + 32);
-      uint32_t w9  = load_bigendian_32(in + 36);
-      uint32_t w10 = load_bigendian_32(in + 40);
-      uint32_t w11 = load_bigendian_32(in + 44);
-      uint32_t w12 = load_bigendian_32(in + 48);
-      uint32_t w13 = load_bigendian_32(in + 52);
-      uint32_t w14 = load_bigendian_32(in + 56);
-      uint32_t w15 = load_bigendian_32(in + 60);
+      u32 w0  = load_bigendian_32(in + 0);
+      u32 w1  = load_bigendian_32(in + 4);
+      u32 w2  = load_bigendian_32(in + 8);
+      u32 w3  = load_bigendian_32(in + 12);
+      u32 w4  = load_bigendian_32(in + 16);
+      u32 w5  = load_bigendian_32(in + 20);
+      u32 w6  = load_bigendian_32(in + 24);
+      u32 w7  = load_bigendian_32(in + 28);
+      u32 w8  = load_bigendian_32(in + 32);
+      u32 w9  = load_bigendian_32(in + 36);
+      u32 w10 = load_bigendian_32(in + 40);
+      u32 w11 = load_bigendian_32(in + 44);
+      u32 w12 = load_bigendian_32(in + 48);
+      u32 w13 = load_bigendian_32(in + 52);
+      u32 w14 = load_bigendian_32(in + 56);
+      u32 w15 = load_bigendian_32(in + 60);
 
       F_32(w0, 0x428a2f98)
       F_32(w1, 0x71374491)
@@ -710,7 +702,7 @@ static size_t crypto_hashblocks_sha256(uint8_t *statebytes, const uint8_t *in, s
   return inlen;
 }
 
-void _gcry_slhdsa_sha256_inc_init(uint8_t *state)
+void _gcry_slhdsa_sha256_inc_init(byte *state)
 {
   for (size_t i = 0; i < 32; ++i)
     {
@@ -722,9 +714,9 @@ void _gcry_slhdsa_sha256_inc_init(uint8_t *state)
     }
 }
 
-void _gcry_slhdsa_sha256_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks)
+void _gcry_slhdsa_sha256_inc_blocks(byte *state, const byte *in, size_t inblocks)
 {
-  uint64_t bytes = load_bigendian_64(state + 32);
+  u64 bytes = load_bigendian_64(state + 32);
 
   crypto_hashblocks_sha256(state, in, 64 * inblocks);
   bytes += 64 * inblocks;

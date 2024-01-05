@@ -20,10 +20,7 @@
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [PUB_SEED || root]
  */
-gcry_err_code_t _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx,
-                                          unsigned char *pk,
-                                          unsigned char *sk,
-                                          const unsigned char *seed)
+gcry_err_code_t _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx, byte *pk, byte *sk, const byte *seed)
 {
   gcry_err_code_t ec = 0;
 
@@ -55,10 +52,10 @@ leave:
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [PUB_SEED || root]
  */
-gcry_err_code_t _gcry_slhdsa_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsigned char *sk)
+gcry_err_code_t _gcry_slhdsa_keypair(_gcry_slhdsa_param_t *ctx, byte *pk, byte *sk)
 {
-  gcry_err_code_t ec  = 0;
-  unsigned char *seed = NULL;
+  gcry_err_code_t ec = 0;
+  byte *seed         = NULL;
 
   seed = xtrymalloc_secure(ctx->seed_bytes);
   if (!seed)
@@ -83,8 +80,8 @@ gcry_err_code_t _gcry_slhdsa_signature(
 {
   gcry_err_code_t ec = 0;
 
-  const unsigned char *sk_prf = sk + ctx->n;
-  const unsigned char *pk     = sk + 2 * ctx->n;
+  const byte *sk_prf = sk + ctx->n;
+  const byte *pk     = sk + 2 * ctx->n;
 
   u32 i;
   u64 tree;
@@ -92,9 +89,9 @@ gcry_err_code_t _gcry_slhdsa_signature(
   u32 wots_addr[8] = {0};
   u32 tree_addr[8] = {0};
 
-  unsigned char *optrand = NULL;
-  unsigned char *mhash   = NULL;
-  unsigned char *root    = NULL;
+  byte *optrand = NULL;
+  byte *mhash   = NULL;
+  byte *root    = NULL;
 
   optrand = xtrymalloc_secure(ctx->n);
   if (!optrand)
@@ -199,12 +196,12 @@ leave:
 gcry_err_code_t _gcry_slhdsa_verify(
     _gcry_slhdsa_param_t *ctx, const byte *sig, size_t siglen, const byte *m, size_t mlen, const byte *pk)
 {
-  gcry_err_code_t ec            = 0;
-  const unsigned char *pub_root = pk + ctx->n;
-  unsigned char *mhash          = NULL;
-  unsigned char *wots_pk        = NULL;
-  unsigned char *root           = NULL;
-  unsigned char *leaf           = NULL;
+  gcry_err_code_t ec   = 0;
+  const byte *pub_root = pk + ctx->n;
+  byte *mhash          = NULL;
+  byte *wots_pk        = NULL;
+  byte *root           = NULL;
+  byte *leaf           = NULL;
   unsigned int i;
   u64 tree;
   u32 idx_leaf;

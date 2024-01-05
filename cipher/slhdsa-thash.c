@@ -17,7 +17,7 @@
 #include "g10lib.h"
 
 gcry_err_code_t _gcry_slhdsa_thash(
-    unsigned char *out, const unsigned char *in, unsigned int inblocks, const _gcry_slhdsa_param_t *ctx, u32 addr[8])
+    byte *out, const byte *in, unsigned int inblocks, const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
   gcry_err_code_t ec = 0;
   gcry_md_hd_t hd    = NULL;
@@ -67,48 +67,48 @@ leave:
 }
 
 #ifdef USE_AVX2
-static gcry_err_code_t thashx8_512(unsigned char *out0,
-                                   unsigned char *out1,
-                                   unsigned char *out2,
-                                   unsigned char *out3,
-                                   unsigned char *out4,
-                                   unsigned char *out5,
-                                   unsigned char *out6,
-                                   unsigned char *out7,
-                                   const unsigned char *in0,
-                                   const unsigned char *in1,
-                                   const unsigned char *in2,
-                                   const unsigned char *in3,
-                                   const unsigned char *in4,
-                                   const unsigned char *in5,
-                                   const unsigned char *in6,
-                                   const unsigned char *in7,
+static gcry_err_code_t thashx8_512(byte *out0,
+                                   byte *out1,
+                                   byte *out2,
+                                   byte *out3,
+                                   byte *out4,
+                                   byte *out5,
+                                   byte *out6,
+                                   byte *out7,
+                                   const byte *in0,
+                                   const byte *in1,
+                                   const byte *in2,
+                                   const byte *in3,
+                                   const byte *in4,
+                                   const byte *in5,
+                                   const byte *in6,
+                                   const byte *in7,
                                    unsigned int inblocks,
                                    const _gcry_slhdsa_param_t *ctx,
-                                   uint32_t addrx8[8 * 8]);
+                                   u32 addrx8[8 * 8]);
 
 /**
  * 8-way parallel version of thash; takes 8x as much input and output
  */
-gcry_err_code_t _gcry_slhdsa_thash_avx2_sha2(unsigned char *out0,
-                                             unsigned char *out1,
-                                             unsigned char *out2,
-                                             unsigned char *out3,
-                                             unsigned char *out4,
-                                             unsigned char *out5,
-                                             unsigned char *out6,
-                                             unsigned char *out7,
-                                             const unsigned char *in0,
-                                             const unsigned char *in1,
-                                             const unsigned char *in2,
-                                             const unsigned char *in3,
-                                             const unsigned char *in4,
-                                             const unsigned char *in5,
-                                             const unsigned char *in6,
-                                             const unsigned char *in7,
+gcry_err_code_t _gcry_slhdsa_thash_avx2_sha2(byte *out0,
+                                             byte *out1,
+                                             byte *out2,
+                                             byte *out3,
+                                             byte *out4,
+                                             byte *out5,
+                                             byte *out6,
+                                             byte *out7,
+                                             const byte *in0,
+                                             const byte *in1,
+                                             const byte *in2,
+                                             const byte *in3,
+                                             const byte *in4,
+                                             const byte *in5,
+                                             const byte *in6,
+                                             const byte *in7,
                                              unsigned int inblocks,
                                              const _gcry_slhdsa_param_t *ctx,
-                                             uint32_t addrx8[8 * 8])
+                                             u32 addrx8[8 * 8])
 {
   gcry_err_code_t ec = 0;
   byte *bufx8        = NULL;
@@ -215,30 +215,30 @@ leave:
  * 2x4-way parallel version of thash; this is for the uses of thash that are
  * based on SHA-512
  */
-gcry_err_code_t thashx8_512(unsigned char *out0,
-                            unsigned char *out1,
-                            unsigned char *out2,
-                            unsigned char *out3,
-                            unsigned char *out4,
-                            unsigned char *out5,
-                            unsigned char *out6,
-                            unsigned char *out7,
-                            const unsigned char *in0,
-                            const unsigned char *in1,
-                            const unsigned char *in2,
-                            const unsigned char *in3,
-                            const unsigned char *in4,
-                            const unsigned char *in5,
-                            const unsigned char *in6,
-                            const unsigned char *in7,
+gcry_err_code_t thashx8_512(byte *out0,
+                            byte *out1,
+                            byte *out2,
+                            byte *out3,
+                            byte *out4,
+                            byte *out5,
+                            byte *out6,
+                            byte *out7,
+                            const byte *in0,
+                            const byte *in1,
+                            const byte *in2,
+                            const byte *in3,
+                            const byte *in4,
+                            const byte *in5,
+                            const byte *in6,
+                            const byte *in7,
                             unsigned int inblocks,
                             const _gcry_slhdsa_param_t *ctx,
-                            uint32_t addrx8[8 * 8])
+                            u32 addrx8[8 * 8])
 {
   gcry_err_code_t ec = 0;
   byte *bufx8        = NULL;
 
-  unsigned char outbuf[4 * SLHDSA_SHA512_OUTPUT_BYTES];
+  byte outbuf[4 * SLHDSA_SHA512_OUTPUT_BYTES];
   unsigned int i;
 
   bufx8 = xtrymalloc_secure(8 * (ctx->addr_bytes + inblocks * ctx->n));
@@ -312,17 +312,17 @@ leave:
 /**
  * 4-way parallel version of thash; takes 4x as much input and output
  */
-gcry_err_code_t _gcry_slhdsa_thash_avx2_shake(unsigned char *out0,
-                                              unsigned char *out1,
-                                              unsigned char *out2,
-                                              unsigned char *out3,
-                                              const unsigned char *in0,
-                                              const unsigned char *in1,
-                                              const unsigned char *in2,
-                                              const unsigned char *in3,
+gcry_err_code_t _gcry_slhdsa_thash_avx2_shake(byte *out0,
+                                              byte *out1,
+                                              byte *out2,
+                                              byte *out3,
+                                              const byte *in0,
+                                              const byte *in1,
+                                              const byte *in2,
+                                              const byte *in3,
                                               unsigned int inblocks,
                                               const _gcry_slhdsa_param_t *ctx,
-                                              uint32_t addrx4[4 * 8])
+                                              u32 addrx4[4 * 8])
 {
   gcry_err_code_t ec = 0;
   byte *buf0         = NULL;

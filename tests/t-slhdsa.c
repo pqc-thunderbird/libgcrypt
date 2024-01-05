@@ -28,6 +28,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "types.h"
+
 
 #define PGM "t-slhdsa"
 #include "t-common.h"
@@ -175,7 +177,7 @@ static char *read_textline(FILE *fp, int *lineno)
 static void *hex2buffer(const char *string, size_t *r_length)
 {
   const char *s;
-  unsigned char *buffer;
+  byte *buffer;
   size_t length;
   size_t str_len = strlen(string);
   *r_length      = 0;
@@ -192,7 +194,7 @@ static void *hex2buffer(const char *string, size_t *r_length)
           xfree(buffer);
           return NULL; /* Invalid hex digits. */
         }
-      ((unsigned char *)buffer)[length++] = xtoi_2(s);
+      ((byte *)buffer)[length++] = xtoi_2(s);
     }
   *r_length = length;
   return buffer;
@@ -200,7 +202,7 @@ static void *hex2buffer(const char *string, size_t *r_length)
 
 /* Copy the data after the tag to BUFFER.  BUFFER will be allocated as
    needed.  */
-static unsigned char *fill_bin_buf_from_hex_line(size_t *r_length, const char tag_char, const char *line, int lineno)
+static byte *fill_bin_buf_from_hex_line(size_t *r_length, const char tag_char, const char *line, int lineno)
 {
   const char *s;
 
@@ -222,10 +224,6 @@ static unsigned char *fill_bin_buf_from_hex_line(size_t *r_length, const char ta
   return hex2buffer(s, r_length);
 }
 
-
-/*
- * TODO: include test-utils.h when merging with kyber branch
- */
 
 const char SLHDSA_MESSAGE_TMPL[] = "(data (flags raw_opaque) (value %b))";
 
@@ -252,7 +250,7 @@ static int check_slhdsa_roundtrip(size_t n_tests)
           gcry_sexp_t s_data       = NULL;
           gcry_sexp_t s_data_wrong = NULL;
 
-          unsigned char *msg = NULL;
+          byte *msg = NULL;
           unsigned msg_len;
 
           if (verbose)
@@ -338,7 +336,7 @@ static int check_slhdsa_roundtrip(size_t n_tests)
 typedef struct
 {
   const char *index;
-  unsigned char *result_buf;
+  byte *result_buf;
   size_t result_buf_len;
 } test_vec_desc_entry;
 
@@ -377,11 +375,11 @@ static void parse_annotation(char **hashalg, char **variant, const char *line, i
   (*variant)[strlen(*variant) - 1] = 0; /* Remove ']'.  */
 }
 
-int check_test_vec_verify(unsigned char *pk,
+int check_test_vec_verify(byte *pk,
                           unsigned pk_len,
-                          unsigned char *m,
+                          byte *m,
                           unsigned m_len,
-                          unsigned char *sig,
+                          byte *sig,
                           unsigned sig_len,
                           const char *hashalg,
                           const char *variant);
@@ -461,7 +459,7 @@ static void check_slhdsa_kat(const char *fname)
       unsigned i;
       unsigned random;
 
-      unsigned char *sig;
+      byte *sig;
       unsigned sig_len;
       test_vec_desc_entry *pk;
       test_vec_desc_entry *msg;
@@ -589,11 +587,11 @@ static void check_slhdsa_kat(const char *fname)
   xfree(variant);
 }
 
-int check_test_vec_verify(unsigned char *pk,
+int check_test_vec_verify(byte *pk,
                           unsigned pk_len,
-                          unsigned char *m,
+                          byte *m,
                           unsigned m_len,
-                          unsigned char *sig,
+                          byte *sig,
                           unsigned sig_len,
                           const char *hashalg,
                           const char *variant)

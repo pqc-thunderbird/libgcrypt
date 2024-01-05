@@ -20,12 +20,8 @@
  * Interprets in as start-th value of the chain.
  * addr has to contain the address of the chain.
  */
-static gcry_err_code_t gen_chain(unsigned char *out,
-                                 const unsigned char *in,
-                                 unsigned int start,
-                                 unsigned int steps,
-                                 const _gcry_slhdsa_param_t *ctx,
-                                 u32 addr[8])
+static gcry_err_code_t gen_chain(
+    byte *out, const byte *in, unsigned int start, unsigned int steps, const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
   gcry_err_code_t ec = 0;
   u32 i;
@@ -51,10 +47,7 @@ leave:
  * It also generates the WOTS signature if leaf_info indicates
  * that we're signing with this WOTS key
  */
-gcry_err_code_t _gcry_slhdsa_wots_gen_leafx1(unsigned char *dest,
-                                             const _gcry_slhdsa_param_t *ctx,
-                                             u32 leaf_idx,
-                                             void *v_info)
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx1(byte *dest, const _gcry_slhdsa_param_t *ctx, u32 leaf_idx, void *v_info)
 {
   gcry_err_code_t ec = 0;
 
@@ -62,8 +55,8 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx1(unsigned char *dest,
   u32 *leaf_addr                           = info->leaf_addr;
   u32 *pk_addr                             = info->pk_addr;
   unsigned int i, k;
-  unsigned char *pk_buffer = NULL;
-  unsigned char *buffer;
+  byte *pk_buffer = NULL;
+  byte *buffer;
   u32 wots_k_mask;
 
   pk_buffer = xtrymalloc_secure(ctx->WOTS_bytes);
@@ -140,34 +133,30 @@ leave:
 /**
  * Computes up the chains
  */
-static gcry_err_code_t gen_chains(unsigned char *out,
-                                  const unsigned char *in,
-                                  unsigned int *start,
-                                  unsigned int *steps,
-                                  const _gcry_slhdsa_param_t *ctx,
-                                  uint32_t addr[8])
+static gcry_err_code_t gen_chains(
+    byte *out, const byte *in, unsigned int *start, unsigned int *steps, const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
   gcry_err_code_t ec = 0;
-  uint32_t i, j, k, idx, watching;
+  u32 i, j, k, idx, watching;
   int done;
-  // unsigned char empty[ctx->n];
-  unsigned char *bufs[8];
+  // byte empty[ctx->n];
+  byte *bufs[8];
   byte *empty = NULL;
-  uint32_t addrs[8 * 8];
+  u32 addrs[8 * 8];
 
   int l;
   byte *counts = NULL;
   byte *idxs   = NULL;
-  uint16_t total, newTotal;
+  u16 total, newTotal;
   const size_t x4_or_x8 = ctx->is_sha2 ? 8 : 4;
 
-  counts = xtrymalloc_secure(ctx->WOTS_w * sizeof(uint16_t));
+  counts = xtrymalloc_secure(ctx->WOTS_w * sizeof(u16));
   if (!counts)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  idxs = xtrymalloc_secure(ctx->WOTS_len * sizeof(uint16_t));
+  idxs = xtrymalloc_secure(ctx->WOTS_len * sizeof(u16));
   if (!idxs)
     {
       ec = gpg_err_code_from_syserror();
@@ -183,7 +172,7 @@ static gcry_err_code_t gen_chains(unsigned char *out,
   /* set addrs = {addr, addr, ..., addr} */
   for (j = 0; j < x4_or_x8; j++)
     {
-      memcpy(addrs + j * 8, addr, sizeof(uint32_t) * 8);
+      memcpy(addrs + j * 8, addr, sizeof(u32) * 8);
     }
 
   /* Initialize out with the value at position 'start'. */
@@ -292,11 +281,11 @@ leave:
  * Interprets an array of bytes as integers in base w.
  * This only works when log_w is a divisor of 8.
  */
-static void base_w(const _gcry_slhdsa_param_t *ctx, unsigned int *output, const int out_len, const unsigned char *input)
+static void base_w(const _gcry_slhdsa_param_t *ctx, unsigned int *output, const int out_len, const byte *input)
 {
   int in  = 0;
   int out = 0;
-  unsigned char total;
+  byte total;
   int bits = 0;
   int consumed;
 
@@ -319,10 +308,10 @@ static gcry_err_code_t wots_checksum(const _gcry_slhdsa_param_t *ctx,
                                      unsigned int *csum_base_w,
                                      const unsigned int *msg_base_w)
 {
-  gcry_err_code_t ec        = 0;
-  unsigned int csum         = 0;
-  size_t csum_bytes_len     = (ctx->WOTS_len2 * ctx->WOTS_logw + 7) / 8;
-  unsigned char *csum_bytes = NULL;
+  gcry_err_code_t ec    = 0;
+  unsigned int csum     = 0;
+  size_t csum_bytes_len = (ctx->WOTS_len2 * ctx->WOTS_logw + 7) / 8;
+  byte *csum_bytes      = NULL;
   unsigned int i;
 
   csum_bytes = xtrymalloc_secure(csum_bytes_len);
@@ -350,9 +339,7 @@ leave:
 }
 
 /* Takes a message and derives the matching chain lengths. */
-gcry_err_code_t _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx,
-                                           unsigned int *lengths,
-                                           const unsigned char *msg)
+gcry_err_code_t _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx, unsigned int *lengths, const byte *msg)
 {
   base_w(ctx, lengths, ctx->WOTS_len1, msg);
   return wots_checksum(ctx, lengths + ctx->WOTS_len1, lengths);
@@ -364,7 +351,7 @@ gcry_err_code_t _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx,
  * Writes the computed public key to 'pk'.
  */
 gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig(
-    unsigned char *pk, const unsigned char *sig, const unsigned char *msg, const _gcry_slhdsa_param_t *ctx, u32 addr[8])
+    byte *pk, const byte *sig, const byte *msg, const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
   gcry_err_code_t ec    = 0;
   unsigned int *lengths = NULL;
@@ -401,7 +388,7 @@ leave:
  * Writes the computed public key to 'pk'.
  */
 gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig_avx2(
-    unsigned char *pk, const unsigned char *sig, const unsigned char *msg, const _gcry_slhdsa_param_t *ctx, u32 addr[8])
+    byte *pk, const byte *sig, const byte *msg, const _gcry_slhdsa_param_t *ctx, u32 addr[8])
 {
   gcry_err_code_t ec  = 0;
   unsigned int *start = NULL;
@@ -440,28 +427,23 @@ leave:
 }
 #endif
 
-// TODO: gen_leafx1 here
-
 #ifdef USE_AVX2
 /*
  * This generates 8 sequential WOTS public keys
  * It also generates the WOTS signature if leaf_info indicates
  * that we're signing with one of these WOTS keys
  */
-gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8(unsigned char *dest,
-                                             const _gcry_slhdsa_param_t *ctx,
-                                             uint32_t leaf_idx,
-                                             void *v_info)
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8(byte *dest, const _gcry_slhdsa_param_t *ctx, u32 leaf_idx, void *v_info)
 {
   gcry_err_code_t ec                       = 0;
   struct _gcry_slhdsa_leaf_info_x8_t *info = v_info;
-  uint32_t *leaf_addr                      = info->leaf_addr;
-  uint32_t *pk_addr                        = info->pk_addr;
+  u32 *leaf_addr                           = info->leaf_addr;
+  u32 *pk_addr                             = info->pk_addr;
   unsigned int i, j, k;
-  unsigned char *pk_buffer = NULL;
-  unsigned wots_offset     = ctx->WOTS_bytes;
-  unsigned char *buffer;
-  uint32_t wots_k_mask;
+  byte *pk_buffer      = NULL;
+  unsigned wots_offset = ctx->WOTS_bytes;
+  byte *buffer;
+  u32 wots_k_mask;
   unsigned wots_sign_index;
 
   pk_buffer = xtrymalloc_secure(8 * ctx->WOTS_bytes);
@@ -494,7 +476,7 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8(unsigned char *dest,
 
   for (i = 0, buffer = pk_buffer; i < ctx->WOTS_len; i++, buffer += ctx->n)
     {
-      uint32_t wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k */
+      u32 wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k */
       /* to the step if we're generating a signature, ~0 if we're not */
 
       /* Start with the secret seed */
@@ -596,20 +578,17 @@ leave:
  * It also generates the WOTS signature if leaf_info indicates
  * that we're signing with one of these WOTS keys
  */
-gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(unsigned char *dest,
-                                             const _gcry_slhdsa_param_t *ctx,
-                                             uint32_t leaf_idx,
-                                             void *v_info)
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(byte *dest, const _gcry_slhdsa_param_t *ctx, u32 leaf_idx, void *v_info)
 {
   gcry_err_code_t ec                       = 0;
   struct _gcry_slhdsa_leaf_info_x4_t *info = v_info;
-  uint32_t *leaf_addr                      = info->leaf_addr;
-  uint32_t *pk_addr                        = info->pk_addr;
+  u32 *leaf_addr                           = info->leaf_addr;
+  u32 *pk_addr                             = info->pk_addr;
   unsigned int i, j, k;
-  unsigned char *pk_buffer = NULL;
-  unsigned wots_offset     = ctx->WOTS_bytes;
-  unsigned char *buffer;
-  uint32_t wots_k_mask;
+  byte *pk_buffer      = NULL;
+  unsigned wots_offset = ctx->WOTS_bytes;
+  byte *buffer;
+  u32 wots_k_mask;
   unsigned wots_sign_index;
 
   pk_buffer = xtrymalloc_secure(4 * ctx->WOTS_bytes);
@@ -630,7 +609,7 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(unsigned char *dest,
   else
     {
       /* Nope, we're just generating pk's; turn off the signature logic */
-      wots_k_mask     = (uint32_t)~0;
+      wots_k_mask     = (u32)~0;
       wots_sign_index = 0;
     }
 
@@ -642,7 +621,7 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(unsigned char *dest,
 
   for (i = 0, buffer = pk_buffer; i < ctx->WOTS_len; i++, buffer += ctx->n)
     {
-      uint32_t wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k to */
+      u32 wots_k = info->wots_steps[i] | wots_k_mask; /* Set wots_k to */
       /* the step if we're generating a signature, ~0 if we're not */
 
       /* Start with the secret seed */

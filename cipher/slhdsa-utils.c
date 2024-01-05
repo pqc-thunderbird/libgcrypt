@@ -12,7 +12,7 @@
 /**
  * Converts the value of 'in' to 'outlen' bytes in big-endian byte order.
  */
-void _gcry_slhdsa_ull_to_bytes(unsigned char *out, unsigned int outlen, unsigned long long in)
+void _gcry_slhdsa_ull_to_bytes(byte *out, unsigned int outlen, unsigned long long in)
 {
   int i;
 
@@ -24,18 +24,18 @@ void _gcry_slhdsa_ull_to_bytes(unsigned char *out, unsigned int outlen, unsigned
     }
 }
 
-void _gcry_slhdsa_u32_to_bytes(unsigned char *out, u32 in)
+void _gcry_slhdsa_u32_to_bytes(byte *out, u32 in)
 {
-  out[0] = (unsigned char)(in >> 24);
-  out[1] = (unsigned char)(in >> 16);
-  out[2] = (unsigned char)(in >> 8);
-  out[3] = (unsigned char)in;
+  out[0] = (byte)(in >> 24);
+  out[1] = (byte)(in >> 16);
+  out[2] = (byte)(in >> 8);
+  out[3] = (byte)in;
 }
 
 /**
  * Converts the inlen bytes in 'in' from big-endian byte order to an integer.
  */
-unsigned long long _gcry_slhdsa_bytes_to_ull(const unsigned char *in, unsigned int inlen)
+unsigned long long _gcry_slhdsa_bytes_to_ull(const byte *in, unsigned int inlen)
 {
   unsigned long long retval = 0;
   unsigned int i;
@@ -51,18 +51,18 @@ unsigned long long _gcry_slhdsa_bytes_to_ull(const unsigned char *in, unsigned i
  * Computes a root node given a leaf and an auth path.
  * Expects address to be complete other than the tree_height and tree_index.
  */
-gcry_err_code_t _gcry_slhdsa_compute_root(unsigned char *root,
-                                          const unsigned char *leaf,
+gcry_err_code_t _gcry_slhdsa_compute_root(byte *root,
+                                          const byte *leaf,
                                           u32 leaf_idx,
                                           u32 idx_offset,
-                                          const unsigned char *auth_path,
+                                          const byte *auth_path,
                                           u32 tree_height,
                                           const _gcry_slhdsa_param_t *ctx,
                                           u32 addr[8])
 {
   gcry_err_code_t ec = 0;
   u32 i;
-  unsigned char *buffer = NULL;
+  byte *buffer = NULL;
 
   buffer = xtrymalloc_secure(2 * ctx->n);
   if (!buffer)

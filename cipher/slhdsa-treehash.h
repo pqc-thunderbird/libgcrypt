@@ -17,13 +17,13 @@
  * Applies the offset idx_offset to indices before building addresses, so that
  * it is possible to continue counting indices across trees.
  */
-gcry_err_code_t _gcry_slhdsa_treehashx1(unsigned char *root,
-                                        unsigned char *auth_path,
+gcry_err_code_t _gcry_slhdsa_treehashx1(byte *root,
+                                        byte *auth_path,
                                         const _gcry_slhdsa_param_t *ctx,
                                         u32 leaf_idx,
                                         u32 idx_offset,
                                         u32 tree_height,
-                                        gcry_err_code_t (*gen_leaf)(unsigned char * /* Where to write the leaf */,
+                                        gcry_err_code_t (*gen_leaf)(byte * /* Where to write the leaf */,
                                                                     const _gcry_slhdsa_param_t * /* ctx */,
                                                                     u32 addr_idx,
                                                                     void *info),
@@ -31,30 +31,30 @@ gcry_err_code_t _gcry_slhdsa_treehashx1(unsigned char *root,
                                         void *info);
 
 #ifdef USE_AVX2
-gcry_err_code_t _gcry_slhdsa_treehashx8(unsigned char *root,
-                                        unsigned char *auth_path,
+gcry_err_code_t _gcry_slhdsa_treehashx8(byte *root,
+                                        byte *auth_path,
                                         const _gcry_slhdsa_param_t *ctx,
-                                        uint32_t leaf_idx,
-                                        uint32_t idx_offset,
-                                        uint32_t tree_height,
-                                        gcry_err_code_t (*gen_leafx8)(unsigned char * /* Where to write the leaves */,
+                                        u32 leaf_idx,
+                                        u32 idx_offset,
+                                        u32 tree_height,
+                                        gcry_err_code_t (*gen_leafx8)(byte * /* Where to write the leaves */,
                                                                       const _gcry_slhdsa_param_t *,
-                                                                      uint32_t idx,
+                                                                      u32 idx,
                                                                       void *info),
-                                        uint32_t tree_addrx8[8 * 8],
+                                        u32 tree_addrx8[8 * 8],
                                         void *info);
 
-gcry_err_code_t _gcry_slhdsa_treehashx4(unsigned char *root,
-                                        unsigned char *auth_path,
+gcry_err_code_t _gcry_slhdsa_treehashx4(byte *root,
+                                        byte *auth_path,
                                         const _gcry_slhdsa_param_t *ctx,
-                                        uint32_t leaf_idx,
-                                        uint32_t idx_offset,
-                                        uint32_t tree_height,
-                                        gcry_err_code_t (*gen_leafx4)(unsigned char * /* Where to write the leaves */,
+                                        u32 leaf_idx,
+                                        u32 idx_offset,
+                                        u32 tree_height,
+                                        gcry_err_code_t (*gen_leafx4)(byte * /* Where to write the leaves */,
                                                                       const _gcry_slhdsa_param_t *,
-                                                                      uint32_t idx,
+                                                                      u32 idx,
                                                                       void *info),
-                                        uint32_t tree_addrx4[4 * 8],
+                                        u32 tree_addrx4[4 * 8],
                                         void *info);
 #endif
 

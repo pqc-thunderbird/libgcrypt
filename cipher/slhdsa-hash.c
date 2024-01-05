@@ -18,32 +18,32 @@
 #endif
 
 static gcry_err_code_t initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx);
-static gcry_err_code_t gen_message_random_sha2(unsigned char *R,
-                                               const unsigned char *sk_prf,
-                                               const unsigned char *optrand,
-                                               const unsigned char *m,
+static gcry_err_code_t gen_message_random_sha2(byte *R,
+                                               const byte *sk_prf,
+                                               const byte *optrand,
+                                               const byte *m,
                                                unsigned long long mlen,
                                                const _gcry_slhdsa_param_t *ctx);
-static gcry_err_code_t gen_message_random_shake(unsigned char *R,
-                                                const unsigned char *sk_prf,
-                                                const unsigned char *optrand,
-                                                const unsigned char *m,
+static gcry_err_code_t gen_message_random_shake(byte *R,
+                                                const byte *sk_prf,
+                                                const byte *optrand,
+                                                const byte *m,
                                                 unsigned long long mlen,
                                                 const _gcry_slhdsa_param_t *ctx);
-static gcry_err_code_t hash_message_sha2(unsigned char *digest,
+static gcry_err_code_t hash_message_sha2(byte *digest,
                                          u64 *tree,
                                          u32 *leaf_idx,
-                                         const unsigned char *R,
-                                         const unsigned char *pk,
-                                         const unsigned char *m,
+                                         const byte *R,
+                                         const byte *pk,
+                                         const byte *m,
                                          unsigned long long mlen,
                                          const _gcry_slhdsa_param_t *ctx);
-static gcry_err_code_t hash_message_shake(unsigned char *digest,
+static gcry_err_code_t hash_message_shake(byte *digest,
                                           u64 *tree,
                                           u32 *leaf_idx,
-                                          const unsigned char *R,
-                                          const unsigned char *pk,
-                                          const unsigned char *m,
+                                          const byte *R,
+                                          const byte *pk,
+                                          const byte *m,
                                           unsigned long long mlen,
                                           const _gcry_slhdsa_param_t *ctx);
 
@@ -72,7 +72,7 @@ gcry_err_code_t _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
  **/
 void initialize_hash_function_sha_avx2(_gcry_slhdsa_param_t *ctx)
 {
-  uint8_t block[SLHDSA_SHA512_BLOCK_BYTES];
+  byte block[SLHDSA_SHA512_BLOCK_BYTES];
   size_t i;
 
   for (i = 0; i < ctx->n; ++i)
@@ -97,7 +97,7 @@ void initialize_hash_function_sha_avx2(_gcry_slhdsa_param_t *ctx)
 /*
  * Computes PRF(pk_seed, sk_seed, addr).
  */
-gcry_err_code_t _gcry_slhdsa_prf_addr(unsigned char *out, const _gcry_slhdsa_param_t *ctx, const u32 addr[8])
+gcry_err_code_t _gcry_slhdsa_prf_addr(byte *out, const _gcry_slhdsa_param_t *ctx, const u32 addr[8])
 {
 
   gcry_err_code_t ec = 0;
@@ -143,21 +143,21 @@ leave:
 /*
  * 8-way parallel version of _gcry_slhdsa_prf_addr; takes 8x as much input and output
  */
-gcry_err_code_t _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
-                                           unsigned char *out1,
-                                           unsigned char *out2,
-                                           unsigned char *out3,
-                                           unsigned char *out4,
-                                           unsigned char *out5,
-                                           unsigned char *out6,
-                                           unsigned char *out7,
+gcry_err_code_t _gcry_slhdsa_prf_avx2_sha2(byte *out0,
+                                           byte *out1,
+                                           byte *out2,
+                                           byte *out3,
+                                           byte *out4,
+                                           byte *out5,
+                                           byte *out6,
+                                           byte *out7,
                                            const _gcry_slhdsa_param_t *ctx,
-                                           const uint32_t addrx8[8 * 8])
+                                           const u32 addrx8[8 * 8])
 {
   gcry_err_code_t ec = 0;
   byte *bufx8        = NULL;
 
-  unsigned char outbufx8[8 * SLHDSA_SHA256_OUTPUT_BYTES];
+  byte outbufx8[8 * SLHDSA_SHA256_OUTPUT_BYTES];
   unsigned int j;
 
   bufx8 = xtrymalloc_secure(8 * (ctx->n + ctx->addr_bytes));
@@ -215,12 +215,8 @@ leave:
   return ec;
 }
 
-void _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
-                                 unsigned char *out1,
-                                 unsigned char *out2,
-                                 unsigned char *out3,
-                                 const _gcry_slhdsa_param_t *ctx,
-                                 const uint32_t addrx4[4 * 8])
+void _gcry_slhdsa_prf_avx2_shake(
+    byte *out0, byte *out1, byte *out2, byte *out3, const _gcry_slhdsa_param_t *ctx, const u32 addrx4[4 * 8])
 {
   /* As we write and read only a few quadwords, it is more efficient to
    * build and extract from the fourway SHAKE256 state by hand. */
@@ -273,10 +269,10 @@ void _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
 
 #endif
 
-gcry_err_code_t _gcry_slhdsa_gen_message_random(unsigned char *R,
-                                                const unsigned char *sk_prf,
-                                                const unsigned char *optrand,
-                                                const unsigned char *m,
+gcry_err_code_t _gcry_slhdsa_gen_message_random(byte *R,
+                                                const byte *sk_prf,
+                                                const byte *optrand,
+                                                const byte *m,
                                                 unsigned long long mlen,
                                                 const _gcry_slhdsa_param_t *ctx)
 {
@@ -290,12 +286,12 @@ gcry_err_code_t _gcry_slhdsa_gen_message_random(unsigned char *R,
     }
 }
 
-gcry_err_code_t _gcry_slhdsa_hash_message(unsigned char *digest,
+gcry_err_code_t _gcry_slhdsa_hash_message(byte *digest,
                                           u64 *tree,
                                           u32 *leaf_idx,
-                                          const unsigned char *R,
-                                          const unsigned char *pk,
-                                          const unsigned char *m,
+                                          const byte *R,
+                                          const byte *pk,
+                                          const byte *m,
                                           unsigned long long mlen,
                                           const _gcry_slhdsa_param_t *ctx)
 
@@ -349,10 +345,10 @@ gcry_err_code_t initialize_hash_function_sha2(_gcry_slhdsa_param_t *ctx)
  * prefix. This is necessary to prevent having to move the message around (and
  * allocate memory for it).
  */
-static gcry_err_code_t gen_message_random_sha2(unsigned char *R,
-                                               const unsigned char *sk_prf,
-                                               const unsigned char *optrand,
-                                               const unsigned char *m,
+static gcry_err_code_t gen_message_random_sha2(byte *R,
+                                               const byte *sk_prf,
+                                               const byte *optrand,
+                                               const byte *m,
                                                unsigned long long mlen,
                                                const _gcry_slhdsa_param_t *ctx)
 {
@@ -362,7 +358,7 @@ static gcry_err_code_t gen_message_random_sha2(unsigned char *R,
   int hmac_shaX_algo;
   gcry_mac_hd_t hd = NULL;
   size_t outlen;
-  unsigned char *tmpmac = NULL;
+  byte *tmpmac = NULL;
 
   if (ctx->do_use_sha512)
     {
@@ -419,12 +415,12 @@ leave:
  * Outputs the message digest and the index of the leaf. The index is split in
  * the tree index and the leaf index, for convenient copying to an address.
  */
-static gcry_err_code_t hash_message_sha2(unsigned char *digest,
+static gcry_err_code_t hash_message_sha2(byte *digest,
                                          u64 *tree,
                                          u32 *leaf_idx,
-                                         const unsigned char *R,
-                                         const unsigned char *pk,
-                                         const unsigned char *m,
+                                         const byte *R,
+                                         const byte *pk,
+                                         const byte *m,
                                          unsigned long long mlen,
                                          const _gcry_slhdsa_param_t *ctx)
 {
@@ -439,10 +435,10 @@ static gcry_err_code_t hash_message_sha2(unsigned char *digest,
   byte shax_block_bytes;
   byte shax_output_bytes;
   size_t SLHDSA_INBLOCKS;
-  unsigned char *seed  = NULL;
-  unsigned char *inbuf = NULL;
-  unsigned char *buf   = NULL;
-  unsigned char *bufp;
+  byte *seed  = NULL;
+  byte *inbuf = NULL;
+  byte *buf   = NULL;
+  byte *bufp;
 
   if (ctx->do_use_sha512)
     {
@@ -539,10 +535,10 @@ leave:
  * Computes the message-dependent randomness R, using a secret seed and an
  * optional randomization value as well as the message.
  */
-static gcry_err_code_t gen_message_random_shake(unsigned char *R,
-                                                const unsigned char *sk_prf,
-                                                const unsigned char *optrand,
-                                                const unsigned char *m,
+static gcry_err_code_t gen_message_random_shake(byte *R,
+                                                const byte *sk_prf,
+                                                const byte *optrand,
+                                                const byte *m,
                                                 unsigned long long mlen,
                                                 const _gcry_slhdsa_param_t *ctx)
 {
@@ -567,12 +563,12 @@ leave:
  * Outputs the message digest and the index of the leaf. The index is split in
  * the tree index and the leaf index, for convenient copying to an address.
  */
-static gcry_err_code_t hash_message_shake(unsigned char *digest,
+static gcry_err_code_t hash_message_shake(byte *digest,
                                           u64 *tree,
                                           u32 *leaf_idx,
-                                          const unsigned char *R,
-                                          const unsigned char *pk,
-                                          const unsigned char *m,
+                                          const byte *R,
+                                          const byte *pk,
+                                          const byte *m,
                                           unsigned long long mlen,
                                           const _gcry_slhdsa_param_t *ctx)
 {
@@ -584,8 +580,8 @@ static gcry_err_code_t hash_message_shake(unsigned char *digest,
   size_t SLHDSA_LEAF_BYTES = (SLHDSA_LEAF_BITS + 7) / 8;
   size_t SLHDSA_DGST_BYTES = ctx->FORS_msg_bytes + SLHDSA_TREE_BYTES + SLHDSA_LEAF_BYTES;
 
-  unsigned char *buf = NULL;
-  unsigned char *bufp;
+  byte *buf = NULL;
+  byte *bufp;
 
   buf = xtrymalloc_secure(SLHDSA_DGST_BYTES);
   if (!buf)

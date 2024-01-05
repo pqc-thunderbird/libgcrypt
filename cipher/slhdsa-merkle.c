@@ -16,10 +16,10 @@
  * authentication path).
  */
 gcry_err_code_t _gcry_slhdsa_merkle_sign(
-    byte *sig, unsigned char *root, const _gcry_slhdsa_param_t *ctx, u32 wots_addr[8], u32 tree_addr[8], u32 idx_leaf)
+    byte *sig, byte *root, const _gcry_slhdsa_param_t *ctx, u32 wots_addr[8], u32 tree_addr[8], u32 idx_leaf)
 {
   gcry_err_code_t ec                      = 0;
-  unsigned char *auth_path                = sig + ctx->WOTS_bytes;
+  byte *auth_path                         = sig + ctx->WOTS_bytes;
   struct _gcry_slhdsa_leaf_info_x1_t info = {0};
   unsigned *steps                         = NULL;
 
@@ -55,13 +55,13 @@ leave:
 
 #ifdef USE_AVX2
 gcry_err_code_t _gcry_slhdsa_merkle_sign_avx_sha2(
-    byte *sig, unsigned char *root, const _gcry_slhdsa_param_t *ctx, u32 wots_addr[8], u32 tree_addr[8], u32 idx_leaf)
+    byte *sig, byte *root, const _gcry_slhdsa_param_t *ctx, u32 wots_addr[8], u32 tree_addr[8], u32 idx_leaf)
 {
   gcry_err_code_t ec                      = 0;
-  unsigned char *auth_path                = sig + ctx->WOTS_bytes;
+  byte *auth_path                         = sig + ctx->WOTS_bytes;
   struct _gcry_slhdsa_leaf_info_x8_t info = {0};
   unsigned *steps                         = NULL;
-  uint32_t tree_addrx8[8 * 8]             = {0};
+  u32 tree_addrx8[8 * 8]                  = {0};
   int j;
 
   steps = xtrymalloc_secure(sizeof(unsigned) * ctx->WOTS_len);
@@ -100,13 +100,13 @@ leave:
 }
 
 gcry_err_code_t _gcry_slhdsa_merkle_sign_avx_shake(
-    byte *sig, unsigned char *root, const _gcry_slhdsa_param_t *ctx, u32 wots_addr[8], u32 tree_addr[8], u32 idx_leaf)
+    byte *sig, byte *root, const _gcry_slhdsa_param_t *ctx, u32 wots_addr[8], u32 tree_addr[8], u32 idx_leaf)
 {
   gcry_err_code_t ec                      = 0;
-  unsigned char *auth_path                = sig + ctx->WOTS_bytes;
+  byte *auth_path                         = sig + ctx->WOTS_bytes;
   struct _gcry_slhdsa_leaf_info_x4_t info = {0};
   unsigned *steps                         = NULL;
-  uint32_t tree_addrx4[4 * 8]             = {0};
+  u32 tree_addrx4[4 * 8]                  = {0};
   int j;
 
   steps = xtrymalloc_secure(sizeof(unsigned) * ctx->WOTS_len);
@@ -146,15 +146,15 @@ leave:
 #endif
 
 /* Compute root node of the top-most subtree. */
-gcry_err_code_t _gcry_slhdsa_merkle_gen_root(unsigned char *root, const _gcry_slhdsa_param_t *ctx)
+gcry_err_code_t _gcry_slhdsa_merkle_gen_root(byte *root, const _gcry_slhdsa_param_t *ctx)
 {
   /* We do not need the auth path in key generation, but it simplifies the
      code to have just one TreeHash routine that computes both root and path
      in one function. */
-  gcry_err_code_t ec       = 0;
-  unsigned char *auth_path = NULL;
-  u32 top_tree_addr[8]     = {0};
-  u32 wots_addr[8]         = {0};
+  gcry_err_code_t ec   = 0;
+  byte *auth_path      = NULL;
+  u32 top_tree_addr[8] = {0};
+  u32 wots_addr[8]     = {0};
 
   auth_path = xtrymalloc_secure(ctx->tree_height * ctx->n + ctx->WOTS_bytes);
   if (!auth_path)
@@ -171,12 +171,12 @@ gcry_err_code_t _gcry_slhdsa_merkle_gen_root(unsigned char *root, const _gcry_sl
     {
       if (ctx->is_sha2)
         {
-        ec = _gcry_slhdsa_merkle_sign_avx_sha2(auth_path,
-                                               root,
-                                               ctx,
-                                               wots_addr,
-                                               top_tree_addr,
-                                               (u32)~0 /* ~0 means "don't bother generating an auth path */);
+          ec = _gcry_slhdsa_merkle_sign_avx_sha2(auth_path,
+                                                 root,
+                                                 ctx,
+                                                 wots_addr,
+                                                 top_tree_addr,
+                                                 (u32)~0 /* ~0 means "don't bother generating an auth path */);
         }
       else
         {

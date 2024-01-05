@@ -8,22 +8,18 @@
 
 #ifdef USE_AVX2
 
-typedef uint64_t u64;
+typedef u64 u64;
 typedef __m256i u256;
 typedef struct SHA512state4x
 {
   __m256i s[8];
-  unsigned char msgblocks[4 * 128];
+  byte msgblocks[4 * 128];
   int datalen;
   unsigned long long msglen;
 } sha512ctx4x;
 
 
-static void sha512_transform4x(sha512ctx4x *ctx,
-                               const unsigned char *d0,
-                               const unsigned char *d1,
-                               const unsigned char *d2,
-                               const unsigned char *d3);
+static void sha512_transform4x(sha512ctx4x *ctx, const byte *d0, const byte *d1, const byte *d2, const byte *d3);
 
 #define BYTESWAP(x)                                                                                                    \
   _mm256_shuffle_epi8(x,                                                                                               \
@@ -162,11 +158,7 @@ static const unsigned long long RC[80] = {
     0x431d67c49c100d4cULL, 0x4cc5d4becb3e42b6ULL, 0x597f299cfc657e2aULL, 0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL,
 };
 
-static void sha512_transform4x(sha512ctx4x *ctx,
-                               const unsigned char *d0,
-                               const unsigned char *d1,
-                               const unsigned char *d2,
-                               const unsigned char *d3)
+static void sha512_transform4x(sha512ctx4x *ctx, const byte *d0, const byte *d1, const byte *d2, const byte *d3)
 {
   u256 s0, s1, s2, s3, s4, s5, s6, s7, w[16], T0, T1, nw;
 
@@ -276,14 +268,14 @@ static void sha512_transform4x(sha512ctx4x *ctx,
 }
 
 static void _sha512x4(sha512ctx4x *ctx,
-                      unsigned char *out0,
-                      unsigned char *out1,
-                      unsigned char *out2,
-                      unsigned char *out3,
-                      const unsigned char *in0,
-                      const unsigned char *in1,
-                      const unsigned char *in2,
-                      const unsigned char *in3,
+                      byte *out0,
+                      byte *out1,
+                      byte *out2,
+                      byte *out3,
+                      const byte *in0,
+                      const byte *in1,
+                      const byte *in2,
+                      const byte *in3,
                       unsigned long long inlen)
 {
   unsigned int i = 0;
@@ -369,16 +361,16 @@ static void _sha512x4(sha512ctx4x *ctx,
   memcpy(out3, out, 64);
 }
 
-void _gcry_slhdsa_sha512x4_seeded(unsigned char *out0,
-                                  unsigned char *out1,
-                                  unsigned char *out2,
-                                  unsigned char *out3,
-                                  const unsigned char *seed,
+void _gcry_slhdsa_sha512x4_seeded(byte *out0,
+                                  byte *out1,
+                                  byte *out2,
+                                  byte *out3,
+                                  const byte *seed,
                                   unsigned long long seedlen,
-                                  const unsigned char *in0,
-                                  const unsigned char *in1,
-                                  const unsigned char *in2,
-                                  const unsigned char *in3,
+                                  const byte *in0,
+                                  const byte *in1,
+                                  const byte *in2,
+                                  const byte *in3,
                                   unsigned long long inlen)
 {
   sha512ctx4x ctx;
@@ -386,9 +378,9 @@ void _gcry_slhdsa_sha512x4_seeded(unsigned char *out0,
 
   for (i = 0; i < 8; i++)
     {
-      uint64_t t = (uint64_t)(seed[7]) | (((uint64_t)(seed[6])) << 8) | (((uint64_t)(seed[5])) << 16)
-                   | (((uint64_t)(seed[4])) << 24) | (((uint64_t)(seed[3])) << 32) | (((uint64_t)(seed[2])) << 40)
-                   | (((uint64_t)(seed[1])) << 48) | (((uint64_t)(seed[0])) << 56);
+      u64 t = (u64)(seed[7]) | (((u64)(seed[6])) << 8) | (((u64)(seed[5])) << 16) | (((u64)(seed[4])) << 24)
+              | (((u64)(seed[3])) << 32) | (((u64)(seed[2])) << 40) | (((u64)(seed[1])) << 48)
+              | (((u64)(seed[0])) << 56);
       ctx.s[i] = _mm256_set_epi64x(t, t, t, t);
       seed += 8;
     }
@@ -399,36 +391,35 @@ void _gcry_slhdsa_sha512x4_seeded(unsigned char *out0,
 
 /* the following functions are required for initializing the hash with the public seed */
 
-static const uint8_t iv_512[64]
+static const byte iv_512[64]
     = {0x6a, 0x09, 0xe6, 0x67, 0xf3, 0xbc, 0xc9, 0x08, 0xbb, 0x67, 0xae, 0x85, 0x84, 0xca, 0xa7, 0x3b,
        0x3c, 0x6e, 0xf3, 0x72, 0xfe, 0x94, 0xf8, 0x2b, 0xa5, 0x4f, 0xf5, 0x3a, 0x5f, 0x1d, 0x36, 0xf1,
        0x51, 0x0e, 0x52, 0x7f, 0xad, 0xe6, 0x82, 0xd1, 0x9b, 0x05, 0x68, 0x8c, 0x2b, 0x3e, 0x6c, 0x1f,
        0x1f, 0x83, 0xd9, 0xab, 0xfb, 0x41, 0xbd, 0x6b, 0x5b, 0xe0, 0xcd, 0x19, 0x13, 0x7e, 0x21, 0x79};
 
-static uint64_t load_bigendian_64(const uint8_t *x)
+static u64 load_bigendian_64(const byte *x)
 {
-  return (uint64_t)(x[7]) | (((uint64_t)(x[6])) << 8) | (((uint64_t)(x[5])) << 16) | (((uint64_t)(x[4])) << 24)
-         | (((uint64_t)(x[3])) << 32) | (((uint64_t)(x[2])) << 40) | (((uint64_t)(x[1])) << 48)
-         | (((uint64_t)(x[0])) << 56);
+  return (u64)(x[7]) | (((u64)(x[6])) << 8) | (((u64)(x[5])) << 16) | (((u64)(x[4])) << 24) | (((u64)(x[3])) << 32)
+         | (((u64)(x[2])) << 40) | (((u64)(x[1])) << 48) | (((u64)(x[0])) << 56);
 }
 
-static void store_bigendian_64(uint8_t *x, uint64_t u)
+static void store_bigendian_64(byte *x, u64 u)
 {
-  x[7] = (uint8_t)u;
+  x[7] = (byte)u;
   u >>= 8;
-  x[6] = (uint8_t)u;
+  x[6] = (byte)u;
   u >>= 8;
-  x[5] = (uint8_t)u;
+  x[5] = (byte)u;
   u >>= 8;
-  x[4] = (uint8_t)u;
+  x[4] = (byte)u;
   u >>= 8;
-  x[3] = (uint8_t)u;
+  x[3] = (byte)u;
   u >>= 8;
-  x[2] = (uint8_t)u;
+  x[2] = (byte)u;
   u >>= 8;
-  x[1] = (uint8_t)u;
+  x[1] = (byte)u;
   u >>= 8;
-  x[0] = (uint8_t)u;
+  x[0] = (byte)u;
 }
 
 #define SHR(x, c) ((x) >> (c))
@@ -512,19 +503,19 @@ static void store_bigendian_64(uint8_t *x, uint64_t u)
   a  = T1 + T2;
 
 
-static int crypto_hashblocks_sha512(unsigned char *statebytes, const unsigned char *in, unsigned long long inlen)
+static int crypto_hashblocks_sha512(byte *statebytes, const byte *in, unsigned long long inlen)
 {
-  uint64_t state[8];
-  uint64_t a;
-  uint64_t b;
-  uint64_t c;
-  uint64_t d;
-  uint64_t e;
-  uint64_t f;
-  uint64_t g;
-  uint64_t h;
-  uint64_t T1;
-  uint64_t T2;
+  u64 state[8];
+  u64 a;
+  u64 b;
+  u64 c;
+  u64 d;
+  u64 e;
+  u64 f;
+  u64 g;
+  u64 h;
+  u64 T1;
+  u64 T2;
 
   a        = load_bigendian_64(statebytes + 0);
   state[0] = a;
@@ -545,22 +536,22 @@ static int crypto_hashblocks_sha512(unsigned char *statebytes, const unsigned ch
 
   while (inlen >= 128)
     {
-      uint64_t w0  = load_bigendian_64(in + 0);
-      uint64_t w1  = load_bigendian_64(in + 8);
-      uint64_t w2  = load_bigendian_64(in + 16);
-      uint64_t w3  = load_bigendian_64(in + 24);
-      uint64_t w4  = load_bigendian_64(in + 32);
-      uint64_t w5  = load_bigendian_64(in + 40);
-      uint64_t w6  = load_bigendian_64(in + 48);
-      uint64_t w7  = load_bigendian_64(in + 56);
-      uint64_t w8  = load_bigendian_64(in + 64);
-      uint64_t w9  = load_bigendian_64(in + 72);
-      uint64_t w10 = load_bigendian_64(in + 80);
-      uint64_t w11 = load_bigendian_64(in + 88);
-      uint64_t w12 = load_bigendian_64(in + 96);
-      uint64_t w13 = load_bigendian_64(in + 104);
-      uint64_t w14 = load_bigendian_64(in + 112);
-      uint64_t w15 = load_bigendian_64(in + 120);
+      u64 w0  = load_bigendian_64(in + 0);
+      u64 w1  = load_bigendian_64(in + 8);
+      u64 w2  = load_bigendian_64(in + 16);
+      u64 w3  = load_bigendian_64(in + 24);
+      u64 w4  = load_bigendian_64(in + 32);
+      u64 w5  = load_bigendian_64(in + 40);
+      u64 w6  = load_bigendian_64(in + 48);
+      u64 w7  = load_bigendian_64(in + 56);
+      u64 w8  = load_bigendian_64(in + 64);
+      u64 w9  = load_bigendian_64(in + 72);
+      u64 w10 = load_bigendian_64(in + 80);
+      u64 w11 = load_bigendian_64(in + 88);
+      u64 w12 = load_bigendian_64(in + 96);
+      u64 w13 = load_bigendian_64(in + 104);
+      u64 w14 = load_bigendian_64(in + 112);
+      u64 w15 = load_bigendian_64(in + 120);
 
       F_64(w0, 0x428a2f98d728ae22ULL)
       F_64(w1, 0x7137449123ef65cdULL)
@@ -689,7 +680,7 @@ static int crypto_hashblocks_sha512(unsigned char *statebytes, const unsigned ch
   return inlen;
 }
 
-void _gcry_slhdsa_sha512_inc_init(uint8_t *state)
+void _gcry_slhdsa_sha512_inc_init(byte *state)
 {
   for (size_t i = 0; i < 64; ++i)
     {
@@ -701,9 +692,9 @@ void _gcry_slhdsa_sha512_inc_init(uint8_t *state)
     }
 }
 
-void _gcry_slhdsa_sha512_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks)
+void _gcry_slhdsa_sha512_inc_blocks(byte *state, const byte *in, size_t inblocks)
 {
-  uint64_t bytes = load_bigendian_64(state + 64);
+  u64 bytes = load_bigendian_64(state + 64);
 
   crypto_hashblocks_sha512(state, in, 128 * inblocks);
   bytes += 128 * inblocks;

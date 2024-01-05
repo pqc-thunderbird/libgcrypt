@@ -8,20 +8,20 @@
 #ifdef USE_AVX2
 #include "immintrin.h"
 
-void _gcry_slhdsa_sha512_inc_init(uint8_t *state);
+void _gcry_slhdsa_sha512_inc_init(byte *state);
 
-void _gcry_slhdsa_sha512_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks);
+void _gcry_slhdsa_sha512_inc_blocks(byte *state, const byte *in, size_t inblocks);
 
-void _gcry_slhdsa_sha512x4_seeded(unsigned char *out0,
-                                  unsigned char *out1,
-                                  unsigned char *out2,
-                                  unsigned char *out3,
-                                  const unsigned char *seed,
+void _gcry_slhdsa_sha512x4_seeded(byte *out0,
+                                  byte *out1,
+                                  byte *out2,
+                                  byte *out3,
+                                  const byte *seed,
                                   unsigned long long seedlen,
-                                  const unsigned char *in0,
-                                  const unsigned char *in1,
-                                  const unsigned char *in2,
-                                  const unsigned char *in3,
+                                  const byte *in0,
+                                  const byte *in1,
+                                  const byte *in2,
+                                  const byte *in3,
                                   unsigned long long inlen);
 
 #endif

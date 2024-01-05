@@ -13,7 +13,7 @@
 #define NROUNDS 24
 #define ROL(a, offset) ((a << offset) ^ (a >> (64 - offset)))
 
-static uint64_t load64(const unsigned char *x)
+static u64 load64(const byte *x)
 {
   unsigned long long r = 0, i;
 
@@ -24,7 +24,7 @@ static uint64_t load64(const unsigned char *x)
   return r;
 }
 
-static void store64(uint8_t *x, uint64_t u)
+static void store64(byte *x, u64 u)
 {
   unsigned int i;
 
@@ -37,18 +37,18 @@ static void store64(uint8_t *x, uint64_t u)
 
 static void keccak_absorb4x(__m256i *s,
                             unsigned int r,
-                            const unsigned char *m0,
-                            const unsigned char *m1,
-                            const unsigned char *m2,
-                            const unsigned char *m3,
+                            const byte *m0,
+                            const byte *m1,
+                            const byte *m2,
+                            const byte *m3,
                             unsigned long long int mlen,
-                            unsigned char p)
+                            byte p)
 {
   unsigned long long i;
-  unsigned char t0[200];
-  unsigned char t1[200];
-  unsigned char t2[200];
-  unsigned char t3[200];
+  byte t0[200];
+  byte t1[200];
+  byte t2[200];
+  byte t3[200];
 
   unsigned long long *ss = (unsigned long long *)s;
 
@@ -106,13 +106,8 @@ static void keccak_absorb4x(__m256i *s,
 }
 
 
-static void keccak_squeezeblocks4x(unsigned char *h0,
-                                   unsigned char *h1,
-                                   unsigned char *h2,
-                                   unsigned char *h3,
-                                   unsigned long long int nblocks,
-                                   __m256i *s,
-                                   unsigned int r)
+static void keccak_squeezeblocks4x(
+    byte *h0, byte *h1, byte *h2, byte *h3, unsigned long long int nblocks, __m256i *s, unsigned int r)
 {
   unsigned int i;
 
@@ -137,22 +132,22 @@ static void keccak_squeezeblocks4x(unsigned char *h0,
 }
 
 
-void _gcry_slhdsa_shake128x4(unsigned char *out0,
-                             unsigned char *out1,
-                             unsigned char *out2,
-                             unsigned char *out3,
+void _gcry_slhdsa_shake128x4(byte *out0,
+                             byte *out1,
+                             byte *out2,
+                             byte *out3,
                              unsigned long long outlen,
-                             unsigned char *in0,
-                             unsigned char *in1,
-                             unsigned char *in2,
-                             unsigned char *in3,
+                             byte *in0,
+                             byte *in1,
+                             byte *in2,
+                             byte *in3,
                              unsigned long long inlen)
 {
   __m256i s[25];
-  unsigned char t0[SHAKE128_RATE];
-  unsigned char t1[SHAKE128_RATE];
-  unsigned char t2[SHAKE128_RATE];
-  unsigned char t3[SHAKE128_RATE];
+  byte t0[SHAKE128_RATE];
+  byte t1[SHAKE128_RATE];
+  byte t2[SHAKE128_RATE];
+  byte t3[SHAKE128_RATE];
   unsigned int i;
 
   /* zero state */
@@ -184,22 +179,22 @@ void _gcry_slhdsa_shake128x4(unsigned char *out0,
 }
 
 
-void _gcry_slhdsa_shake256x4(unsigned char *out0,
-                             unsigned char *out1,
-                             unsigned char *out2,
-                             unsigned char *out3,
+void _gcry_slhdsa_shake256x4(byte *out0,
+                             byte *out1,
+                             byte *out2,
+                             byte *out3,
                              unsigned long long outlen,
-                             unsigned char *in0,
-                             unsigned char *in1,
-                             unsigned char *in2,
-                             unsigned char *in3,
+                             byte *in0,
+                             byte *in1,
+                             byte *in2,
+                             byte *in3,
                              unsigned long long inlen)
 {
   __m256i s[25];
-  unsigned char t0[SHAKE256_RATE];
-  unsigned char t1[SHAKE256_RATE];
-  unsigned char t2[SHAKE256_RATE];
-  unsigned char t3[SHAKE256_RATE];
+  byte t0[SHAKE256_RATE];
+  byte t1[SHAKE256_RATE];
+  byte t2[SHAKE256_RATE];
+  byte t3[SHAKE256_RATE];
   unsigned int i;
 
   /* zero state */

@@ -9,31 +9,30 @@
 #include <stdint.h>
 
 
-void _gcry_slhdsa_sha256x8_seeded(unsigned char *out0,
-                     unsigned char *out1,
-                     unsigned char *out2,
-                     unsigned char *out3,
-                     unsigned char *out4,
-                     unsigned char *out5,
-                     unsigned char *out6,
-                     unsigned char *out7,
-                     const unsigned char *seed,
-                     unsigned long long seedlen,
-                     const unsigned char *in0,
-                     const unsigned char *in1,
-                     const unsigned char *in2,
-                     const unsigned char *in3,
-                     const unsigned char *in4,
-                     const unsigned char *in5,
-                     const unsigned char *in6,
-                     const unsigned char *in7,
-                     unsigned long long inlen);
+void _gcry_slhdsa_sha256x8_seeded(byte *out0,
+                                  byte *out1,
+                                  byte *out2,
+                                  byte *out3,
+                                  byte *out4,
+                                  byte *out5,
+                                  byte *out6,
+                                  byte *out7,
+                                  const byte *seed,
+                                  unsigned long long seedlen,
+                                  const byte *in0,
+                                  const byte *in1,
+                                  const byte *in2,
+                                  const byte *in3,
+                                  const byte *in4,
+                                  const byte *in5,
+                                  const byte *in6,
+                                  const byte *in7,
+                                  unsigned long long inlen);
 
 
+void _gcry_slhdsa_sha256_inc_init(byte *state);
 
-void _gcry_slhdsa_sha256_inc_init(uint8_t *state);
-
-void _gcry_slhdsa_sha256_inc_blocks(uint8_t *state, const uint8_t *in, size_t inblocks);
+void _gcry_slhdsa_sha256_inc_blocks(byte *state, const byte *in, size_t inblocks);
 
 #endif
 #endif

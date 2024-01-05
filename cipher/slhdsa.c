@@ -121,7 +121,7 @@ static void gcry_slhdsa_param_destroy(_gcry_slhdsa_param_t *param)
 
 static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param_t *param, slhdsa_paramset paramset)
 {
-  gcry_err_code_t ec      = 0;
+  gcry_err_code_t ec = 0;
 #ifdef USE_AVX2
   unsigned int hwfeatures;
 #endif
@@ -244,7 +244,7 @@ static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param
       return GPG_ERR_INV_ARG;
     }
 
-  param->addr_bytes     = param->is_sha2 ? 22 : 32;
+  param->addr_bytes = param->is_sha2 ? 22 : 32;
 
   param->pub_seed = xtrymalloc(param->n);
   if (!param->pub_seed)
@@ -306,7 +306,7 @@ static gcry_err_code_t gcry_slhdsa_get_param_from_paramset_id(_gcry_slhdsa_param
     }
 
 #ifdef USE_AVX2
-  hwfeatures = _gcry_get_hw_features ();
+  hwfeatures      = _gcry_get_hw_features();
   param->use_avx2 = !!(hwfeatures & HWF_INTEL_AVX2);
 #endif
 
@@ -392,7 +392,7 @@ static const char *slhdsa_names[] = {
 
 static gcry_err_code_t extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
                                                     const char *label,
-                                                    unsigned char **sk_p,
+                                                    byte **sk_p,
                                                     size_t exp_len)
 {
   gcry_mpi_t sk     = NULL;
@@ -434,16 +434,12 @@ leave:
 }
 
 
-static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
-                                             const _gcry_slhdsa_param_t param,
-                                             unsigned char **sk_p)
+static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms, const _gcry_slhdsa_param_t param, byte **sk_p)
 {
   return extract_opaque_mpi_from_sexp(keyparms, "/s", sk_p, param.secret_key_bytes);
 }
 
-static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms,
-                                            const _gcry_slhdsa_param_t param,
-                                            unsigned char **pk_p)
+static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms, const _gcry_slhdsa_param_t param, byte **pk_p)
 {
   return extract_opaque_mpi_from_sexp(keyparms, "/p", pk_p, param.public_key_bytes);
 }
@@ -453,8 +449,8 @@ static gcry_err_code_t slhdsa_generate(const gcry_sexp_t genparms, gcry_sexp_t *
 {
   gpg_err_code_t ec = 0;
 
-  unsigned char *pk          = NULL;
-  unsigned char *sk          = NULL;
+  byte *pk                   = NULL;
+  byte *sk                   = NULL;
   _gcry_slhdsa_param_t param = {0};
   slhdsa_paramset paramset;
 
@@ -519,11 +515,11 @@ leave:
 
 static gcry_err_code_t slhdsa_sign(gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 {
-  gpg_err_code_t ec       = 0;
-  unsigned char *sig_buf  = NULL;
-  unsigned char *sk_buf   = NULL;
-  unsigned char *data_buf = NULL;
-  size_t data_buf_len     = 0;
+  gpg_err_code_t ec   = 0;
+  byte *sig_buf       = NULL;
+  byte *sk_buf        = NULL;
+  byte *data_buf      = NULL;
+  size_t data_buf_len = 0;
 
   struct pk_encoding_ctx ctx;
 
@@ -612,11 +608,11 @@ leave:
 
 static gcry_err_code_t slhdsa_verify(gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
 {
-  gpg_err_code_t ec       = 0;
-  unsigned char *sig_buf  = NULL;
-  unsigned char *pk_buf   = NULL;
-  unsigned char *data_buf = NULL;
-  size_t data_buf_len     = 0;
+  gpg_err_code_t ec   = 0;
+  byte *sig_buf       = NULL;
+  byte *pk_buf        = NULL;
+  byte *data_buf      = NULL;
+  size_t data_buf_len = 0;
 
   struct pk_encoding_ctx ctx;
 

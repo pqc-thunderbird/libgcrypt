@@ -16,16 +16,16 @@
  * Format pk: [root || PUB_SEED]
  */
 gcry_err_code_t _gcry_slhdsa_seed_keypair(_gcry_slhdsa_param_t *ctx,
-                                          unsigned char *pk,
-                                          unsigned char *sk,
-                                          const unsigned char *seed);
+                                          byte *pk,
+                                          byte *sk,
+                                          const byte *seed);
 
 /*
  * Generates a slhdsa key pair.
  * Format sk: [SK_SEED || SK_PRF || PUB_SEED || root]
  * Format pk: [root || PUB_SEED]
  */
-gcry_err_code_t _gcry_slhdsa_keypair(_gcry_slhdsa_param_t *ctx, unsigned char *pk, unsigned char *sk);
+gcry_err_code_t _gcry_slhdsa_keypair(_gcry_slhdsa_param_t *ctx, byte *pk, byte *sk);
 
 /**
  * Returns an array containing a detached signature.

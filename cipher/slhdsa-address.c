@@ -9,7 +9,7 @@
  */
 void _gcry_slhdsa_set_layer_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 layer)
 {
-  ((unsigned char *)addr)[ctx->offset_layer] = (unsigned char)layer;
+  ((byte *)addr)[ctx->offset_layer] = (byte)layer;
 }
 
 /*
@@ -17,7 +17,7 @@ void _gcry_slhdsa_set_layer_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u
  */
 void _gcry_slhdsa_set_tree_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u64 tree)
 {
-  _gcry_slhdsa_ull_to_bytes(&((unsigned char *)addr)[ctx->offset_tree], 8, tree);
+  _gcry_slhdsa_ull_to_bytes(&((byte *)addr)[ctx->offset_tree], 8, tree);
 }
 
 /*
@@ -28,7 +28,7 @@ void _gcry_slhdsa_set_tree_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u6
  */
 void _gcry_slhdsa_set_type(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 type)
 {
-  ((unsigned char *)addr)[ctx->offset_type] = (unsigned char)type;
+  ((byte *)addr)[ctx->offset_type] = (byte)type;
 }
 
 /*
@@ -52,9 +52,9 @@ void _gcry_slhdsa_set_keypair_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8],
     {
       /* We have > 256 OTS at the bottom of the Merkle tree; to specify */
       /* which one, we'd need to express it in two bytes */
-      ((unsigned char *)addr)[ctx->offset_kp_addr2] = (unsigned char)(keypair >> 8);
+      ((byte *)addr)[ctx->offset_kp_addr2] = (byte)(keypair >> 8);
     }
-  ((unsigned char *)addr)[ctx->offset_kp_addr1] = (unsigned char)keypair;
+  ((byte *)addr)[ctx->offset_kp_addr1] = (byte)keypair;
 }
 
 /*
@@ -66,9 +66,9 @@ void _gcry_slhdsa_copy_keypair_addr(const _gcry_slhdsa_param_t *ctx, u32 out[8],
   memcpy(out, in, ctx->offset_tree + 8);
   if (ctx->full_height / ctx->d > 8)
     {
-      ((unsigned char *)out)[ctx->offset_kp_addr2] = ((unsigned char *)in)[ctx->offset_kp_addr2];
+      ((byte *)out)[ctx->offset_kp_addr2] = ((byte *)in)[ctx->offset_kp_addr2];
     }
-  ((unsigned char *)out)[ctx->offset_kp_addr1] = ((unsigned char *)in)[ctx->offset_kp_addr1];
+  ((byte *)out)[ctx->offset_kp_addr1] = ((byte *)in)[ctx->offset_kp_addr1];
 }
 
 /*
@@ -77,7 +77,7 @@ void _gcry_slhdsa_copy_keypair_addr(const _gcry_slhdsa_param_t *ctx, u32 out[8],
  */
 void _gcry_slhdsa_set_chain_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 chain)
 {
-  ((unsigned char *)addr)[ctx->offset_chain_addr] = (unsigned char)chain;
+  ((byte *)addr)[ctx->offset_chain_addr] = (byte)chain;
 }
 
 /*
@@ -86,7 +86,7 @@ void _gcry_slhdsa_set_chain_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u
  */
 void _gcry_slhdsa_set_hash_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 hash)
 {
-  ((unsigned char *)addr)[ctx->offset_hash_addr] = (unsigned char)hash;
+  ((byte *)addr)[ctx->offset_hash_addr] = (byte)hash;
 }
 
 /* These functions are used for all hash tree addresses (including FORS). */
@@ -97,7 +97,7 @@ void _gcry_slhdsa_set_hash_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u3
  */
 void _gcry_slhdsa_set_tree_height(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 tree_height)
 {
-  ((unsigned char *)addr)[ctx->offset_tree_hgt] = (unsigned char)tree_height;
+  ((byte *)addr)[ctx->offset_tree_hgt] = (byte)tree_height;
 }
 
 /*
@@ -106,5 +106,5 @@ void _gcry_slhdsa_set_tree_height(const _gcry_slhdsa_param_t *ctx, u32 addr[8], 
  */
 void _gcry_slhdsa_set_tree_index(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 tree_index)
 {
-  _gcry_slhdsa_u32_to_bytes(&((unsigned char *)addr)[ctx->offset_tree_index], tree_index);
+  _gcry_slhdsa_u32_to_bytes(&((byte *)addr)[ctx->offset_tree_index], tree_index);
 }

@@ -24,13 +24,13 @@
  *
  * This works by using the standard Merkle tree building algorithm,
  */
-gcry_err_code_t _gcry_slhdsa_treehashx1(unsigned char *root,
-                                        unsigned char *auth_path,
+gcry_err_code_t _gcry_slhdsa_treehashx1(byte *root,
+                                        byte *auth_path,
                                         const _gcry_slhdsa_param_t *ctx,
                                         u32 leaf_idx,
                                         u32 idx_offset,
                                         u32 tree_height,
-                                        gcry_err_code_t (*gen_leaf)(unsigned char * /* Where to write the leaves */,
+                                        gcry_err_code_t (*gen_leaf)(byte * /* Where to write the leaves */,
                                                                     const _gcry_slhdsa_param_t * /* ctx */,
                                                                     u32 idx,
                                                                     void *info),
@@ -78,7 +78,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx1(unsigned char *root,
       /* generated left ones */
       for (h = 0;; h++, internal_idx >>= 1, internal_leaf >>= 1)
         {
-          unsigned char *left;
+          byte *left;
 
           /* Check if we hit the top of the tree */
           if (h == tree_height)
@@ -136,29 +136,29 @@ leave:
 
 
 #ifdef USE_AVX2
-gcry_err_code_t _gcry_slhdsa_treehashx8(unsigned char *root,
-                                        unsigned char *auth_path,
+gcry_err_code_t _gcry_slhdsa_treehashx8(byte *root,
+                                        byte *auth_path,
                                         const _gcry_slhdsa_param_t *ctx,
-                                        uint32_t leaf_idx,
-                                        uint32_t idx_offset,
-                                        uint32_t tree_height,
-                                        gcry_err_code_t (*gen_leafx8)(unsigned char * /* Where to write the leaves */,
+                                        u32 leaf_idx,
+                                        u32 idx_offset,
+                                        u32 tree_height,
+                                        gcry_err_code_t (*gen_leafx8)(byte * /* Where to write the leaves */,
                                                                       const _gcry_slhdsa_param_t *,
                                                                       u32 idx,
                                                                       void *info),
-                                        uint32_t tree_addrx8[8 * 8],
+                                        u32 tree_addrx8[8 * 8],
                                         void *info)
 {
   gcry_err_code_t ec = 0;
   /* This is where we keep the intermediate nodes */
-  byte *stackx8     = NULL;
-  byte *current     = NULL;
-  uint32_t left_adj = 0, prev_left_adj = 0; /* When we're doing the top 3 */
-                                            /* levels, the left-most part of the tree isn't at the beginning */
-                                            /* of current[].  These give the offset of the actual start */
+  byte *stackx8 = NULL;
+  byte *current = NULL;
+  u32 left_adj = 0, prev_left_adj = 0; /* When we're doing the top 3 */
+                                       /* levels, the left-most part of the tree isn't at the beginning */
+                                       /* of current[].  These give the offset of the actual start */
 
-  uint32_t idx;
-  uint32_t max_idx = (1 << (tree_height - 3)) - 1;
+  u32 idx;
+  u32 max_idx = (1 << (tree_height - 3)) - 1;
 
   stackx8 = xtrymalloc_secure(8 * tree_height * ctx->n);
   if (!stackx8)
@@ -169,10 +169,10 @@ gcry_err_code_t _gcry_slhdsa_treehashx8(unsigned char *root,
 
   for (idx = 0;; idx++)
     {
-      uint32_t internal_idx_offset = idx_offset;
-      uint32_t internal_idx        = idx;
-      uint32_t internal_leaf       = leaf_idx;
-      uint32_t h; /* The height we are in the Merkle tree */
+      u32 internal_idx_offset = idx_offset;
+      u32 internal_idx        = idx;
+      u32 internal_leaf       = leaf_idx;
+      u32 h; /* The height we are in the Merkle tree */
 
       xfree(current); /* free for previous loop iteration */
       current = xtrymalloc_secure(8 * ctx->n);
@@ -190,7 +190,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx8(unsigned char *root,
       for (h = 0;; h++, internal_idx >>= 1, internal_leaf >>= 1)
         {
           int j;
-          unsigned char *left = NULL;
+          byte *left = NULL;
           /* Special processing if we're at the top of the tree */
           if (h >= tree_height - 3)
             {
@@ -279,29 +279,29 @@ leave:
   return ec;
 }
 
-gcry_err_code_t _gcry_slhdsa_treehashx4(unsigned char *root,
-                           unsigned char *auth_path,
-                           const _gcry_slhdsa_param_t *ctx,
-                           uint32_t leaf_idx,
-                           uint32_t idx_offset,
-                           uint32_t tree_height,
-                           gcry_err_code_t (*gen_leafx4)(unsigned char * /* Where to write the leaves */,
-                                                         const _gcry_slhdsa_param_t *,
-                                                         u32 idx,
-                                                         void *info),
-                           uint32_t tree_addrx4[4 * 8],
-                           void *info)
+gcry_err_code_t _gcry_slhdsa_treehashx4(byte *root,
+                                        byte *auth_path,
+                                        const _gcry_slhdsa_param_t *ctx,
+                                        u32 leaf_idx,
+                                        u32 idx_offset,
+                                        u32 tree_height,
+                                        gcry_err_code_t (*gen_leafx4)(byte * /* Where to write the leaves */,
+                                                                      const _gcry_slhdsa_param_t *,
+                                                                      u32 idx,
+                                                                      void *info),
+                                        u32 tree_addrx4[4 * 8],
+                                        void *info)
 {
   gcry_err_code_t ec = 0;
   /* This is where we keep the intermediate nodes */
-  byte *stackx4     = NULL;
-  byte *current     = NULL;
-  uint32_t left_adj = 0, prev_left_adj = 0; /* When we're doing the top 3 */
-                                            /* levels, the left-most part of the tree isn't at the beginning */
-                                            /* of current[].  These give the offset of the actual start */
+  byte *stackx4 = NULL;
+  byte *current = NULL;
+  u32 left_adj = 0, prev_left_adj = 0; /* When we're doing the top 3 */
+                                       /* levels, the left-most part of the tree isn't at the beginning */
+                                       /* of current[].  These give the offset of the actual start */
 
-  uint32_t idx;
-  uint32_t max_idx = (1 << (tree_height - 2)) - 1;
+  u32 idx;
+  u32 max_idx = (1 << (tree_height - 2)) - 1;
 
   stackx4 = xtrymalloc_secure(4 * tree_height * ctx->n);
   if (!stackx4)
@@ -316,10 +316,10 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(unsigned char *root,
 
       /* Now combine the freshly generated right node with previously */
       /* generated left ones */
-      uint32_t internal_idx_offset = idx_offset;
-      uint32_t internal_idx        = idx;
-      uint32_t internal_leaf       = leaf_idx;
-      uint32_t h; /* The height we are in the Merkle tree */
+      u32 internal_idx_offset = idx_offset;
+      u32 internal_idx        = idx;
+      u32 internal_leaf       = leaf_idx;
+      u32 h; /* The height we are in the Merkle tree */
 
       xfree(current); /* free for previous loop iteration */
       current = xtrymalloc_secure(4 * ctx->n);
@@ -331,7 +331,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(unsigned char *root,
       gen_leafx4(current, ctx, 4 * idx + idx_offset, info);
       for (h = 0;; h++, internal_idx >>= 1, internal_leaf >>= 1)
         {
-          unsigned char *left = NULL;
+          byte *left = NULL;
           int j;
 
           /* Special processing if we're at the top of the tree */

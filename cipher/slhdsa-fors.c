@@ -13,22 +13,22 @@
 
 #include "g10lib.h"
 
-static gcry_err_code_t fors_gen_sk(unsigned char *sk, const _gcry_slhdsa_param_t *ctx, u32 fors_leaf_addr[8])
+static gcry_err_code_t fors_gen_sk(byte *sk, const _gcry_slhdsa_param_t *ctx, u32 fors_leaf_addr[8])
 {
   return _gcry_slhdsa_prf_addr(sk, ctx, fors_leaf_addr);
 }
 
 #ifdef USE_AVX2
-static gcry_err_code_t fors_gen_sk_avx2(unsigned char *sk0,
-                                        unsigned char *sk1,
-                                        unsigned char *sk2,
-                                        unsigned char *sk3,
-                                        unsigned char *sk4,
-                                        unsigned char *sk5,
-                                        unsigned char *sk6,
-                                        unsigned char *sk7,
+static gcry_err_code_t fors_gen_sk_avx2(byte *sk0,
+                                        byte *sk1,
+                                        byte *sk2,
+                                        byte *sk3,
+                                        byte *sk4,
+                                        byte *sk5,
+                                        byte *sk6,
+                                        byte *sk7,
                                         const _gcry_slhdsa_param_t *ctx,
-                                        uint32_t *fors_leaf_addr)
+                                        u32 *fors_leaf_addr)
 {
   if (ctx->is_sha2)
     {
@@ -42,8 +42,8 @@ static gcry_err_code_t fors_gen_sk_avx2(unsigned char *sk0,
 }
 #endif
 
-static gcry_err_code_t fors_sk_to_leaf(unsigned char *leaf,
-                                       const unsigned char *sk,
+static gcry_err_code_t fors_sk_to_leaf(byte *leaf,
+                                       const byte *sk,
                                        const _gcry_slhdsa_param_t *ctx,
                                        u32 fors_leaf_addr[8])
 {
@@ -51,24 +51,24 @@ static gcry_err_code_t fors_sk_to_leaf(unsigned char *leaf,
 }
 
 #ifdef USE_AVX2
-static gcry_err_code_t fors_sk_to_leafx_avx2(unsigned char *leaf0,
-                                             unsigned char *leaf1,
-                                             unsigned char *leaf2,
-                                             unsigned char *leaf3,
-                                             unsigned char *leaf4,
-                                             unsigned char *leaf5,
-                                             unsigned char *leaf6,
-                                             unsigned char *leaf7,
-                                             const unsigned char *sk0,
-                                             const unsigned char *sk1,
-                                             const unsigned char *sk2,
-                                             const unsigned char *sk3,
-                                             const unsigned char *sk4,
-                                             const unsigned char *sk5,
-                                             const unsigned char *sk6,
-                                             const unsigned char *sk7,
+static gcry_err_code_t fors_sk_to_leafx_avx2(byte *leaf0,
+                                             byte *leaf1,
+                                             byte *leaf2,
+                                             byte *leaf3,
+                                             byte *leaf4,
+                                             byte *leaf5,
+                                             byte *leaf6,
+                                             byte *leaf7,
+                                             const byte *sk0,
+                                             const byte *sk1,
+                                             const byte *sk2,
+                                             const byte *sk3,
+                                             const byte *sk4,
+                                             const byte *sk5,
+                                             const byte *sk6,
+                                             const byte *sk7,
                                              const _gcry_slhdsa_param_t *ctx,
-                                             uint32_t *fors_leaf_addr)
+                                             u32 *fors_leaf_addr)
 {
   if (ctx->is_sha2)
     {
@@ -108,7 +108,7 @@ struct fors_gen_leaf_info
 #endif
 };
 
-static gcry_err_code_t fors_gen_leafx1(unsigned char *leaf, const _gcry_slhdsa_param_t *ctx, u32 addr_idx, void *info)
+static gcry_err_code_t fors_gen_leafx1(byte *leaf, const _gcry_slhdsa_param_t *ctx, u32 addr_idx, void *info)
 {
   gcry_err_code_t ec                   = 0;
   struct fors_gen_leaf_info *fors_info = info;
@@ -129,10 +129,7 @@ leave:
 }
 
 #ifdef USE_AVX2
-static gcry_err_code_t fors_gen_leaf_avx2_sha2(unsigned char *leaf,
-                                               const _gcry_slhdsa_param_t *ctx,
-                                               u32 addr_idx,
-                                               void *info)
+static gcry_err_code_t fors_gen_leaf_avx2_sha2(byte *leaf, const _gcry_slhdsa_param_t *ctx, u32 addr_idx, void *info)
 {
   gcry_err_code_t ec                   = 0;
   struct fors_gen_leaf_info *fors_info = info;
@@ -188,14 +185,11 @@ leave:
   return ec;
 }
 
-static gcry_err_code_t fors_gen_leaf_avx2_shake(unsigned char *leaf,
-                                                const _gcry_slhdsa_param_t *ctx,
-                                                uint32_t addr_idx,
-                                                void *info)
+static gcry_err_code_t fors_gen_leaf_avx2_shake(byte *leaf, const _gcry_slhdsa_param_t *ctx, u32 addr_idx, void *info)
 {
   gcry_err_code_t ec                   = 0;
   struct fors_gen_leaf_info *fors_info = info;
-  uint32_t *fors_leaf_addrx4           = fors_info->leaf_addrx;
+  u32 *fors_leaf_addrx4                = fors_info->leaf_addrx;
   unsigned int j;
 
   /* Only set the parts that the caller doesn't set */
@@ -253,7 +247,7 @@ leave:
  * Assumes m contains at least ctx->FORS_height * ctx->FORS_trees bits.
  * Assumes indices has space for ctx->FORS_trees integers.
  */
-static void message_to_indices(const _gcry_slhdsa_param_t *ctx, u32 *indices, const unsigned char *m)
+static void message_to_indices(const _gcry_slhdsa_param_t *ctx, u32 *indices, const byte *m)
 {
   unsigned int i, j;
   unsigned int offset = 0;
@@ -273,15 +267,12 @@ static void message_to_indices(const _gcry_slhdsa_param_t *ctx, u32 *indices, co
  * Signs a message m, deriving the secret key from sk_seed and the FTS address.
  * Assumes m contains at least ctx->FORS_height * ctx->FORS_trees bits.
  */
-gcry_err_code_t _gcry_slhdsa_fors_sign(unsigned char *sig,
-                                       unsigned char *pk,
-                                       const unsigned char *m,
-                                       const _gcry_slhdsa_param_t *ctx,
-                                       const u32 fors_addr[8])
+gcry_err_code_t _gcry_slhdsa_fors_sign(
+    byte *sig, byte *pk, const byte *m, const _gcry_slhdsa_param_t *ctx, const u32 fors_addr[8])
 {
-  gcry_err_code_t ec   = 0;
-  u32 *indices         = NULL;
-  unsigned char *roots = NULL;
+  gcry_err_code_t ec = 0;
+  u32 *indices       = NULL;
+  byte *roots        = NULL;
 #ifdef USE_AVX2
   u32 fors_tree_addr[8 * 8] = {0};
 #else
@@ -407,16 +398,13 @@ leave:
  * typical use-case when used as an FTS below an OTS in a hypertree.
  * Assumes m contains at least ctx->FORS_height * ctx->FORS_trees bits.
  */
-gcry_err_code_t _gcry_slhdsa_fors_pk_from_sig(unsigned char *pk,
-                                              const unsigned char *sig,
-                                              const unsigned char *m,
-                                              const _gcry_slhdsa_param_t *ctx,
-                                              const u32 fors_addr[8])
+gcry_err_code_t _gcry_slhdsa_fors_pk_from_sig(
+    byte *pk, const byte *sig, const byte *m, const _gcry_slhdsa_param_t *ctx, const u32 fors_addr[8])
 {
   gcry_err_code_t ec    = 0;
   u32 *indices          = NULL;
-  unsigned char *roots  = NULL;
-  unsigned char *leaf   = NULL;
+  byte *roots           = NULL;
+  byte *leaf            = NULL;
   u32 fors_tree_addr[8] = {0};
   u32 fors_pk_addr[8]   = {0};
   u32 idx_offset;
