@@ -188,7 +188,7 @@ gcry_err_code_t thashx8_512(unsigned char *out0,
   gcry_err_code_t ec = 0;
   byte *bufx8        = NULL;
 
-  unsigned char outbuf[4 * SLHDSA_SHA512_OUTPUT_BYTES]; // TODO
+  unsigned char outbuf[4 * SLHDSA_SHA512_OUTPUT_BYTES];
   unsigned int i;
 
   bufx8 = xtrymalloc_secure(8 * (ctx->addr_bytes + inblocks * ctx->n));
@@ -302,6 +302,11 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_shake(unsigned char *out0,
                                               uint32_t addrx4[4 * 8])
 {
   gcry_err_code_t ec = 0;
+  byte *buf0         = NULL;
+  byte *buf1         = NULL;
+  byte *buf2         = NULL;
+  byte *buf3         = NULL;
+
   if (inblocks == 1 || inblocks == 2)
     {
       /* As we write and read only a few quadwords, it is more efficient to
@@ -354,10 +359,30 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_shake(unsigned char *out0,
     }
   else
     {
-      byte buf0[ctx->n + ctx->addr_bytes + inblocks * ctx->n]; // TODO
-      byte buf1[ctx->n + ctx->addr_bytes + inblocks * ctx->n]; // TODO
-      byte buf2[ctx->n + ctx->addr_bytes + inblocks * ctx->n]; // TODO
-      byte buf3[ctx->n + ctx->addr_bytes + inblocks * ctx->n]; // TODO
+      buf0 = xtrymalloc_secure(ctx->n + ctx->addr_bytes + inblocks * ctx->n);
+      if (ec)
+        {
+          ec = gpg_err_code_from_syserror();
+          goto leave;
+        }
+      buf1 = xtrymalloc_secure(ctx->n + ctx->addr_bytes + inblocks * ctx->n);
+      if (ec)
+        {
+          ec = gpg_err_code_from_syserror();
+          goto leave;
+        }
+      buf2 = xtrymalloc_secure(ctx->n + ctx->addr_bytes + inblocks * ctx->n);
+      if (ec)
+        {
+          ec = gpg_err_code_from_syserror();
+          goto leave;
+        }
+      buf3 = xtrymalloc_secure(ctx->n + ctx->addr_bytes + inblocks * ctx->n);
+      if (ec)
+        {
+          ec = gpg_err_code_from_syserror();
+          goto leave;
+        }
 
       memcpy(buf0, ctx->pub_seed, ctx->n);
       memcpy(buf1, ctx->pub_seed, ctx->n);
@@ -376,6 +401,10 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_shake(unsigned char *out0,
     }
 
 leave:
+  xfree(buf0);
+  xfree(buf1);
+  xfree(buf2);
+  xfree(buf3);
   return ec;
 }
 

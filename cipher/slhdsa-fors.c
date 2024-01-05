@@ -37,11 +37,11 @@ static void fors_gen_sk_avx2(unsigned char *sk0,
 {
   if (ctx->is_sha2)
     {
-      _gcry_slhdsa_prf_avx2_sha2(sk0, sk1, sk2, sk3, sk4, sk5, sk6, sk7, ctx, fors_leaf_addr);
+      return _gcry_slhdsa_prf_avx2_sha2(sk0, sk1, sk2, sk3, sk4, sk5, sk6, sk7, ctx, fors_leaf_addr);
     }
   else
     {
-      _gcry_slhdsa_prf_avx2_shake(sk0, sk1, sk2, sk3, ctx, fors_leaf_addr);
+      return _gcry_slhdsa_prf_avx2_shake(sk0, sk1, sk2, sk3, ctx, fors_leaf_addr);
     }
 }
 #endif

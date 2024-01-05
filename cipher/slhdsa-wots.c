@@ -188,17 +188,8 @@ static gcry_err_code_t gen_chains(unsigned char *out,
             }
           else
             {
-              _gcry_slhdsa_thash_avx2_shake(bufs[0],
-                                            bufs[1],
-                                            bufs[2],
-                                            bufs[3],
-                                            bufs[0],
-                                            bufs[1],
-                                            bufs[2],
-                                            bufs[3],
-                                            1,
-                                            ctx,
-                                            addrs);
+              _gcry_slhdsa_thash_avx2_shake(
+                  bufs[0], bufs[1], bufs[2], bufs[3], bufs[0], bufs[1], bufs[2], bufs[3], 1, ctx, addrs);
             }
         }
     }
@@ -371,7 +362,10 @@ leave:
  * It also generates the WOTS signature if leaf_info indicates
  * that we're signing with one of these WOTS keys
  */
-gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8(unsigned char *dest, const _gcry_slhdsa_param_t *ctx, uint32_t leaf_idx, void *v_info)
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8(unsigned char *dest,
+                                             const _gcry_slhdsa_param_t *ctx,
+                                             uint32_t leaf_idx,
+                                             void *v_info)
 {
   gcry_err_code_t ec                       = 0;
   struct _gcry_slhdsa_leaf_info_x8_t *info = v_info;
@@ -425,16 +419,18 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8(unsigned char *dest, const _gcry_sl
           _gcry_slhdsa_set_type(ctx, leaf_addr + j * 8, SLHDSA_ADDR_TYPE_WOTSPRF);
         }
 
-      _gcry_slhdsa_prf_avx2_sha2(buffer + 0 * wots_offset,
-                                 buffer + 1 * wots_offset,
-                                 buffer + 2 * wots_offset,
-                                 buffer + 3 * wots_offset,
-                                 buffer + 4 * wots_offset,
-                                 buffer + 5 * wots_offset,
-                                 buffer + 6 * wots_offset,
-                                 buffer + 7 * wots_offset,
-                                 ctx,
-                                 leaf_addr);
+      ec = _gcry_slhdsa_prf_avx2_sha2(buffer + 0 * wots_offset,
+                                      buffer + 1 * wots_offset,
+                                      buffer + 2 * wots_offset,
+                                      buffer + 3 * wots_offset,
+                                      buffer + 4 * wots_offset,
+                                      buffer + 5 * wots_offset,
+                                      buffer + 6 * wots_offset,
+                                      buffer + 7 * wots_offset,
+                                      ctx,
+                                      leaf_addr);
+      if (ec)
+        goto leave;
 
       for (j = 0; j < 8; j++)
         {
@@ -514,7 +510,10 @@ leave:
  * It also generates the WOTS signature if leaf_info indicates
  * that we're signing with one of these WOTS keys
  */
-gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(unsigned char *dest, const _gcry_slhdsa_param_t *ctx, uint32_t leaf_idx, void *v_info)
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(unsigned char *dest,
+                                             const _gcry_slhdsa_param_t *ctx,
+                                             uint32_t leaf_idx,
+                                             void *v_info)
 {
   gcry_err_code_t ec                       = 0;
   struct _gcry_slhdsa_leaf_info_x4_t *info = v_info;

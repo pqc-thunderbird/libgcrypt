@@ -5,7 +5,6 @@
 
 #include "types.h"
 #include "slhdsa-context.h"
-#include "avx2-immintrin-support.h"
 
 #include "g10lib.h"
 
@@ -32,17 +31,5 @@ gcry_err_code_t _gcry_slhdsa_compute_root(unsigned char *root,
                                           u32 tree_height,
                                           const _gcry_slhdsa_param_t *ctx,
                                           u32 addr[8]);
-
-
-#ifdef USE_AVX2
-typedef struct
-{
-  byte *buf;
-  byte *alloc_addr;
-} gcry_slhdsa_buf_al;
-
-gcry_err_code_t _gcry_slhdsa_buf_al_create(gcry_slhdsa_buf_al *buf, size_t size);
-void _gcry_slhdsa_buf_al_destroy(gcry_slhdsa_buf_al *buf);
-#endif
 
 #endif

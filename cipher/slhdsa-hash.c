@@ -114,30 +114,34 @@ leave:
  * 8-way parallel version of _gcry_slhdsa_prf_addr; takes 8x as much input and output
  */
 gcry_err_code_t _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
-                                  unsigned char *out1,
-                                  unsigned char *out2,
-                                  unsigned char *out3,
-                                  unsigned char *out4,
-                                  unsigned char *out5,
-                                  unsigned char *out6,
-                                  unsigned char *out7,
-                                  const _gcry_slhdsa_param_t *ctx,
-                                  const uint32_t addrx8[8 * 8])
+                                           unsigned char *out1,
+                                           unsigned char *out2,
+                                           unsigned char *out3,
+                                           unsigned char *out4,
+                                           unsigned char *out5,
+                                           unsigned char *out6,
+                                           unsigned char *out7,
+                                           const _gcry_slhdsa_param_t *ctx,
+                                           const uint32_t addrx8[8 * 8])
 {
   gcry_err_code_t ec = 0;
-  gcry_slhdsa_buf_al bufx8 = {};
+  byte *bufx8        = NULL;
 
   unsigned char outbufx8[8 * SLHDSA_SHA256_OUTPUT_BYTES];
   unsigned int j;
 
-  ec = _gcry_slhdsa_buf_al_create(&bufx8, 8 * (ctx->n + ctx->addr_bytes));
-  if (ec)
-    goto leave;
+  bufx8 = xtrymalloc_secure(8 * (ctx->n + ctx->addr_bytes));
+  if (!bufx8)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+
 
   for (j = 0; j < 8; j++)
     {
-      memcpy(bufx8.buf + j * (ctx->n + ctx->addr_bytes), addrx8 + j * 8, ctx->addr_bytes);
-      memcpy(bufx8.buf + j * (ctx->n + ctx->addr_bytes) + ctx->addr_bytes, ctx->sk_seed, ctx->n);
+      memcpy(bufx8 + j * (ctx->n + ctx->addr_bytes), addrx8 + j * 8, ctx->addr_bytes);
+      memcpy(bufx8 + j * (ctx->n + ctx->addr_bytes) + ctx->addr_bytes, ctx->sk_seed, ctx->n);
     }
 
   sha256x8_seeded(
@@ -156,14 +160,14 @@ gcry_err_code_t _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
       512,
 
       /* in */
-      bufx8.buf + 0 * (ctx->addr_bytes + ctx->n),
-      bufx8.buf + 1 * (ctx->addr_bytes + ctx->n),
-      bufx8.buf + 2 * (ctx->addr_bytes + ctx->n),
-      bufx8.buf + 3 * (ctx->addr_bytes + ctx->n),
-      bufx8.buf + 4 * (ctx->addr_bytes + ctx->n),
-      bufx8.buf + 5 * (ctx->addr_bytes + ctx->n),
-      bufx8.buf + 6 * (ctx->addr_bytes + ctx->n),
-      bufx8.buf + 7 * (ctx->addr_bytes + ctx->n),
+      bufx8 + 0 * (ctx->addr_bytes + ctx->n),
+      bufx8 + 1 * (ctx->addr_bytes + ctx->n),
+      bufx8 + 2 * (ctx->addr_bytes + ctx->n),
+      bufx8 + 3 * (ctx->addr_bytes + ctx->n),
+      bufx8 + 4 * (ctx->addr_bytes + ctx->n),
+      bufx8 + 5 * (ctx->addr_bytes + ctx->n),
+      bufx8 + 6 * (ctx->addr_bytes + ctx->n),
+      bufx8 + 7 * (ctx->addr_bytes + ctx->n),
       ctx->addr_bytes + ctx->n /* len */
   );
 
@@ -177,59 +181,68 @@ gcry_err_code_t _gcry_slhdsa_prf_avx2_sha2(unsigned char *out0,
   memcpy(out7, outbufx8 + 7 * SLHDSA_SHA256_OUTPUT_BYTES, ctx->n);
 
 leave:
-  _gcry_slhdsa_buf_al_destroy(&bufx8);
+  xfree(bufx8);
   return ec;
 }
 
 gcry_err_code_t _gcry_slhdsa_prf_avx2_shake(unsigned char *out0,
-                unsigned char *out1,
-                unsigned char *out2,
-                unsigned char *out3,
-                const _gcry_slhdsa_param_t *ctx,
-                const uint32_t addrx4[4*8]) {
-    /* As we write and read only a few quadwords, it is more efficient to
-     * build and extract from the fourway SHAKE256 state by hand. */
-    __m256i state[25];
+                                            unsigned char *out1,
+                                            unsigned char *out2,
+                                            unsigned char *out3,
+                                            const _gcry_slhdsa_param_t *ctx,
+                                            const uint32_t addrx4[4 * 8])
+{
+  /* As we write and read only a few quadwords, it is more efficient to
+   * build and extract from the fourway SHAKE256 state by hand. */
+  gcry_err_code_t ec = 0;
+  __m256i state[25];
 
-    for (int i = 0; i < ctx->n/8; i++) {
-        state[i] = _mm256_set1_epi64x(((int64_t*)ctx->pub_seed)[i]);
+  for (int i = 0; i < ctx->n / 8; i++)
+    {
+      state[i] = _mm256_set1_epi64x(((int64_t *)ctx->pub_seed)[i]);
     }
-    for (int i = 0; i < 4; i++) {
-        state[ctx->n/8+i] = _mm256_set_epi32(
-            addrx4[3*8+1+2*i],
-            addrx4[3*8+2*i],
-            addrx4[2*8+1+2*i],
-            addrx4[2*8+2*i],
-            addrx4[8+1+2*i],
-            addrx4[8+2*i],
-            addrx4[1+2*i],
-            addrx4[2*i]
-        );
+  for (int i = 0; i < 4; i++)
+    {
+      state[ctx->n / 8 + i] = _mm256_set_epi32(addrx4[3 * 8 + 1 + 2 * i],
+                                               addrx4[3 * 8 + 2 * i],
+                                               addrx4[2 * 8 + 1 + 2 * i],
+                                               addrx4[2 * 8 + 2 * i],
+                                               addrx4[8 + 1 + 2 * i],
+                                               addrx4[8 + 2 * i],
+                                               addrx4[1 + 2 * i],
+                                               addrx4[2 * i]);
     }
-    for (int i = 0; i < ctx->n/8; i++) {
-        state[ctx->n/8+i+4] = _mm256_set1_epi64x(((int64_t*)ctx->sk_seed)[i]);
-    }
-
-    /* SHAKE domain separator and padding. */
-    state[ctx->n/4+4] = _mm256_set1_epi64x(0x1f);
-    for (int i = ctx->n/4+5; i < 16; i++) {
-        state[i] = _mm256_set1_epi64x(0);
-    }
-    // shift unsigned and then cast to avoid UB
-    state[16] = _mm256_set1_epi64x((long long)(0x80ULL << 56));
-
-    for (int i = 17; i < 25; i++) {
-        state[i] = _mm256_set1_epi64x(0);
+  for (int i = 0; i < ctx->n / 8; i++)
+    {
+      state[ctx->n / 8 + i + 4] = _mm256_set1_epi64x(((int64_t *)ctx->sk_seed)[i]);
     }
 
-    KeccakP1600times4_PermuteAll_24rounds(&state[0]);
-
-    for (int i = 0; i < ctx->n/8; i++) {
-        ((int64_t*)out0)[i] = _mm256_extract_epi64(state[i], 0);
-        ((int64_t*)out1)[i] = _mm256_extract_epi64(state[i], 1);
-        ((int64_t*)out2)[i] = _mm256_extract_epi64(state[i], 2);
-        ((int64_t*)out3)[i] = _mm256_extract_epi64(state[i], 3);
+  /* SHAKE domain separator and padding. */
+  state[ctx->n / 4 + 4] = _mm256_set1_epi64x(0x1f);
+  for (int i = ctx->n / 4 + 5; i < 16; i++)
+    {
+      state[i] = _mm256_set1_epi64x(0);
     }
+  // shift unsigned and then cast to avoid UB
+  state[16] = _mm256_set1_epi64x((long long)(0x80ULL << 56));
+
+  for (int i = 17; i < 25; i++)
+    {
+      state[i] = _mm256_set1_epi64x(0);
+    }
+
+  KeccakP1600times4_PermuteAll_24rounds(&state[0]);
+
+  for (int i = 0; i < ctx->n / 8; i++)
+    {
+      ((int64_t *)out0)[i] = _mm256_extract_epi64(state[i], 0);
+      ((int64_t *)out1)[i] = _mm256_extract_epi64(state[i], 1);
+      ((int64_t *)out2)[i] = _mm256_extract_epi64(state[i], 2);
+      ((int64_t *)out3)[i] = _mm256_extract_epi64(state[i], 3);
+    }
+
+leave:
+  return ec;
 }
 
 #endif

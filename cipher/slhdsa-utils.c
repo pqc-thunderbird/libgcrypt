@@ -122,31 +122,3 @@ leave:
   xfree(buffer);
   return ec;
 }
-
-#ifdef USE_AVX2
-gcry_err_code_t _gcry_slhdsa_buf_al_create(gcry_slhdsa_buf_al *buf, size_t size)
-{
-  const size_t alloc_size = size + /*align*/ 128;
-  buf->alloc_addr         = xtrymalloc_secure(alloc_size);
-
-  if (!buf->alloc_addr)
-    {
-      buf->buf = NULL;
-      return gpg_error_from_syserror();
-    }
-  buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (128 - ((uintptr_t)buf->alloc_addr % 128))); // aligned memory
-
-  memset(buf->alloc_addr, 0, alloc_size);
-  return 0;
-}
-
-void _gcry_slhdsa_buf_al_destroy(gcry_slhdsa_buf_al *buf)
-{
-  if (buf->alloc_addr)
-    {
-      xfree(buf->alloc_addr);
-    }
-  buf->buf        = NULL;
-  buf->alloc_addr = NULL;
-}
-#endif
