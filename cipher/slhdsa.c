@@ -7,7 +7,7 @@
 #include "pubkey-internal.h"
 #include "slhdsa-context.h"
 #include "avx2-immintrin-support.h"
-#include "slhdsa-api.h"
+#include "slhdsa-sign.h"
 
 static unsigned int
 /* TODOMTG nbits not meaningful for slhdsa */

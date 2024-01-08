@@ -36,8 +36,7 @@ static gcry_err_code_t fors_gen_sk_avx2(byte *sk0,
     }
   else
     {
-      _gcry_slhdsa_prf_avx2_shake(sk0, sk1, sk2, sk3, ctx, fors_leaf_addr);
-      return 0;
+      return _gcry_slhdsa_prf_avx2_shake(sk0, sk1, sk2, sk3, ctx, fors_leaf_addr);
     }
 }
 #endif
@@ -153,7 +152,6 @@ static gcry_err_code_t fors_gen_leaf_avx2_sha2(byte *leaf, const _gcry_slhdsa_pa
                         leaf + 7 * ctx->n,
                         ctx,
                         fors_leaf_addrx8);
-
   if (ec)
     goto leave;
 
@@ -162,7 +160,7 @@ static gcry_err_code_t fors_gen_leaf_avx2_sha2(byte *leaf, const _gcry_slhdsa_pa
       _gcry_slhdsa_set_type(ctx, fors_leaf_addrx8 + j * 8, SLHDSA_ADDR_TYPE_FORSTREE);
     }
 
-  fors_sk_to_leafx_avx2(leaf + 0 * ctx->n,
+  ec = fors_sk_to_leafx_avx2(leaf + 0 * ctx->n,
                         leaf + 1 * ctx->n,
                         leaf + 2 * ctx->n,
                         leaf + 3 * ctx->n,
@@ -445,7 +443,9 @@ gcry_err_code_t _gcry_slhdsa_fors_pk_from_sig(
       _gcry_slhdsa_set_tree_index(ctx, fors_tree_addr, indices[i] + idx_offset);
 
       /* Derive the leaf from the included secret key part. */
-      fors_sk_to_leaf(leaf, sig, ctx, fors_tree_addr);
+      ec = fors_sk_to_leaf(leaf, sig, ctx, fors_tree_addr);
+      if (ec)
+        goto leave;
       sig += ctx->n;
 
       /* Derive the corresponding root node of this tree. */

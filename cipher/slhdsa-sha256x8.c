@@ -101,7 +101,7 @@ typedef struct SHA256state
   unsigned long long msglen;
 } sha256ctx;
 
-// Transpose 8 vectors containing 32-bit values
+/* Transpose 8 vectors containing 32-bit values */
 static void transpose(u256 s[8])
 {
   u256 tmp0[8];
@@ -144,7 +144,7 @@ static void sha256_transform8x(sha256ctx *ctx,
 {
   u256 s[8], w[64], T0, T1;
 
-  // Load words and transform data correctly
+  /* Load words and transform data correctly */
   w[0]     = BYTESWAP(LOAD(data0));
   w[0 + 8] = BYTESWAP(LOAD(data0 + 32));
   w[1]     = BYTESWAP(LOAD(data1));
@@ -165,7 +165,7 @@ static void sha256_transform8x(sha256ctx *ctx,
   transpose(w);
   transpose(w + 8);
 
-  // Initial State
+  /* Initial State */
   s[0] = ctx->s[0];
   s[1] = ctx->s[1];
   s[2] = ctx->s[2];
@@ -288,7 +288,7 @@ static void sha256_transform8x(sha256ctx *ctx,
   w[63] = ADD4_32(WSIGMA1_AVX(w[61]), w[47], w[56], WSIGMA0_AVX(w[48]));
   SHA256ROUND_AVX(s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[0], 63, w[63]);
 
-  // Feed Forward
+  /* Feed Forward */
   ctx->s[0] = ADD32(s[0], ctx->s[0]);
   ctx->s[1] = ADD32(s[1], ctx->s[1]);
   ctx->s[2] = ADD32(s[2], ctx->s[2]);
@@ -304,7 +304,7 @@ static void sha256_final8x(
 {
   unsigned int i, curlen;
 
-  // Padding
+  /* Padding */
   if (ctx->datalen < 56)
     {
       for (i = 0; i < 8; ++i)
@@ -340,7 +340,7 @@ static void sha256_final8x(
       memset(ctx->msgblocks, 0, 8 * 64);
     }
 
-  // Add length of the message to each block
+  /* Add length of the message to each block */
   ctx->msglen += ctx->datalen * 8;
   for (i = 0; i < 8; i++)
     {
@@ -363,10 +363,10 @@ static void sha256_final8x(
                      &ctx->msgblocks[64 * 6],
                      &ctx->msgblocks[64 * 7]);
 
-  // Compute final hash output
+  /* Compute final hash output */
   transpose(ctx->s);
 
-  // Store Hash value
+  /* Store Hash value */
   STORE(out0, BYTESWAP(ctx->s[0]));
   STORE(out1, BYTESWAP(ctx->s[1]));
   STORE(out2, BYTESWAP(ctx->s[2]));
@@ -382,7 +382,7 @@ static u32 load_bigendian_32(const byte *x)
   return (u32)(x[3]) | (((u32)(x[2])) << 8) | (((u32)(x[1])) << 16) | (((u32)(x[0])) << 24);
 }
 
-// Performs sha256x8 on an initialized (and perhaps seeded) state.
+/* Performs sha256x8 on an initialized (and perhaps seeded) state. */
 static void _sha256x8(sha256ctx *ctx,
                       byte *out0,
                       byte *out1,

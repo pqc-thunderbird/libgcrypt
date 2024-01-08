@@ -4,7 +4,7 @@
 #include <string.h>
 #include "types.h"
 
-#include "slhdsa-api.h"
+#include "slhdsa-sign.h"
 #include "slhdsa-wots.h"
 #include "slhdsa-fors.h"
 #include "slhdsa-hash.h"
@@ -143,7 +143,9 @@ gcry_err_code_t _gcry_slhdsa_signature(
   _gcry_slhdsa_set_keypair_addr(ctx, wots_addr, idx_leaf);
 
   /* Sign the message hash using FORS. */
-  _gcry_slhdsa_fors_sign(sig, root, mhash, ctx, wots_addr);
+  ec = _gcry_slhdsa_fors_sign(sig, root, mhash, ctx, wots_addr);
+  if (ec)
+    goto leave;
   sig += ctx->FORS_bytes;
 
   for (i = 0; i < ctx->d; i++)
@@ -263,7 +265,9 @@ gcry_err_code_t _gcry_slhdsa_verify(
   _gcry_slhdsa_set_tree_addr(ctx, wots_addr, tree);
   _gcry_slhdsa_set_keypair_addr(ctx, wots_addr, idx_leaf);
 
-  _gcry_slhdsa_fors_pk_from_sig(root, sig, mhash, ctx, wots_addr);
+  ec = _gcry_slhdsa_fors_pk_from_sig(root, sig, mhash, ctx, wots_addr);
+  if (ec)
+    goto leave;
   sig += ctx->FORS_bytes;
 
   /* For each subtree.. */

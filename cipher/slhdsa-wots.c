@@ -139,7 +139,6 @@ static gcry_err_code_t gen_chains(
   gcry_err_code_t ec = 0;
   u32 i, j, k, idx, watching;
   int done;
-  // byte empty[ctx->n];
   byte *bufs[8];
   byte *empty = NULL;
   u32 addrs[8 * 8];
@@ -241,30 +240,34 @@ static gcry_err_code_t gen_chains(
 
           if (ctx->is_sha2)
             {
-              _gcry_slhdsa_thash_avx2_sha2(bufs[0],
-                                           bufs[1],
-                                           bufs[2],
-                                           bufs[3],
-                                           bufs[4],
-                                           bufs[5],
-                                           bufs[6],
-                                           bufs[7],
-                                           bufs[0],
-                                           bufs[1],
-                                           bufs[2],
-                                           bufs[3],
-                                           bufs[4],
-                                           bufs[5],
-                                           bufs[6],
-                                           bufs[7],
-                                           1,
-                                           ctx,
-                                           addrs);
+              ec = _gcry_slhdsa_thash_avx2_sha2(bufs[0],
+                                                bufs[1],
+                                                bufs[2],
+                                                bufs[3],
+                                                bufs[4],
+                                                bufs[5],
+                                                bufs[6],
+                                                bufs[7],
+                                                bufs[0],
+                                                bufs[1],
+                                                bufs[2],
+                                                bufs[3],
+                                                bufs[4],
+                                                bufs[5],
+                                                bufs[6],
+                                                bufs[7],
+                                                1,
+                                                ctx,
+                                                addrs);
+              if (ec)
+                goto leave;
             }
           else
             {
-              _gcry_slhdsa_thash_avx2_shake(
+              ec = _gcry_slhdsa_thash_avx2_shake(
                   bufs[0], bufs[1], bufs[2], bufs[3], bufs[0], bufs[1], bufs[2], bufs[3], 1, ctx, addrs);
+              if (ec)
+                goto leave;
             }
         }
     }
@@ -314,7 +317,7 @@ static gcry_err_code_t wots_checksum(const _gcry_slhdsa_param_t *ctx,
   byte *csum_bytes      = NULL;
   unsigned int i;
 
-  csum_bytes = xtrymalloc_secure(csum_bytes_len);
+  csum_bytes = xtrymalloc(csum_bytes_len);
   if (!csum_bytes)
     {
       ec = gpg_err_code_from_syserror();
@@ -349,6 +352,8 @@ gcry_err_code_t _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx, unsi
  * Takes a WOTS signature and an n-byte message, computes a WOTS public key.
  *
  * Writes the computed public key to 'pk'.
+ *
+ * Note: no secure memory needed since this is part of the public operation
  */
 gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig(
     byte *pk, const byte *sig, const byte *msg, const _gcry_slhdsa_param_t *ctx, u32 addr[8])
@@ -357,7 +362,7 @@ gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig(
   unsigned int *lengths = NULL;
   u32 i;
 
-  lengths = xtrymalloc_secure(sizeof(unsigned int) * ctx->WOTS_len);
+  lengths = xtrymalloc(sizeof(unsigned int) * ctx->WOTS_len);
   if (!lengths)
     {
       ec = gpg_err_code_from_syserror();
@@ -386,6 +391,8 @@ leave:
  * Takes a WOTS signature and an n-byte message, computes a WOTS public key.
  *
  * Writes the computed public key to 'pk'.
+ *
+ * Note: no secure memory needed since this is part of the public operation
  */
 gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig_avx2(
     byte *pk, const byte *sig, const byte *msg, const _gcry_slhdsa_param_t *ctx, u32 addr[8])
@@ -395,13 +402,13 @@ gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig_avx2(
   unsigned int *steps = NULL;
   u32 i;
 
-  start = xtrymalloc_secure(sizeof(unsigned int) * ctx->WOTS_len);
+  start = xtrymalloc(sizeof(unsigned int) * ctx->WOTS_len);
   if (!start)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  steps = xtrymalloc_secure(sizeof(unsigned int) * ctx->WOTS_len);
+  steps = xtrymalloc(sizeof(unsigned int) * ctx->WOTS_len);
   if (!steps)
     {
       ec = gpg_err_code_from_syserror();
@@ -524,48 +531,52 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8(byte *dest, const _gcry_slhdsa_para
             {
               _gcry_slhdsa_set_hash_addr(ctx, leaf_addr + j * 8, k);
             }
-          _gcry_slhdsa_thash_avx2_sha2(buffer + 0 * wots_offset,
-                                       buffer + 1 * wots_offset,
-                                       buffer + 2 * wots_offset,
-                                       buffer + 3 * wots_offset,
-                                       buffer + 4 * wots_offset,
-                                       buffer + 5 * wots_offset,
-                                       buffer + 6 * wots_offset,
-                                       buffer + 7 * wots_offset,
-                                       buffer + 0 * wots_offset,
-                                       buffer + 1 * wots_offset,
-                                       buffer + 2 * wots_offset,
-                                       buffer + 3 * wots_offset,
-                                       buffer + 4 * wots_offset,
-                                       buffer + 5 * wots_offset,
-                                       buffer + 6 * wots_offset,
-                                       buffer + 7 * wots_offset,
-                                       1,
-                                       ctx,
-                                       leaf_addr);
+          ec = _gcry_slhdsa_thash_avx2_sha2(buffer + 0 * wots_offset,
+                                            buffer + 1 * wots_offset,
+                                            buffer + 2 * wots_offset,
+                                            buffer + 3 * wots_offset,
+                                            buffer + 4 * wots_offset,
+                                            buffer + 5 * wots_offset,
+                                            buffer + 6 * wots_offset,
+                                            buffer + 7 * wots_offset,
+                                            buffer + 0 * wots_offset,
+                                            buffer + 1 * wots_offset,
+                                            buffer + 2 * wots_offset,
+                                            buffer + 3 * wots_offset,
+                                            buffer + 4 * wots_offset,
+                                            buffer + 5 * wots_offset,
+                                            buffer + 6 * wots_offset,
+                                            buffer + 7 * wots_offset,
+                                            1,
+                                            ctx,
+                                            leaf_addr);
+          if (ec)
+            goto leave;
         }
     }
 
   /* Do the final thash to generate the public keys */
-  _gcry_slhdsa_thash_avx2_sha2(dest + 0 * ctx->n,
-                               dest + 1 * ctx->n,
-                               dest + 2 * ctx->n,
-                               dest + 3 * ctx->n,
-                               dest + 4 * ctx->n,
-                               dest + 5 * ctx->n,
-                               dest + 6 * ctx->n,
-                               dest + 7 * ctx->n,
-                               pk_buffer + 0 * wots_offset,
-                               pk_buffer + 1 * wots_offset,
-                               pk_buffer + 2 * wots_offset,
-                               pk_buffer + 3 * wots_offset,
-                               pk_buffer + 4 * wots_offset,
-                               pk_buffer + 5 * wots_offset,
-                               pk_buffer + 6 * wots_offset,
-                               pk_buffer + 7 * wots_offset,
-                               ctx->WOTS_len,
-                               ctx,
-                               pk_addr);
+  ec = _gcry_slhdsa_thash_avx2_sha2(dest + 0 * ctx->n,
+                                    dest + 1 * ctx->n,
+                                    dest + 2 * ctx->n,
+                                    dest + 3 * ctx->n,
+                                    dest + 4 * ctx->n,
+                                    dest + 5 * ctx->n,
+                                    dest + 6 * ctx->n,
+                                    dest + 7 * ctx->n,
+                                    pk_buffer + 0 * wots_offset,
+                                    pk_buffer + 1 * wots_offset,
+                                    pk_buffer + 2 * wots_offset,
+                                    pk_buffer + 3 * wots_offset,
+                                    pk_buffer + 4 * wots_offset,
+                                    pk_buffer + 5 * wots_offset,
+                                    pk_buffer + 6 * wots_offset,
+                                    pk_buffer + 7 * wots_offset,
+                                    ctx->WOTS_len,
+                                    ctx,
+                                    pk_addr);
+  if (ec)
+    goto leave;
 
 leave:
   xfree(pk_buffer);
@@ -631,12 +642,14 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(byte *dest, const _gcry_slhdsa_para
           _gcry_slhdsa_set_hash_addr(ctx, leaf_addr + j * 8, 0);
           _gcry_slhdsa_set_type(ctx, leaf_addr + j * 8, SLHDSA_ADDR_TYPE_WOTSPRF);
         }
-      _gcry_slhdsa_prf_avx2_shake(buffer + 0 * wots_offset,
-                                  buffer + 1 * wots_offset,
-                                  buffer + 2 * wots_offset,
-                                  buffer + 3 * wots_offset,
-                                  ctx,
-                                  leaf_addr);
+      ec = _gcry_slhdsa_prf_avx2_shake(buffer + 0 * wots_offset,
+                                       buffer + 1 * wots_offset,
+                                       buffer + 2 * wots_offset,
+                                       buffer + 3 * wots_offset,
+                                       ctx,
+                                       leaf_addr);
+      if (ec)
+        return ec;
 
       for (j = 0; j < 4; j++)
         {
@@ -662,32 +675,36 @@ gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(byte *dest, const _gcry_slhdsa_para
             {
               _gcry_slhdsa_set_hash_addr(ctx, leaf_addr + j * 8, k);
             }
-          _gcry_slhdsa_thash_avx2_shake(buffer + 0 * wots_offset,
-                                        buffer + 1 * wots_offset,
-                                        buffer + 2 * wots_offset,
-                                        buffer + 3 * wots_offset,
-                                        buffer + 0 * wots_offset,
-                                        buffer + 1 * wots_offset,
-                                        buffer + 2 * wots_offset,
-                                        buffer + 3 * wots_offset,
-                                        1,
-                                        ctx,
-                                        leaf_addr);
+          ec = _gcry_slhdsa_thash_avx2_shake(buffer + 0 * wots_offset,
+                                             buffer + 1 * wots_offset,
+                                             buffer + 2 * wots_offset,
+                                             buffer + 3 * wots_offset,
+                                             buffer + 0 * wots_offset,
+                                             buffer + 1 * wots_offset,
+                                             buffer + 2 * wots_offset,
+                                             buffer + 3 * wots_offset,
+                                             1,
+                                             ctx,
+                                             leaf_addr);
+          if (ec)
+            goto leave;
         }
     }
 
   /* Do the final thash to generate the public keys */
-  _gcry_slhdsa_thash_avx2_shake(dest + 0 * ctx->n,
-                                dest + 1 * ctx->n,
-                                dest + 2 * ctx->n,
-                                dest + 3 * ctx->n,
-                                pk_buffer + 0 * wots_offset,
-                                pk_buffer + 1 * wots_offset,
-                                pk_buffer + 2 * wots_offset,
-                                pk_buffer + 3 * wots_offset,
-                                ctx->WOTS_len,
-                                ctx,
-                                pk_addr);
+  ec = _gcry_slhdsa_thash_avx2_shake(dest + 0 * ctx->n,
+                                     dest + 1 * ctx->n,
+                                     dest + 2 * ctx->n,
+                                     dest + 3 * ctx->n,
+                                     pk_buffer + 0 * wots_offset,
+                                     pk_buffer + 1 * wots_offset,
+                                     pk_buffer + 2 * wots_offset,
+                                     pk_buffer + 3 * wots_offset,
+                                     ctx->WOTS_len,
+                                     ctx,
+                                     pk_addr);
+  if (ec)
+    goto leave;
 
 leave:
   xfree(pk_buffer);

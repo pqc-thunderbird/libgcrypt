@@ -10,16 +10,17 @@
 
 typedef u64 u64;
 typedef __m256i u256;
-typedef struct SHA512state4x
+typedef struct
 {
   __m256i s[8];
   byte msgblocks[4 * 128];
   int datalen;
   unsigned long long msglen;
-} sha512ctx4x;
+} gcry_slhdsa_sha512ctx4x;
 
 
-static void sha512_transform4x(sha512ctx4x *ctx, const byte *d0, const byte *d1, const byte *d2, const byte *d3);
+static void sha512_transform4x(
+    gcry_slhdsa_sha512ctx4x *ctx, const byte *d0, const byte *d1, const byte *d2, const byte *d3);
 
 #define BYTESWAP(x)                                                                                                    \
   _mm256_shuffle_epi8(x,                                                                                               \
@@ -57,18 +58,19 @@ static void sha512_transform4x(sha512ctx4x *ctx, const byte *d0, const byte *d1,
                                       0x7))
 #define STORE(dest, src) _mm256_storeu_si256((__m256i *)(dest), src)
 
-// Transpose 4 vectors containing 64-bit values
-// That is, it rearranges the array:
-//     A B C D
-//     E F G H
-//     I J K L
-//     M N O P
-// into
-//     A E I M
-//     B F J N
-//     C G K O
-//     D H L P
-// where each letter stands for 64 bits (and lsbits on the left)
+/* Transpose 4 vectors containing 64-bit values
+ *  That is, it rearranges the array:
+ *      A B C D
+ *      E F G H
+ *      I J K L
+ *      M N O P
+ *  into
+ *      A E I M
+ *      B F J N
+ *      C G K O
+ *      D H L P
+ *  where each letter stands for 64 bits (and lsbits on the left)
+ */
 static void transpose(u256 s[4])
 {
   u256 tmp[4];
@@ -76,11 +78,12 @@ static void transpose(u256 s[4])
   tmp[1] = _mm256_unpackhi_epi64(s[0], s[1]);
   tmp[2] = _mm256_unpacklo_epi64(s[2], s[3]);
   tmp[3] = _mm256_unpackhi_epi64(s[2], s[3]);
-  // tmp is in the order of
-  //   A E C G
-  //   B F D H
-  //   I M K O
-  //   J N L P
+  /* tmp is in the order of
+   *   A E C G
+   *   B F D H
+   *   I M K O
+   *   J N L P
+   */
   s[0] = _mm256_permute2x128_si256(tmp[0], tmp[2], 0x20);
   s[1] = _mm256_permute2x128_si256(tmp[1], tmp[3], 0x20);
   s[2] = _mm256_permute2x128_si256(tmp[0], tmp[2], 0x31);
@@ -158,11 +161,12 @@ static const unsigned long long RC[80] = {
     0x431d67c49c100d4cULL, 0x4cc5d4becb3e42b6ULL, 0x597f299cfc657e2aULL, 0x5fcb6fab3ad6faecULL, 0x6c44198c4a475817ULL,
 };
 
-static void sha512_transform4x(sha512ctx4x *ctx, const byte *d0, const byte *d1, const byte *d2, const byte *d3)
+static void sha512_transform4x(
+    gcry_slhdsa_sha512ctx4x *ctx, const byte *d0, const byte *d1, const byte *d2, const byte *d3)
 {
   u256 s0, s1, s2, s3, s4, s5, s6, s7, w[16], T0, T1, nw;
 
-  // Load words and transform data correctly
+  /* Load words and transform data correctly */
   w[0]      = BYTESWAP(LOAD(d0));
   w[0 + 4]  = BYTESWAP(LOAD(d0 + 32));
   w[0 + 8]  = BYTESWAP(LOAD(d0 + 64));
@@ -188,7 +192,7 @@ static void sha512_transform4x(sha512ctx4x *ctx, const byte *d0, const byte *d1,
   transpose(w + 8);
   transpose(w + 12);
 
-  // Initial State
+  /* Initial State */
   s0 = ctx->s[0];
   s1 = ctx->s[1];
   s2 = ctx->s[2];
@@ -198,7 +202,7 @@ static void sha512_transform4x(sha512ctx4x *ctx, const byte *d0, const byte *d1,
   s6 = ctx->s[6];
   s7 = ctx->s[7];
 
-  // The first 16 rounds (where the w inputs are directly from the data)
+  /* The first 16 rounds (where the w inputs are directly from the data) */
   SHA512ROUND_AVX(s0, s1, s2, s3, s4, s5, s6, s7, 0, w[0]);
   SHA512ROUND_AVX(s7, s0, s1, s2, s3, s4, s5, s6, 1, w[1]);
   SHA512ROUND_AVX(s6, s7, s0, s1, s2, s3, s4, s5, 2, w[2]);
@@ -219,7 +223,7 @@ static void sha512_transform4x(sha512ctx4x *ctx, const byte *d0, const byte *d1,
 #define M(i) (((i) + 16) & 0xf)
 #define NextW(i) w[M(i)] = ADD4_64(GAMMA1_AVX(w[M((i)-2)]), w[M((i)-7)], GAMMA0_AVX(w[M((i)-15)]), w[M((i)-16)]);
 
-  // The remaining 64 rounds (where the w inputs are a linear fix of the data)
+  /* The remaining 64 rounds (where the w inputs are a linear fix of the data) */
   for (unsigned i = 16; i < 80; i += 16)
     {
       nw = NextW(0);
@@ -256,7 +260,7 @@ static void sha512_transform4x(sha512ctx4x *ctx, const byte *d0, const byte *d1,
       SHA512ROUND_AVX(s1, s2, s3, s4, s5, s6, s7, s0, i + 15, nw);
     }
 
-  // Feed Forward
+  /* Feed Forward */
   ctx->s[0] = ADD64(s0, ctx->s[0]);
   ctx->s[1] = ADD64(s1, ctx->s[1]);
   ctx->s[2] = ADD64(s2, ctx->s[2]);
@@ -267,7 +271,7 @@ static void sha512_transform4x(sha512ctx4x *ctx, const byte *d0, const byte *d1,
   ctx->s[7] = ADD64(s7, ctx->s[7]);
 }
 
-static void _sha512x4(sha512ctx4x *ctx,
+static void _sha512x4(gcry_slhdsa_sha512ctx4x *ctx,
                       byte *out0,
                       byte *out1,
                       byte *out2,
@@ -295,7 +299,7 @@ static void _sha512x4(sha512ctx4x *ctx,
   memcpy(&ctx->msgblocks[128 * 2], in2 + i, ctx->datalen);
   memcpy(&ctx->msgblocks[128 * 3], in3 + i, ctx->datalen);
 
-  // Padding
+  /* Padding */
   if (ctx->datalen < 112)
     {
       for (i = 0; i < 4; ++i)
@@ -323,7 +327,7 @@ static void _sha512x4(sha512ctx4x *ctx,
       memset(ctx->msgblocks, 0, 4 * 128);
     }
 
-  // Add length of the message to each block
+  /* Add length of the message to each block */
   ctx->msglen += ctx->datalen * 8;
   for (i = 0; i < 4; i++)
     {
@@ -339,11 +343,11 @@ static void _sha512x4(sha512ctx4x *ctx,
     }
   sha512_transform4x(ctx, ctx->msgblocks, ctx->msgblocks + 128, ctx->msgblocks + 256, ctx->msgblocks + 384);
 
-  // Compute final hash output
+  /* Compute final hash output */
   transpose(ctx->s);
   transpose(ctx->s + 4);
 
-  // Store Hash value
+  /* Store Hash value */
   STORE(out, BYTESWAP(ctx->s[0]));
   STORE(out + 1, BYTESWAP(ctx->s[4]));
   memcpy(out0, out, 64);
@@ -373,18 +377,18 @@ gcry_err_code_t _gcry_slhdsa_sha512x4_seeded(byte *out0,
                                              const byte *in3,
                                              unsigned long long inlen)
 {
-  gcry_err_code_t ec = 0;
-  gcry_slhdsa_buf_al ctx_alloc    = {};
-  sha512ctx4x *ctx   = NULL;
+  gcry_err_code_t ec           = 0;
+  gcry_slhdsa_buf_al ctx_alloc = {};
+  gcry_slhdsa_sha512ctx4x *ctx = NULL;
   unsigned long i;
 
   /* we need 32-byte aligned state */
-  ec = _gcry_mldsa_buf_al_create(&ctx_alloc, sizeof(sha512ctx4x));
+  ec = _gcry_mldsa_buf_al_create(&ctx_alloc, sizeof(gcry_slhdsa_sha512ctx4x));
   if (ec)
     {
       goto leave;
     }
-  ctx = (sha512ctx4x *)ctx_alloc.buf;
+  ctx = (gcry_slhdsa_sha512ctx4x *)ctx_alloc.buf;
 
   for (i = 0; i < 8; i++)
     {

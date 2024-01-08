@@ -9,7 +9,6 @@
 #ifdef USE_AVX2
 #include <immintrin.h>
 
-
 gcry_err_code_t _gcry_slhdsa_shake256x4(byte *out0,
                                         byte *out1,
                                         byte *out2,

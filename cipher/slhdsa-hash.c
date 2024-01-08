@@ -215,12 +215,22 @@ leave:
   return ec;
 }
 
-void _gcry_slhdsa_prf_avx2_shake(
+gcry_err_code_t _gcry_slhdsa_prf_avx2_shake(
     byte *out0, byte *out1, byte *out2, byte *out3, const _gcry_slhdsa_param_t *ctx, const u32 addrx4[4 * 8])
 {
+  gcry_err_code_t ec = 0;
+
   /* As we write and read only a few quadwords, it is more efficient to
    * build and extract from the fourway SHAKE256 state by hand. */
-  __m256i state[25];
+  gcry_slhdsa_buf_al state_alloc = {};
+  __m256i *state                 = NULL;
+
+  ec = _gcry_mldsa_buf_al_create(&state_alloc, sizeof(__m256i[25]));
+  if (ec)
+    {
+      goto leave;
+    }
+  state = (__m256i *)state_alloc.buf;
 
   for (int i = 0; i < ctx->n / 8; i++)
     {
@@ -248,7 +258,7 @@ void _gcry_slhdsa_prf_avx2_shake(
     {
       state[i] = _mm256_set1_epi64x(0);
     }
-  // shift unsigned and then cast to avoid UB
+  /* shift unsigned and then cast to avoid UB */
   state[16] = _mm256_set1_epi64x((long long)(0x80ULL << 56));
 
   for (int i = 17; i < 25; i++)
@@ -265,6 +275,9 @@ void _gcry_slhdsa_prf_avx2_shake(
       ((int64_t *)out2)[i] = _mm256_extract_epi64(state[i], 2);
       ((int64_t *)out3)[i] = _mm256_extract_epi64(state[i], 3);
     }
+leave:
+  _gcry_mldsa_buf_al_destroy(&state_alloc);
+  return ec;
 }
 
 #endif
@@ -454,19 +467,19 @@ static gcry_err_code_t hash_message_sha2(byte *digest,
     }
   SLHDSA_INBLOCKS = (((ctx->n + ctx->public_key_bytes + shax_block_bytes - 1) & -shax_block_bytes) / shax_block_bytes);
 
-  seed = xtrymalloc_secure(2 * ctx->n + shax_output_bytes);
+  seed = xtrymalloc(2 * ctx->n + shax_output_bytes);
   if (!seed)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  inbuf = xtrymalloc_secure(SLHDSA_INBLOCKS * shax_block_bytes);
+  inbuf = xtrymalloc(SLHDSA_INBLOCKS * shax_block_bytes);
   if (!inbuf)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  buf = xtrymalloc_secure(SLHDSA_DGST_BYTES);
+  buf = xtrymalloc(SLHDSA_DGST_BYTES);
   if (!buf)
     {
       ec = gpg_err_code_from_syserror();
@@ -583,7 +596,7 @@ static gcry_err_code_t hash_message_shake(byte *digest,
   byte *buf = NULL;
   byte *bufp;
 
-  buf = xtrymalloc_secure(SLHDSA_DGST_BYTES);
+  buf = xtrymalloc(SLHDSA_DGST_BYTES);
   if (!buf)
     {
       ec = gpg_err_code_from_syserror();

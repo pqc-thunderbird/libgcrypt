@@ -247,25 +247,27 @@ gcry_err_code_t _gcry_slhdsa_treehashx8(byte *root,
                   ctx, tree_addrx8 + j * 8, (8 / 2) * (internal_idx & ~1) + j - left_adj + internal_idx_offset);
             }
           left = &stackx8[h * 8 * ctx->n];
-          _gcry_slhdsa_thash_avx2_sha2(&current[0 * ctx->n],
-                                       &current[1 * ctx->n],
-                                       &current[2 * ctx->n],
-                                       &current[3 * ctx->n],
-                                       &current[4 * ctx->n],
-                                       &current[5 * ctx->n],
-                                       &current[6 * ctx->n],
-                                       &current[7 * ctx->n],
-                                       &left[0 * ctx->n],
-                                       &left[2 * ctx->n],
-                                       &left[4 * ctx->n],
-                                       &left[6 * ctx->n],
-                                       &current[0 * ctx->n],
-                                       &current[2 * ctx->n],
-                                       &current[4 * ctx->n],
-                                       &current[6 * ctx->n],
-                                       2,
-                                       ctx,
-                                       tree_addrx8);
+          ec   = _gcry_slhdsa_thash_avx2_sha2(&current[0 * ctx->n],
+                                            &current[1 * ctx->n],
+                                            &current[2 * ctx->n],
+                                            &current[3 * ctx->n],
+                                            &current[4 * ctx->n],
+                                            &current[5 * ctx->n],
+                                            &current[6 * ctx->n],
+                                            &current[7 * ctx->n],
+                                            &left[0 * ctx->n],
+                                            &left[2 * ctx->n],
+                                            &left[4 * ctx->n],
+                                            &left[6 * ctx->n],
+                                            &current[0 * ctx->n],
+                                            &current[2 * ctx->n],
+                                            &current[4 * ctx->n],
+                                            &current[6 * ctx->n],
+                                            2,
+                                            ctx,
+                                            tree_addrx8);
+          if (ec)
+            goto leave;
         }
 
       /* We've hit a left child; save the current for when we get the */
@@ -390,17 +392,19 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(byte *root,
                   ctx, tree_addrx4 + j * 8, (4 / 2) * (internal_idx & ~1) + j - left_adj + internal_idx_offset);
             }
           left = &stackx4[h * 4 * ctx->n];
-          _gcry_slhdsa_thash_avx2_shake(&current[0 * ctx->n],
-                                        &current[1 * ctx->n],
-                                        &current[2 * ctx->n],
-                                        &current[3 * ctx->n],
-                                        &left[0 * ctx->n],
-                                        &left[2 * ctx->n],
-                                        &current[0 * ctx->n],
-                                        &current[2 * ctx->n],
-                                        2,
-                                        ctx,
-                                        tree_addrx4);
+          ec   = _gcry_slhdsa_thash_avx2_shake(&current[0 * ctx->n],
+                                             &current[1 * ctx->n],
+                                             &current[2 * ctx->n],
+                                             &current[3 * ctx->n],
+                                             &left[0 * ctx->n],
+                                             &left[2 * ctx->n],
+                                             &current[0 * ctx->n],
+                                             &current[2 * ctx->n],
+                                             2,
+                                             ctx,
+                                             tree_addrx4);
+          if (ec)
+            goto leave;
         }
 
       /* We've hit a left child; save the current for when we get the */

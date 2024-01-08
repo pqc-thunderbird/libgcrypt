@@ -20,7 +20,7 @@ gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_slhdsa_buf_al *buf, size_t size)
       buf->buf = NULL;
       return gpg_error_from_syserror();
     }
-  buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (32 - ((uintptr_t)buf->alloc_addr % 32))); // aligned memory
+  buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (32 - ((uintptr_t)buf->alloc_addr % 32)));
 
   memset(buf->alloc_addr, 0, alloc_size);
   return 0;

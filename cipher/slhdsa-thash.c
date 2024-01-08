@@ -328,17 +328,28 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_shake(byte *out0,
                                               const _gcry_slhdsa_param_t *ctx,
                                               u32 addrx4[4 * 8])
 {
-  gcry_err_code_t ec = 0;
-  byte *buf0         = NULL;
-  byte *buf1         = NULL;
-  byte *buf2         = NULL;
-  byte *buf3         = NULL;
+  gcry_err_code_t ec             = 0;
+  byte *buf0                     = NULL;
+  byte *buf1                     = NULL;
+  byte *buf2                     = NULL;
+  byte *buf3                     = NULL;
+  gcry_slhdsa_buf_al state_alloc = {};
+
 
   if (inblocks == 1 || inblocks == 2)
     {
       /* As we write and read only a few quadwords, it is more efficient to
        * build and extract from the fourway SHAKE256 state by hand. */
-      __m256i state[25];
+      __m256i *state = NULL;
+
+      /* we need 32-byte aligned state */
+      ec = _gcry_mldsa_buf_al_create(&state_alloc, sizeof(__m256i[25]));
+      if (ec)
+        {
+          goto leave;
+        }
+      state = (__m256i *)state_alloc.buf;
+
       for (int i = 0; i < ctx->n / 8; i++)
         {
           state[i] = _mm256_set1_epi64x(((int64_t *)ctx->pub_seed)[i]);
@@ -435,6 +446,7 @@ leave:
   xfree(buf1);
   xfree(buf2);
   xfree(buf3);
+  _gcry_mldsa_buf_al_destroy(&state_alloc);
   return ec;
 }
 #endif

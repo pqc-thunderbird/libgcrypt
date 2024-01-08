@@ -44,7 +44,7 @@ gcry_err_code_t _gcry_slhdsa_prf_avx2_sha2(byte *out0,
 
 void initialize_hash_function_sha_avx2(_gcry_slhdsa_param_t *ctx);
 
-void _gcry_slhdsa_prf_avx2_shake(
+gcry_err_code_t _gcry_slhdsa_prf_avx2_shake(
     byte *out0, byte *out1, byte *out2, byte *out3, const _gcry_slhdsa_param_t *ctx, const u32 addrx4[4 * 8]);
 #endif
 
