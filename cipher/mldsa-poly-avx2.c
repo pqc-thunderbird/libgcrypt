@@ -346,13 +346,19 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(
   gcry_mldsa_buf_al buf = {};
   size_t offset_al;
 
-  size_t buf_elem_len = REJ_UNIFORM_BUFLEN + 8;
-  /* make sure each sub structure starts memory aligned */
-  gcry_mldsa_keccakx4_state state;
+  size_t buf_elem_len     = REJ_UNIFORM_BUFLEN + 8;
+  gcry_mldsa_buf_al state = {};
   __m256i f;
 
+  /* make sure each sub structure starts memory aligned */
   offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
   ec        = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
+  if (ec)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
+  ec = _gcry_mldsa_buf_al_create(&state, sizeof(gcry_mldsa_keccakx4_state));
   if (ec)
     {
       ec = gpg_err_code_from_syserror();
@@ -374,7 +380,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(
   buf.buf[3 * offset_al + GCRY_MLDSA_SEEDBYTES + 0] = nonce3;
   buf.buf[3 * offset_al + GCRY_MLDSA_SEEDBYTES + 1] = nonce3 >> 8;
 
-  _gcry_mldsa_avx2_shake128x4_absorb_once(&state,
+  _gcry_mldsa_avx2_shake128x4_absorb_once((gcry_mldsa_keccakx4_state*)state.buf,
                                           &buf.buf[0 * offset_al],
                                           &buf.buf[1 * offset_al],
                                           &buf.buf[2 * offset_al],
@@ -385,7 +391,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(
                                             &buf.buf[2 * offset_al],
                                             &buf.buf[3 * offset_al],
                                             REJ_UNIFORM_NBLOCKS,
-                                            &state);
+                                            (gcry_mldsa_keccakx4_state*)state.buf);
 
   ctr0 = _gcry_mldsa_avx2_rej_uniform_avx(((gcry_mldsa_poly *)a0)->coeffs, &buf.buf[0 * offset_al]);
   ctr1 = _gcry_mldsa_avx2_rej_uniform_avx(((gcry_mldsa_poly *)a1)->coeffs, &buf.buf[1 * offset_al]);
@@ -399,7 +405,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(
                                                 &buf.buf[2 * offset_al],
                                                 &buf.buf[3 * offset_al],
                                                 1,
-                                                &state);
+                                                (gcry_mldsa_keccakx4_state*)state.buf);
 
       ctr0 += rej_uniform(
           ((gcry_mldsa_poly *)a0)->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], GCRY_SHAKE128_RATE);
@@ -413,6 +419,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(
 
 leave:
   _gcry_mldsa_buf_al_destroy(&buf);
+  _gcry_mldsa_buf_al_destroy(&state);
   return ec;
 }
 
@@ -491,7 +498,8 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params,
   size_t REJ_UNIFORM_ETA_NBLOCKS;
   gcry_mldsa_buf_al buf = {};
   __m256i f;
-  gcry_mldsa_keccakx4_state state;
+  gcry_mldsa_buf_al state = {};
+
 
   if (params->eta == 2)
     {
@@ -512,7 +520,12 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params,
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-
+  ec = _gcry_mldsa_buf_al_create(&state, sizeof(gcry_mldsa_keccakx4_state));
+  if (ec)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
   f = _mm256_loadu_si256((__m256i *)&seed[0]);
   _mm256_store_si256((__m256i *)&buf.buf[0 * offset_al + 0 * sizeof(__m256i)], f);
@@ -534,14 +547,18 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params,
   buf.buf[3 * offset_al + 64] = nonce3;
   buf.buf[3 * offset_al + 65] = nonce3 >> 8;
 
-  _gcry_mldsa_avx2_shake256x4_absorb_once(
-      &state, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 66);
+  _gcry_mldsa_avx2_shake256x4_absorb_once((gcry_mldsa_keccakx4_state *)state.buf,
+                                          &buf.buf[0 * offset_al],
+                                          &buf.buf[1 * offset_al],
+                                          &buf.buf[2 * offset_al],
+                                          &buf.buf[3 * offset_al],
+                                          66);
   _gcry_mldsa_avx2_shake256x4_squeezeblocks(&buf.buf[0 * offset_al],
                                             &buf.buf[1 * offset_al],
                                             &buf.buf[2 * offset_al],
                                             &buf.buf[3 * offset_al],
                                             REJ_UNIFORM_ETA_NBLOCKS,
-                                            &state);
+                                            (gcry_mldsa_keccakx4_state *)state.buf);
 
   if (params->eta == 2)
     {
@@ -565,7 +582,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params,
                                                 &buf.buf[2 * offset_al],
                                                 &buf.buf[3 * offset_al],
                                                 1,
-                                                &state);
+                                                (gcry_mldsa_keccakx4_state *)state.buf);
       if (params->eta == 2)
         {
           ctr0 += rej_eta2(a0->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], GCRY_SHAKE256_RATE);
@@ -584,6 +601,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params,
 
 leave:
   _gcry_mldsa_buf_al_destroy(&buf);
+  _gcry_mldsa_buf_al_destroy(&state);
   return ec;
 }
 
@@ -636,10 +654,10 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *para
   gcry_mldsa_buf_al buf = {};
   size_t offset_al;
 
-  /* make sure each sub structure starts memory aligned */
-  gcry_mldsa_keccakx4_state state;
+  gcry_mldsa_buf_al state = {};
   __m256i f;
 
+  /* make sure each sub structure starts memory aligned */
   offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
   ec        = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
   if (ec)
@@ -647,6 +665,12 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *para
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
+    ec = _gcry_mldsa_buf_al_create(&state, sizeof(gcry_mldsa_keccakx4_state));
+if (ec)
+{
+  ec = gpg_err_code_from_syserror();
+  goto leave;
+}
 
   f = _mm256_loadu_si256((__m256i *)&seed[0]);
   _mm256_store_si256((__m256i *)&buf.buf[0 * offset_al], f);
@@ -669,13 +693,13 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *para
   buf.buf[3 * offset_al + 65] = nonce3 >> 8;
 
   _gcry_mldsa_avx2_shake256x4_absorb_once(
-      &state, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 66);
+      (gcry_mldsa_keccakx4_state*)state.buf	, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 66);
   _gcry_mldsa_avx2_shake256x4_squeezeblocks(&buf.buf[0 * offset_al],
                                             &buf.buf[1 * offset_al],
                                             &buf.buf[2 * offset_al],
                                             &buf.buf[3 * offset_al],
                                             POLY_UNIFORM_GAMMA1_NBLOCKS,
-                                            &state);
+                                            (gcry_mldsa_keccakx4_state*)state.buf	);
 
   _gcry_mldsa_avx2_polyz_unpack(params, (gcry_mldsa_poly *)a0, &buf.buf[0 * offset_al]);
   _gcry_mldsa_avx2_polyz_unpack(params, (gcry_mldsa_poly *)a1, &buf.buf[1 * offset_al]);
@@ -684,6 +708,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *para
 
 leave:
   _gcry_mldsa_buf_al_destroy(&buf);
+  _gcry_mldsa_buf_al_destroy(&state);
   return ec;
 }
 

@@ -6,9 +6,10 @@
 #include "mldsa-ntt-avx2.h"
 #include "mldsa-consts-avx2.h"
 
+/* the following functions are for allocating 32-byte aligned memory */
 gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf, size_t mat_elems, size_t vec_elems)
 {
-  const size_t alloc_size = mat_elems * vec_elems * sizeof(gcry_mldsa_poly) + /*align*/ 128;
+  const size_t alloc_size = mat_elems * vec_elems * sizeof(gcry_mldsa_poly) + /*align*/ 32;
   polybuf->alloc_addr     = xtrymalloc_secure(alloc_size);
 
   if (!polybuf->alloc_addr)
@@ -17,7 +18,7 @@ gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf, si
       return gpg_error_from_syserror();
     }
   polybuf->buf
-      = (byte *)((uintptr_t)polybuf->alloc_addr + (128 - ((uintptr_t)polybuf->alloc_addr % 128))); // aligned memory
+      = (byte *)((uintptr_t)polybuf->alloc_addr + (32 - ((uintptr_t)polybuf->alloc_addr % 32))); // aligned memory
 
   memset(polybuf->alloc_addr, 0, alloc_size);
   return 0;
@@ -35,7 +36,7 @@ void _gcry_mldsa_polybuf_al_destroy(gcry_mldsa_polybuf_al *polybuf)
 
 gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_mldsa_buf_al *buf, size_t size)
 {
-  const size_t alloc_size = size + /*align*/ 128;
+  const size_t alloc_size = size + /*align*/ 32;
   buf->alloc_addr         = xtrymalloc_secure(alloc_size);
 
   if (!buf->alloc_addr)
@@ -43,7 +44,7 @@ gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_mldsa_buf_al *buf, size_t size)
       buf->buf = NULL;
       return gpg_error_from_syserror();
     }
-  buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (128 - ((uintptr_t)buf->alloc_addr % 128))); // aligned memory
+  buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (32 - ((uintptr_t)buf->alloc_addr % 32))); // aligned memory
 
   memset(buf->alloc_addr, 0, alloc_size);
   return 0;

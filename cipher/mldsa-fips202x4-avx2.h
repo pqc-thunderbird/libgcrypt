@@ -41,27 +41,5 @@ void _gcry_mldsa_avx2_shake256x4_absorb_once(
 void _gcry_mldsa_avx2_shake256x4_squeezeblocks(
     byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_mldsa_keccakx4_state *state);
 
-void _gcry_mldsa_avx2_shake128x4(byte *out0,
-                                 byte *out1,
-                                 byte *out2,
-                                 byte *out3,
-                                 size_t outlen,
-                                 const byte *in0,
-                                 const byte *in1,
-                                 const byte *in2,
-                                 const byte *in3,
-                                 size_t inlen);
-
-void _gcry_mldsa_avx2_shake256x4(byte *out0,
-                                 byte *out1,
-                                 byte *out2,
-                                 byte *out3,
-                                 size_t outlen,
-                                 const byte *in0,
-                                 const byte *in1,
-                                 const byte *in2,
-                                 const byte *in3,
-                                 size_t inlen);
-
 #endif
 #endif
