@@ -61,6 +61,7 @@ enum pk_encoding
     PUBKEY_ENC_PKCS1_RAW,
     PUBKEY_ENC_OAEP,
     PUBKEY_ENC_PSS,
+    PUBKEY_ENC_RAW_OPAQUE,
     PUBKEY_ENC_UNKNOWN
   };
 

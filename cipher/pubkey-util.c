@@ -171,6 +171,8 @@ _gcry_pk_util_parse_flaglist (gcry_sexp_t list,
             igninvflag = 1;
           else if (!memcmp (s, "no-keytest", 10))
             flags |= PUBKEY_FLAG_NO_KEYTEST;
+          else if (!memcmp(s, "raw_opaque", 10))
+            encoding = PUBKEY_ENC_RAW_OPAQUE;
           else if (!igninvflag)
             rc = GPG_ERR_INV_FLAG;
           break;
@@ -945,6 +947,13 @@ _gcry_pk_util_data_to_mpi (gcry_sexp_t input, gcry_mpi_t *ret_mpi,
 
       /* Get the value */
       *ret_mpi = sexp_nth_mpi (lvalue, 1, GCRYMPI_FMT_USG);
+      if (!*ret_mpi)
+        rc = GPG_ERR_INV_OBJ;
+    }
+  else if(ctx->encoding == PUBKEY_ENC_RAW_OPAQUE && lvalue)
+    {
+      /* Get the value */
+      *ret_mpi = sexp_nth_mpi (lvalue, 1, GCRYMPI_FMT_OPAQUE);
       if (!*ret_mpi)
         rc = GPG_ERR_INV_OBJ;
     }
