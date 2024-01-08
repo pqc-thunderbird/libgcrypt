@@ -687,7 +687,7 @@ gcry_pk_spec_t _gcry_pubkey_spec_mlkem = {
     "z",
     "a",
     "",
-    "", /* elements of pub-key, sec-key, ciphertext, signature, key-grip */
+    "y", /* elements of pub-key, sec-key, ciphertext, signature, key-grip */
     mlkem_generate,
     mlkem_check_secret_key,
     NULL, /* encrypt */
