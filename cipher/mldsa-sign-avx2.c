@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "config.h"
-#include "mldsa-sign-avx2.h"
+#include "mldsa-sign.h"
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-polyvec.h"
 #include "mldsa-poly-avx2.h"
@@ -63,7 +63,7 @@ static inline gcry_err_code_t polyvec_matrix_expand_row(
 }
 
 /*************************************************
- * Name:        _gcry_mldsa_avx2_keypair
+ * Name:        _gcry_mldsa_keypair
  *
  * Description: Generates public and private key.
  *
@@ -74,7 +74,7 @@ static inline gcry_err_code_t polyvec_matrix_expand_row(
  *
  * Returns 0 (success)
  **************************************************/
-gcry_err_code_t _gcry_mldsa_avx2_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk)
+gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk)
 {
   gcry_err_code_t ec = 0;
   unsigned int i;
@@ -278,7 +278,7 @@ leave:
 }
 
 /*************************************************
- * Name:        _gcry_mldsa_avx2_sign
+ * Name:        _gcry_mldsa_sign
  *
  * Description: Computes signature.
  *
@@ -290,7 +290,7 @@ leave:
  *
  * Returns 0 (success)
  **************************************************/
-gcry_err_code_t _gcry_mldsa_avx2_sign(
+gcry_err_code_t _gcry_mldsa_sign(
     gcry_mldsa_param_t *params, byte *sig, size_t *siglen, const byte *m, size_t mlen, const byte *sk)
 {
   gcry_err_code_t ec = 0;
@@ -541,7 +541,7 @@ leave:
 
 
 /*************************************************
- * Name:        _gcry_mldsa_avx2_verify
+ * Name:        _gcry_mldsa_verify
  *
  * Description: Verifies signature.
  *
@@ -553,7 +553,7 @@ leave:
  *
  * Returns 0 if signature could be verified correctly and -1 otherwise
  **************************************************/
-gcry_err_code_t _gcry_mldsa_avx2_verify(
+gcry_err_code_t _gcry_mldsa_verify(
     gcry_mldsa_param_t *params, const byte *sig, size_t siglen, const byte *m, size_t mlen, const byte *pk)
 {
   gcry_err_code_t ec = 0;

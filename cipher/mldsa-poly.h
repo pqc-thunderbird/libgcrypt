@@ -5,16 +5,30 @@
 
 #include "types.h"
 #include "mldsa-params.h"
+#include "avx2-immintrin-support.h"
+
+#ifdef USE_AVX2
 #include <immintrin.h>
+#endif
 
 #include "g10lib.h"
+
+#ifdef USE_AVX2
 typedef struct
 {
-  union {
+  union
+  {
     s32 coeffs[GCRY_MLDSA_N];
-    __m256i vec[(GCRY_MLDSA_N+7)/8]; // TODO ifdef
+    __m256i vec[(GCRY_MLDSA_N + 7) / 8];
   };
 } gcry_mldsa_poly;
+#else
+typedef struct
+{
+  s32 coeffs[GCRY_MLDSA_N];
+} gcry_mldsa_poly;
+#endif
+
 
 void _gcry_mldsa_poly_reduce(gcry_mldsa_poly *a);
 void _gcry_mldsa_poly_caddq(gcry_mldsa_poly *a);

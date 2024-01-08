@@ -7,7 +7,9 @@
 #include "mldsa-poly.h"
 #include "mldsa-symmetric.h"
 #include "g10lib.h"
+#include "avx2-immintrin-support.h"
 
+#ifndef USE_AVX2
 /*************************************************
  * Name:        _gcry_mldsa_keypair
  *
@@ -20,7 +22,6 @@
  *
  * Returns 0 (success)
  **************************************************/
-
 gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *sk)
 {
   gcry_err_code_t ec = 0;
@@ -35,56 +36,6 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   gcry_mldsa_polyvec s2 = {.vec = NULL};
   gcry_mldsa_polyvec t1 = {.vec = NULL};
   gcry_mldsa_polyvec t0 = {.vec = NULL};
-
-  /* TODO: REMOVE ****************************/
-  if (1)
-  {
-    uint8_t pk_avx2[params->public_key_bytes];
-    uint8_t sk_avx2[params->secret_key_bytes];
-    uint8_t sig_avx2[params->signature_bytes];
-    size_t sig_avx2_len;
-    byte msg_avx2[] = {0x01, 0x02};
-    if(_gcry_mldsa_avx2_keypair(params, pk_avx2, sk_avx2))
-    {
-        printf("generating avx2 keys failed\n");
-        return -1;
-    }
-    if(_gcry_mldsa_avx2_sign(params, sig_avx2, &sig_avx2_len, msg_avx2, sizeof(msg_avx2), sk_avx2))
-    {
-        printf("generating avx2 sig failed\n");
-        return -1;
-    }
-    if(_gcry_mldsa_avx2_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
-    {
-        printf("verifying avx2 sig failed\n");
-        return -1;
-    }
-
-    // verify avx2 generated
-    if(_gcry_mldsa_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
-    {
-      printf("verify avx2 sig with ref failed\n");
-      return -1;
-    }
-    if(_gcry_mldsa_sign(params, sig_avx2, &sig_avx2_len, msg_avx2, sizeof(msg_avx2), sk_avx2))
-    {
-      printf("sign with ref with avx2 keys failed\n");
-      return -1;
-    }
-    if(_gcry_mldsa_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
-    {
-      printf("verify ref sig with avx2 keys failed\n");
-      return -1;
-    }
-      if(_gcry_mldsa_avx2_verify(params, sig_avx2, sig_avx2_len, msg_avx2, sizeof(msg_avx2), pk_avx2))
-    {
-        printf("verifying ref sig with avx2 failed\n");
-        return -1;
-    }
-    printf("successfully generated keys with AVX2 and cross signed/verified with non-AVX2!\n");
-  }
-  /********************************************/
-  /********************************************/
 
   if ((ec = _gcry_mldsa_polymatrix_create(&mat, params->k, params->l))
       || (ec = _gcry_mldsa_polyvec_create(&s1, params->l)) || (ec = _gcry_mldsa_polyvec_create(&s1hat, params->l))
@@ -450,3 +401,4 @@ leave:
   _gcry_mldsa_polyvec_destroy(&h);
   return ec;
 }
+#endif

@@ -823,6 +823,7 @@ AC_SEARCH_LIBS(setsockopt, [nsl])
 ##################################
 
 AC_CHECK_HEADERS(unistd.h sys/auxv.h sys/random.h sys/sysctl.h)
+AC_CHECK_HEADER(immintrin.h, [have_immintrin=yes], [have_immintrin=no])
 
 
 ##########################################
@@ -2345,6 +2346,11 @@ if test "$gcry_cv_gcc_inline_asm_s390x_vx" = "yes" ; then
 fi
 
 
+if test "$have_immintrin" = "yes" ; then
+   AC_DEFINE(HAVE_IMMINTRIN_H,1,
+     [Defined if immintrin.h is available])
+fi
+
 #######################################
 #### Checks for library functions. ####
 #######################################
@@ -3048,11 +3054,12 @@ AM_CONDITIONAL(USE_MLDSA, [test "$found" = "1"])
 if test "$found" = "1" ; then
   GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mldsa.lo mldsa-ntt.lo mldsa-packing.lo mldsa-poly.lo mldsa-polyvec.lo mldsa-reduce.lo mldsa-rounding.lo mldsa-sign.lo mldsa-symmetric.lo"
 
-  # TODO: correctly integrate avx2
-  CFLAGS="$CFLAGS -mavx2"
-  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mldsa-sign-avx2.lo mldsa-polyvec-avx2.lo mldsa-poly-avx2.lo mldsa-ntt-avx2.lo mldsa-invntt-avx2.lo mldsa-pointwise-avx2.lo mldsa-fips202x4-avx2.lo mldsa-f1600x4-avx2.lo mldsa-rejsample-avx2.lo mldsa-consts-avx2.lo mldsa-rounding-avx2.lo mldsa-shuffle-avx2.lo"
+  if test "$have_immintrin" = "yes" ; then
+    CFLAGS="$CFLAGS -mavx2"
+    GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mldsa-sign-avx2.lo mldsa-polyvec-avx2.lo mldsa-poly-avx2.lo mldsa-ntt-avx2.lo mldsa-invntt-avx2.lo mldsa-pointwise-avx2.lo mldsa-fips202x4-avx2.lo mldsa-f1600x4-avx2.lo mldsa-rejsample-avx2.lo mldsa-consts-avx2.lo mldsa-rounding-avx2.lo mldsa-shuffle-avx2.lo"
+  fi
 
-   AC_DEFINE(USE_MLDSA, 1, [Defined if this module should be included])
+  AC_DEFINE(USE_MLDSA, 1, [Defined if this module should be included])
 fi
 
 LIST_MEMBER(rsa, $enabled_pubkey_ciphers)
