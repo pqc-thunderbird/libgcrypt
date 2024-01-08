@@ -1,4 +1,5 @@
 #include "slhdsa-fips202x4.h"
+#include "slhdsa-utils.h"
 
 #ifdef USE_AVX2
 #include <immintrin.h>
@@ -131,71 +132,34 @@ static void keccak_squeezeblocks4x(
     }
 }
 
-
-void _gcry_slhdsa_shake128x4(byte *out0,
-                             byte *out1,
-                             byte *out2,
-                             byte *out3,
-                             unsigned long long outlen,
-                             byte *in0,
-                             byte *in1,
-                             byte *in2,
-                             byte *in3,
-                             unsigned long long inlen)
+gcry_err_code_t _gcry_slhdsa_shake256x4(byte *out0,
+                                        byte *out1,
+                                        byte *out2,
+                                        byte *out3,
+                                        unsigned long long outlen,
+                                        byte *in0,
+                                        byte *in1,
+                                        byte *in2,
+                                        byte *in3,
+                                        unsigned long long inlen)
 {
-  __m256i s[25];
-  byte t0[SHAKE128_RATE];
-  byte t1[SHAKE128_RATE];
-  byte t2[SHAKE128_RATE];
-  byte t3[SHAKE128_RATE];
-  unsigned int i;
+  gcry_err_code_t ec             = 0;
+  gcry_slhdsa_buf_al state_alloc = {};
+  __m256i *s                 = NULL;
 
-  /* zero state */
-  for (i = 0; i < 25; i++)
-    s[i] = _mm256_xor_si256(s[i], s[i]);
-
-  /* absorb 4 message of identical length in parallel */
-  keccak_absorb4x(s, SHAKE128_RATE, in0, in1, in2, in3, inlen, 0x1F);
-
-  /* Squeeze output */
-  keccak_squeezeblocks4x(out0, out1, out2, out3, outlen / SHAKE128_RATE, s, SHAKE128_RATE);
-
-  out0 += (outlen / SHAKE128_RATE) * SHAKE128_RATE;
-  out1 += (outlen / SHAKE128_RATE) * SHAKE128_RATE;
-  out2 += (outlen / SHAKE128_RATE) * SHAKE128_RATE;
-  out3 += (outlen / SHAKE128_RATE) * SHAKE128_RATE;
-
-  if (outlen % SHAKE128_RATE)
-    {
-      keccak_squeezeblocks4x(t0, t1, t2, t3, 1, s, SHAKE128_RATE);
-      for (i = 0; i < outlen % SHAKE128_RATE; i++)
-        {
-          out0[i] = t0[i];
-          out1[i] = t1[i];
-          out2[i] = t2[i];
-          out3[i] = t3[i];
-        }
-    }
-}
-
-
-void _gcry_slhdsa_shake256x4(byte *out0,
-                             byte *out1,
-                             byte *out2,
-                             byte *out3,
-                             unsigned long long outlen,
-                             byte *in0,
-                             byte *in1,
-                             byte *in2,
-                             byte *in3,
-                             unsigned long long inlen)
-{
-  __m256i s[25];
   byte t0[SHAKE256_RATE];
   byte t1[SHAKE256_RATE];
   byte t2[SHAKE256_RATE];
   byte t3[SHAKE256_RATE];
   unsigned int i;
+
+  /* we need 32-byte aligned state */
+  ec = _gcry_mldsa_buf_al_create(&state_alloc, sizeof(__m256i[25]));
+  if (ec)
+    {
+      goto leave;
+    }
+  s = (__m256i *)state_alloc.buf;
 
   /* zero state */
   for (i = 0; i < 25; i++)
@@ -223,6 +187,9 @@ void _gcry_slhdsa_shake256x4(byte *out0,
           out3[i] = t3[i];
         }
     }
+leave:
+  _gcry_mldsa_buf_al_destroy(&state_alloc);
+  return ec;
 }
 
 typedef unsigned long long int UINT64;

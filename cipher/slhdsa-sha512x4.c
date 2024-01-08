@@ -361,32 +361,46 @@ static void _sha512x4(sha512ctx4x *ctx,
   memcpy(out3, out, 64);
 }
 
-void _gcry_slhdsa_sha512x4_seeded(byte *out0,
-                                  byte *out1,
-                                  byte *out2,
-                                  byte *out3,
-                                  const byte *seed,
-                                  unsigned long long seedlen,
-                                  const byte *in0,
-                                  const byte *in1,
-                                  const byte *in2,
-                                  const byte *in3,
-                                  unsigned long long inlen)
+gcry_err_code_t _gcry_slhdsa_sha512x4_seeded(byte *out0,
+                                             byte *out1,
+                                             byte *out2,
+                                             byte *out3,
+                                             const byte *seed,
+                                             unsigned long long seedlen,
+                                             const byte *in0,
+                                             const byte *in1,
+                                             const byte *in2,
+                                             const byte *in3,
+                                             unsigned long long inlen)
 {
-  sha512ctx4x ctx;
+  gcry_err_code_t ec = 0;
+  gcry_slhdsa_buf_al ctx_alloc    = {};
+  sha512ctx4x *ctx   = NULL;
   unsigned long i;
+
+  /* we need 32-byte aligned state */
+  ec = _gcry_mldsa_buf_al_create(&ctx_alloc, sizeof(sha512ctx4x));
+  if (ec)
+    {
+      goto leave;
+    }
+  ctx = (sha512ctx4x *)ctx_alloc.buf;
 
   for (i = 0; i < 8; i++)
     {
       u64 t = (u64)(seed[7]) | (((u64)(seed[6])) << 8) | (((u64)(seed[5])) << 16) | (((u64)(seed[4])) << 24)
               | (((u64)(seed[3])) << 32) | (((u64)(seed[2])) << 40) | (((u64)(seed[1])) << 48)
               | (((u64)(seed[0])) << 56);
-      ctx.s[i] = _mm256_set_epi64x(t, t, t, t);
+      ctx->s[i] = _mm256_set_epi64x(t, t, t, t);
       seed += 8;
     }
 
-  ctx.msglen = seedlen;
-  _sha512x4(&ctx, out0, out1, out2, out3, in0, in1, in2, in3, inlen);
+  ctx->msglen = seedlen;
+  _sha512x4(ctx, out0, out1, out2, out3, in0, in1, in2, in3, inlen);
+
+leave:
+  _gcry_mldsa_buf_al_destroy(&ctx_alloc);
+  return ec;
 }
 
 /* the following functions are required for initializing the hash with the public seed */
