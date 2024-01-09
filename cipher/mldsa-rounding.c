@@ -15,7 +15,7 @@
  *
  * Returns a1.
  **************************************************/
-s32 _gcry_mldsa_power2round(s32 *a0, s32 a)
+s32 _gcry_mldsa_power2round (s32 *a0, s32 a)
 {
   s32 a1;
 
@@ -38,7 +38,7 @@ s32 _gcry_mldsa_power2round(s32 *a0, s32 a)
  *
  * Returns a1.
  **************************************************/
-s32 _gcry_mldsa_decompose(gcry_mldsa_param_t *params, s32 *a0, s32 a)
+s32 _gcry_mldsa_decompose (gcry_mldsa_param_t *params, s32 *a0, s32 a)
 {
   s32 a1;
 
@@ -70,7 +70,7 @@ s32 _gcry_mldsa_decompose(gcry_mldsa_param_t *params, s32 *a0, s32 a)
  *
  * Returns 1 if overflow.
  **************************************************/
-unsigned int _gcry_mldsa_make_hint(gcry_mldsa_param_t *params, s32 a0, s32 a1)
+unsigned int _gcry_mldsa_make_hint (gcry_mldsa_param_t *params, s32 a0, s32 a1)
 {
   if (a0 > params->gamma2 || a0 < -params->gamma2 || (a0 == -params->gamma2 && a1 != 0))
     return 1;
@@ -88,11 +88,11 @@ unsigned int _gcry_mldsa_make_hint(gcry_mldsa_param_t *params, s32 a0, s32 a1)
  *
  * Returns corrected high bits.
  **************************************************/
-s32 _gcry_mldsa_use_hint(gcry_mldsa_param_t *params, s32 a, unsigned int hint)
+s32 _gcry_mldsa_use_hint (gcry_mldsa_param_t *params, s32 a, unsigned int hint)
 {
   s32 a0, a1;
 
-  a1 = _gcry_mldsa_decompose(params, &a0, a);
+  a1 = _gcry_mldsa_decompose (params, &a0, a);
   if (hint == 0)
     return a1;
 

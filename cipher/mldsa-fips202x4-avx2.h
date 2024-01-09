@@ -11,7 +11,7 @@
  */
 #if defined(__WIN32__) || defined(__APPLE__)
 #define decorate(s) _##s
-#define _cdecl(s) decorate(s)
+#define _cdecl(s) decorate (s)
 #define cdecl(s) _cdecl(s)
 #else
 #define cdecl(s) s
@@ -27,18 +27,18 @@ typedef struct
   __m256i s[25];
 } gcry_mldsa_keccakx4_state;
 
-void _gcry_mldsa_avx2_f1600x4(__m256i *s, const u64 *rc);
+void _gcry_mldsa_avx2_f1600x4 (__m256i *s, const u64 *rc);
 
-void _gcry_mldsa_avx2_shake128x4_absorb_once(
+void _gcry_mldsa_avx2_shake128x4_absorb_once (
     gcry_mldsa_keccakx4_state *state, const byte *in0, const byte *in1, const byte *in2, const byte *in3, size_t inlen);
 
-void _gcry_mldsa_avx2_shake128x4_squeezeblocks(
+void _gcry_mldsa_avx2_shake128x4_squeezeblocks (
     byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_mldsa_keccakx4_state *state);
 
-void _gcry_mldsa_avx2_shake256x4_absorb_once(
+void _gcry_mldsa_avx2_shake256x4_absorb_once (
     gcry_mldsa_keccakx4_state *state, const byte *in0, const byte *in1, const byte *in2, const byte *in3, size_t inlen);
 
-void _gcry_mldsa_avx2_shake256x4_squeezeblocks(
+void _gcry_mldsa_avx2_shake256x4_squeezeblocks (
     byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_mldsa_keccakx4_state *state);
 
 #endif

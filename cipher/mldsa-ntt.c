@@ -38,7 +38,7 @@ static const s32 gcry_mldsa_zetas[GCRY_MLDSA_N]
  *
  * Arguments:   - u32 p[GCRY_MLDSA_N]: input/output coefficient array
  **************************************************/
-void _gcry_mldsa_ntt(s32 a[GCRY_MLDSA_N])
+void _gcry_mldsa_ntt (s32 a[GCRY_MLDSA_N])
 {
   unsigned int len, start, j, k;
   s32 zeta, t;
@@ -51,7 +51,7 @@ void _gcry_mldsa_ntt(s32 a[GCRY_MLDSA_N])
           zeta = gcry_mldsa_zetas[++k];
           for (j = start; j < start + len; ++j)
             {
-              t          = _gcry_mldsa_montgomery_reduce((int64_t)zeta * a[j + len]);
+              t          = _gcry_mldsa_montgomery_reduce ((int64_t)zeta * a[j + len]);
               a[j + len] = a[j] - t;
               a[j]       = a[j] + t;
             }
@@ -70,7 +70,7 @@ void _gcry_mldsa_ntt(s32 a[GCRY_MLDSA_N])
  *
  * Arguments:   - u32 p[GCRY_MLDSA_N]: input/output coefficient array
  **************************************************/
-void _gcry_mldsa_invntt_tomont(s32 a[GCRY_MLDSA_N])
+void _gcry_mldsa_invntt_tomont (s32 a[GCRY_MLDSA_N])
 {
   unsigned int start, len, j, k;
   s32 t, zeta;
@@ -87,13 +87,13 @@ void _gcry_mldsa_invntt_tomont(s32 a[GCRY_MLDSA_N])
               t          = a[j];
               a[j]       = t + a[j + len];
               a[j + len] = t - a[j + len];
-              a[j + len] = _gcry_mldsa_montgomery_reduce((int64_t)zeta * a[j + len]);
+              a[j + len] = _gcry_mldsa_montgomery_reduce ((int64_t)zeta * a[j + len]);
             }
         }
     }
 
   for (j = 0; j < GCRY_MLDSA_N; ++j)
     {
-      a[j] = _gcry_mldsa_montgomery_reduce((int64_t)f * a[j]);
+      a[j] = _gcry_mldsa_montgomery_reduce ((int64_t)f * a[j]);
     }
 }

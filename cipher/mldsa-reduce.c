@@ -13,7 +13,7 @@
  *
  * Returns r.
  **************************************************/
-s32 _gcry_mldsa_montgomery_reduce(int64_t a)
+s32 _gcry_mldsa_montgomery_reduce (int64_t a)
 {
   s32 t;
 
@@ -32,7 +32,7 @@ s32 _gcry_mldsa_montgomery_reduce(int64_t a)
  *
  * Returns r.
  **************************************************/
-s32 _gcry_mldsa_reduce32(s32 a)
+s32 _gcry_mldsa_reduce32 (s32 a)
 {
   s32 t;
 
@@ -50,7 +50,7 @@ s32 _gcry_mldsa_reduce32(s32 a)
  *
  * Returns r.
  **************************************************/
-s32 _gcry_mldsa_caddq(s32 a)
+s32 _gcry_mldsa_caddq (s32 a)
 {
   a += (a >> 31) & GCRY_MLDSA_Q;
   return a;
@@ -66,9 +66,9 @@ s32 _gcry_mldsa_caddq(s32 a)
  *
  * Returns r.
  **************************************************/
-s32 _gcry_mldsa_freeze(s32 a)
+s32 _gcry_mldsa_freeze (s32 a)
 {
-  a = _gcry_mldsa_reduce32(a);
-  a = _gcry_mldsa_caddq(a);
+  a = _gcry_mldsa_reduce32 (a);
+  a = _gcry_mldsa_caddq (a);
   return a;
 }

@@ -17,7 +17,7 @@
  */
 #if defined(__WIN32__) || defined(__APPLE__)
 #define decorate(s) _##s
-#define _cdecl(s) decorate(s)
+#define _cdecl(s) decorate (s)
 #define cdecl(s) _cdecl(s)
 #else
 #define cdecl(s) s

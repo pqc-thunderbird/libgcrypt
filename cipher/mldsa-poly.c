@@ -15,12 +15,12 @@
  *
  * Arguments:   - gcry_mldsa_poly *a: pointer to input/output polynomial
  **************************************************/
-void _gcry_mldsa_poly_reduce(gcry_mldsa_poly *a)
+void _gcry_mldsa_poly_reduce (gcry_mldsa_poly *a)
 {
   unsigned int i;
 
   for (i = 0; i < GCRY_MLDSA_N; ++i)
-    a->coeffs[i] = _gcry_mldsa_reduce32(a->coeffs[i]);
+    a->coeffs[i] = _gcry_mldsa_reduce32 (a->coeffs[i]);
 }
 
 /*************************************************
@@ -31,12 +31,12 @@ void _gcry_mldsa_poly_reduce(gcry_mldsa_poly *a)
  *
  * Arguments:   - gcry_mldsa_poly *a: pointer to input/output polynomial
  **************************************************/
-void _gcry_mldsa_poly_caddq(gcry_mldsa_poly *a)
+void _gcry_mldsa_poly_caddq (gcry_mldsa_poly *a)
 {
   unsigned int i;
 
   for (i = 0; i < GCRY_MLDSA_N; ++i)
-    a->coeffs[i] = _gcry_mldsa_caddq(a->coeffs[i]);
+    a->coeffs[i] = _gcry_mldsa_caddq (a->coeffs[i]);
 }
 
 /*************************************************
@@ -48,7 +48,7 @@ void _gcry_mldsa_poly_caddq(gcry_mldsa_poly *a)
  *              - const gcry_mldsa_poly *a: pointer to first summand
  *              - const gcry_mldsa_poly *b: pointer to second summand
  **************************************************/
-void _gcry_mldsa_poly_add(gcry_mldsa_poly *c, const gcry_mldsa_poly *a, const gcry_mldsa_poly *b)
+void _gcry_mldsa_poly_add (gcry_mldsa_poly *c, const gcry_mldsa_poly *a, const gcry_mldsa_poly *b)
 {
   unsigned int i;
 
@@ -67,7 +67,7 @@ void _gcry_mldsa_poly_add(gcry_mldsa_poly *c, const gcry_mldsa_poly *a, const gc
  *              - const gcry_mldsa_poly *b: pointer to second input polynomial to be
  *                               subtraced from first input polynomial
  **************************************************/
-void _gcry_mldsa_poly_sub(gcry_mldsa_poly *c, const gcry_mldsa_poly *a, const gcry_mldsa_poly *b)
+void _gcry_mldsa_poly_sub (gcry_mldsa_poly *c, const gcry_mldsa_poly *a, const gcry_mldsa_poly *b)
 {
   unsigned int i;
 
@@ -83,7 +83,7 @@ void _gcry_mldsa_poly_sub(gcry_mldsa_poly *c, const gcry_mldsa_poly *a, const gc
  *
  * Arguments:   - gcry_mldsa_poly *a: pointer to input/output polynomial
  **************************************************/
-void _gcry_mldsa_poly_shiftl(gcry_mldsa_poly *a)
+void _gcry_mldsa_poly_shiftl (gcry_mldsa_poly *a)
 {
   unsigned int i;
 
@@ -99,9 +99,9 @@ void _gcry_mldsa_poly_shiftl(gcry_mldsa_poly *a)
  *
  * Arguments:   - gcry_mldsa_poly *a: pointer to input/output polynomial
  **************************************************/
-void _gcry_mldsa_poly_ntt(gcry_mldsa_poly *a)
+void _gcry_mldsa_poly_ntt (gcry_mldsa_poly *a)
 {
-  _gcry_mldsa_ntt(a->coeffs);
+  _gcry_mldsa_ntt (a->coeffs);
 }
 
 /*************************************************
@@ -113,9 +113,9 @@ void _gcry_mldsa_poly_ntt(gcry_mldsa_poly *a)
  *
  * Arguments:   - gcry_mldsa_poly *a: pointer to input/output polynomial
  **************************************************/
-void _gcry_mldsa_poly_invntt_tomont(gcry_mldsa_poly *a)
+void _gcry_mldsa_poly_invntt_tomont (gcry_mldsa_poly *a)
 {
-  _gcry_mldsa_invntt_tomont(a->coeffs);
+  _gcry_mldsa_invntt_tomont (a->coeffs);
 }
 
 /*************************************************
@@ -129,12 +129,12 @@ void _gcry_mldsa_poly_invntt_tomont(gcry_mldsa_poly *a)
  *              - const gcry_mldsa_poly *a: pointer to first input polynomial
  *              - const gcry_mldsa_poly *b: pointer to second input polynomial
  **************************************************/
-void _gcry_mldsa_poly_pointwise_montgomery(gcry_mldsa_poly *c, const gcry_mldsa_poly *a, const gcry_mldsa_poly *b)
+void _gcry_mldsa_poly_pointwise_montgomery (gcry_mldsa_poly *c, const gcry_mldsa_poly *a, const gcry_mldsa_poly *b)
 {
   unsigned int i;
 
   for (i = 0; i < GCRY_MLDSA_N; ++i)
-    c->coeffs[i] = _gcry_mldsa_montgomery_reduce((int64_t)a->coeffs[i] * b->coeffs[i]);
+    c->coeffs[i] = _gcry_mldsa_montgomery_reduce ((int64_t)a->coeffs[i] * b->coeffs[i]);
 }
 
 /*************************************************
@@ -149,11 +149,11 @@ void _gcry_mldsa_poly_pointwise_montgomery(gcry_mldsa_poly *c, const gcry_mldsa_
  *              - gcry_mldsa_poly *a0: pointer to output polynomial with coefficients c0
  *              - const gcry_mldsa_poly *a: pointer to input polynomial
  **************************************************/
-void _gcry_mldsa_poly_power2round(gcry_mldsa_poly *a1, gcry_mldsa_poly *a0, const gcry_mldsa_poly *a)
+void _gcry_mldsa_poly_power2round (gcry_mldsa_poly *a1, gcry_mldsa_poly *a0, const gcry_mldsa_poly *a)
 {
   unsigned int i;
   for (i = 0; i < GCRY_MLDSA_N; ++i)
-    a1->coeffs[i] = _gcry_mldsa_power2round(&a0->coeffs[i], a->coeffs[i]);
+    a1->coeffs[i] = _gcry_mldsa_power2round (&a0->coeffs[i], a->coeffs[i]);
 }
 
 /*************************************************
@@ -169,15 +169,15 @@ void _gcry_mldsa_poly_power2round(gcry_mldsa_poly *a1, gcry_mldsa_poly *a0, cons
  *              - gcry_mldsa_poly *a0: pointer to output polynomial with coefficients c0
  *              - const gcry_mldsa_poly *a: pointer to input polynomial
  **************************************************/
-void _gcry_mldsa_poly_decompose(gcry_mldsa_param_t *params,
-                                gcry_mldsa_poly *a1,
-                                gcry_mldsa_poly *a0,
-                                const gcry_mldsa_poly *a)
+void _gcry_mldsa_poly_decompose (gcry_mldsa_param_t *params,
+                                 gcry_mldsa_poly *a1,
+                                 gcry_mldsa_poly *a0,
+                                 const gcry_mldsa_poly *a)
 {
   unsigned int i;
 
   for (i = 0; i < GCRY_MLDSA_N; ++i)
-    a1->coeffs[i] = _gcry_mldsa_decompose(params, &a0->coeffs[i], a->coeffs[i]);
+    a1->coeffs[i] = _gcry_mldsa_decompose (params, &a0->coeffs[i], a->coeffs[i]);
 }
 
 /*************************************************
@@ -193,16 +193,16 @@ void _gcry_mldsa_poly_decompose(gcry_mldsa_param_t *params,
  *
  * Returns number of 1 bits.
  **************************************************/
-unsigned int _gcry_mldsa_poly_make_hint(gcry_mldsa_param_t *params,
-                                        gcry_mldsa_poly *h,
-                                        const gcry_mldsa_poly *a0,
-                                        const gcry_mldsa_poly *a1)
+unsigned int _gcry_mldsa_poly_make_hint (gcry_mldsa_param_t *params,
+                                         gcry_mldsa_poly *h,
+                                         const gcry_mldsa_poly *a0,
+                                         const gcry_mldsa_poly *a1)
 {
   unsigned int i, s = 0;
 
   for (i = 0; i < GCRY_MLDSA_N; ++i)
     {
-      h->coeffs[i] = _gcry_mldsa_make_hint(params, a0->coeffs[i], a1->coeffs[i]);
+      h->coeffs[i] = _gcry_mldsa_make_hint (params, a0->coeffs[i], a1->coeffs[i]);
       s += h->coeffs[i];
     }
 
@@ -218,15 +218,15 @@ unsigned int _gcry_mldsa_poly_make_hint(gcry_mldsa_param_t *params,
  *              - const gcry_mldsa_poly *a: pointer to input polynomial
  *              - const gcry_mldsa_poly *h: pointer to input hint polynomial
  **************************************************/
-void _gcry_mldsa_poly_use_hint(gcry_mldsa_param_t *params,
-                               gcry_mldsa_poly *b,
-                               const gcry_mldsa_poly *a,
-                               const gcry_mldsa_poly *h)
+void _gcry_mldsa_poly_use_hint (gcry_mldsa_param_t *params,
+                                gcry_mldsa_poly *b,
+                                const gcry_mldsa_poly *a,
+                                const gcry_mldsa_poly *h)
 {
   unsigned int i;
 
   for (i = 0; i < GCRY_MLDSA_N; ++i)
-    b->coeffs[i] = _gcry_mldsa_use_hint(params, a->coeffs[i], h->coeffs[i]);
+    b->coeffs[i] = _gcry_mldsa_use_hint (params, a->coeffs[i], h->coeffs[i]);
 }
 
 /*************************************************
@@ -240,7 +240,7 @@ void _gcry_mldsa_poly_use_hint(gcry_mldsa_param_t *params,
  *
  * Returns 0 if norm is strictly smaller than B <= (GCRY_MLDSA_Q-1)/8 and 1 otherwise.
  **************************************************/
-int _gcry_mldsa_poly_chknorm(const gcry_mldsa_poly *a, s32 B)
+int _gcry_mldsa_poly_chknorm (const gcry_mldsa_poly *a, s32 B)
 {
   unsigned int i;
   s32 t;
@@ -280,7 +280,7 @@ int _gcry_mldsa_poly_chknorm(const gcry_mldsa_poly *a, s32 B)
  * Returns number of sampled coefficients. Can be smaller than len if not enough
  * random bytes were given.
  **************************************************/
-static unsigned int rej_uniform(s32 *a, unsigned int len, const byte *buf, unsigned int buflen)
+static unsigned int rej_uniform (s32 *a, unsigned int len, const byte *buf, unsigned int buflen)
 {
   unsigned int ctr, pos;
   u32 t;
@@ -312,7 +312,7 @@ static unsigned int rej_uniform(s32 *a, unsigned int len, const byte *buf, unsig
  *              - u16 nonce: 2-byte nonce
  **************************************************/
 #define POLY_UNIFORM_NBLOCKS ((768 + GCRY_STREAM128_BLOCKBYTES - 1) / GCRY_STREAM128_BLOCKBYTES)
-gcry_err_code_t _gcry_mldsa_poly_uniform(gcry_mldsa_poly *a, const byte seed[GCRY_MLDSA_SEEDBYTES], u16 nonce)
+gcry_err_code_t _gcry_mldsa_poly_uniform (gcry_mldsa_poly *a, const byte seed[GCRY_MLDSA_SEEDBYTES], u16 nonce)
 {
   gcry_err_code_t ec = 0;
   gcry_md_hd_t md    = NULL;
@@ -321,21 +321,21 @@ gcry_err_code_t _gcry_mldsa_poly_uniform(gcry_mldsa_poly *a, const byte seed[GCR
   byte *buf = NULL;
 
   buflen = POLY_UNIFORM_NBLOCKS * GCRY_STREAM128_BLOCKBYTES;
-  buf    = xtrymalloc_secure(buflen + 2);
+  buf    = xtrymalloc_secure (buflen + 2);
   if (!buf)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
 
-  ec = _gcry_mldsa_shake128_stream_init(&md, seed, nonce);
+  ec = _gcry_mldsa_shake128_stream_init (&md, seed, nonce);
   if (ec)
     goto leave;
-  ec = _gcry_mldsa_shake128_squeeze_nblocks(md, POLY_UNIFORM_NBLOCKS, buf);
+  ec = _gcry_mldsa_shake128_squeeze_nblocks (md, POLY_UNIFORM_NBLOCKS, buf);
   if (ec)
     goto leave;
 
-  ctr = rej_uniform(a->coeffs, GCRY_MLDSA_N, buf, buflen);
+  ctr = rej_uniform (a->coeffs, GCRY_MLDSA_N, buf, buflen);
 
   while (ctr < GCRY_MLDSA_N)
     {
@@ -343,16 +343,16 @@ gcry_err_code_t _gcry_mldsa_poly_uniform(gcry_mldsa_poly *a, const byte seed[GCR
       for (i = 0; i < off; ++i)
         buf[i] = buf[buflen - off + i];
 
-      ec = _gcry_mldsa_shake128_squeeze_nblocks(md, 1, buf + off);
+      ec = _gcry_mldsa_shake128_squeeze_nblocks (md, 1, buf + off);
       if (ec)
         goto leave;
       buflen = GCRY_STREAM128_BLOCKBYTES + off;
-      ctr += rej_uniform(a->coeffs + ctr, GCRY_MLDSA_N - ctr, buf, buflen);
+      ctr += rej_uniform (a->coeffs + ctr, GCRY_MLDSA_N - ctr, buf, buflen);
     }
 
 leave:
-  xfree(buf);
-  _gcry_md_close(md);
+  xfree (buf);
+  _gcry_md_close (md);
   return ec;
 }
 
@@ -370,7 +370,7 @@ leave:
  * Returns number of sampled coefficients. Can be smaller than len if not enough
  * random bytes were given.
  **************************************************/
-static unsigned int rej_eta(gcry_mldsa_param_t *params, s32 *a, unsigned int len, const byte *buf, unsigned int buflen)
+static unsigned int rej_eta (gcry_mldsa_param_t *params, s32 *a, unsigned int len, const byte *buf, unsigned int buflen)
 {
   unsigned int ctr, pos;
   u32 t0, t1;
@@ -417,10 +417,10 @@ static unsigned int rej_eta(gcry_mldsa_param_t *params, s32 *a, unsigned int len
  *              - const byte seed[]: byte array with seed of length GCRY_MLDSA_CRHBYTES
  *              - u16 nonce: 2-byte nonce
  **************************************************/
-gcry_err_code_t _gcry_mldsa_poly_uniform_eta(gcry_mldsa_param_t *params,
-                                             gcry_mldsa_poly *a,
-                                             const byte seed[GCRY_MLDSA_CRHBYTES],
-                                             u16 nonce)
+gcry_err_code_t _gcry_mldsa_poly_uniform_eta (gcry_mldsa_param_t *params,
+                                              gcry_mldsa_poly *a,
+                                              const byte seed[GCRY_MLDSA_CRHBYTES],
+                                              u16 nonce)
 {
   gcry_err_code_t ec = 0;
   gcry_md_hd_t md    = NULL;
@@ -438,33 +438,33 @@ gcry_err_code_t _gcry_mldsa_poly_uniform_eta(gcry_mldsa_param_t *params,
       POLY_UNIFORM_ETA_NBLOCKS = ((227 + GCRY_STREAM256_BLOCKBYTES - 1) / GCRY_STREAM256_BLOCKBYTES);
     }
   buflen = POLY_UNIFORM_ETA_NBLOCKS * GCRY_STREAM256_BLOCKBYTES;
-  buf    = xtrymalloc_secure(buflen);
+  buf    = xtrymalloc_secure (buflen);
   if (!buf)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
 
-  ec = _gcry_mldsa_shake256_stream_init(&md, seed, nonce);
+  ec = _gcry_mldsa_shake256_stream_init (&md, seed, nonce);
   if (ec)
     goto leave;
-  ec = _gcry_mldsa_shake256_squeeze_nblocks(md, POLY_UNIFORM_ETA_NBLOCKS, buf);
+  ec = _gcry_mldsa_shake256_squeeze_nblocks (md, POLY_UNIFORM_ETA_NBLOCKS, buf);
   if (ec)
     goto leave;
 
-  ctr = rej_eta(params, a->coeffs, GCRY_MLDSA_N, buf, buflen);
+  ctr = rej_eta (params, a->coeffs, GCRY_MLDSA_N, buf, buflen);
 
   while (ctr < GCRY_MLDSA_N)
     {
-      ec = _gcry_mldsa_shake256_squeeze_nblocks(md, 1, buf);
+      ec = _gcry_mldsa_shake256_squeeze_nblocks (md, 1, buf);
       if (ec)
         goto leave;
-      ctr += rej_eta(params, a->coeffs + ctr, GCRY_MLDSA_N - ctr, buf, GCRY_STREAM256_BLOCKBYTES);
+      ctr += rej_eta (params, a->coeffs + ctr, GCRY_MLDSA_N - ctr, buf, GCRY_STREAM256_BLOCKBYTES);
     }
 
 leave:
-  _gcry_md_close(md);
-  xfree(buf);
+  _gcry_md_close (md);
+  xfree (buf);
   return ec;
 }
 
@@ -479,10 +479,10 @@ leave:
  *              - const byte seed[]: byte array with seed of length GCRY_MLDSA_CRHBYTES
  *              - u16 nonce: 16-bit nonce
  **************************************************/
-gcry_err_code_t _gcry_mldsa_poly_uniform_gamma1(gcry_mldsa_param_t *params,
-                                                gcry_mldsa_poly *a,
-                                                const byte seed[GCRY_MLDSA_CRHBYTES],
-                                                u16 nonce)
+gcry_err_code_t _gcry_mldsa_poly_uniform_gamma1 (gcry_mldsa_param_t *params,
+                                                 gcry_mldsa_poly *a,
+                                                 const byte seed[GCRY_MLDSA_CRHBYTES],
+                                                 u16 nonce)
 {
   gcry_err_code_t ec = 0;
   gcry_md_hd_t md    = NULL;
@@ -491,26 +491,26 @@ gcry_err_code_t _gcry_mldsa_poly_uniform_gamma1(gcry_mldsa_param_t *params,
   unsigned int buflen = POLY_UNIFORM_GAMMA1_NBLOCKS * GCRY_STREAM256_BLOCKBYTES;
   byte *buf           = NULL;
 
-  buf = xtrymalloc_secure(buflen);
+  buf = xtrymalloc_secure (buflen);
   if (!buf)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
 
-  ec = _gcry_mldsa_shake256_stream_init(&md, seed, nonce);
+  ec = _gcry_mldsa_shake256_stream_init (&md, seed, nonce);
   if (ec)
     goto leave;
-  ec = _gcry_mldsa_shake256_squeeze_nblocks(md, POLY_UNIFORM_GAMMA1_NBLOCKS, buf);
+  ec = _gcry_mldsa_shake256_squeeze_nblocks (md, POLY_UNIFORM_GAMMA1_NBLOCKS, buf);
   if (ec)
     goto leave;
 
 
-  _gcry_mldsa_polyz_unpack(params, a, buf);
+  _gcry_mldsa_polyz_unpack (params, a, buf);
 
 leave:
-  xfree(buf);
-  _gcry_md_close(md);
+  xfree (buf);
+  _gcry_md_close (md);
   return ec;
 }
 
@@ -524,9 +524,9 @@ leave:
  * Arguments:   - gcry_mldsa_poly *c: pointer to output polynomial
  *              - const byte mu[]: byte array containing seed of length GCRY_MLDSA_SEEDBYTES
  **************************************************/
-gcry_err_code_t _gcry_mldsa_poly_challenge(gcry_mldsa_param_t *params,
-                                           gcry_mldsa_poly *c,
-                                           const byte seed[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t _gcry_mldsa_poly_challenge (gcry_mldsa_param_t *params,
+                                            gcry_mldsa_poly *c,
+                                            const byte seed[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec = 0;
   gcry_md_hd_t hd    = NULL;
@@ -534,18 +534,18 @@ gcry_err_code_t _gcry_mldsa_poly_challenge(gcry_mldsa_param_t *params,
   uint64_t signs;
   byte *buf = NULL;
 
-  buf = xtrymalloc_secure(GCRY_SHAKE256_RATE);
+  buf = xtrymalloc_secure (GCRY_SHAKE256_RATE);
   if (!buf)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
 
-  ec = _gcry_md_open(&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
+  ec = _gcry_md_open (&hd, GCRY_MD_SHAKE256, GCRY_MD_FLAG_SECURE);
   if (ec)
     goto leave;
-  _gcry_md_write(hd, seed, GCRY_MLDSA_SEEDBYTES);
-  ec = _gcry_mldsa_shake256_squeeze_nblocks(hd, 1, buf);
+  _gcry_md_write (hd, seed, GCRY_MLDSA_SEEDBYTES);
+  ec = _gcry_mldsa_shake256_squeeze_nblocks (hd, 1, buf);
   if (ec)
     goto leave;
 
@@ -562,7 +562,7 @@ gcry_err_code_t _gcry_mldsa_poly_challenge(gcry_mldsa_param_t *params,
         {
           if (pos >= GCRY_SHAKE256_RATE)
             {
-              ec = _gcry_mldsa_shake256_squeeze_nblocks(hd, 1, buf);
+              ec = _gcry_mldsa_shake256_squeeze_nblocks (hd, 1, buf);
               if (ec)
                 goto leave;
               pos = 0;
@@ -578,8 +578,8 @@ gcry_err_code_t _gcry_mldsa_poly_challenge(gcry_mldsa_param_t *params,
     }
 
 leave:
-  xfree(buf);
-  _gcry_md_close(hd);
+  xfree (buf);
+  _gcry_md_close (hd);
   return ec;
 }
 
@@ -592,7 +592,7 @@ leave:
  *                            params->polyeta_packedbytes bytes
  *              - const gcry_mldsa_poly *a: pointer to input polynomial
  **************************************************/
-void _gcry_mldsa_polyeta_pack(gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly *a)
+void _gcry_mldsa_polyeta_pack (gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly *a)
 {
   unsigned int i;
   byte t[8];
@@ -634,7 +634,7 @@ void _gcry_mldsa_polyeta_pack(gcry_mldsa_param_t *params, byte *r, const gcry_ml
  * Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
  *              - const byte *a: byte array with bit-packed polynomial
  **************************************************/
-void _gcry_mldsa_polyeta_unpack(gcry_mldsa_param_t *params, gcry_mldsa_poly *r, const byte *a)
+void _gcry_mldsa_polyeta_unpack (gcry_mldsa_param_t *params, gcry_mldsa_poly *r, const byte *a)
 {
   unsigned int i;
 
@@ -683,7 +683,7 @@ void _gcry_mldsa_polyeta_unpack(gcry_mldsa_param_t *params, gcry_mldsa_poly *r, 
  *                            GCRY_MLDSA_POLYT1_PACKEDBYTES bytes
  *              - const gcry_mldsa_poly *a: pointer to input polynomial
  **************************************************/
-void _gcry_mldsa_polyt1_pack(byte *r, const gcry_mldsa_poly *a)
+void _gcry_mldsa_polyt1_pack (byte *r, const gcry_mldsa_poly *a)
 {
   unsigned int i;
 
@@ -706,7 +706,7 @@ void _gcry_mldsa_polyt1_pack(byte *r, const gcry_mldsa_poly *a)
  * Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
  *              - const byte *a: byte array with bit-packed polynomial
  **************************************************/
-void _gcry_mldsa_polyt1_unpack(gcry_mldsa_poly *r, const byte *a)
+void _gcry_mldsa_polyt1_unpack (gcry_mldsa_poly *r, const byte *a)
 {
   unsigned int i;
 
@@ -728,7 +728,7 @@ void _gcry_mldsa_polyt1_unpack(gcry_mldsa_poly *r, const byte *a)
  *                            GCRY_MLDSA_POLYT0_PACKEDBYTES bytes
  *              - const gcry_mldsa_poly *a: pointer to input polynomial
  **************************************************/
-void _gcry_mldsa_polyt0_pack(byte *r, const gcry_mldsa_poly *a)
+void _gcry_mldsa_polyt0_pack (byte *r, const gcry_mldsa_poly *a)
 {
   unsigned int i;
   u32 t[8];
@@ -775,7 +775,7 @@ void _gcry_mldsa_polyt0_pack(byte *r, const gcry_mldsa_poly *a)
  * Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
  *              - const byte *a: byte array with bit-packed polynomial
  **************************************************/
-void _gcry_mldsa_polyt0_unpack(gcry_mldsa_poly *r, const byte *a)
+void _gcry_mldsa_polyt0_unpack (gcry_mldsa_poly *r, const byte *a)
 {
   unsigned int i;
 
@@ -838,7 +838,7 @@ void _gcry_mldsa_polyt0_unpack(gcry_mldsa_poly *r, const byte *a)
  *                            params->polyz_packedbytes bytes
  *              - const gcry_mldsa_poly *a: pointer to input polynomial
  **************************************************/
-void _gcry_mldsa_polyz_pack(gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly *a)
+void _gcry_mldsa_polyz_pack (gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly *a)
 {
   unsigned int i;
   u32 t[4];
@@ -892,7 +892,7 @@ void _gcry_mldsa_polyz_pack(gcry_mldsa_param_t *params, byte *r, const gcry_mlds
  * Arguments:   - gcry_mldsa_poly *r: pointer to output polynomial
  *              - const byte *a: byte array with bit-packed polynomial
  **************************************************/
-void _gcry_mldsa_polyz_unpack(gcry_mldsa_param_t *params, gcry_mldsa_poly *r, const byte *a)
+void _gcry_mldsa_polyz_unpack (gcry_mldsa_param_t *params, gcry_mldsa_poly *r, const byte *a)
 {
   unsigned int i;
 
@@ -956,7 +956,7 @@ void _gcry_mldsa_polyz_unpack(gcry_mldsa_param_t *params, gcry_mldsa_poly *r, co
  *                            params->polyw1_packedbytes bytes
  *              - const gcry_mldsa_poly *a: pointer to input polynomial
  **************************************************/
-void _gcry_mldsa_polyw1_pack(gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly *a)
+void _gcry_mldsa_polyw1_pack (gcry_mldsa_param_t *params, byte *r, const gcry_mldsa_poly *a)
 {
   unsigned int i;
 

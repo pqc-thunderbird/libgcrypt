@@ -13,11 +13,11 @@
 
 static unsigned int
 /* TODO nbits not meaningful for mldsa */
-mldsa_get_nbits(gcry_sexp_t parms)
+mldsa_get_nbits (gcry_sexp_t parms)
 {
   gpg_err_code_t ec;
   unsigned int nbits;
-  ec = _gcry_pk_util_get_nbits(parms, &nbits);
+  ec = _gcry_pk_util_get_nbits (parms, &nbits);
   if (ec)
     {
       return 0;
@@ -32,7 +32,7 @@ static const char *mldsa_names[] = {
 };
 
 
-static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits, gcry_mldsa_param_t *param)
+static gcry_err_code_t gcry_mldsa_get_param_from_bit_size (size_t nbits, gcry_mldsa_param_t *param)
 {
   /* nbits: mldsa pubkey byte size * 8 */
   switch (nbits)
@@ -89,7 +89,7 @@ static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits, gcry_mld
     }
   else
     {
-      printf("error when determining polyz_packedbytes\n");
+      printf ("error when determining polyz_packedbytes\n");
       return GPG_ERR_GENERAL;
     }
 
@@ -104,7 +104,7 @@ static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits, gcry_mld
     }
   else
     {
-      printf("error when determining polyw1_packedbytes\n");
+      printf ("error when determining polyw1_packedbytes\n");
       return GPG_ERR_GENERAL;
     }
 
@@ -118,7 +118,7 @@ static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits, gcry_mld
     }
   else
     {
-      printf("error when determining polyeta_packedbytes\n");
+      printf ("error when determining polyeta_packedbytes\n");
       return GPG_ERR_GENERAL;
     }
 
@@ -131,34 +131,34 @@ static gcry_err_code_t gcry_mldsa_get_param_from_bit_size(size_t nbits, gcry_mld
 }
 
 
-static gcry_err_code_t extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
-                                                    const char *label,
-                                                    unsigned char **sk_p,
-                                                    size_t exp_len)
+static gcry_err_code_t extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
+                                                     const char *label,
+                                                     unsigned char **sk_p,
+                                                     size_t exp_len)
 {
   gcry_mpi_t sk     = NULL;
   gpg_err_code_t ec = 0;
   size_t nwritten   = 0;
   *sk_p             = 0;
 
-  ec = sexp_extract_param(keyparms, NULL, label, &sk, NULL);
+  ec = sexp_extract_param (keyparms, NULL, label, &sk, NULL);
   if (ec)
     {
-      printf("error from sexp_extract_param (keyparms)\n");
+      printf ("error from sexp_extract_param (keyparms)\n");
       goto leave;
     }
-  if (mpi_get_nbits(sk) != exp_len * 8)
+  if (mpi_get_nbits (sk) != exp_len * 8)
     {
       ec = GPG_ERR_INV_ARG;
       goto leave;
     }
 
-  if (!(*sk_p = xtrymalloc(exp_len)))
+  if (!(*sk_p = xtrymalloc (exp_len)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  _gcry_mpi_print(GCRYMPI_FMT_USG, *sk_p, exp_len, &nwritten, sk);
+  _gcry_mpi_print (GCRYMPI_FMT_USG, *sk_p, exp_len, &nwritten, sk);
 
   if (exp_len != nwritten)
     {
@@ -169,33 +169,33 @@ static gcry_err_code_t extract_opaque_mpi_from_sexp(const gcry_sexp_t keyparms,
 leave:
   if (sk != NULL)
     {
-      _gcry_mpi_release(sk);
+      _gcry_mpi_release (sk);
     }
   if (ec)
     {
-      xfree(*sk_p);
+      xfree (*sk_p);
       *sk_p = 0;
     }
   return ec;
 }
 
 
-static gcry_err_code_t private_key_from_sexp(const gcry_sexp_t keyparms,
+static gcry_err_code_t private_key_from_sexp (const gcry_sexp_t keyparms,
+                                              const gcry_mldsa_param_t param,
+                                              unsigned char **sk_p)
+{
+  return extract_opaque_mpi_from_sexp (keyparms, "/s", sk_p, param.secret_key_bytes);
+}
+
+static gcry_err_code_t public_key_from_sexp (const gcry_sexp_t keyparms,
                                              const gcry_mldsa_param_t param,
-                                             unsigned char **sk_p)
+                                             unsigned char **pk_p)
 {
-  return extract_opaque_mpi_from_sexp(keyparms, "/s", sk_p, param.secret_key_bytes);
-}
-
-static gcry_err_code_t public_key_from_sexp(const gcry_sexp_t keyparms,
-                                            const gcry_mldsa_param_t param,
-                                            unsigned char **pk_p)
-{
-  return extract_opaque_mpi_from_sexp(keyparms, "/p", pk_p, param.public_key_bytes);
+  return extract_opaque_mpi_from_sexp (keyparms, "/p", pk_p, param.public_key_bytes);
 }
 
 
-static gcry_err_code_t mldsa_generate(const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
+static gcry_err_code_t mldsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
 {
   gpg_err_code_t ec = 0;
 
@@ -206,54 +206,54 @@ static gcry_err_code_t mldsa_generate(const gcry_sexp_t genparms, gcry_sexp_t *r
   gcry_mpi_t sk_mpi = NULL;
   gcry_mpi_t pk_mpi = NULL;
 
-  ec = _gcry_pk_util_get_nbits(genparms, &nbits);
+  ec = _gcry_pk_util_get_nbits (genparms, &nbits);
   if (ec)
     return ec;
-  if ((ec = gcry_mldsa_get_param_from_bit_size(nbits, &param)))
+  if ((ec = gcry_mldsa_get_param_from_bit_size (nbits, &param)))
     return ec;
 
-  if (!(sk = xtrymalloc_secure(param.secret_key_bytes)) || !(pk = xtrymalloc(param.public_key_bytes)))
+  if (!(sk = xtrymalloc_secure (param.secret_key_bytes)) || !(pk = xtrymalloc (param.public_key_bytes)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  _gcry_mldsa_keypair(&param, pk, sk);
+  _gcry_mldsa_keypair (&param, pk, sk);
 
-  sk_mpi = _gcry_mpi_set_opaque_copy(sk_mpi, sk, param.secret_key_bytes * 8);
-  pk_mpi = _gcry_mpi_set_opaque_copy(pk_mpi, pk, param.public_key_bytes * 8);
+  sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
+  pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
 
   if (!sk_mpi || !pk_mpi)
     {
-      printf("creating sk_mpi or pk_mpi failed!\n");
+      printf ("creating sk_mpi or pk_mpi failed!\n");
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
 
   if (!ec)
     {
-      ec = sexp_build(r_skey,
-                      NULL,
-                      "(key-data"
-                      " (public-key"
-                      "  (mldsa-ipd(p%m) (nbits%u)))"
-                      " (private-key"
-                      "  (mldsa-ipd(s%m) (nbits%u))))",
-                      pk_mpi,
-                      nbits,
-                      sk_mpi,
-                      nbits,
-                      NULL);
+      ec = sexp_build (r_skey,
+                       NULL,
+                       "(key-data"
+                       " (public-key"
+                       "  (mldsa-ipd(p%m) (nbits%u)))"
+                       " (private-key"
+                       "  (mldsa-ipd(s%m) (nbits%u))))",
+                       pk_mpi,
+                       nbits,
+                       sk_mpi,
+                       nbits,
+                       NULL);
     }
 
 leave:
-  _gcry_mpi_release(sk_mpi);
-  _gcry_mpi_release(pk_mpi);
-  xfree(sk);
-  xfree(pk);
+  _gcry_mpi_release (sk_mpi);
+  _gcry_mpi_release (pk_mpi);
+  xfree (sk);
+  xfree (pk);
   return ec;
 }
 
-static gcry_err_code_t mldsa_sign(gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
+static gcry_err_code_t mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 {
   gpg_err_code_t ec       = 0;
   unsigned char *sig_buf  = NULL;
@@ -266,81 +266,81 @@ static gcry_err_code_t mldsa_sign(gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_s
   gcry_mpi_t data = NULL;
   size_t nwritten = 0;
 
-  unsigned int nbits = mldsa_get_nbits(keyparms);
+  unsigned int nbits = mldsa_get_nbits (keyparms);
   gcry_mldsa_param_t param;
   size_t sig_buf_len = 0;
 
-  if ((ec = gcry_mldsa_get_param_from_bit_size(nbits, &param)))
+  if ((ec = gcry_mldsa_get_param_from_bit_size (nbits, &param)))
     return ec;
-  _gcry_pk_util_init_encoding_ctx(&ctx, PUBKEY_OP_SIGN, nbits);
+  _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_SIGN, nbits);
 
 
-  ec = _gcry_pk_util_data_to_mpi(s_data, &data, &ctx);
+  ec = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
   if (ec)
     goto leave;
-  if (!mpi_is_opaque(data))
+  if (!mpi_is_opaque (data))
     {
-      printf("mldsa only works with opaque mpis!\n");
+      printf ("mldsa only works with opaque mpis!\n");
       ec = GPG_ERR_INV_ARG;
       goto leave;
     }
 
   /* extract msg from mpi */
-  _gcry_mpi_print(GCRYMPI_FMT_USG, NULL, 0, &nwritten, data);
+  _gcry_mpi_print (GCRYMPI_FMT_USG, NULL, 0, &nwritten, data);
   data_buf_len = nwritten;
-  if (!(data_buf = xtrymalloc(data_buf_len)))
+  if (!(data_buf = xtrymalloc (data_buf_len)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  _gcry_mpi_print(GCRYMPI_FMT_USG, data_buf, data_buf_len, &nwritten, data);
+  _gcry_mpi_print (GCRYMPI_FMT_USG, data_buf, data_buf_len, &nwritten, data);
   if (nwritten != data_buf_len)
     {
-      printf("nwritten != data_buf_len\n");
+      printf ("nwritten != data_buf_len\n");
     }
 
   /* extract sk */
-  if ((ec = private_key_from_sexp(keyparms, param, &sk_buf)))
+  if ((ec = private_key_from_sexp (keyparms, param, &sk_buf)))
     {
       goto leave;
     }
 
-  if (!(sig_buf = xtrymalloc(param.signature_bytes)))
+  if (!(sig_buf = xtrymalloc (param.signature_bytes)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
 
-  if (0 != _gcry_mldsa_sign(&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
+  if (0 != _gcry_mldsa_sign (&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
     {
-      printf("sign operation failed\n");
+      printf ("sign operation failed\n");
       ec = GPG_ERR_GENERAL;
       goto leave;
     }
   if (sig_buf_len != param.signature_bytes)
     {
-      printf("unexpected sig buf length\n");
+      printf ("unexpected sig buf length\n");
       ec = GPG_ERR_GENERAL;
       goto leave;
     }
 
-  ec = sexp_build(r_sig, NULL, "(sig-val(mldsa-ipd(a%b)))", sig_buf_len, sig_buf);
+  ec = sexp_build (r_sig, NULL, "(sig-val(mldsa-ipd(a%b)))", sig_buf_len, sig_buf);
   if (ec)
-    printf("sexp build failed\n");
+    printf ("sexp build failed\n");
 
 leave:
-  _gcry_pk_util_free_encoding_ctx(&ctx);
-  xfree(sk_buf);
-  xfree(sig_buf);
-  xfree(data_buf);
-  _gcry_mpi_release(data);
+  _gcry_pk_util_free_encoding_ctx (&ctx);
+  xfree (sk_buf);
+  xfree (sig_buf);
+  xfree (data_buf);
+  _gcry_mpi_release (data);
   if (DBG_CIPHER)
-    log_debug("mldsa_sign    => %s\n", gpg_strerror(ec));
+    log_debug ("mldsa_sign    => %s\n", gpg_strerror (ec));
   return ec;
 }
 
 
-static gcry_err_code_t mldsa_verify(gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
+static gcry_err_code_t mldsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
 {
   gpg_err_code_t ec       = 0;
   unsigned char *sig_buf  = NULL;
@@ -356,82 +356,82 @@ static gcry_err_code_t mldsa_verify(gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_
   gcry_mldsa_param_t param;
   gcry_sexp_t l1 = NULL;
 
-  unsigned int nbits = mldsa_get_nbits(s_keyparms);
-  if ((ec = gcry_mldsa_get_param_from_bit_size(nbits, &param)))
+  unsigned int nbits = mldsa_get_nbits (s_keyparms);
+  if ((ec = gcry_mldsa_get_param_from_bit_size (nbits, &param)))
     return ec;
 
-  _gcry_pk_util_init_encoding_ctx(&ctx, PUBKEY_OP_VERIFY, nbits);
+  _gcry_pk_util_init_encoding_ctx (&ctx, PUBKEY_OP_VERIFY, nbits);
 
-  ec = _gcry_pk_util_data_to_mpi(s_data, &data, &ctx);
+  ec = _gcry_pk_util_data_to_mpi (s_data, &data, &ctx);
   if (ec)
     goto leave;
-  if (!mpi_is_opaque(data))
+  if (!mpi_is_opaque (data))
     {
-      printf("mldsa only works with opaque mpis!\n");
+      printf ("mldsa only works with opaque mpis!\n");
       ec = GPG_ERR_INV_ARG;
       goto leave;
     }
 
   /* extract msg from mpi */
-  _gcry_mpi_print(GCRYMPI_FMT_USG, NULL, 0, &nwritten, data);
+  _gcry_mpi_print (GCRYMPI_FMT_USG, NULL, 0, &nwritten, data);
   data_buf_len = nwritten;
-  if (!(data_buf = xtrymalloc(data_buf_len)))
+  if (!(data_buf = xtrymalloc (data_buf_len)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  _gcry_mpi_print(GCRYMPI_FMT_USG, data_buf, data_buf_len, &nwritten, data);
+  _gcry_mpi_print (GCRYMPI_FMT_USG, data_buf, data_buf_len, &nwritten, data);
   if (nwritten != data_buf_len)
     {
-      printf("nwritten != data_buf_len\n");
+      printf ("nwritten != data_buf_len\n");
     }
 
   /* extract pk */
-  if ((ec = public_key_from_sexp(s_keyparms, param, &pk_buf)))
+  if ((ec = public_key_from_sexp (s_keyparms, param, &pk_buf)))
     {
-      printf("failed to parse public key\n");
+      printf ("failed to parse public key\n");
       goto leave;
     }
 
   /* Extract the signature value.  */
-  ec = _gcry_pk_util_preparse_sigval(s_sig, mldsa_names, &l1, NULL);
+  ec = _gcry_pk_util_preparse_sigval (s_sig, mldsa_names, &l1, NULL);
   if (ec)
     goto leave;
-  ec = sexp_extract_param(l1, NULL, "/a", &sig, NULL);
+  ec = sexp_extract_param (l1, NULL, "/a", &sig, NULL);
   if (ec)
     goto leave;
   if (DBG_CIPHER)
-    log_printmpi("mldsa_verify  sig", sig);
+    log_printmpi ("mldsa_verify  sig", sig);
 
   /* extract sig from mpi */
-  if (!(sig_buf = xtrymalloc(param.signature_bytes)))
+  if (!(sig_buf = xtrymalloc (param.signature_bytes)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  _gcry_mpi_print(GCRYMPI_FMT_USG, sig_buf, param.signature_bytes, &nwritten, sig);
+  _gcry_mpi_print (GCRYMPI_FMT_USG, sig_buf, param.signature_bytes, &nwritten, sig);
   if (nwritten != param.signature_bytes)
     {
       ec = GPG_ERR_BAD_SIGNATURE;
       goto leave;
     }
 
-  if (0 != _gcry_mldsa_verify(&param, sig_buf, param.signature_bytes, data_buf, data_buf_len, pk_buf))
+  if (0 != _gcry_mldsa_verify (&param, sig_buf, param.signature_bytes, data_buf, data_buf_len, pk_buf))
     {
       ec = GPG_ERR_GENERAL;
       goto leave;
     }
 
 leave:
-  _gcry_pk_util_free_encoding_ctx(&ctx);
-  xfree(pk_buf);
-  xfree(data_buf);
-  xfree(sig_buf);
-  _gcry_mpi_release(data);
-  _gcry_mpi_release(sig);
-  sexp_release(l1);
+  _gcry_pk_util_free_encoding_ctx (&ctx);
+  xfree (pk_buf);
+  xfree (data_buf);
+  xfree (sig_buf);
+  _gcry_mpi_release (data);
+  _gcry_mpi_release (sig);
+  sexp_release (l1);
   if (DBG_CIPHER)
-    log_debug("mldsa_verify    => %s\n", gpg_strerror(ec));
+    log_debug ("mldsa_verify    => %s\n", gpg_strerror (ec));
   return ec;
 }
 
