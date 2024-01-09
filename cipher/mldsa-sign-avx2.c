@@ -1,9 +1,10 @@
+#include "avx2-immintrin-support.h"
+#ifdef USE_AVX2
 #include "config.h"
-
+#include "mldsa-sign.h"
 #include <stdint.h>
 #include <string.h>
 #include "config.h"
-#include "mldsa-sign.h"
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-polyvec.h"
 #include "mldsa-poly-avx2.h"
@@ -306,9 +307,8 @@ gcry_err_code_t _gcry_mldsa_sign(
   gcry_mldsa_polybuf_al s2   = {};
   gcry_mldsa_polybuf_al w1   = {};
   gcry_mldsa_polybuf_al tmpv = {};
-  // gcry_mldsa_poly c, tmp;
-  gcry_mldsa_polybuf_al c   = {};
-  gcry_mldsa_polybuf_al tmp = {};
+  gcry_mldsa_polybuf_al c    = {};
+  gcry_mldsa_polybuf_al tmp  = {};
 
   const size_t polysize = sizeof(gcry_mldsa_poly);
   gcry_md_hd_t hd       = NULL;
@@ -588,7 +588,7 @@ gcry_err_code_t _gcry_mldsa_verify(
   /* _gcry_mldsa_avx2_polyw1_pack writes additional 14 bytes */
   _gcry_mldsa_buf_al_create(&buf, params->k * params->polyw1_packedbytes + 14);
 
-  if (!(mu = xtrymalloc_secure(GCRY_MLDSA_CRHBYTES)))
+  if (!(mu = xtrymalloc(GCRY_MLDSA_CRHBYTES)))
     {
       ec = gpg_error_from_syserror();
       goto leave;
@@ -695,3 +695,4 @@ leave:
   _gcry_mldsa_buf_al_destroy(&buf);
   return ec;
 }
+#endif

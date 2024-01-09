@@ -1,6 +1,9 @@
 #ifndef _GCRY_MLDSA_AVX2_POLYVEC_H
 #define _GCRY_MLDSA_AVX2_POLYVEC_H
 
+#include "avx2-immintrin-support.h"
+#ifdef USE_AVX2
+
 #include <stdint.h>
 #include "mldsa-params.h"
 #include "mldsa-poly-avx2.h"
@@ -86,4 +89,5 @@ void _gcry_mldsa_avx2_polyvec_matrix_pointwise_montgomery(gcry_mldsa_param_t *pa
                                                           const byte *mat,
                                                           const byte *v);
 
+#endif
 #endif

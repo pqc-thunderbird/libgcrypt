@@ -1,8 +1,10 @@
+#include "mldsa-poly-avx2.h"
+#ifdef USE_AVX2
 #include <stdint.h>
 #include <immintrin.h>
 #include <string.h>
 #include "config.h"
-#include "mldsa-poly-avx2.h"
+#include "types.h"
 #include "mldsa-symmetric.h"
 #include "mldsa-polyvec-avx2.h"
 #include "mldsa-ntt-avx2.h"
@@ -1216,3 +1218,4 @@ void _gcry_mldsa_avx2_unpack_sk(gcry_mldsa_param_t *params,
     _gcry_mldsa_avx2_polyt0_unpack((gcry_mldsa_poly *)&t0[i * sizeof(gcry_mldsa_poly)],
                                    sk + i * GCRY_MLDSA_POLYT0_PACKEDBYTES);
 }
+#endif

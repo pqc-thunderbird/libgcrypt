@@ -1,8 +1,9 @@
+#include "mldsa-rejsample-avx2.h"
+#ifdef USE_AVX2
 #include <stdint.h>
 #include <immintrin.h>
 #include "config.h"
 #include "types.h"
-#include "mldsa-rejsample-avx2.h"
 #include "mldsa-symmetric.h"
 
 const byte _gcry_mldsa_avx2_idxlut[256][8]
@@ -303,3 +304,4 @@ unsigned int _gcry_mldsa_avx2_rej_eta_avx_eta4(s32 *restrict r, const byte *buf)
 
   return ctr;
 }
+#endif

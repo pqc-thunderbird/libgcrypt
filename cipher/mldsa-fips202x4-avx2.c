@@ -1,10 +1,12 @@
+#include "config.h"
+#include "types.h"
+#include "mldsa-fips202x4-avx2.h"
+#include "avx2-immintrin-support.h"
+#ifdef USE_AVX2
 #include <stddef.h>
 #include <stdint.h>
 #include <immintrin.h>
 #include <string.h>
-#include "config.h"
-#include "types.h"
-#include "mldsa-fips202x4-avx2.h"
 #include "mldsa-symmetric.h"
 
 /* Keccak round constants */
@@ -119,3 +121,4 @@ void _gcry_mldsa_avx2_shake256x4_squeezeblocks(
 {
   keccakx4_squeezeblocks(out0, out1, out2, out3, nblocks, GCRY_SHAKE256_RATE, state->s);
 }
+#endif

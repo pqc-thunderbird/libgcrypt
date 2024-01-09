@@ -1,6 +1,7 @@
+#include "mldsa-polyvec-avx2.h"
+#ifdef USE_AVX2
 #include <stdint.h>
 #include "config.h"
-#include "mldsa-polyvec-avx2.h"
 #include "mldsa-polyvec.h"
 #include "mldsa-poly-avx2.h"
 #include "mldsa-ntt-avx2.h"
@@ -18,7 +19,7 @@ gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf, si
       return gpg_error_from_syserror();
     }
   polybuf->buf
-      = (byte *)((uintptr_t)polybuf->alloc_addr + (32 - ((uintptr_t)polybuf->alloc_addr % 32))); // aligned memory
+      = (byte *)((uintptr_t)polybuf->alloc_addr + (32 - ((uintptr_t)polybuf->alloc_addr % 32)));
 
   memset(polybuf->alloc_addr, 0, alloc_size);
   return 0;
@@ -44,7 +45,7 @@ gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_mldsa_buf_al *buf, size_t size)
       buf->buf = NULL;
       return gpg_error_from_syserror();
     }
-  buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (32 - ((uintptr_t)buf->alloc_addr % 32))); // aligned memory
+  buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (32 - ((uintptr_t)buf->alloc_addr % 32)));
 
   memset(buf->alloc_addr, 0, alloc_size);
   return 0;
@@ -766,3 +767,4 @@ void _gcry_mldsa_avx2_polyveck_pack_w1(gcry_mldsa_param_t *params, byte *r, cons
     _gcry_mldsa_avx2_polyw1_pack(
         params, &r[i * params->polyw1_packedbytes], (gcry_mldsa_poly *)&w1[i * sizeof(gcry_mldsa_poly)]);
 }
+#endif

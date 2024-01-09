@@ -1,8 +1,9 @@
+#include "mldsa-rounding-avx2.h"
+#ifdef USE_AVX2
 #include <stdint.h>
 #include <immintrin.h>
 #include <string.h>
 #include "config.h"
-#include "mldsa-rounding-avx2.h"
 #include "mldsa-rejsample-avx2.h"
 #include "mldsa-consts-avx2.h"
 
@@ -220,3 +221,4 @@ void _gcry_mldsa_avx2_use_hint_avx(gcry_mldsa_param_t *params,
       _mm256_store_si256(&b[i], g);
     }
 }
+#endif

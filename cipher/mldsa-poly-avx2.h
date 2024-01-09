@@ -1,6 +1,9 @@
 #ifndef _GCRY_MLDSA_AVX2_POLY_H
 #define _GCRY_MLDSA_AVX2_POLY_H
 
+#include "avx2-immintrin-support.h"
+#ifdef USE_AVX2
+
 #include <stdint.h>
 #include "mldsa-params.h"
 
@@ -92,4 +95,5 @@ void _gcry_mldsa_avx2_unpack_sk(gcry_mldsa_param_t *params,
                                 byte *s2,
                                 const byte *sk);
 
+#endif
 #endif

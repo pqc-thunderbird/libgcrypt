@@ -2,12 +2,14 @@
 #include "config.h"
 #include "mldsa-params.h"
 #include "mldsa-consts-avx2.h"
+#include "avx2-immintrin-support.h"
 
-#define QINV 58728449 // q^(-1) mod 2^32
-#define MONT -4186625 // 2^32 mod q
-#define DIV 41978     // mont^2/256
+#define QINV 58728449 /* q^(-1) mod 2^32 */
+#define MONT -4186625 /* 2^32 mod q */
+#define DIV 41978     /* mont^2/256 */
 #define DIV_QINV -8395782
 
+#ifdef USE_AVX2
 const qdata_t qdata = {{
 #define _8XQ 0
     GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q, GCRY_MLDSA_Q,
@@ -99,3 +101,4 @@ const qdata_t qdata = {{
     -1374803,     3406031,      -1846953,     -3776993,     -164721,      -1207385,     3014001,      -1799107,
     269760,       472078,       1910376,      -3833893,     -2286327,     -3545687,     -1362209,     1976782,
 }};
+#endif
