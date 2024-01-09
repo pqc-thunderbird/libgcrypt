@@ -104,7 +104,9 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand (gcry_mldsa_param_t *para
     }
   else if (params->k == 6 && params->l == 5)
     {
-      _gcry_mldsa_buf_al_create (&tmp, rowsize, 1);
+      ec = _gcry_mldsa_buf_al_create (&tmp, rowsize, 1);
+      if (ec)
+        goto leave;
       ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0 (params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
       if (ec)
         goto leave;

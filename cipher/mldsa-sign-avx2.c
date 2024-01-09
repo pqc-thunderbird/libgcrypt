@@ -587,7 +587,9 @@ gcry_err_code_t _gcry_mldsa_verify (
   row = rowbuf.buf;
 
   /* _gcry_mldsa_avx2_polyw1_pack writes additional 14 bytes */
-  _gcry_mldsa_buf_al_create (&buf, params->k * params->polyw1_packedbytes + 14, 0);
+  ec = _gcry_mldsa_buf_al_create (&buf, params->k * params->polyw1_packedbytes + 14, 0);
+  if (ec)
+    goto leave;
 
   if (!(mu = xtrymalloc (GCRY_MLDSA_CRHBYTES)))
     {
