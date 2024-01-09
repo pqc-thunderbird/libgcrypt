@@ -10,10 +10,10 @@
 #include "g10lib.h"
 
 /* create 32-byte memory aligned buf on secure heap */
-gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_slhdsa_buf_al *buf, size_t size)
+gcry_err_code_t _gcry_mldsa_buf_al_create (gcry_slhdsa_buf_al *buf, size_t size)
 {
   const size_t alloc_size = size + /*align*/ 32;
-  buf->alloc_addr         = xtrymalloc_secure(alloc_size);
+  buf->alloc_addr         = xtrymalloc_secure (alloc_size);
 
   if (!buf->alloc_addr)
     {
@@ -22,15 +22,15 @@ gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_slhdsa_buf_al *buf, size_t size)
     }
   buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (32 - ((uintptr_t)buf->alloc_addr % 32)));
 
-  memset(buf->alloc_addr, 0, alloc_size);
+  memset (buf->alloc_addr, 0, alloc_size);
   return 0;
 }
 
-void _gcry_mldsa_buf_al_destroy(gcry_slhdsa_buf_al *buf)
+void _gcry_mldsa_buf_al_destroy (gcry_slhdsa_buf_al *buf)
 {
   if (buf->alloc_addr)
     {
-      xfree(buf->alloc_addr);
+      xfree (buf->alloc_addr);
     }
   buf->buf        = NULL;
   buf->alloc_addr = NULL;
@@ -39,7 +39,7 @@ void _gcry_mldsa_buf_al_destroy(gcry_slhdsa_buf_al *buf)
 /**
  * Converts the value of 'in' to 'outlen' bytes in big-endian byte order.
  */
-void _gcry_slhdsa_ull_to_bytes(byte *out, unsigned int outlen, unsigned long long in)
+void _gcry_slhdsa_ull_to_bytes (byte *out, unsigned int outlen, unsigned long long in)
 {
   int i;
 
@@ -51,7 +51,7 @@ void _gcry_slhdsa_ull_to_bytes(byte *out, unsigned int outlen, unsigned long lon
     }
 }
 
-void _gcry_slhdsa_u32_to_bytes(byte *out, u32 in)
+void _gcry_slhdsa_u32_to_bytes (byte *out, u32 in)
 {
   out[0] = (byte)(in >> 24);
   out[1] = (byte)(in >> 16);
@@ -62,7 +62,7 @@ void _gcry_slhdsa_u32_to_bytes(byte *out, u32 in)
 /**
  * Converts the inlen bytes in 'in' from big-endian byte order to an integer.
  */
-unsigned long long _gcry_slhdsa_bytes_to_ull(const byte *in, unsigned int inlen)
+unsigned long long _gcry_slhdsa_bytes_to_ull (const byte *in, unsigned int inlen)
 {
   unsigned long long retval = 0;
   unsigned int i;
@@ -78,20 +78,20 @@ unsigned long long _gcry_slhdsa_bytes_to_ull(const byte *in, unsigned int inlen)
  * Computes a root node given a leaf and an auth path.
  * Expects address to be complete other than the tree_height and tree_index.
  */
-gcry_err_code_t _gcry_slhdsa_compute_root(byte *root,
-                                          const byte *leaf,
-                                          u32 leaf_idx,
-                                          u32 idx_offset,
-                                          const byte *auth_path,
-                                          u32 tree_height,
-                                          const _gcry_slhdsa_param_t *ctx,
-                                          u32 addr[8])
+gcry_err_code_t _gcry_slhdsa_compute_root (byte *root,
+                                           const byte *leaf,
+                                           u32 leaf_idx,
+                                           u32 idx_offset,
+                                           const byte *auth_path,
+                                           u32 tree_height,
+                                           const _gcry_slhdsa_param_t *ctx,
+                                           u32 addr[8])
 {
   gcry_err_code_t ec = 0;
   u32 i;
   byte *buffer = NULL;
 
-  buffer = xtrymalloc_secure(2 * ctx->n);
+  buffer = xtrymalloc_secure (2 * ctx->n);
   if (!buffer)
     {
       ec = gpg_err_code_from_syserror();
@@ -102,13 +102,13 @@ gcry_err_code_t _gcry_slhdsa_compute_root(byte *root,
      and auth_path has to go left. Otherwise it is the other way around. */
   if (leaf_idx & 1)
     {
-      memcpy(buffer + ctx->n, leaf, ctx->n);
-      memcpy(buffer, auth_path, ctx->n);
+      memcpy (buffer + ctx->n, leaf, ctx->n);
+      memcpy (buffer, auth_path, ctx->n);
     }
   else
     {
-      memcpy(buffer, leaf, ctx->n);
-      memcpy(buffer + ctx->n, auth_path, ctx->n);
+      memcpy (buffer, leaf, ctx->n);
+      memcpy (buffer + ctx->n, auth_path, ctx->n);
     }
   auth_path += ctx->n;
 
@@ -117,23 +117,23 @@ gcry_err_code_t _gcry_slhdsa_compute_root(byte *root,
       leaf_idx >>= 1;
       idx_offset >>= 1;
       /* Set the address of the node we're creating. */
-      _gcry_slhdsa_set_tree_height(ctx, addr, i + 1);
-      _gcry_slhdsa_set_tree_index(ctx, addr, leaf_idx + idx_offset);
+      _gcry_slhdsa_set_tree_height (ctx, addr, i + 1);
+      _gcry_slhdsa_set_tree_index (ctx, addr, leaf_idx + idx_offset);
 
       /* Pick the right or left neighbor, depending on parity of the node. */
       if (leaf_idx & 1)
         {
-          ec = _gcry_slhdsa_thash(buffer + ctx->n, buffer, 2, ctx, addr);
+          ec = _gcry_slhdsa_thash (buffer + ctx->n, buffer, 2, ctx, addr);
           if (ec)
             goto leave;
-          memcpy(buffer, auth_path, ctx->n);
+          memcpy (buffer, auth_path, ctx->n);
         }
       else
         {
-          ec = _gcry_slhdsa_thash(buffer, buffer, 2, ctx, addr);
+          ec = _gcry_slhdsa_thash (buffer, buffer, 2, ctx, addr);
           if (ec)
             goto leave;
-          memcpy(buffer + ctx->n, auth_path, ctx->n);
+          memcpy (buffer + ctx->n, auth_path, ctx->n);
         }
       auth_path += ctx->n;
     }
@@ -141,11 +141,11 @@ gcry_err_code_t _gcry_slhdsa_compute_root(byte *root,
   /* The last iteration is exceptional; we do not copy an auth_path node. */
   leaf_idx >>= 1;
   idx_offset >>= 1;
-  _gcry_slhdsa_set_tree_height(ctx, addr, tree_height);
-  _gcry_slhdsa_set_tree_index(ctx, addr, leaf_idx + idx_offset);
-  ec = _gcry_slhdsa_thash(root, buffer, 2, ctx, addr);
+  _gcry_slhdsa_set_tree_height (ctx, addr, tree_height);
+  _gcry_slhdsa_set_tree_index (ctx, addr, leaf_idx + idx_offset);
+  ec = _gcry_slhdsa_thash (root, buffer, 2, ctx, addr);
 
 leave:
-  xfree(buffer);
+  xfree (buffer);
   return ec;
 }

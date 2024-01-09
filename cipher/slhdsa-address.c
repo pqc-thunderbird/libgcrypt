@@ -7,7 +7,7 @@
 /*
  * Specify which level of Merkle tree (the "layer") we're working on
  */
-void _gcry_slhdsa_set_layer_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 layer)
+void _gcry_slhdsa_set_layer_addr (const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 layer)
 {
   ((byte *)addr)[ctx->offset_layer] = (byte)layer;
 }
@@ -15,9 +15,9 @@ void _gcry_slhdsa_set_layer_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u
 /*
  * Specify which Merkle tree within the level (the "tree address") we're working on
  */
-void _gcry_slhdsa_set_tree_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u64 tree)
+void _gcry_slhdsa_set_tree_addr (const _gcry_slhdsa_param_t *ctx, u32 addr[8], u64 tree)
 {
-  _gcry_slhdsa_ull_to_bytes(&((byte *)addr)[ctx->offset_tree], 8, tree);
+  _gcry_slhdsa_ull_to_bytes (&((byte *)addr)[ctx->offset_tree], 8, tree);
 }
 
 /*
@@ -26,7 +26,7 @@ void _gcry_slhdsa_set_tree_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u6
  * hashes don't accidentally get the same address structure.  The type will be
  * one of the SLHDSA_ADDR_TYPE constants
  */
-void _gcry_slhdsa_set_type(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 type)
+void _gcry_slhdsa_set_type (const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 type)
 {
   ((byte *)addr)[ctx->offset_type] = (byte)type;
 }
@@ -35,9 +35,9 @@ void _gcry_slhdsa_set_type(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 typ
  * Copy the layer and tree fields of the address structure.  This is used
  * when we're doing multiple types of hashes within the same Merkle tree
  */
-void _gcry_slhdsa_copy_subtree_addr(const _gcry_slhdsa_param_t *ctx, u32 out[8], const u32 in[8])
+void _gcry_slhdsa_copy_subtree_addr (const _gcry_slhdsa_param_t *ctx, u32 out[8], const u32 in[8])
 {
-  memcpy(out, in, ctx->offset_tree + 8);
+  memcpy (out, in, ctx->offset_tree + 8);
 }
 
 /* These functions are used for OTS addresses. */
@@ -46,7 +46,7 @@ void _gcry_slhdsa_copy_subtree_addr(const _gcry_slhdsa_param_t *ctx, u32 out[8],
  * Specify which Merkle leaf we're working on; that is, which OTS keypair
  * we're talking about.
  */
-void _gcry_slhdsa_set_keypair_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 keypair)
+void _gcry_slhdsa_set_keypair_addr (const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 keypair)
 {
   if (ctx->full_height / ctx->d > 8)
     {
@@ -61,9 +61,9 @@ void _gcry_slhdsa_set_keypair_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8],
  * Copy the layer, tree and keypair fields of the address structure.  This is
  * used when we're doing multiple things within the same OTS keypair
  */
-void _gcry_slhdsa_copy_keypair_addr(const _gcry_slhdsa_param_t *ctx, u32 out[8], const u32 in[8])
+void _gcry_slhdsa_copy_keypair_addr (const _gcry_slhdsa_param_t *ctx, u32 out[8], const u32 in[8])
 {
-  memcpy(out, in, ctx->offset_tree + 8);
+  memcpy (out, in, ctx->offset_tree + 8);
   if (ctx->full_height / ctx->d > 8)
     {
       ((byte *)out)[ctx->offset_kp_addr2] = ((byte *)in)[ctx->offset_kp_addr2];
@@ -75,7 +75,7 @@ void _gcry_slhdsa_copy_keypair_addr(const _gcry_slhdsa_param_t *ctx, u32 out[8],
  * Specify which Merkle chain within the OTS we're working with
  * (the chain address)
  */
-void _gcry_slhdsa_set_chain_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 chain)
+void _gcry_slhdsa_set_chain_addr (const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 chain)
 {
   ((byte *)addr)[ctx->offset_chain_addr] = (byte)chain;
 }
@@ -84,7 +84,7 @@ void _gcry_slhdsa_set_chain_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u
  * Specify where in the Merkle chain we are
  * (the hash address)
  */
-void _gcry_slhdsa_set_hash_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 hash)
+void _gcry_slhdsa_set_hash_addr (const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 hash)
 {
   ((byte *)addr)[ctx->offset_hash_addr] = (byte)hash;
 }
@@ -95,7 +95,7 @@ void _gcry_slhdsa_set_hash_addr(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u3
  * Specify the height of the node in the Merkle/FORS tree we are in
  * (the tree height)
  */
-void _gcry_slhdsa_set_tree_height(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 tree_height)
+void _gcry_slhdsa_set_tree_height (const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 tree_height)
 {
   ((byte *)addr)[ctx->offset_tree_hgt] = (byte)tree_height;
 }
@@ -104,7 +104,7 @@ void _gcry_slhdsa_set_tree_height(const _gcry_slhdsa_param_t *ctx, u32 addr[8], 
  * Specify the distance from the left edge of the node in the Merkle/FORS tree
  * (the tree index)
  */
-void _gcry_slhdsa_set_tree_index(const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 tree_index)
+void _gcry_slhdsa_set_tree_index (const _gcry_slhdsa_param_t *ctx, u32 addr[8], u32 tree_index)
 {
-  _gcry_slhdsa_u32_to_bytes(&((byte *)addr)[ctx->offset_tree_index], tree_index);
+  _gcry_slhdsa_u32_to_bytes (&((byte *)addr)[ctx->offset_tree_index], tree_index);
 }

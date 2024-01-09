@@ -24,18 +24,18 @@
  *
  * This works by using the standard Merkle tree building algorithm,
  */
-gcry_err_code_t _gcry_slhdsa_treehashx1(byte *root,
-                                        byte *auth_path,
-                                        const _gcry_slhdsa_param_t *ctx,
-                                        u32 leaf_idx,
-                                        u32 idx_offset,
-                                        u32 tree_height,
-                                        gcry_err_code_t (*gen_leaf)(byte * /* Where to write the leaves */,
-                                                                    const _gcry_slhdsa_param_t * /* ctx */,
-                                                                    u32 idx,
-                                                                    void *info),
-                                        u32 tree_addr[8],
-                                        void *info)
+gcry_err_code_t _gcry_slhdsa_treehashx1 (byte *root,
+                                         byte *auth_path,
+                                         const _gcry_slhdsa_param_t *ctx,
+                                         u32 leaf_idx,
+                                         u32 idx_offset,
+                                         u32 tree_height,
+                                         gcry_err_code_t (*gen_leaf) (byte * /* Where to write the leaves */,
+                                                                      const _gcry_slhdsa_param_t * /* ctx */,
+                                                                      u32 idx,
+                                                                      void *info),
+                                         u32 tree_addr[8],
+                                         void *info)
 {
   gcry_err_code_t ec = 0;
   u32 idx;
@@ -45,7 +45,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx1(byte *root,
   byte *stack   = NULL;
   byte *current = NULL;
 
-  stack = xtrymalloc_secure(tree_height * ctx->n);
+  stack = xtrymalloc_secure (tree_height * ctx->n);
   if (!stack)
     {
       ec = gpg_err_code_from_syserror();
@@ -62,15 +62,15 @@ gcry_err_code_t _gcry_slhdsa_treehashx1(byte *root,
       /* index[ctx->n].  We do this to minimize the number of copies */
       /* needed during a _gcry_slhdsa_thash */
 
-      xfree(current); /* free for previous loop iteration */
-      current = xtrymalloc_secure(2 * ctx->n);
+      xfree (current); /* free for previous loop iteration */
+      current = xtrymalloc_secure (2 * ctx->n);
       if (!current)
         {
           ec = gpg_err_code_from_syserror();
           goto leave;
         }
 
-      ec = gen_leaf(&current[ctx->n], ctx, idx + idx_offset, info);
+      ec = gen_leaf (&current[ctx->n], ctx, idx + idx_offset, info);
       if (ec)
         goto leave;
 
@@ -84,7 +84,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx1(byte *root,
           if (h == tree_height)
             {
               /* We hit the root; return it */
-              memcpy(root, &current[ctx->n], ctx->n);
+              memcpy (root, &current[ctx->n], ctx->n);
               goto leave;
             }
 
@@ -94,7 +94,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx1(byte *root,
            */
           if ((internal_idx ^ internal_leaf) == 0x01)
             {
-              memcpy(&auth_path[h * ctx->n], &current[ctx->n], ctx->n);
+              memcpy (&auth_path[h * ctx->n], &current[ctx->n], ctx->n);
             }
 
           /*
@@ -113,41 +113,41 @@ gcry_err_code_t _gcry_slhdsa_treehashx1(byte *root,
 
           /* Set the address of the node we're creating. */
           internal_idx_offset >>= 1;
-          _gcry_slhdsa_set_tree_height(ctx, tree_addr, h + 1);
-          _gcry_slhdsa_set_tree_index(ctx, tree_addr, internal_idx / 2 + internal_idx_offset);
+          _gcry_slhdsa_set_tree_height (ctx, tree_addr, h + 1);
+          _gcry_slhdsa_set_tree_index (ctx, tree_addr, internal_idx / 2 + internal_idx_offset);
 
           left = &stack[h * ctx->n];
-          memcpy(&current[0], left, ctx->n);
-          ec = _gcry_slhdsa_thash(&current[1 * ctx->n], &current[0 * ctx->n], 2, ctx, tree_addr);
+          memcpy (&current[0], left, ctx->n);
+          ec = _gcry_slhdsa_thash (&current[1 * ctx->n], &current[0 * ctx->n], 2, ctx, tree_addr);
           if (ec)
             goto leave;
         }
 
       /* We've hit a left child; save the current for when we get the */
       /* corresponding right right */
-      memcpy(&stack[h * ctx->n], &current[ctx->n], ctx->n);
+      memcpy (&stack[h * ctx->n], &current[ctx->n], ctx->n);
     }
 
 leave:
-  xfree(stack);
-  xfree(current);
+  xfree (stack);
+  xfree (current);
   return ec;
 }
 
 
 #ifdef USE_AVX2
-gcry_err_code_t _gcry_slhdsa_treehashx8(byte *root,
-                                        byte *auth_path,
-                                        const _gcry_slhdsa_param_t *ctx,
-                                        u32 leaf_idx,
-                                        u32 idx_offset,
-                                        u32 tree_height,
-                                        gcry_err_code_t (*gen_leafx8)(byte * /* Where to write the leaves */,
-                                                                      const _gcry_slhdsa_param_t *,
-                                                                      u32 idx,
-                                                                      void *info),
-                                        u32 tree_addrx8[8 * 8],
-                                        void *info)
+gcry_err_code_t _gcry_slhdsa_treehashx8 (byte *root,
+                                         byte *auth_path,
+                                         const _gcry_slhdsa_param_t *ctx,
+                                         u32 leaf_idx,
+                                         u32 idx_offset,
+                                         u32 tree_height,
+                                         gcry_err_code_t (*gen_leafx8) (byte * /* Where to write the leaves */,
+                                                                        const _gcry_slhdsa_param_t *,
+                                                                        u32 idx,
+                                                                        void *info),
+                                         u32 tree_addrx8[8 * 8],
+                                         void *info)
 {
   gcry_err_code_t ec = 0;
   /* This is where we keep the intermediate nodes */
@@ -160,7 +160,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx8(byte *root,
   u32 idx;
   u32 max_idx = (1 << (tree_height - 3)) - 1;
 
-  stackx8 = xtrymalloc_secure(8 * tree_height * ctx->n);
+  stackx8 = xtrymalloc_secure (8 * tree_height * ctx->n);
   if (!stackx8)
     {
       ec = gpg_err_code_from_syserror();
@@ -174,14 +174,14 @@ gcry_err_code_t _gcry_slhdsa_treehashx8(byte *root,
       u32 internal_leaf       = leaf_idx;
       u32 h; /* The height we are in the Merkle tree */
 
-      xfree(current); /* free for previous loop iteration */
-      current = xtrymalloc_secure(8 * ctx->n);
+      xfree (current); /* free for previous loop iteration */
+      current = xtrymalloc_secure (8 * ctx->n);
       if (!current)
         {
           ec = gpg_err_code_from_syserror();
           goto leave;
         }
-      ec = gen_leafx8(current, ctx, 8 * idx + idx_offset, info);
+      ec = gen_leafx8 (current, ctx, 8 * idx + idx_offset, info);
       if (ec)
         goto leave;
 
@@ -197,7 +197,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx8(byte *root,
               if (h == tree_height)
                 {
                   /* We hit the root; return it */
-                  memcpy(root, &current[7 * ctx->n], ctx->n);
+                  memcpy (root, &current[7 * ctx->n], ctx->n);
                   goto leave;
                 }
               /* The tree indexing logic is a bit off in this case */
@@ -211,7 +211,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx8(byte *root,
           if (h == tree_height)
             {
               /* We hit the root; return it */
-              memcpy(root, &current[7 * ctx->n], ctx->n);
+              memcpy (root, &current[7 * ctx->n], ctx->n);
               goto leave;
             }
 
@@ -221,7 +221,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx8(byte *root,
            */
           if ((((internal_idx << 3) ^ internal_leaf) & ~0x7) == 0)
             {
-              memcpy(&auth_path[h * ctx->n], &current[(((internal_leaf & 7) ^ 1) + prev_left_adj) * ctx->n], ctx->n);
+              memcpy (&auth_path[h * ctx->n], &current[(((internal_leaf & 7) ^ 1) + prev_left_adj) * ctx->n], ctx->n);
             }
 
           /*
@@ -242,57 +242,57 @@ gcry_err_code_t _gcry_slhdsa_treehashx8(byte *root,
           internal_idx_offset >>= 1;
           for (j = 0; j < 8; j++)
             {
-              _gcry_slhdsa_set_tree_height(ctx, tree_addrx8 + j * 8, h + 1);
-              _gcry_slhdsa_set_tree_index(
+              _gcry_slhdsa_set_tree_height (ctx, tree_addrx8 + j * 8, h + 1);
+              _gcry_slhdsa_set_tree_index (
                   ctx, tree_addrx8 + j * 8, (8 / 2) * (internal_idx & ~1) + j - left_adj + internal_idx_offset);
             }
           left = &stackx8[h * 8 * ctx->n];
-          ec   = _gcry_slhdsa_thash_avx2_sha2(&current[0 * ctx->n],
-                                            &current[1 * ctx->n],
-                                            &current[2 * ctx->n],
-                                            &current[3 * ctx->n],
-                                            &current[4 * ctx->n],
-                                            &current[5 * ctx->n],
-                                            &current[6 * ctx->n],
-                                            &current[7 * ctx->n],
-                                            &left[0 * ctx->n],
-                                            &left[2 * ctx->n],
-                                            &left[4 * ctx->n],
-                                            &left[6 * ctx->n],
-                                            &current[0 * ctx->n],
-                                            &current[2 * ctx->n],
-                                            &current[4 * ctx->n],
-                                            &current[6 * ctx->n],
-                                            2,
-                                            ctx,
-                                            tree_addrx8);
+          ec   = _gcry_slhdsa_thash_avx2_sha2 (&current[0 * ctx->n],
+                                             &current[1 * ctx->n],
+                                             &current[2 * ctx->n],
+                                             &current[3 * ctx->n],
+                                             &current[4 * ctx->n],
+                                             &current[5 * ctx->n],
+                                             &current[6 * ctx->n],
+                                             &current[7 * ctx->n],
+                                             &left[0 * ctx->n],
+                                             &left[2 * ctx->n],
+                                             &left[4 * ctx->n],
+                                             &left[6 * ctx->n],
+                                             &current[0 * ctx->n],
+                                             &current[2 * ctx->n],
+                                             &current[4 * ctx->n],
+                                             &current[6 * ctx->n],
+                                             2,
+                                             ctx,
+                                             tree_addrx8);
           if (ec)
             goto leave;
         }
 
       /* We've hit a left child; save the current for when we get the */
       /* corresponding right right */
-      memcpy(&stackx8[h * 8 * ctx->n], current, 8 * ctx->n);
+      memcpy (&stackx8[h * 8 * ctx->n], current, 8 * ctx->n);
     }
 
 leave:
-  xfree(stackx8);
-  xfree(current);
+  xfree (stackx8);
+  xfree (current);
   return ec;
 }
 
-gcry_err_code_t _gcry_slhdsa_treehashx4(byte *root,
-                                        byte *auth_path,
-                                        const _gcry_slhdsa_param_t *ctx,
-                                        u32 leaf_idx,
-                                        u32 idx_offset,
-                                        u32 tree_height,
-                                        gcry_err_code_t (*gen_leafx4)(byte * /* Where to write the leaves */,
-                                                                      const _gcry_slhdsa_param_t *,
-                                                                      u32 idx,
-                                                                      void *info),
-                                        u32 tree_addrx4[4 * 8],
-                                        void *info)
+gcry_err_code_t _gcry_slhdsa_treehashx4 (byte *root,
+                                         byte *auth_path,
+                                         const _gcry_slhdsa_param_t *ctx,
+                                         u32 leaf_idx,
+                                         u32 idx_offset,
+                                         u32 tree_height,
+                                         gcry_err_code_t (*gen_leafx4) (byte * /* Where to write the leaves */,
+                                                                        const _gcry_slhdsa_param_t *,
+                                                                        u32 idx,
+                                                                        void *info),
+                                         u32 tree_addrx4[4 * 8],
+                                         void *info)
 {
   gcry_err_code_t ec = 0;
   /* This is where we keep the intermediate nodes */
@@ -305,7 +305,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(byte *root,
   u32 idx;
   u32 max_idx = (1 << (tree_height - 2)) - 1;
 
-  stackx4 = xtrymalloc_secure(4 * tree_height * ctx->n);
+  stackx4 = xtrymalloc_secure (4 * tree_height * ctx->n);
   if (!stackx4)
     {
       ec = gpg_err_code_from_syserror();
@@ -323,14 +323,14 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(byte *root,
       u32 internal_leaf       = leaf_idx;
       u32 h; /* The height we are in the Merkle tree */
 
-      xfree(current); /* free for previous loop iteration */
-      current = xtrymalloc_secure(4 * ctx->n);
+      xfree (current); /* free for previous loop iteration */
+      current = xtrymalloc_secure (4 * ctx->n);
       if (!current)
         {
           ec = gpg_err_code_from_syserror();
           goto leave;
         }
-      gen_leafx4(current, ctx, 4 * idx + idx_offset, info);
+      gen_leafx4 (current, ctx, 4 * idx + idx_offset, info);
       for (h = 0;; h++, internal_idx >>= 1, internal_leaf >>= 1)
         {
           byte *left = NULL;
@@ -342,7 +342,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(byte *root,
               if (h == tree_height)
                 {
                   /* We hit the root; return it */
-                  memcpy(root, &current[3 * ctx->n], ctx->n);
+                  memcpy (root, &current[3 * ctx->n], ctx->n);
                   goto leave;
                 }
               /* The tree indexing logic is a bit off in this case */
@@ -356,7 +356,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(byte *root,
           if (h == tree_height)
             {
               /* We hit the root; return it */
-              memcpy(root, &current[3 * ctx->n], ctx->n);
+              memcpy (root, &current[3 * ctx->n], ctx->n);
               goto leave;
             }
 
@@ -366,7 +366,7 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(byte *root,
            */
           if ((((internal_idx << 2) ^ internal_leaf) & ~0x3) == 0)
             {
-              memcpy(&auth_path[h * ctx->n], &current[(((internal_leaf & 3) ^ 1) + prev_left_adj) * ctx->n], ctx->n);
+              memcpy (&auth_path[h * ctx->n], &current[(((internal_leaf & 3) ^ 1) + prev_left_adj) * ctx->n], ctx->n);
             }
 
           /*
@@ -387,34 +387,34 @@ gcry_err_code_t _gcry_slhdsa_treehashx4(byte *root,
           internal_idx_offset >>= 1;
           for (j = 0; j < 4; j++)
             {
-              _gcry_slhdsa_set_tree_height(ctx, tree_addrx4 + j * 8, h + 1);
-              _gcry_slhdsa_set_tree_index(
+              _gcry_slhdsa_set_tree_height (ctx, tree_addrx4 + j * 8, h + 1);
+              _gcry_slhdsa_set_tree_index (
                   ctx, tree_addrx4 + j * 8, (4 / 2) * (internal_idx & ~1) + j - left_adj + internal_idx_offset);
             }
           left = &stackx4[h * 4 * ctx->n];
-          ec   = _gcry_slhdsa_thash_avx2_shake(&current[0 * ctx->n],
-                                             &current[1 * ctx->n],
-                                             &current[2 * ctx->n],
-                                             &current[3 * ctx->n],
-                                             &left[0 * ctx->n],
-                                             &left[2 * ctx->n],
-                                             &current[0 * ctx->n],
-                                             &current[2 * ctx->n],
-                                             2,
-                                             ctx,
-                                             tree_addrx4);
+          ec   = _gcry_slhdsa_thash_avx2_shake (&current[0 * ctx->n],
+                                              &current[1 * ctx->n],
+                                              &current[2 * ctx->n],
+                                              &current[3 * ctx->n],
+                                              &left[0 * ctx->n],
+                                              &left[2 * ctx->n],
+                                              &current[0 * ctx->n],
+                                              &current[2 * ctx->n],
+                                              2,
+                                              ctx,
+                                              tree_addrx4);
           if (ec)
             goto leave;
         }
 
       /* We've hit a left child; save the current for when we get the */
       /* corresponding right right */
-      memcpy(&stackx4[h * 4 * ctx->n], current, 4 * ctx->n);
+      memcpy (&stackx4[h * 4 * ctx->n], current, 4 * ctx->n);
     }
 
 leave:
-  xfree(stackx4);
-  xfree(current);
+  xfree (stackx4);
+  xfree (current);
   return ec;
 }
 #endif

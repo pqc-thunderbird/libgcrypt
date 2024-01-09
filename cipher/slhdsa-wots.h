@@ -14,12 +14,12 @@
  *
  * Writes the computed public key to 'pk'.
  */
-gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig(
+gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig (
     byte *pk, const byte *sig, const byte *msg, const _gcry_slhdsa_param_t *ctx, u32 addr[8]);
 /*
  * Compute the chain lengths needed for a given message hash
  */
-gcry_err_code_t _gcry_slhdsa_chain_lengths(const _gcry_slhdsa_param_t *ctx, unsigned int *lengths, const byte *msg);
+gcry_err_code_t _gcry_slhdsa_chain_lengths (const _gcry_slhdsa_param_t *ctx, unsigned int *lengths, const byte *msg);
 
 struct _gcry_slhdsa_leaf_info_x1_t
 {
@@ -30,7 +30,7 @@ struct _gcry_slhdsa_leaf_info_x1_t
   u32 pk_addr[8];
 };
 
-gcry_err_code_t _gcry_slhdsa_wots_gen_leafx1(byte *dest, const _gcry_slhdsa_param_t *ctx, u32 leaf_idx, void *v_info);
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx1 (byte *dest, const _gcry_slhdsa_param_t *ctx, u32 leaf_idx, void *v_info);
 
 
 #ifdef USE_AVX2
@@ -51,11 +51,11 @@ struct _gcry_slhdsa_leaf_info_x4_t
   u32 pk_addr[4 * 8];
 };
 
-gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig_avx2(
+gcry_err_code_t _gcry_slhdsa_wots_pk_from_sig_avx2 (
     byte *pk, const byte *sig, const byte *msg, const _gcry_slhdsa_param_t *ctx, u32 addr[8]);
 
 
-gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8(byte *dest, const _gcry_slhdsa_param_t *ctx, u32 leaf_idx, void *v_info);
-gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4(byte *dest, const _gcry_slhdsa_param_t *ctx, u32 leaf_idx, void *v_info);
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx8 (byte *dest, const _gcry_slhdsa_param_t *ctx, u32 leaf_idx, void *v_info);
+gcry_err_code_t _gcry_slhdsa_wots_gen_leafx4 (byte *dest, const _gcry_slhdsa_param_t *ctx, u32 leaf_idx, void *v_info);
 #endif
 #endif

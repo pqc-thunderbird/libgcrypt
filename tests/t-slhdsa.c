@@ -71,7 +71,7 @@ typedef enum
 const char *hash_alg_map[] = {"SHA2", "SHAKE"};
 const char *variant_map[]  = {"128f", "128s", "192f", "192s", "256f", "256s"};
 
-const char *hash_from_paramset(slhdsa_paramset paramset)
+const char *hash_from_paramset (slhdsa_paramset paramset)
 {
   switch (paramset)
     {
@@ -93,7 +93,7 @@ const char *hash_from_paramset(slhdsa_paramset paramset)
   return NULL;
 }
 
-const char *variant_from_paramset(slhdsa_paramset paramset)
+const char *variant_from_paramset (slhdsa_paramset paramset)
 {
   switch (paramset)
     {
@@ -121,48 +121,48 @@ const char *variant_from_paramset(slhdsa_paramset paramset)
 
 /* Prepend FNAME with the srcdir environment variable's value and
  * return an allocated filename.  */
-char *prepend_srcdir(const char *fname)
+char *prepend_srcdir (const char *fname)
 {
   static const char *srcdir;
   char *result;
 
-  if (!srcdir && !(srcdir = getenv("srcdir")))
+  if (!srcdir && !(srcdir = getenv ("srcdir")))
     srcdir = ".";
 
-  result = xmalloc(strlen(srcdir) + 1 + strlen(fname) + 1);
-  strcpy(result, srcdir);
-  strcat(result, "/");
-  strcat(result, fname);
+  result = xmalloc (strlen (srcdir) + 1 + strlen (fname) + 1);
+  strcpy (result, srcdir);
+  strcat (result, "/");
+  strcat (result, fname);
   return result;
 }
 
 /* Read next line but skip over empty and comment lines.  Caller must
    xfree the result.  */
-static char *read_textline(FILE *fp, int *lineno)
+static char *read_textline (FILE *fp, int *lineno)
 {
   char line[150000]; /* max smlen for slhdsa is roughly 49k + msg size. 150k to be safe. */
   char *p;
 
   do
     {
-      if (!fgets(line, sizeof line, fp))
+      if (!fgets (line, sizeof line, fp))
         {
-          if (feof(fp))
+          if (feof (fp))
             return NULL;
-          die("error reading input line: %s\n", strerror(errno));
+          die ("error reading input line: %s\n", strerror (errno));
         }
       ++*lineno;
-      p = strchr(line, '\n');
+      p = strchr (line, '\n');
       if (!p)
-        die("input line %d not terminated or too long\n", *lineno);
+        die ("input line %d not terminated or too long\n", *lineno);
       *p = 0;
-      for (p--; p > line && my_isascii(*p) && isspace(*p); p--)
+      for (p--; p > line && my_isascii (*p) && isspace (*p); p--)
         *p = 0;
     }
   while (!*line || *line == '#');
   /* if (debug) */
   /*   info ("read line: '%s'\n", line); */
-  return xstrdup(line);
+  return xstrdup (line);
 }
 
 /**
@@ -174,27 +174,27 @@ static char *read_textline(FILE *fp, int *lineno)
  *
  * @return pointer to hex decoded binary. The function returns NULL on error.
  **/
-static void *hex2buffer(const char *string, size_t *r_length)
+static void *hex2buffer (const char *string, size_t *r_length)
 {
   const char *s;
   byte *buffer;
   size_t length;
-  size_t str_len = strlen(string);
+  size_t str_len = strlen (string);
   *r_length      = 0;
   if (str_len % 2)
     {
       return NULL;
     }
-  buffer = xmalloc(strlen(string) / 2 + 1);
+  buffer = xmalloc (strlen (string) / 2 + 1);
   length = 0;
   for (s = string; *s; s += 2)
     {
-      if (!hexdigitp(s) || !hexdigitp(s + 1))
+      if (!hexdigitp (s) || !hexdigitp (s + 1))
         {
-          xfree(buffer);
+          xfree (buffer);
           return NULL; /* Invalid hex digits. */
         }
-      ((byte *)buffer)[length++] = xtoi_2(s);
+      ((byte *)buffer)[length++] = xtoi_2 (s);
     }
   *r_length = length;
   return buffer;
@@ -202,32 +202,32 @@ static void *hex2buffer(const char *string, size_t *r_length)
 
 /* Copy the data after the tag to BUFFER.  BUFFER will be allocated as
    needed.  */
-static byte *fill_bin_buf_from_hex_line(size_t *r_length, const char tag_char, const char *line, int lineno)
+static byte *fill_bin_buf_from_hex_line (size_t *r_length, const char tag_char, const char *line, int lineno)
 {
   const char *s;
 
 
-  s = strchr(line, tag_char);
+  s = strchr (line, tag_char);
   if (!s)
     {
-      fail("syntax error at input line %d", lineno);
+      fail ("syntax error at input line %d", lineno);
       return NULL;
     }
   s++;
-  while (strlen(s) && s[0] == ' ')
+  while (strlen (s) && s[0] == ' ')
     {
       s++;
     }
   /*for (s++; my_isascii (*s) && isspace (*s); s++)
     ;
   *buffer = xstrdup (s);*/
-  return hex2buffer(s, r_length);
+  return hex2buffer (s, r_length);
 }
 
 
 const char SLHDSA_MESSAGE_TMPL[] = "(data (flags raw_opaque) (value %b))";
 
-static int check_slhdsa_roundtrip(size_t n_tests)
+static int check_slhdsa_roundtrip (size_t n_tests)
 {
   const char *hashalgs[] = {"SHA2", "SHAKE"};
   const char *variants[] = {"128f", "128s", "192f", "192s", "256f", "256s"};
@@ -235,8 +235,8 @@ static int check_slhdsa_roundtrip(size_t n_tests)
   int rc;
 
   for (size_t iteration = 0; iteration < n_tests; iteration++)
-    for (int i = 0; i < sizeof(hashalgs) / sizeof(hashalgs[0]); i++)
-      for (int j = 0; j < sizeof(variants) / sizeof(variants[0]); j++)
+    for (int i = 0; i < sizeof (hashalgs) / sizeof (hashalgs[0]); i++)
+      for (int j = 0; j < sizeof (variants) / sizeof (variants[0]); j++)
         {
           const char *hashalg = hashalgs[i];
           const char *variant = variants[j];
@@ -254,80 +254,80 @@ static int check_slhdsa_roundtrip(size_t n_tests)
           unsigned msg_len;
 
           if (verbose)
-            info("creating %s-%s key\n", hashalg, variant);
+            info ("creating %s-%s key\n", hashalg, variant);
 
-          rc = gcry_sexp_build(
+          rc = gcry_sexp_build (
               &keyparm, NULL, "(genkey (slhdsa-ipd (hash-alg%s) (variant%s)))", hashalg, variant, NULL);
 
           if (rc)
-            die("error creating S-expression: %s\n", gpg_strerror(rc));
-          rc = gcry_pk_genkey(&key, keyparm);
+            die ("error creating S-expression: %s\n", gpg_strerror (rc));
+          rc = gcry_pk_genkey (&key, keyparm);
 
           if (rc)
-            die("error generating slhdsa key: %s\n", gpg_strerror(rc));
+            die ("error generating slhdsa key: %s\n", gpg_strerror (rc));
 
 
-          pkey = gcry_sexp_find_token(key, "public-key", 0);
+          pkey = gcry_sexp_find_token (key, "public-key", 0);
           if (!pkey)
             {
-              die("public part missing in return value\n");
+              die ("public part missing in return value\n");
             }
 
-          skey = gcry_sexp_find_token(key, "private-key", 0);
+          skey = gcry_sexp_find_token (key, "private-key", 0);
           if (!skey)
-            die("private part missing in return value\n");
+            die ("private part missing in return value\n");
 
           /* sign random message of length 1..16384 */
-          gcry_randomize(&msg_len, sizeof(unsigned), GCRY_WEAK_RANDOM);
+          gcry_randomize (&msg_len, sizeof (unsigned), GCRY_WEAK_RANDOM);
           msg_len = 1 + (msg_len % 16384);
-          msg     = xmalloc(msg_len);
+          msg     = xmalloc (msg_len);
           if (!msg)
             {
-              die("error allocating msg buf");
+              die ("error allocating msg buf");
             }
-          gcry_randomize(msg, msg_len, GCRY_WEAK_RANDOM);
+          gcry_randomize (msg, msg_len, GCRY_WEAK_RANDOM);
 
-          rc = gcry_sexp_build(&s_data, NULL, SLHDSA_MESSAGE_TMPL, msg_len, msg, NULL);
+          rc = gcry_sexp_build (&s_data, NULL, SLHDSA_MESSAGE_TMPL, msg_len, msg, NULL);
           if (rc)
             {
-              die("error generating data sexp");
+              die ("error generating data sexp");
             }
 
-          rc = gcry_pk_sign(&r_sig, s_data, skey);
+          rc = gcry_pk_sign (&r_sig, s_data, skey);
           if (rc)
-            die("sign failed\n");
+            die ("sign failed\n");
 
-          printf("verifying correct %s-%s-signature, iteration %ld/%ld\n", hashalg, variant, iteration + 1, n_tests);
-          rc = gcry_pk_verify(r_sig, s_data, pkey);
+          printf ("verifying correct %s-%s-signature, iteration %ld/%ld\n", hashalg, variant, iteration + 1, n_tests);
+          rc = gcry_pk_verify (r_sig, s_data, pkey);
           if (rc)
-            die("verify failed\n");
-          printf("... ok!\n");
+            die ("verify failed\n");
+          printf ("... ok!\n");
 
           /* now verify against a wrong msg */
           msg[0]--;
-          printf("verifying wrong signature\n");
-          rc = gcry_sexp_build(&s_data_wrong, NULL, SLHDSA_MESSAGE_TMPL, msg_len, msg, NULL);
+          printf ("verifying wrong signature\n");
+          rc = gcry_sexp_build (&s_data_wrong, NULL, SLHDSA_MESSAGE_TMPL, msg_len, msg, NULL);
           if (rc)
             {
-              die("error generating data sexp");
+              die ("error generating data sexp");
             }
 
-          rc = gcry_pk_verify(r_sig, s_data_wrong, pkey);
+          rc = gcry_pk_verify (r_sig, s_data_wrong, pkey);
           if (!rc)
-            die("verify succesful for wrong data\n");
-          printf("... ok!\n");
+            die ("verify succesful for wrong data\n");
+          printf ("... ok!\n");
           rc = 0;
 
-          gcry_sexp_release(skey);
-          gcry_sexp_release(pkey);
-          gcry_sexp_release(keyparm);
-          gcry_sexp_release(key);
-          gcry_sexp_release(l);
-          xfree(msg);
+          gcry_sexp_release (skey);
+          gcry_sexp_release (pkey);
+          gcry_sexp_release (keyparm);
+          gcry_sexp_release (key);
+          gcry_sexp_release (l);
+          xfree (msg);
 
-          gcry_sexp_release(r_sig);
-          gcry_sexp_release(s_data);
-          gcry_sexp_release(s_data_wrong);
+          gcry_sexp_release (r_sig);
+          gcry_sexp_release (s_data);
+          gcry_sexp_release (s_data_wrong);
         }
 
   return rc;
@@ -348,43 +348,43 @@ typedef struct
  *      [SHA2,128f]
  *
  */
-static void parse_annotation(char **hashalg, char **variant, const char *line, int lineno)
+static void parse_annotation (char **hashalg, char **variant, const char *line, int lineno)
 {
   const char *s;
   size_t hashalg_size;
 
-  xfree(*hashalg);
+  xfree (*hashalg);
   *hashalg = NULL;
 
-  xfree(*variant);
+  xfree (*variant);
   *variant = NULL;
 
-  s = strchr(line, ',');
+  s = strchr (line, ',');
   if (!s)
     {
-      fail("syntax error at input line %d", lineno);
+      fail ("syntax error at input line %d", lineno);
       return;
     }
 
   hashalg_size             = s - line - 1;
-  *hashalg                 = xmalloc(hashalg_size + 1);
+  *hashalg                 = xmalloc (hashalg_size + 1);
   (*hashalg)[hashalg_size] = '\0';
-  memcpy(*hashalg, line + 1, hashalg_size);
+  memcpy (*hashalg, line + 1, hashalg_size);
 
-  *variant                         = xstrdup(s + 1);
-  (*variant)[strlen(*variant) - 1] = 0; /* Remove ']'.  */
+  *variant                          = xstrdup (s + 1);
+  (*variant)[strlen (*variant) - 1] = 0; /* Remove ']'.  */
 }
 
-int check_test_vec_verify(byte *pk,
-                          unsigned pk_len,
-                          byte *m,
-                          unsigned m_len,
-                          byte *sig,
-                          unsigned sig_len,
-                          const char *hashalg,
-                          const char *variant);
+int check_test_vec_verify (byte *pk,
+                           unsigned pk_len,
+                           byte *m,
+                           unsigned m_len,
+                           byte *sig,
+                           unsigned sig_len,
+                           const char *hashalg,
+                           const char *variant);
 
-static void check_slhdsa_kat(const char *fname)
+static void check_slhdsa_kat (const char *fname)
 {
   const size_t nb_kat_tests = 0; /* zero means all */
   FILE *fp;
@@ -444,15 +444,15 @@ static void check_slhdsa_kat(const char *fname)
                                     }};
   size_t test_count = 0;
 
-  info("Checking Kyber KAT.\n");
+  info ("Checking Kyber KAT.\n");
 
   fname = prepend_srcdir (fname);
-  fp = fopen(fname, "r");
+  fp    = fopen (fname, "r");
   if (!fp)
-    die("error opening '%s': %s\n", fname, strerror(errno));
+    die ("error opening '%s': %s\n", fname, strerror (errno));
   xfree ((void *)fname);
 
-  while ((line = read_textline(fp, &lineno)) && !(nb_kat_tests && nb_kat_tests <= test_count))
+  while ((line = read_textline (fp, &lineno)) && !(nb_kat_tests && nb_kat_tests <= test_count))
     {
       int rc;
       int is_complete = 1;
@@ -465,42 +465,42 @@ static void check_slhdsa_kat(const char *fname)
       test_vec_desc_entry *msg;
 
       /* read in test vec */
-      for (i = 0; i < sizeof(test_vec) / sizeof(test_vec[0]); i++)
+      for (i = 0; i < sizeof (test_vec) / sizeof (test_vec[0]); i++)
         {
           test_vec_desc_entry *e = &test_vec[i];
-          if (!strncmp(line, "#", 1) || !strncmp(line, "\n", 1) || !strncmp(line, "count", 5)
-              || !strncmp(line, "mlen", 4) || !strncmp(line, "smlen", 5))
+          if (!strncmp (line, "#", 1) || !strncmp (line, "\n", 1) || !strncmp (line, "count", 5)
+              || !strncmp (line, "mlen", 4) || !strncmp (line, "smlen", 5))
             {
               continue;
             }
-          else if (!strncmp(line, "[", 1))
+          else if (!strncmp (line, "[", 1))
             {
-              parse_annotation(&hashalg, &variant, line, lineno);
+              parse_annotation (&hashalg, &variant, line, lineno);
               break;
             }
-          else if (!strncmp(line, e->index, strlen(e->index)))
+          else if (!strncmp (line, e->index, strlen (e->index)))
             {
               if (!variant || !hashalg)
                 {
-                  fail("No annotation string found to set slhdsa parameters");
+                  fail ("No annotation string found to set slhdsa parameters");
                 }
               if (e->result_buf != NULL)
                 {
-                  fail("trying to set test vector element twice");
+                  fail ("trying to set test vector element twice");
                 }
-              e->result_buf = fill_bin_buf_from_hex_line(&e->result_buf_len, '=', line, lineno);
+              e->result_buf = fill_bin_buf_from_hex_line (&e->result_buf_len, '=', line, lineno);
               break;
             }
         }
 
       /* check if we completed one test vector: */
-      for (i = 0; i < sizeof(test_vec) / sizeof(test_vec[0]); i++)
+      for (i = 0; i < sizeof (test_vec) / sizeof (test_vec[0]); i++)
         {
           is_complete &= (test_vec[i].result_buf != NULL);
         }
       if (!is_complete)
         {
-          xfree(line);
+          xfree (line);
           continue;
         }
       else
@@ -514,87 +514,87 @@ static void check_slhdsa_kat(const char *fname)
       sig_len = test_vec[4].result_buf_len - test_vec[1].result_buf_len;
       pk      = &test_vec[2];
       msg     = &test_vec[1];
-      rc      = check_test_vec_verify(
+      rc      = check_test_vec_verify (
           pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if (rc)
-        die("Failed to verify KAT test vector");
+        die ("Failed to verify KAT test vector");
 
       /* check that changing m, sig, or pk results in failure*/
-      gcry_randomize(&random, sizeof(unsigned), GCRY_WEAK_RANDOM);
+      gcry_randomize (&random, sizeof (unsigned), GCRY_WEAK_RANDOM);
 
       pk->result_buf[random % pk->result_buf_len]--;
-      rc = check_test_vec_verify(
+      rc = check_test_vec_verify (
           pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if (!rc)
-        die("modified KAT test vector should not be verifiable");
+        die ("modified KAT test vector should not be verifiable");
       pk->result_buf[random % pk->result_buf_len]++;
 
       sig[random % sig_len]--;
-      rc = check_test_vec_verify(
+      rc = check_test_vec_verify (
           pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if (!rc)
-        die("modified KAT test vector should not be verifiable");
+        die ("modified KAT test vector should not be verifiable");
       sig[random % sig_len]++;
 
       msg->result_buf[random % msg->result_buf_len]--;
-      rc = check_test_vec_verify(
+      rc = check_test_vec_verify (
           pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if (!rc)
-        die("modified KAT test vector should not be verifiable");
+        die ("modified KAT test vector should not be verifiable");
       msg->result_buf[random % msg->result_buf_len]++;
 
       sig_len--;
-      rc = check_test_vec_verify(
+      rc = check_test_vec_verify (
           pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if (!rc)
-        die("modified KAT test vector should not be verifiable");
+        die ("modified KAT test vector should not be verifiable");
       sig_len++;
 
       pk->result_buf_len--;
-      rc = check_test_vec_verify(
+      rc = check_test_vec_verify (
           pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if (!rc)
-        die("modified KAT test vector should not be verifiable");
+        die ("modified KAT test vector should not be verifiable");
       pk->result_buf_len++;
 
       msg->result_buf_len--;
-      rc = check_test_vec_verify(
+      rc = check_test_vec_verify (
           pk->result_buf, pk->result_buf_len, msg->result_buf, msg->result_buf_len, sig, sig_len, hashalg, variant);
       if (!rc)
-        die("modified KAT test vector should not be verifiable");
+        die ("modified KAT test vector should not be verifiable");
       msg->result_buf_len++;
 
 
       /* free test vec */
-      xfree(line);
-      for (i = 0; i < sizeof(test_vec) / sizeof(test_vec[0]); i++)
+      xfree (line);
+      for (i = 0; i < sizeof (test_vec) / sizeof (test_vec[0]); i++)
         {
           test_vec_desc_entry *e = &test_vec[i];
           if (e->result_buf)
             {
-              xfree(e->result_buf);
+              xfree (e->result_buf);
             }
           e->result_buf     = NULL;
           e->result_buf_len = 0;
         }
 
-      printf("Test vector %ld successfully verified\n", test_count);
+      printf ("Test vector %ld successfully verified\n", test_count);
     }
 
-  printf("\n");
-  xfree(line);
-  xfree(hashalg);
-  xfree(variant);
+  printf ("\n");
+  xfree (line);
+  xfree (hashalg);
+  xfree (variant);
 }
 
-int check_test_vec_verify(byte *pk,
-                          unsigned pk_len,
-                          byte *m,
-                          unsigned m_len,
-                          byte *sig,
-                          unsigned sig_len,
-                          const char *hashalg,
-                          const char *variant)
+int check_test_vec_verify (byte *pk,
+                           unsigned pk_len,
+                           byte *m,
+                           unsigned m_len,
+                           byte *sig,
+                           unsigned sig_len,
+                           const char *hashalg,
+                           const char *variant)
 {
 
 
@@ -604,46 +604,46 @@ int check_test_vec_verify(byte *pk,
   gcry_sexp_t data_sx;
 
   /* pk */
-  err = gcry_sexp_build(&public_key_sx,
-                        NULL,
-                        "(public-key (slhdsa-ipd (p %b) (hash-alg%s) (variant%s) ))",
-                        pk_len,
-                        pk,
-                        hashalg,
-                        variant,
-                        NULL);
+  err = gcry_sexp_build (&public_key_sx,
+                         NULL,
+                         "(public-key (slhdsa-ipd (p %b) (hash-alg%s) (variant%s) ))",
+                         pk_len,
+                         pk,
+                         hashalg,
+                         variant,
+                         NULL);
   if (err)
     {
-      fail("error building public key SEXP: %s", gpg_strerror(err));
+      fail ("error building public key SEXP: %s", gpg_strerror (err));
     }
 
   /* data */
-  err = gcry_sexp_build(&data_sx, NULL, SLHDSA_MESSAGE_TMPL, m_len, m, NULL);
+  err = gcry_sexp_build (&data_sx, NULL, SLHDSA_MESSAGE_TMPL, m_len, m, NULL);
 
   if (err)
     {
-      fail("error building msg SEXP: %s", gpg_strerror(err));
+      fail ("error building msg SEXP: %s", gpg_strerror (err));
     }
 
   /* sig */
-  err = gcry_sexp_build(&signature_sx, NULL, "(sig-val(slhdsa-ipd(a %b)))", sig_len, sig, NULL);
+  err = gcry_sexp_build (&signature_sx, NULL, "(sig-val(slhdsa-ipd(a %b)))", sig_len, sig, NULL);
 
   if (err)
     {
-      fail("error building msg SEXP: %s", gpg_strerror(err));
+      fail ("error building msg SEXP: %s", gpg_strerror (err));
     }
 
-  err = gcry_pk_verify(signature_sx, data_sx, public_key_sx);
+  err = gcry_pk_verify (signature_sx, data_sx, public_key_sx);
 
-  gcry_sexp_release(public_key_sx);
-  gcry_sexp_release(signature_sx);
-  gcry_sexp_release(data_sx);
+  gcry_sexp_release (public_key_sx);
+  gcry_sexp_release (signature_sx);
+  gcry_sexp_release (data_sx);
   if (err)
     return 1;
   return 0;
 }
 
-int main(int argc, char **argv)
+int main (int argc, char **argv)
 {
 
   int last_argc = -1;
@@ -657,65 +657,65 @@ int main(int argc, char **argv)
   while (argc && last_argc != argc)
     {
       last_argc = argc;
-      if (!strcmp(*argv, "--"))
+      if (!strcmp (*argv, "--"))
         {
           argc--;
           argv++;
           break;
         }
-      else if (!strcmp(*argv, "--help"))
+      else if (!strcmp (*argv, "--help"))
         {
-          fputs("usage: " PGM " [options]\n"
-                "Options:\n"
-                "  --verbose       print timings etc.\n"
-                "  --debug         flyswatter\n"
-                "  --data FNAME    take test data from file FNAME\n",
-                stdout);
-          exit(0);
+          fputs ("usage: " PGM " [options]\n"
+                 "Options:\n"
+                 "  --verbose       print timings etc.\n"
+                 "  --debug         flyswatter\n"
+                 "  --data FNAME    take test data from file FNAME\n",
+                 stdout);
+          exit (0);
         }
-      else if (!strcmp(*argv, "--verbose"))
+      else if (!strcmp (*argv, "--verbose"))
         {
           verbose++;
           argc--;
           argv++;
         }
-      else if (!strcmp(*argv, "--debug"))
+      else if (!strcmp (*argv, "--debug"))
         {
           verbose += 2;
           debug++;
           argc--;
           argv++;
         }
-      else if (!strcmp(*argv, "--data"))
+      else if (!strcmp (*argv, "--data"))
         {
           argc--;
           argv++;
           if (argc)
             {
-              xfree(fname);
-              fname = xstrdup(*argv);
+              xfree (fname);
+              fname = xstrdup (*argv);
               argc--;
               argv++;
             }
         }
-      else if (!strncmp(*argv, "--", 2))
-        die("unknown option '%s'", *argv);
+      else if (!strncmp (*argv, "--", 2))
+        die ("unknown option '%s'", *argv);
     }
 
 
   if (fname)
     {
-      check_slhdsa_kat(fname);
-      xfree(fname);
+      check_slhdsa_kat (fname);
+      xfree (fname);
     }
   else
     {
-      if (check_slhdsa_roundtrip(10))
+      if (check_slhdsa_roundtrip (10))
         {
-          fail("check_slhdsa_roundtrip() yielded an error, aborting");
+          fail ("check_slhdsa_roundtrip() yielded an error, aborting");
         }
     }
 
-  printf("Success.\n");
+  printf ("Success.\n");
   return 0;
 }
