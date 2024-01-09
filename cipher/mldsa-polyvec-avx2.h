@@ -20,10 +20,13 @@ typedef struct
 /* aligned buffer type */
 typedef gcry_mldsa_polybuf_al gcry_mldsa_buf_al;
 
-gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf, size_t mat_elems, size_t vec_elems);
+gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf,
+                                              size_t mat_elems,
+                                              size_t vec_elems,
+                                              int secure);
 void _gcry_mldsa_polybuf_al_destroy(gcry_mldsa_polybuf_al *polybuf);
 
-gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_mldsa_buf_al *buf, size_t size);
+gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_mldsa_buf_al *buf, size_t size, int secure);
 void _gcry_mldsa_buf_al_destroy(gcry_mldsa_buf_al *buf);
 
 

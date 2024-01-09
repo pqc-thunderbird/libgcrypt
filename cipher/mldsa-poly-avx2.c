@@ -354,13 +354,13 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(
 
   /* make sure each sub structure starts memory aligned */
   offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
-  ec        = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
+  ec        = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al, 1);
   if (ec)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  ec = _gcry_mldsa_buf_al_create(&state, sizeof(gcry_mldsa_keccakx4_state));
+  ec = _gcry_mldsa_buf_al_create(&state, sizeof(gcry_mldsa_keccakx4_state), 1);
   if (ec)
     {
       ec = gpg_err_code_from_syserror();
@@ -382,7 +382,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(
   buf.buf[3 * offset_al + GCRY_MLDSA_SEEDBYTES + 0] = nonce3;
   buf.buf[3 * offset_al + GCRY_MLDSA_SEEDBYTES + 1] = nonce3 >> 8;
 
-  _gcry_mldsa_avx2_shake128x4_absorb_once((gcry_mldsa_keccakx4_state*)state.buf,
+  _gcry_mldsa_avx2_shake128x4_absorb_once((gcry_mldsa_keccakx4_state *)state.buf,
                                           &buf.buf[0 * offset_al],
                                           &buf.buf[1 * offset_al],
                                           &buf.buf[2 * offset_al],
@@ -393,7 +393,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(
                                             &buf.buf[2 * offset_al],
                                             &buf.buf[3 * offset_al],
                                             REJ_UNIFORM_NBLOCKS,
-                                            (gcry_mldsa_keccakx4_state*)state.buf);
+                                            (gcry_mldsa_keccakx4_state *)state.buf);
 
   ctr0 = _gcry_mldsa_avx2_rej_uniform_avx(((gcry_mldsa_poly *)a0)->coeffs, &buf.buf[0 * offset_al]);
   ctr1 = _gcry_mldsa_avx2_rej_uniform_avx(((gcry_mldsa_poly *)a1)->coeffs, &buf.buf[1 * offset_al]);
@@ -407,7 +407,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_4x(
                                                 &buf.buf[2 * offset_al],
                                                 &buf.buf[3 * offset_al],
                                                 1,
-                                                (gcry_mldsa_keccakx4_state*)state.buf);
+                                                (gcry_mldsa_keccakx4_state *)state.buf);
 
       ctr0 += rej_uniform(
           ((gcry_mldsa_poly *)a0)->coeffs + ctr0, GCRY_MLDSA_N - ctr0, &buf.buf[0 * offset_al], GCRY_SHAKE128_RATE);
@@ -516,13 +516,13 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_eta_4x(gcry_mldsa_param_t *params,
 
   /* make sure each sub structure starts memory aligned */
   offset_al = REJ_UNIFORM_ETA_BUFLEN + (128 - (REJ_UNIFORM_ETA_BUFLEN % 128));
-  ec        = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
+  ec        = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al, 1);
   if (ec)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-  ec = _gcry_mldsa_buf_al_create(&state, sizeof(gcry_mldsa_keccakx4_state));
+  ec = _gcry_mldsa_buf_al_create(&state, sizeof(gcry_mldsa_keccakx4_state), 1);
   if (ec)
     {
       ec = gpg_err_code_from_syserror();
@@ -621,7 +621,7 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1(gcry_mldsa_param_t *params,
 
   gcry_mldsa_buf_al buf = {};
   /* _gcry_mldsa_avx2_polyz_unpack reads 14 additional bytes */
-  _gcry_mldsa_buf_al_create(&buf, POLY_UNIFORM_GAMMA1_NBLOCKS * GCRY_STREAM256_BLOCKBYTES + 14);
+  _gcry_mldsa_buf_al_create(&buf, POLY_UNIFORM_GAMMA1_NBLOCKS * GCRY_STREAM256_BLOCKBYTES + 14, 1);
 
   ec = _gcry_mldsa_shake256_stream_init(&md, seed, nonce);
   if (ec)
@@ -661,18 +661,18 @@ gcry_err_code_t _gcry_mldsa_avx2_poly_uniform_gamma1_4x(gcry_mldsa_param_t *para
 
   /* make sure each sub structure starts memory aligned */
   offset_al = buf_elem_len + (128 - (buf_elem_len % 128));
-  ec        = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al);
+  ec        = _gcry_mldsa_buf_al_create(&buf, 4 * offset_al, 1);
   if (ec)
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
-    ec = _gcry_mldsa_buf_al_create(&state, sizeof(gcry_mldsa_keccakx4_state));
-if (ec)
-{
-  ec = gpg_err_code_from_syserror();
-  goto leave;
-}
+  ec = _gcry_mldsa_buf_al_create(&state, sizeof(gcry_mldsa_keccakx4_state), 1);
+  if (ec)
+    {
+      ec = gpg_err_code_from_syserror();
+      goto leave;
+    }
 
   f = _mm256_loadu_si256((__m256i *)&seed[0]);
   _mm256_store_si256((__m256i *)&buf.buf[0 * offset_al], f);
@@ -694,14 +694,18 @@ if (ec)
   buf.buf[3 * offset_al + 64] = nonce3;
   buf.buf[3 * offset_al + 65] = nonce3 >> 8;
 
-  _gcry_mldsa_avx2_shake256x4_absorb_once(
-      (gcry_mldsa_keccakx4_state*)state.buf	, &buf.buf[0 * offset_al], &buf.buf[1 * offset_al], &buf.buf[2 * offset_al], &buf.buf[3 * offset_al], 66);
+  _gcry_mldsa_avx2_shake256x4_absorb_once((gcry_mldsa_keccakx4_state *)state.buf,
+                                          &buf.buf[0 * offset_al],
+                                          &buf.buf[1 * offset_al],
+                                          &buf.buf[2 * offset_al],
+                                          &buf.buf[3 * offset_al],
+                                          66);
   _gcry_mldsa_avx2_shake256x4_squeezeblocks(&buf.buf[0 * offset_al],
                                             &buf.buf[1 * offset_al],
                                             &buf.buf[2 * offset_al],
                                             &buf.buf[3 * offset_al],
                                             POLY_UNIFORM_GAMMA1_NBLOCKS,
-                                            (gcry_mldsa_keccakx4_state*)state.buf	);
+                                            (gcry_mldsa_keccakx4_state *)state.buf);
 
   _gcry_mldsa_avx2_polyz_unpack(params, (gcry_mldsa_poly *)a0, &buf.buf[0 * offset_al]);
   _gcry_mldsa_avx2_polyz_unpack(params, (gcry_mldsa_poly *)a1, &buf.buf[1 * offset_al]);

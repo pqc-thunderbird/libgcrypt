@@ -89,10 +89,10 @@ gcry_err_code_t _gcry_mldsa_keypair(gcry_mldsa_param_t *params, byte *pk, byte *
   gcry_mldsa_polybuf_al t0     = {};
   const size_t polysize        = sizeof(gcry_mldsa_poly);
 
-  if ((ec = _gcry_mldsa_polybuf_al_create(&rowbuf, 2, params->l))
-      || (ec = _gcry_mldsa_polybuf_al_create(&s1, 1, params->l))
-      || (ec = _gcry_mldsa_polybuf_al_create(&s2, 1, params->k)) || (ec = _gcry_mldsa_polybuf_al_create(&t1, 1, 1))
-      || (ec = _gcry_mldsa_polybuf_al_create(&t0, 1, 1)))
+  if ((ec = _gcry_mldsa_polybuf_al_create(&rowbuf, 2, params->l, 1))
+      || (ec = _gcry_mldsa_polybuf_al_create(&s1, 1, params->l, 1))
+      || (ec = _gcry_mldsa_polybuf_al_create(&s2, 1, params->k, 1))
+      || (ec = _gcry_mldsa_polybuf_al_create(&t1, 1, 1, 1)) || (ec = _gcry_mldsa_polybuf_al_create(&t0, 1, 1, 1)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
@@ -313,14 +313,14 @@ gcry_err_code_t _gcry_mldsa_sign(
   const size_t polysize = sizeof(gcry_mldsa_poly);
   gcry_md_hd_t hd       = NULL;
 
-  if ((ec = _gcry_mldsa_polybuf_al_create(&mat, params->k, params->l))
-      || (ec = _gcry_mldsa_polybuf_al_create(&s1, 1, params->l))
-      || (ec = _gcry_mldsa_polybuf_al_create(&z, 1, params->l))
-      || (ec = _gcry_mldsa_polybuf_al_create(&tmpv, 1, params->k))
-      || (ec = _gcry_mldsa_polybuf_al_create(&t0, 1, params->k))
-      || (ec = _gcry_mldsa_polybuf_al_create(&s2, 1, params->k))
-      || (ec = _gcry_mldsa_polybuf_al_create(&w1, 1, params->k)) || (ec = _gcry_mldsa_polybuf_al_create(&c, 1, 1))
-      || (ec = _gcry_mldsa_polybuf_al_create(&tmp, 1, 1)))
+  if ((ec = _gcry_mldsa_polybuf_al_create(&mat, params->k, params->l, 1))
+      || (ec = _gcry_mldsa_polybuf_al_create(&s1, 1, params->l, 1))
+      || (ec = _gcry_mldsa_polybuf_al_create(&z, 1, params->l, 1))
+      || (ec = _gcry_mldsa_polybuf_al_create(&tmpv, 1, params->k, 1))
+      || (ec = _gcry_mldsa_polybuf_al_create(&t0, 1, params->k, 1))
+      || (ec = _gcry_mldsa_polybuf_al_create(&s2, 1, params->k, 1))
+      || (ec = _gcry_mldsa_polybuf_al_create(&w1, 1, params->k, 1)) || (ec = _gcry_mldsa_polybuf_al_create(&c, 1, 1, 1))
+      || (ec = _gcry_mldsa_polybuf_al_create(&tmp, 1, 1, 1)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
@@ -575,9 +575,9 @@ gcry_err_code_t _gcry_mldsa_verify(
       goto leave;
     }
 
-  if ((ec = _gcry_mldsa_polybuf_al_create(&rowbuf, 2, params->l))
-      || (ec = _gcry_mldsa_polybuf_al_create(&z, 1, params->l)) || (ec = _gcry_mldsa_polybuf_al_create(&c, 1, 1))
-      || (ec = _gcry_mldsa_polybuf_al_create(&w1, 1, 1)) || (ec = _gcry_mldsa_polybuf_al_create(&h, 1, 1)))
+  if ((ec = _gcry_mldsa_polybuf_al_create(&rowbuf, 2, params->l, 0))
+      || (ec = _gcry_mldsa_polybuf_al_create(&z, 1, params->l, 0)) || (ec = _gcry_mldsa_polybuf_al_create(&c, 1, 1, 0))
+      || (ec = _gcry_mldsa_polybuf_al_create(&w1, 1, 1, 0)) || (ec = _gcry_mldsa_polybuf_al_create(&h, 1, 1, 0)))
     {
       ec = gpg_err_code_from_syserror();
       goto leave;
@@ -586,7 +586,7 @@ gcry_err_code_t _gcry_mldsa_verify(
   row = rowbuf.buf;
 
   /* _gcry_mldsa_avx2_polyw1_pack writes additional 14 bytes */
-  _gcry_mldsa_buf_al_create(&buf, params->k * params->polyw1_packedbytes + 14);
+  _gcry_mldsa_buf_al_create(&buf, params->k * params->polyw1_packedbytes + 14, 0);
 
   if (!(mu = xtrymalloc(GCRY_MLDSA_CRHBYTES)))
     {

@@ -8,18 +8,23 @@
 #include "mldsa-consts-avx2.h"
 
 /* the following functions are for allocating 32-byte aligned memory */
-gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf, size_t mat_elems, size_t vec_elems)
+gcry_err_code_t _gcry_mldsa_polybuf_al_create(gcry_mldsa_polybuf_al *polybuf,
+                                              size_t mat_elems,
+                                              size_t vec_elems,
+                                              int secure)
 {
   const size_t alloc_size = mat_elems * vec_elems * sizeof(gcry_mldsa_poly) + /*align*/ 32;
-  polybuf->alloc_addr     = xtrymalloc_secure(alloc_size);
+  if (secure)
+    polybuf->alloc_addr = xtrymalloc_secure(alloc_size);
+  else
+    polybuf->alloc_addr = xtrymalloc(alloc_size);
 
   if (!polybuf->alloc_addr)
     {
       polybuf->buf = NULL;
       return gpg_error_from_syserror();
     }
-  polybuf->buf
-      = (byte *)((uintptr_t)polybuf->alloc_addr + (32 - ((uintptr_t)polybuf->alloc_addr % 32)));
+  polybuf->buf = (byte *)((uintptr_t)polybuf->alloc_addr + (32 - ((uintptr_t)polybuf->alloc_addr % 32)));
 
   memset(polybuf->alloc_addr, 0, alloc_size);
   return 0;
@@ -35,10 +40,13 @@ void _gcry_mldsa_polybuf_al_destroy(gcry_mldsa_polybuf_al *polybuf)
   polybuf->alloc_addr = NULL;
 }
 
-gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_mldsa_buf_al *buf, size_t size)
+gcry_err_code_t _gcry_mldsa_buf_al_create(gcry_mldsa_buf_al *buf, size_t size, int secure)
 {
   const size_t alloc_size = size + /*align*/ 32;
-  buf->alloc_addr         = xtrymalloc_secure(alloc_size);
+  if (secure)
+    buf->alloc_addr = xtrymalloc_secure(alloc_size);
+  else
+    buf->alloc_addr = xtrymalloc(alloc_size);
 
   if (!buf->alloc_addr)
     {
@@ -96,7 +104,7 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand(gcry_mldsa_param_t *param
     }
   else if (params->k == 6 && params->l == 5)
     {
-      _gcry_mldsa_buf_al_create(&tmp, rowsize);
+      _gcry_mldsa_buf_al_create(&tmp, rowsize, 1);
       ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0(params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
       if (ec)
         goto leave;
