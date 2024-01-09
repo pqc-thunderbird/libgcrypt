@@ -65,6 +65,7 @@ gcry_err_code_t _gcry_slhdsa_initialize_hash_function(_gcry_slhdsa_param_t *ctx)
   return 0;
 }
 
+#ifdef USE_AVX2
 /**
  * Absorb the constant pub_seed using one round of the compression function
  * This initializes state_seeded and state_seeded_512, which can then be
@@ -92,7 +93,7 @@ void initialize_hash_function_sha_avx2(_gcry_slhdsa_param_t *ctx)
       _gcry_slhdsa_sha512_inc_blocks(ctx->state_seeded_512_avx2, block, 1);
     }
 }
-
+#endif
 
 /*
  * Computes PRF(pk_seed, sk_seed, addr).
