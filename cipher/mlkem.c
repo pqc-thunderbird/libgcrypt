@@ -592,8 +592,6 @@ mlkem_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 
 
   /* Extract the key Ciphertext from the SEXP.  */
-  /* TODO: remove debug dump: */
-  _gcry_sexp_dump(s_data);
 
   ec = ciphertext_from_sexp (s_data, &ciphertext, NULL, &param);
   if (ec)

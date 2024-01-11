@@ -57,7 +57,7 @@ _gcry_mlkem_polymatrix_destroy (gcry_mlkem_polyvec **polymat,
                                 gcry_mlkem_param_t const *param)
 {
   unsigned i;
-  if (polymat == NULL)
+  if (polymat == NULL || *polymat == NULL)
     {
       return;
     }

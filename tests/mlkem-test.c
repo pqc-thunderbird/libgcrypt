@@ -334,7 +334,7 @@ check_mlkem_kat (const char *fname, unsigned mlkem_bits)
       test_count++;
       err = gcry_sexp_build (&private_key_sx,
                              NULL,
-                             "(private-key (mlkem (s %b) (nbits%u) ))",
+                             "(private-key (mlkem (z %b) (nbits%u) ))",
                              (int)test_vec[privat_key_idx].result_buf_len,
                              test_vec[privat_key_idx].result_buf,
                              mlkem_bits,
