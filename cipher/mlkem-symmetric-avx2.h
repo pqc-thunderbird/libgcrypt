@@ -9,7 +9,6 @@
 
 typedef keccak_state xof_state;
 
-#define kyber_shake128_absorb KYBER_NAMESPACE(kyber_shake128_absorb)
 void kyber_shake128_absorb(keccak_state *s,
                            const uint8_t seed[KYBER_SYMBYTES],
                            uint8_t x,
@@ -27,6 +26,6 @@ void _gcry_mlkem_shake256_prf(uint8_t *out,
 #define xof_absorb(STATE, SEED, X, Y) kyber_shake128_absorb(STATE, SEED, X, Y)
 #define xof_squeezeblocks(OUT, OUTBLOCKS, STATE) shake128_squeezeblocks(OUT, OUTBLOCKS, STATE)
 #define prf(OUT, OUTBYTES, KEY, NONCE) _gcry_mlkem_shake256_prf(OUT, OUTBYTES, KEY, NONCE)
-#define rkprf(OUT, KEY, INPUT) kyber_shake256_rkprf(OUT, KEY, INPUT)
+#define rkprf(OUT, KEY, INPUT, INPUT_LEN) _gcry_mlkem_mlkem_shake256_rkprf(OUT, KEY, INPUT, INPUT_LEN)
 
 #endif /* SYMMETRIC_H */

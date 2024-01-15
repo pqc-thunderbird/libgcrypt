@@ -6,56 +6,51 @@
 #include "mlkem-indcpa-avx2.h"
 #include "mlkem-verify-avx2.h"
 #include "mlkem-symmetric-avx2.h"
-#include "mlkem-randombytes-avx2.h"
+#include "g10lib.h"
 
 
-/*************************************************
-* Name:        crypto_kem_keypair_derand
-*
-* Description: Generates public and private key
-*              for CCA-secure Kyber key encapsulation mechanism
-*
-* Arguments:   - uint8_t *pk: pointer to output public key
-*                (an already allocated array of KYBER_PUBLICKEYBYTES bytes)
-*              - uint8_t *sk: pointer to output private key
-*                (an already allocated array of KYBER_SECRETKEYBYTES bytes)
-*              - uint8_t *coins: pointer to input randomness
-*                (an already allocated array filled with 2*KYBER_SYMBYTES random bytes)
-**
-* Returns 0 (success)
-**************************************************/
-int crypto_kem_keypair_derand(uint8_t *pk,
+gcry_err_code_t _gcry_mlkem_avx2_kem_keypair_derand(uint8_t *pk,
                               uint8_t *sk,
-                              const uint8_t *coins)
+                              const uint8_t *coins,
+                              gcry_mlkem_param_t *param)
 {
-  indcpa_keypair_derand(pk, sk, coins);
-  memcpy(sk+KYBER_INDCPA_SECRETKEYBYTES, pk, KYBER_PUBLICKEYBYTES);
-  hash_h(sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
+  gpg_err_code_t ec = 0;
+  ec                = indcpa_keypair_derand (pk, sk, coins, param);
+  if (ec)
+    {
+      return ec;
+    }
+  memcpy (&sk[param->indcpa_secret_key_bytes], pk, param->public_key_bytes);
+  _gcry_md_hash_buffer (GCRY_MD_SHA3_256,
+                        sk + param->secret_key_bytes - 2 * GCRY_MLKEM_SYMBYTES,
+                        pk,
+                        param->public_key_bytes);
   /* Value z for pseudo-random output on reject */
-  memcpy(sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES, coins+KYBER_SYMBYTES, KYBER_SYMBYTES);
-  return 0;
+  memcpy (sk + param->secret_key_bytes - GCRY_MLKEM_SYMBYTES,
+          coins + GCRY_MLKEM_SYMBYTES,
+          GCRY_MLKEM_SYMBYTES);
+  return ec;
 }
 
-/*************************************************
-* Name:        crypto_kem_keypair
-*
-* Description: Generates public and private key
-*              for CCA-secure Kyber key encapsulation mechanism
-*
-* Arguments:   - uint8_t *pk: pointer to output public key
-*                (an already allocated array of KYBER_PUBLICKEYBYTES bytes)
-*              - uint8_t *sk: pointer to output private key
-*                (an already allocated array of KYBER_SECRETKEYBYTES bytes)
-*
-* Returns 0 (success)
-**************************************************/
-int crypto_kem_keypair(uint8_t *pk,
-                       uint8_t *sk)
+gcry_err_code_t _gcry_mlkem_avx2_kem_keypair(uint8_t *pk,
+                       uint8_t *sk,
+                       const gcry_mlkem_param_t *param)
 {
-  uint8_t coins[2*KYBER_SYMBYTES];
-  randombytes(coins, 2*KYBER_SYMBYTES);
-  crypto_kem_keypair_derand(pk, sk, coins);
-  return 0;
+  // TODO: remove this function and use #ifdef USE_AVX2 in _gcry_mlkem_kem_keypair
+  gcry_err_code_t ec = 0;
+  byte *coins        = NULL;
+  coins              = xtrymalloc_secure (GCRY_MLKEM_COINS_SIZE);
+  if (!coins)
+    {
+      ec = gpg_err_code_from_syserror ();
+      goto leave;
+    }
+  _gcry_randomize (coins, GCRY_MLKEM_COINS_SIZE, GCRY_VERY_STRONG_RANDOM);
+  ec = _gcry_mlkem_avx2_kem_keypair_derand (pk, sk, coins, param); // TODO align order of coins and param with existing call
+
+leave:
+  xfree (coins);
+  return ec;
 }
 
 /*************************************************
@@ -78,7 +73,8 @@ int crypto_kem_keypair(uint8_t *pk,
 int crypto_kem_enc_derand(uint8_t *ct,
                           uint8_t *ss,
                           const uint8_t *pk,
-                          const uint8_t *coins)
+                          const uint8_t *coins,
+                          const gcry_mlkem_param_t *param)
 {
   uint8_t buf[2*KYBER_SYMBYTES];
   /* Will contain key, coins */
@@ -91,7 +87,7 @@ int crypto_kem_enc_derand(uint8_t *ct,
   hash_g(kr, buf, 2*KYBER_SYMBYTES);
 
   /* coins are in kr+KYBER_SYMBYTES */
-  indcpa_enc(ct, buf, pk, kr+KYBER_SYMBYTES);
+  indcpa_enc(ct, buf, pk, kr+KYBER_SYMBYTES, param);
 
   memcpy(ss,kr,KYBER_SYMBYTES);
   return 0;
@@ -114,11 +110,12 @@ int crypto_kem_enc_derand(uint8_t *ct,
 **************************************************/
 int crypto_kem_enc(uint8_t *ct,
                    uint8_t *ss,
-                   const uint8_t *pk)
+                   const uint8_t *pk,
+                   const gcry_mlkem_param_t *param)
 {
   uint8_t coins[KYBER_SYMBYTES];
-  randombytes(coins, KYBER_SYMBYTES);
-  crypto_kem_enc_derand(ct, ss, pk, coins);
+  _gcry_randomize (coins, KYBER_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
+  crypto_kem_enc_derand(ct, ss, pk, coins, param);
   return 0;
 }
 
@@ -141,7 +138,8 @@ int crypto_kem_enc(uint8_t *ct,
 **************************************************/
 int crypto_kem_dec(uint8_t *ss,
                    const uint8_t *ct,
-                   const uint8_t *sk)
+                   const uint8_t *sk,
+                   const gcry_mlkem_param_t *param)
 {
   int fail;
   uint8_t buf[2*KYBER_SYMBYTES];
@@ -150,19 +148,19 @@ int crypto_kem_dec(uint8_t *ss,
   uint8_t cmp[KYBER_CIPHERTEXTBYTES+KYBER_SYMBYTES];
   const uint8_t *pk = sk+KYBER_INDCPA_SECRETKEYBYTES;
 
-  indcpa_dec(buf, ct, sk);
+  indcpa_dec(buf, ct, sk, param);
 
   /* Multitarget countermeasure for coins + contributory KEM */
   memcpy(buf+KYBER_SYMBYTES, sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, KYBER_SYMBYTES);
   hash_g(kr, buf, 2*KYBER_SYMBYTES);
 
   /* coins are in kr+KYBER_SYMBYTES */
-  indcpa_enc(cmp, buf, pk, kr+KYBER_SYMBYTES);
+  indcpa_enc(cmp, buf, pk, kr+KYBER_SYMBYTES, param);
 
   fail = verify(ct, cmp, KYBER_CIPHERTEXTBYTES);
 
   /* Compute rejection key */
-  rkprf(ss,sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES,ct);
+  rkprf(ss,sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES,ct,KYBER_SECRETKEYBYTES-KYBER_SYMBYTES);
 
   /* Copy true key to return buffer if fail is false */
   cmov(ss,kr,KYBER_SYMBYTES,!fail);

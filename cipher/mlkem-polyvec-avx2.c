@@ -7,7 +7,7 @@
 #include "mlkem-ntt-avx2.h"
 #include "mlkem-consts-avx2.h"
 
-#if (KYBER_POLYVECCOMPRESSEDBYTES == (KYBER_K * 320))
+// #if (KYBER_POLYVECCOMPRESSEDBYTES == (KYBER_K * 320))
 static void poly_compress10(uint8_t r[320], const poly * restrict a)
 {
   unsigned int i;
@@ -71,7 +71,7 @@ static void poly_decompress10(poly * restrict r, const uint8_t a[320+12])
   }
 }
 
-#elif (KYBER_POLYVECCOMPRESSEDBYTES == (KYBER_K * 352))
+// #elif (KYBER_POLYVECCOMPRESSEDBYTES == (KYBER_K * 352))
 static void poly_compress11(uint8_t r[352+2], const poly * restrict a)
 {
   unsigned int i;
@@ -142,8 +142,7 @@ static void poly_decompress11(poly * restrict r, const uint8_t a[352+10])
     _mm256_store_si256(&r->vec[i],f);
   }
 }
-
-#endif
+// #endif
 
 /*************************************************
 * Name:        polyvec_compress
@@ -154,17 +153,20 @@ static void poly_decompress11(poly * restrict r, const uint8_t a[352+10])
 *                            (needs space for KYBER_POLYVECCOMPRESSEDBYTES)
 *              - polyvec *a: pointer to input vector of polynomials
 **************************************************/
-void polyvec_compress(uint8_t r[KYBER_POLYVECCOMPRESSEDBYTES+2], const polyvec *a)
+void polyvec_compress(uint8_t r[KYBER_POLYVECCOMPRESSEDBYTES+2], const polyvec *a, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
 
-#if (KYBER_POLYVECCOMPRESSEDBYTES == (KYBER_K * 320))
-  for(i=0;i<KYBER_K;i++)
+  if(param->polyvec_compressed_bytes == param->k * 320)
+  {
+  for(i=0;i<param->k;i++)
     poly_compress10(&r[320*i],&a->vec[i]);
-#elif (KYBER_POLYVECCOMPRESSEDBYTES == (KYBER_K * 352))
-  for(i=0;i<KYBER_K;i++)
+  }
+  else if(param->polyvec_compressed_bytes == (param->k * 352))
+  {
+  for(i=0;i<param->k;i++)
     poly_compress11(&r[352*i],&a->vec[i]);
-#endif
+  }
 }
 
 /*************************************************
@@ -177,17 +179,20 @@ void polyvec_compress(uint8_t r[KYBER_POLYVECCOMPRESSEDBYTES+2], const polyvec *
 *              - const uint8_t *a: pointer to input byte array
 *                                  (of length KYBER_POLYVECCOMPRESSEDBYTES)
 **************************************************/
-void polyvec_decompress(polyvec *r, const uint8_t a[KYBER_POLYVECCOMPRESSEDBYTES+12])
+void polyvec_decompress(polyvec *r, const uint8_t a[KYBER_POLYVECCOMPRESSEDBYTES+12], const gcry_mlkem_param_t *param)
 {
   unsigned int i;
 
-#if (KYBER_POLYVECCOMPRESSEDBYTES == (KYBER_K * 320))
-  for(i=0;i<KYBER_K;i++)
+  if(param->polyvec_compressed_bytes == param->k * 320)
+  {
+  for(i=0;i<param->k;i++)
     poly_decompress10(&r->vec[i],&a[320*i]);
-#elif (KYBER_POLYVECCOMPRESSEDBYTES == (KYBER_K * 352))
-  for(i=0;i<KYBER_K;i++)
+  }
+  else if(param->polyvec_compressed_bytes == (param->k * 352))
+  {
+  for(i=0;i<param->k;i++)
     poly_decompress11(&r->vec[i],&a[352*i]);
-#endif
+  }
 }
 
 /*************************************************
@@ -199,10 +204,10 @@ void polyvec_decompress(polyvec *r, const uint8_t a[KYBER_POLYVECCOMPRESSEDBYTES
 *                            (needs space for KYBER_POLYVECBYTES)
 *              - polyvec *a: pointer to input vector of polynomials
 **************************************************/
-void polyvec_tobytes(uint8_t r[KYBER_POLYVECBYTES], const polyvec *a)
+void polyvec_tobytes(uint8_t r[KYBER_POLYVECBYTES], const polyvec *a, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
-  for(i=0;i<KYBER_K;i++)
+  for(i=0;i<param->k;i++)
     poly_tobytes(r+i*KYBER_POLYBYTES, &a->vec[i]);
 }
 
@@ -216,10 +221,10 @@ void polyvec_tobytes(uint8_t r[KYBER_POLYVECBYTES], const polyvec *a)
 *              - const polyvec *a: pointer to input vector of polynomials
 *                                  (of length KYBER_POLYVECBYTES)
 **************************************************/
-void polyvec_frombytes(polyvec *r, const uint8_t a[KYBER_POLYVECBYTES])
+void polyvec_frombytes(polyvec *r, const uint8_t a[KYBER_POLYVECBYTES], const gcry_mlkem_param_t *param)
 {
   unsigned int i;
-  for(i=0;i<KYBER_K;i++)
+  for(i=0;i<param->k;i++)
     poly_frombytes(&r->vec[i], a+i*KYBER_POLYBYTES);
 }
 
@@ -230,10 +235,10 @@ void polyvec_frombytes(polyvec *r, const uint8_t a[KYBER_POLYVECBYTES])
 *
 * Arguments:   - polyvec *r: pointer to in/output vector of polynomials
 **************************************************/
-void polyvec_ntt(polyvec *r)
+void polyvec_ntt(polyvec *r, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
-  for(i=0;i<KYBER_K;i++)
+  for(i=0;i<param->k;i++)
     poly_ntt(&r->vec[i]);
 }
 
@@ -245,10 +250,10 @@ void polyvec_ntt(polyvec *r)
 *
 * Arguments:   - polyvec *r: pointer to in/output vector of polynomials
 **************************************************/
-void polyvec_invntt_tomont(polyvec *r)
+void polyvec_invntt_tomont(polyvec *r, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
-  for(i=0;i<KYBER_K;i++)
+  for(i=0;i<param->k;i++)
     poly_invntt_tomont(&r->vec[i]);
 }
 
@@ -262,13 +267,13 @@ void polyvec_invntt_tomont(polyvec *r)
 *            - const polyvec *a: pointer to first input vector of polynomials
 *            - const polyvec *b: pointer to second input vector of polynomials
 **************************************************/
-void polyvec_basemul_acc_montgomery(poly *r, const polyvec *a, const polyvec *b)
+void polyvec_basemul_acc_montgomery(poly *r, const polyvec *a, const polyvec *b, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
   poly tmp;
 
   poly_basemul_montgomery(r,&a->vec[0],&b->vec[0]);
-  for(i=1;i<KYBER_K;i++) {
+  for(i=1;i<param->k;i++) {
     poly_basemul_montgomery(&tmp,&a->vec[i],&b->vec[i]);
     poly_add(r,r,&tmp);
   }
@@ -283,10 +288,10 @@ void polyvec_basemul_acc_montgomery(poly *r, const polyvec *a, const polyvec *b)
 *
 * Arguments:   - polyvec *r: pointer to input/output polynomial
 **************************************************/
-void polyvec_reduce(polyvec *r)
+void polyvec_reduce(polyvec *r, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
-  for(i=0;i<KYBER_K;i++)
+  for(i=0;i<param->k;i++)
     poly_reduce(&r->vec[i]);
 }
 
@@ -299,9 +304,9 @@ void polyvec_reduce(polyvec *r)
 *            - const polyvec *a: pointer to first input vector of polynomials
 *            - const polyvec *b: pointer to second input vector of polynomials
 **************************************************/
-void polyvec_add(polyvec *r, const polyvec *a, const polyvec *b)
+void polyvec_add(polyvec *r, const polyvec *a, const polyvec *b, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
-  for(i=0;i<KYBER_K;i++)
+  for(i=0;i<param->k;i++)
     poly_add(&r->vec[i], &a->vec[i], &b->vec[i]);
 }

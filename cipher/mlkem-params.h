@@ -45,6 +45,7 @@ typedef struct
   u16 secret_key_bytes;
   u16 ciphertext_bytes;
 
+  uint8_t use_avx2; /* TODO: remove */
 } gcry_mlkem_param_t;
 
 

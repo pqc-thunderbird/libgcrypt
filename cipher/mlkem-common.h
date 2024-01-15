@@ -57,5 +57,10 @@ gcry_err_code_t _gcry_mlkem_kem_dec (byte *ss,
                                      const byte *sk,
                                      gcry_mlkem_param_t *param);
 
+gcry_err_code_t
+_gcry_mlkem_mlkem_shake256_rkprf (byte out[GCRY_MLKEM_SSBYTES],
+                                  const byte key[GCRY_MLKEM_SYMBYTES],
+                                  const byte *input,
+                                  size_t input_length);
 
 #endif /* GCRYPT_MLKEM_COMMON_H */

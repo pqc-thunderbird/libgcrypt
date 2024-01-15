@@ -310,7 +310,6 @@ void poly_getnoise_eta2(poly *r, const uint8_t seed[KYBER_SYMBYTES], uint8_t non
   poly_cbd_eta2(r, buf.vec);
 }
 
-#ifndef KYBER_90S
 #define NOISE_NBLOCKS ((KYBER_ETA1*KYBER_N/4+SHAKE256_RATE-1)/SHAKE256_RATE)
 void poly_getnoise_eta1_4x(poly *r0,
                            poly *r1,
@@ -380,7 +379,6 @@ void poly_getnoise_eta1122_4x(poly *r0,
   poly_cbd_eta2(r2, buf[2].vec);
   poly_cbd_eta2(r3, buf[3].vec);
 }
-#endif
 #endif
 
 /*************************************************
