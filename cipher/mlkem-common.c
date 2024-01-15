@@ -30,6 +30,8 @@
 #include "mlkem-symmetric.h"
 #include "gcrypt.h"
 #include "bufhelp.h"
+#include "mlkem-indcpa-avx2.h" // TODO
+#include "mlkem-kem-avx2.h" // TODO
 
 #include "g10lib.h"
 
@@ -634,6 +636,18 @@ _gcry_mlkem_mlkem_shake256_rkprf (byte out[GCRY_MLKEM_SSBYTES],
   return ec;
 }
 
+// TODO: remove
+#include "mlkem-fips202-avx2.h"
+void kyber_shake256_rkprf(uint8_t out[KYBER_SSBYTES], const uint8_t key[KYBER_SYMBYTES], const uint8_t input[KYBER_CIPHERTEXTBYTES])
+{
+  keccak_state s;
+
+  shake256_init(&s);
+  shake256_absorb(&s, key, KYBER_SYMBYTES);
+  shake256_absorb(&s, input, KYBER_CIPHERTEXTBYTES);
+  shake256_finalize(&s);
+  shake256_squeeze(out, KYBER_SSBYTES, &s);
+}
 
 gcry_err_code_t
 _gcry_mlkem_kem_keypair (byte *pk, byte *sk, gcry_mlkem_param_t *param)
@@ -648,6 +662,23 @@ _gcry_mlkem_kem_keypair (byte *pk, byte *sk, gcry_mlkem_param_t *param)
     }
   _gcry_randomize (coins, GCRY_MLKEM_COINS_SIZE, GCRY_VERY_STRONG_RANDOM);
   ec = _gcry_mlkem_kem_keypair_derand (pk, sk, param, coins);
+  /* TODO: remove */
+  if(param->k == 3)
+  {
+    byte pk_avx2[param->public_key_bytes];
+    byte sk_avx2[param->secret_key_bytes];
+    byte ct[param->ciphertext_bytes];
+    byte ss[GCRY_MLKEM_SSBYTES];
+    byte ss2[GCRY_MLKEM_SSBYTES];
+    byte ss3[GCRY_MLKEM_SSBYTES];
+    int ret_keygen = crypto_kem_keypair(pk_avx2, sk_avx2);
+    int ret_enc = crypto_kem_enc(ct, ss, pk_avx2);
+    //int ret_enc = _gcry_mlkem_kem_enc(ct, ss, pk_avx2, param);
+    crypto_kem_dec(ss2, ct, sk_avx2);
+    _gcry_mlkem_kem_dec(ss3, ct, sk_avx2, param);
+    printf("ret_keygen, ret_enc, memcmp1, memcp2: %d, %d, %d, %d\n", ret_keygen, ret_enc, memcmp(ss, ss2, GCRY_MLKEM_SSBYTES), memcmp(ss, ss3, GCRY_MLKEM_SSBYTES));
+  }
+  /* /TODO */
 leave:
   xfree (coins);
   return ec;

@@ -860,6 +860,7 @@ AC_SEARCH_LIBS(setsockopt, [nsl])
 ##################################
 
 AC_CHECK_HEADERS(unistd.h sys/auxv.h sys/random.h sys/sysctl.h)
+AC_CHECK_HEADER(immintrin.h, [have_immintrin=yes], [have_immintrin=no])
 
 
 ##########################################
@@ -2604,6 +2605,10 @@ if test "$gcry_cv_gcc_inline_asm_s390x_vx" = "yes" ; then
      [Defined if inline assembler supports zSeries vector instructions])
 fi
 
+if test "$have_immintrin" = "yes" ; then
+   AC_DEFINE(HAVE_IMMINTRIN_H,1,
+     [Defined if immintrin.h is available])
+fi
 
 #######################################
 #### Checks for library functions. ####
@@ -3342,8 +3347,14 @@ fi
 LIST_MEMBER(mlkem, $enabled_pubkey_ciphers)
 AM_CONDITIONAL(USE_MLKEM, [test "$found" = "1"])
 if test "$found" = "1" ; then
-  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mlkem.lo mlkem-common.lo mlkem-ntt.lo mlkem-poly.lo mlkem-polyvec.lo  mlkem-symmetric.lo  mlkem-cbd.lo mlkem-aux.lo"
-   AC_DEFINE(USE_MLKEM, 1, [Defined if this module should be included])
+   GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mlkem.lo mlkem-common.lo mlkem-ntt.lo mlkem-poly.lo mlkem-polyvec.lo  mlkem-symmetric.lo  mlkem-cbd.lo mlkem-aux.lo"
+
+   if test "$have_immintrin" = "yes" ; then
+      CFLAGS="$CFLAGS -mavx2 -maes -mbmi2"
+      GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mlkem-fips202x4-avx2.lo mlkem-f1600x4-avx2.lo mlkem-aes256ctr-avx2.lo mlkem-cbd-avx2.lo mlkem-consts-avx2.lo mlkem-fq-avx2.lo mlkem-invntt-avx2.lo mlkem-kem-avx2.lo mlkem-ntt-avx2.lo mlkem-poly-avx2.lo mlkem-polyvec-avx2.lo mlkem-rejsample-avx2.lo mlkem-shuffle-avx2.lo mlkem-verify-avx2.lo"
+      GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mlkem-randombytes-avx2.lo mlkem-indcpa-avx2.lo mlkem-fips202-avx2.lo mlkem-basemul-avx2.lo"
+   fi
+  AC_DEFINE(USE_MLKEM, 1, [Defined if this module should be included])
 fi
 
 LIST_MEMBER(elgamal, $enabled_pubkey_ciphers)
