@@ -12,7 +12,7 @@
 gcry_err_code_t _gcry_mlkem_avx2_kem_keypair_derand(uint8_t *pk,
                               uint8_t *sk,
                               const uint8_t *coins,
-                              gcry_mlkem_param_t *param)
+                              const gcry_mlkem_param_t *param)
 {
   gpg_err_code_t ec = 0;
   ec                = indcpa_keypair_derand (pk, sk, coins, param);
@@ -60,13 +60,9 @@ leave:
 *              secret for given public key
 *
 * Arguments:   - uint8_t *ct: pointer to output cipher text
-*                (an already allocated array of KYBER_CIPHERTEXTBYTES bytes)
 *              - uint8_t *ss: pointer to output shared secret
-*                (an already allocated array of KYBER_SSBYTES bytes)
 *              - const uint8_t *pk: pointer to input public key
-*                (an already allocated array of KYBER_PUBLICKEYBYTES bytes)
 *              - const uint8_t *coins: pointer to input randomness
-*                (an already allocated array filled with KYBER_SYMBYTES random bytes)
 **
 * Returns 0 (success)
 **************************************************/
@@ -76,20 +72,20 @@ int crypto_kem_enc_derand(uint8_t *ct,
                           const uint8_t *coins,
                           const gcry_mlkem_param_t *param)
 {
-  uint8_t buf[2*KYBER_SYMBYTES];
+  uint8_t buf[2*GCRY_MLKEM_SYMBYTES];
   /* Will contain key, coins */
-  uint8_t kr[2*KYBER_SYMBYTES];
+  uint8_t kr[2*GCRY_MLKEM_SYMBYTES];
 
-  memcpy(buf, coins, KYBER_SYMBYTES);
+  memcpy(buf, coins, GCRY_MLKEM_SYMBYTES);
 
   /* Multitarget countermeasure for coins + contributory KEM */
-  hash_h(buf+KYBER_SYMBYTES, pk, KYBER_PUBLICKEYBYTES);
-  hash_g(kr, buf, 2*KYBER_SYMBYTES);
+  hash_h(buf+GCRY_MLKEM_SYMBYTES, pk, param->public_key_bytes);
+  hash_g(kr, buf, 2*GCRY_MLKEM_SYMBYTES);
 
-  /* coins are in kr+KYBER_SYMBYTES */
-  indcpa_enc(ct, buf, pk, kr+KYBER_SYMBYTES, param);
+  /* coins are in kr+GCRY_MLKEM_SYMBYTES */
+  indcpa_enc(ct, buf, pk, kr+GCRY_MLKEM_SYMBYTES, param);
 
-  memcpy(ss,kr,KYBER_SYMBYTES);
+  memcpy(ss,kr,GCRY_MLKEM_SYMBYTES);
   return 0;
 }
 
@@ -100,11 +96,8 @@ int crypto_kem_enc_derand(uint8_t *ct,
 *              secret for given public key
 *
 * Arguments:   - uint8_t *ct: pointer to output cipher text
-*                (an already allocated array of KYBER_CIPHERTEXTBYTES bytes)
 *              - uint8_t *ss: pointer to output shared secret
-*                (an already allocated array of KYBER_SSBYTES bytes)
 *              - const uint8_t *pk: pointer to input public key
-*                (an already allocated array of KYBER_PUBLICKEYBYTES bytes)
 *
 * Returns 0 (success)
 **************************************************/
@@ -113,8 +106,8 @@ int crypto_kem_enc(uint8_t *ct,
                    const uint8_t *pk,
                    const gcry_mlkem_param_t *param)
 {
-  uint8_t coins[KYBER_SYMBYTES];
-  _gcry_randomize (coins, KYBER_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
+  uint8_t coins[GCRY_MLKEM_SYMBYTES];
+  _gcry_randomize (coins, GCRY_MLKEM_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
   crypto_kem_enc_derand(ct, ss, pk, coins, param);
   return 0;
 }
@@ -126,11 +119,8 @@ int crypto_kem_enc(uint8_t *ct,
 *              cipher text and private key
 *
 * Arguments:   - uint8_t *ss: pointer to output shared secret
-*                (an already allocated array of KYBER_SSBYTES bytes)
 *              - const uint8_t *ct: pointer to input cipher text
-*                (an already allocated array of KYBER_CIPHERTEXTBYTES bytes)
 *              - const uint8_t *sk: pointer to input private key
-*                (an already allocated array of KYBER_SECRETKEYBYTES bytes)
 *
 * Returns 0.
 *
@@ -142,28 +132,28 @@ int crypto_kem_dec(uint8_t *ss,
                    const gcry_mlkem_param_t *param)
 {
   int fail;
-  uint8_t buf[2*KYBER_SYMBYTES];
+  uint8_t buf[2*GCRY_MLKEM_SYMBYTES];
   /* Will contain key, coins */
-  uint8_t kr[2*KYBER_SYMBYTES];
-  uint8_t cmp[KYBER_CIPHERTEXTBYTES+KYBER_SYMBYTES];
-  const uint8_t *pk = sk+KYBER_INDCPA_SECRETKEYBYTES;
+  uint8_t kr[2*GCRY_MLKEM_SYMBYTES];
+  uint8_t cmp[param->ciphertext_bytes+GCRY_MLKEM_SYMBYTES];
+  const uint8_t *pk = sk+param->polyvec_bytes;
 
   indcpa_dec(buf, ct, sk, param);
 
   /* Multitarget countermeasure for coins + contributory KEM */
-  memcpy(buf+KYBER_SYMBYTES, sk+KYBER_SECRETKEYBYTES-2*KYBER_SYMBYTES, KYBER_SYMBYTES);
-  hash_g(kr, buf, 2*KYBER_SYMBYTES);
+  memcpy(buf+GCRY_MLKEM_SYMBYTES, sk+param->secret_key_bytes-2*GCRY_MLKEM_SYMBYTES, GCRY_MLKEM_SYMBYTES);
+  hash_g(kr, buf, 2*GCRY_MLKEM_SYMBYTES);
 
-  /* coins are in kr+KYBER_SYMBYTES */
-  indcpa_enc(cmp, buf, pk, kr+KYBER_SYMBYTES, param);
+  /* coins are in kr+GCRY_MLKEM_SYMBYTES */
+  indcpa_enc(cmp, buf, pk, kr+GCRY_MLKEM_SYMBYTES, param);
 
-  fail = verify(ct, cmp, KYBER_CIPHERTEXTBYTES);
+  fail = verify(ct, cmp, param->ciphertext_bytes);
 
   /* Compute rejection key */
-  rkprf(ss,sk+KYBER_SECRETKEYBYTES-KYBER_SYMBYTES,ct,KYBER_SECRETKEYBYTES-KYBER_SYMBYTES);
+  rkprf(ss,sk+param->secret_key_bytes-GCRY_MLKEM_SYMBYTES,ct,param->secret_key_bytes-GCRY_MLKEM_SYMBYTES);
 
   /* Copy true key to return buffer if fail is false */
-  cmov(ss,kr,KYBER_SYMBYTES,!fail);
+  cmov(ss,kr,GCRY_MLKEM_SYMBYTES,!fail);
 
   return 0;
 }

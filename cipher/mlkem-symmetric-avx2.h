@@ -10,13 +10,13 @@
 typedef keccak_state xof_state;
 
 void kyber_shake128_absorb(keccak_state *s,
-                           const uint8_t seed[KYBER_SYMBYTES],
+                           const uint8_t seed[GCRY_MLKEM_SYMBYTES],
                            uint8_t x,
                            uint8_t y);
 
 void _gcry_mlkem_shake256_prf(uint8_t *out,
                         size_t outlen,
-                        const uint8_t key[KYBER_SYMBYTES],
+                        const uint8_t key[GCRY_MLKEM_SYMBYTES],
                         uint8_t nonce);
 
 #define XOF_BLOCKBYTES SHAKE128_RATE

@@ -650,7 +650,6 @@ _gcry_mlkem_kem_keypair (byte *pk, byte *sk, gcry_mlkem_param_t *param)
   _gcry_randomize (coins, GCRY_MLKEM_COINS_SIZE, GCRY_VERY_STRONG_RANDOM);
   ec = _gcry_mlkem_kem_keypair_derand (pk, sk, param, coins);
   /* TODO: remove */
-  if(param->k == KYBER_K)
   {
     byte pk_avx2[param->public_key_bytes];
     byte sk_avx2[param->secret_key_bytes];
@@ -659,22 +658,18 @@ _gcry_mlkem_kem_keypair (byte *pk, byte *sk, gcry_mlkem_param_t *param)
     byte ss2[GCRY_MLKEM_SSBYTES];
     byte ss3[GCRY_MLKEM_SSBYTES];
 
-    param->use_avx2 = 1;
     int ret_keygen = _gcry_mlkem_avx2_kem_keypair(pk_avx2, sk_avx2, param);
-    param->use_avx2 = 0;
-
-    param->use_avx2 = 1;
     int ret_enc = crypto_kem_enc(ct, ss, pk_avx2, param);
-    param->use_avx2 = 0;
-
     //int ret_enc = _gcry_mlkem_kem_enc(ct, ss, pk_avx2, param);
-
-    param->use_avx2 = 1;
     crypto_kem_dec(ss2, ct, sk_avx2, param);
-    param->use_avx2 = 0;
-
     _gcry_mlkem_kem_dec(ss3, ct, sk_avx2, param);
     printf("ret_keygen, ret_enc, memcmp1, memcp2: %d, %d, %d, %d\n", ret_keygen, ret_enc, memcmp(ss, ss2, GCRY_MLKEM_SSBYTES), memcmp(ss, ss3, GCRY_MLKEM_SSBYTES));
+
+    // same with standard pk/sk and swap enc
+    ret_enc = _gcry_mlkem_kem_enc(ct, ss, pk_avx2, param);
+    crypto_kem_dec(ss2, ct, sk_avx2, param);
+    _gcry_mlkem_kem_dec(ss3, ct, sk_avx2, param);
+    printf("ret_enc, memcmp1, memcp2: %d, %d, %d\n", ret_enc, memcmp(ss, ss2, GCRY_MLKEM_SSBYTES), memcmp(ss, ss3, GCRY_MLKEM_SSBYTES));
   }
   /* /TODO */
 leave:

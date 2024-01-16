@@ -44,8 +44,6 @@ typedef struct
   u16 indcpa_secret_key_bytes;
   u16 secret_key_bytes;
   u16 ciphertext_bytes;
-
-  uint8_t use_avx2; /* TODO: remove */
 } gcry_mlkem_param_t;
 
 
@@ -56,8 +54,6 @@ typedef struct
 #define GCRY_MLKEM_SSBYTES 32  /* size in bytes of shared key */
 
 #define GCRY_MLKEM_POLYBYTES 384
-#define GCRY_MLKEM_POLYVECBYTES (MLKEM_K * GCRY_MLKEM_POLYBYTES)
-
 
 #define GCRY_MLKEM_ETA1_MAX 3
 #define GCRY_MLKEM_ETA2 2

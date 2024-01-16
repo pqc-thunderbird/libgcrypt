@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <immintrin.h>
 #include "mlkem-params-avx2.h"
+#include "mlkem-params.h"
 #include "mlkem-cbd-avx2.h"
 
 /*************************************************
@@ -13,7 +14,7 @@
 * Arguments:   - poly *r: pointer to output polynomial
 *              - const __m256i *buf: pointer to aligned input byte array
 **************************************************/
-static void cbd2(poly * restrict r, const __m256i buf[2*KYBER_N/128])
+static void cbd2(poly * restrict r, const __m256i buf[2*GCRY_MLKEM_N/128])
 {
   unsigned int i;
   __m256i f0, f1, f2, f3;
@@ -22,7 +23,7 @@ static void cbd2(poly * restrict r, const __m256i buf[2*KYBER_N/128])
   const __m256i mask03 = _mm256_set1_epi32(0x03030303);
   const __m256i mask0F = _mm256_set1_epi32(0x0F0F0F0F);
 
-  for(i = 0; i < KYBER_N/64; i++) {
+  for(i = 0; i < GCRY_MLKEM_N/64; i++) {
     f0 = _mm256_load_si256(&buf[i]);
 
     f1 = _mm256_srli_epi16(f0, 1);
@@ -57,7 +58,6 @@ static void cbd2(poly * restrict r, const __m256i buf[2*KYBER_N/128])
   }
 }
 
-#if KYBER_ETA1 == 3
 /*************************************************
 * Name:        cbd3
 *
@@ -69,7 +69,7 @@ static void cbd2(poly * restrict r, const __m256i buf[2*KYBER_N/128])
 * Arguments:   - poly *r: pointer to output polynomial
 *              - const __m256i *buf: pointer to aligned input byte array
 **************************************************/
-static void cbd3(poly * restrict r, const uint8_t buf[3*KYBER_N/4+8])
+static void cbd3(poly * restrict r, const uint8_t buf[3*GCRY_MLKEM_N/4+8])
 {
   unsigned int i;
   __m256i f0, f1, f2, f3;
@@ -81,7 +81,7 @@ static void cbd3(poly * restrict r, const uint8_t buf[3*KYBER_N/4+8])
   const __m256i shufbidx = _mm256_set_epi8(-1,15,14,13,-1,12,11,10,-1, 9, 8, 7,-1, 6, 5, 4,
                                            -1,11,10, 9,-1, 8, 7, 6,-1, 5, 4, 3,-1, 2, 1, 0);
 
-  for(i = 0; i < KYBER_N/32; i++) {
+  for(i = 0; i < GCRY_MLKEM_N/32; i++) {
     f0 = _mm256_loadu_si256((__m256i *)&buf[24*i]);
     f0 = _mm256_permute4x64_epi64(f0,0x94);
     f0 = _mm256_shuffle_epi8(f0,shufbidx);
@@ -120,25 +120,21 @@ static void cbd3(poly * restrict r, const uint8_t buf[3*KYBER_N/4+8])
     _mm256_store_si256(&r->vec[2*i+1], f1);
   }
 }
-#endif
 
 /* buf 32 bytes longer for cbd3 */
-void poly_cbd_eta1(poly *r, const __m256i buf[KYBER_ETA1*KYBER_N/128+1])
+void poly_cbd_eta1(poly *r, const __m256i *buf, gcry_mlkem_param_t const *param)
 {
-#if KYBER_ETA1 == 2
-  cbd2(r, buf);
-#elif KYBER_ETA1 == 3
-  cbd3(r, (uint8_t *)buf);
-#else
-#error "This implementation requires eta1 in {2,3}"
-#endif
+  if(param->eta1 == 2)
+  {
+    cbd2(r, buf);
+  }
+  else // eta1 == 3
+  {
+    cbd3(r, (uint8_t *)buf);
+  }
 }
 
-void poly_cbd_eta2(poly *r, const __m256i buf[KYBER_ETA2*KYBER_N/128])
+void poly_cbd_eta2(poly *r, const __m256i buf[GCRY_MLKEM_ETA2*GCRY_MLKEM_N/128])
 {
-#if KYBER_ETA2 == 2
   cbd2(r, buf);
-#else
-#error "This implementation requires eta2 = 2"
-#endif
 }

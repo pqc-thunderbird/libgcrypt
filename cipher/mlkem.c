@@ -172,8 +172,6 @@ mlkem_params_from_private_key_size (size_t private_key_size,
         }
     }
 
-  param->use_avx2 = 0; // TODO: remove
-
   return ec;
 }
 static gcry_err_code_t
