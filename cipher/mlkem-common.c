@@ -663,13 +663,15 @@ _gcry_mlkem_kem_keypair (byte *pk, byte *sk, gcry_mlkem_param_t *param)
     //int ret_enc = _gcry_mlkem_kem_enc(ct, ss, pk_avx2, param);
     crypto_kem_dec(ss2, ct, sk_avx2, param);
     _gcry_mlkem_kem_dec(ss3, ct, sk_avx2, param);
+    printf("K: %d\n", param->k);
     printf("ret_keygen, ret_enc, memcmp1, memcp2: %d, %d, %d, %d\n", ret_keygen, ret_enc, memcmp(ss, ss2, GCRY_MLKEM_SSBYTES), memcmp(ss, ss3, GCRY_MLKEM_SSBYTES));
 
     // same with standard pk/sk and swap enc
-    ret_enc = _gcry_mlkem_kem_enc(ct, ss, pk_avx2, param);
-    crypto_kem_dec(ss2, ct, sk_avx2, param);
-    _gcry_mlkem_kem_dec(ss3, ct, sk_avx2, param);
+    ret_enc = _gcry_mlkem_kem_enc(ct, ss, pk, param);
+    crypto_kem_dec(ss2, ct, sk, param);
+    _gcry_mlkem_kem_dec(ss3, ct, sk, param);
     printf("ret_enc, memcmp1, memcp2: %d, %d, %d\n", ret_enc, memcmp(ss, ss2, GCRY_MLKEM_SSBYTES), memcmp(ss, ss3, GCRY_MLKEM_SSBYTES));
+    printf("------\n\n");
   }
   /* /TODO */
 leave:

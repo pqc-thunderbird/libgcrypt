@@ -28,7 +28,7 @@
 *              const uint8_t *seed: pointer to the input public seed
 **************************************************/
 static void pack_pk(uint8_t *r,
-                    polyvec *pk,
+                    byte *pk,
                     const uint8_t seed[GCRY_MLKEM_SYMBYTES],
                     const gcry_mlkem_param_t *param)
 {
@@ -46,7 +46,7 @@ static void pack_pk(uint8_t *r,
 *              - uint8_t *seed: pointer to output seed to generate matrix A
 *              - const uint8_t *packedpk: pointer to input serialized public key
 **************************************************/
-static void unpack_pk(polyvec *pk,
+static void unpack_pk(byte *pk,
                       uint8_t seed[GCRY_MLKEM_SYMBYTES],
                       const uint8_t *packedpk,
                       const gcry_mlkem_param_t *param)
@@ -66,7 +66,7 @@ static void unpack_pk(polyvec *pk,
 * Arguments:   - uint8_t *r: pointer to output serialized secret key
 *              - polyvec *sk: pointer to input vector of polynomials (secret key)
 **************************************************/
-static void pack_sk(uint8_t *r, polyvec *sk, const gcry_mlkem_param_t *param)
+static void pack_sk(uint8_t *r, byte *sk, const gcry_mlkem_param_t *param)
 {
   polyvec_tobytes(r, sk, param);
 }
@@ -79,7 +79,7 @@ static void pack_sk(uint8_t *r, polyvec *sk, const gcry_mlkem_param_t *param)
 * Arguments:   - polyvec *sk: pointer to output vector of polynomials (secret key)
 *              - const uint8_t *packedsk: pointer to input serialized secret key
 **************************************************/
-static void unpack_sk(polyvec *sk, const uint8_t *packedsk, const gcry_mlkem_param_t *param)
+static void unpack_sk(byte *sk, const uint8_t *packedsk, const gcry_mlkem_param_t *param)
 {
   polyvec_frombytes(sk, packedsk, param);
 }
@@ -98,7 +98,7 @@ static void unpack_sk(polyvec *sk, const uint8_t *packedsk, const gcry_mlkem_par
 *              poly *pk: pointer to the input vector of polynomials b
 *              poly *v: pointer to the input polynomial v
 **************************************************/
-static void pack_ciphertext(uint8_t *r, polyvec *b, poly *v, const gcry_mlkem_param_t *param)
+static void pack_ciphertext(uint8_t *r, byte *b, poly *v, const gcry_mlkem_param_t *param)
 {
   polyvec_compress(r, b, param);
   if(param->poly_compressed_bytes == 128)
@@ -120,7 +120,7 @@ static void pack_ciphertext(uint8_t *r, polyvec *b, poly *v, const gcry_mlkem_pa
 *              - poly *v: pointer to the output polynomial v
 *              - const uint8_t *c: pointer to the input serialized ciphertext
 **************************************************/
-static void unpack_ciphertext(polyvec *b, poly *v, const uint8_t *c, const gcry_mlkem_param_t *param)
+static void unpack_ciphertext(byte *b, poly *v, const uint8_t *c, const gcry_mlkem_param_t *param)
 {
   polyvec_decompress(b, c, param);
   if(param->poly_compressed_bytes == 128)
@@ -168,12 +168,14 @@ static unsigned int rej_uniform(int16_t *r,
   return ctr;
 }
 
-static void gen_matrix_k2(polyvec *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
+static void gen_matrix_k2(poly *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
 {
   unsigned int ctr0, ctr1, ctr2, ctr3;
   ALIGNED_UINT8(REJ_UNIFORM_AVX_NBLOCKS*SHAKE128_RATE) buf[4];
   __m256i f;
   gcry_mlkem_keccakx4_state state;
+  size_t colsize = sizeof(poly);
+  size_t rowsize = colsize * param->k;
 
   f = _mm256_loadu_si256((__m256i *)seed);
   _mm256_store_si256(buf[0].vec, f);
@@ -205,33 +207,35 @@ static void gen_matrix_k2(polyvec *a, const uint8_t seed[32], int transposed, co
   _gcry_mlkem_avx2_shake128x4_absorb_once(&state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 34);
   _gcry_mlkem_avx2_shake128x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, REJ_UNIFORM_AVX_NBLOCKS, &state);
 
-  ctr0 = rej_uniform_avx(a[0].vec[0].coeffs, buf[0].coeffs);
-  ctr1 = rej_uniform_avx(a[0].vec[1].coeffs, buf[1].coeffs);
-  ctr2 = rej_uniform_avx(a[1].vec[0].coeffs, buf[2].coeffs);
-  ctr3 = rej_uniform_avx(a[1].vec[1].coeffs, buf[3].coeffs);
+  ctr0 = rej_uniform_avx(a[0 * param->k + 0].coeffs, buf[0].coeffs);
+  ctr1 = rej_uniform_avx(a[0 * param->k + 1].coeffs, buf[1].coeffs);
+  ctr2 = rej_uniform_avx(a[1 * param->k + 0].coeffs, buf[2].coeffs);
+  ctr3 = rej_uniform_avx(a[1 * param->k + 1].coeffs, buf[3].coeffs);
 
   while(ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N || ctr3 < GCRY_MLKEM_N) {
     _gcry_mlkem_avx2_shake128x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 1, &state);
 
-    ctr0 += rej_uniform(a[0].vec[0].coeffs + ctr0, GCRY_MLKEM_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
-    ctr1 += rej_uniform(a[0].vec[1].coeffs + ctr1, GCRY_MLKEM_N - ctr1, buf[1].coeffs, SHAKE128_RATE);
-    ctr2 += rej_uniform(a[1].vec[0].coeffs + ctr2, GCRY_MLKEM_N - ctr2, buf[2].coeffs, SHAKE128_RATE);
-    ctr3 += rej_uniform(a[1].vec[1].coeffs + ctr3, GCRY_MLKEM_N - ctr3, buf[3].coeffs, SHAKE128_RATE);
+    ctr0 += rej_uniform(a[0 * param->k + 0].coeffs + ctr0, GCRY_MLKEM_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
+    ctr1 += rej_uniform(a[0 * param->k + 1].coeffs + ctr1, GCRY_MLKEM_N - ctr1, buf[1].coeffs, SHAKE128_RATE);
+    ctr2 += rej_uniform(a[1 * param->k + 0].coeffs + ctr2, GCRY_MLKEM_N - ctr2, buf[2].coeffs, SHAKE128_RATE);
+    ctr3 += rej_uniform(a[1 * param->k + 1].coeffs + ctr3, GCRY_MLKEM_N - ctr3, buf[3].coeffs, SHAKE128_RATE);
   }
 
-  poly_nttunpack(&a[0].vec[0]);
-  poly_nttunpack(&a[0].vec[1]);
-  poly_nttunpack(&a[1].vec[0]);
-  poly_nttunpack(&a[1].vec[1]);
+  poly_nttunpack(&a[0 * param->k + 0]);
+  poly_nttunpack(&a[0 * param->k + 1]);
+  poly_nttunpack(&a[1 * param->k + 0]);
+  poly_nttunpack(&a[1 * param->k + 1]);
 }
 
-static void gen_matrix_k3(polyvec *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
+static void gen_matrix_k3(poly *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
 {
   unsigned int ctr0, ctr1, ctr2, ctr3;
   ALIGNED_UINT8(REJ_UNIFORM_AVX_NBLOCKS*SHAKE128_RATE) buf[4];
   __m256i f;
   gcry_mlkem_keccakx4_state state;
   keccak_state state1x;
+  size_t colsize = sizeof(poly);
+  size_t rowsize = colsize * param->k;
 
   f = _mm256_loadu_si256((__m256i *)seed);
   _mm256_store_si256(buf[0].vec, f);
@@ -263,24 +267,24 @@ static void gen_matrix_k3(polyvec *a, const uint8_t seed[32], int transposed, co
   _gcry_mlkem_avx2_shake128x4_absorb_once(&state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 34);
   _gcry_mlkem_avx2_shake128x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, REJ_UNIFORM_AVX_NBLOCKS, &state);
 
-  ctr0 = rej_uniform_avx(a[0].vec[0].coeffs, buf[0].coeffs);
-  ctr1 = rej_uniform_avx(a[0].vec[1].coeffs, buf[1].coeffs);
-  ctr2 = rej_uniform_avx(a[0].vec[2].coeffs, buf[2].coeffs);
-  ctr3 = rej_uniform_avx(a[1].vec[0].coeffs, buf[3].coeffs);
+  ctr0 = rej_uniform_avx(a[0 * param->k + 0].coeffs, buf[0].coeffs);
+  ctr1 = rej_uniform_avx(a[0 * param->k + 1].coeffs, buf[1].coeffs);
+  ctr2 = rej_uniform_avx(a[0 * param->k + 2].coeffs, buf[2].coeffs);
+  ctr3 = rej_uniform_avx(a[1 * param->k + 0].coeffs, buf[3].coeffs);
 
   while(ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N || ctr3 < GCRY_MLKEM_N) {
     _gcry_mlkem_avx2_shake128x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 1, &state);
 
-    ctr0 += rej_uniform(a[0].vec[0].coeffs + ctr0, GCRY_MLKEM_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
-    ctr1 += rej_uniform(a[0].vec[1].coeffs + ctr1, GCRY_MLKEM_N - ctr1, buf[1].coeffs, SHAKE128_RATE);
-    ctr2 += rej_uniform(a[0].vec[2].coeffs + ctr2, GCRY_MLKEM_N - ctr2, buf[2].coeffs, SHAKE128_RATE);
-    ctr3 += rej_uniform(a[1].vec[0].coeffs + ctr3, GCRY_MLKEM_N - ctr3, buf[3].coeffs, SHAKE128_RATE);
+    ctr0 += rej_uniform(a[0 * param->k + 0].coeffs + ctr0, GCRY_MLKEM_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
+    ctr1 += rej_uniform(a[0 * param->k + 1].coeffs + ctr1, GCRY_MLKEM_N - ctr1, buf[1].coeffs, SHAKE128_RATE);
+    ctr2 += rej_uniform(a[0 * param->k + 2].coeffs + ctr2, GCRY_MLKEM_N - ctr2, buf[2].coeffs, SHAKE128_RATE);
+    ctr3 += rej_uniform(a[1 * param->k + 0].coeffs + ctr3, GCRY_MLKEM_N - ctr3, buf[3].coeffs, SHAKE128_RATE);
   }
 
-  poly_nttunpack(&a[0].vec[0]);
-  poly_nttunpack(&a[0].vec[1]);
-  poly_nttunpack(&a[0].vec[2]);
-  poly_nttunpack(&a[1].vec[0]);
+  poly_nttunpack(&a[0 * param->k + 0]);
+  poly_nttunpack(&a[0 * param->k + 1]);
+  poly_nttunpack(&a[0 * param->k + 2]);
+  poly_nttunpack(&a[1 * param->k + 0]);
 
   f = _mm256_loadu_si256((__m256i *)seed);
   _mm256_store_si256(buf[0].vec, f);
@@ -312,24 +316,24 @@ static void gen_matrix_k3(polyvec *a, const uint8_t seed[32], int transposed, co
   _gcry_mlkem_avx2_shake128x4_absorb_once(&state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 34);
   _gcry_mlkem_avx2_shake128x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, REJ_UNIFORM_AVX_NBLOCKS, &state);
 
-  ctr0 = rej_uniform_avx(a[1].vec[1].coeffs, buf[0].coeffs);
-  ctr1 = rej_uniform_avx(a[1].vec[2].coeffs, buf[1].coeffs);
-  ctr2 = rej_uniform_avx(a[2].vec[0].coeffs, buf[2].coeffs);
-  ctr3 = rej_uniform_avx(a[2].vec[1].coeffs, buf[3].coeffs);
+  ctr0 = rej_uniform_avx(a[1 * param->k + 1].coeffs, buf[0].coeffs);
+  ctr1 = rej_uniform_avx(a[1 * param->k + 2].coeffs, buf[1].coeffs);
+  ctr2 = rej_uniform_avx(a[2 * param->k + 0].coeffs, buf[2].coeffs);
+  ctr3 = rej_uniform_avx(a[2 * param->k + 1].coeffs, buf[3].coeffs);
 
   while(ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N || ctr3 < GCRY_MLKEM_N) {
     _gcry_mlkem_avx2_shake128x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 1, &state);
 
-    ctr0 += rej_uniform(a[1].vec[1].coeffs + ctr0, GCRY_MLKEM_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
-    ctr1 += rej_uniform(a[1].vec[2].coeffs + ctr1, GCRY_MLKEM_N - ctr1, buf[1].coeffs, SHAKE128_RATE);
-    ctr2 += rej_uniform(a[2].vec[0].coeffs + ctr2, GCRY_MLKEM_N - ctr2, buf[2].coeffs, SHAKE128_RATE);
-    ctr3 += rej_uniform(a[2].vec[1].coeffs + ctr3, GCRY_MLKEM_N - ctr3, buf[3].coeffs, SHAKE128_RATE);
+    ctr0 += rej_uniform(a[1 * param->k + 1].coeffs + ctr0, GCRY_MLKEM_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
+    ctr1 += rej_uniform(a[1 * param->k + 2].coeffs + ctr1, GCRY_MLKEM_N - ctr1, buf[1].coeffs, SHAKE128_RATE);
+    ctr2 += rej_uniform(a[2 * param->k + 0].coeffs + ctr2, GCRY_MLKEM_N - ctr2, buf[2].coeffs, SHAKE128_RATE);
+    ctr3 += rej_uniform(a[2 * param->k + 1].coeffs + ctr3, GCRY_MLKEM_N - ctr3, buf[3].coeffs, SHAKE128_RATE);
   }
 
-  poly_nttunpack(&a[1].vec[1]);
-  poly_nttunpack(&a[1].vec[2]);
-  poly_nttunpack(&a[2].vec[0]);
-  poly_nttunpack(&a[2].vec[1]);
+  poly_nttunpack(&a[1 * param->k + 1]);
+  poly_nttunpack(&a[1 * param->k + 2]);
+  poly_nttunpack(&a[2 * param->k + 0]);
+  poly_nttunpack(&a[2 * param->k + 1]);
 
   f = _mm256_loadu_si256((__m256i *)seed);
   _mm256_store_si256(buf[0].vec, f);
@@ -337,21 +341,23 @@ static void gen_matrix_k3(polyvec *a, const uint8_t seed[32], int transposed, co
   buf[0].coeffs[33] = 2;
   shake128_absorb_once(&state1x, buf[0].coeffs, 34);
   shake128_squeezeblocks(buf[0].coeffs, REJ_UNIFORM_AVX_NBLOCKS, &state1x);
-  ctr0 = rej_uniform_avx(a[2].vec[2].coeffs, buf[0].coeffs);
+  ctr0 = rej_uniform_avx(a[2 * param->k + 2].coeffs, buf[0].coeffs);
   while(ctr0 < GCRY_MLKEM_N) {
     shake128_squeezeblocks(buf[0].coeffs, 1, &state1x);
-    ctr0 += rej_uniform(a[2].vec[2].coeffs + ctr0, GCRY_MLKEM_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
+    ctr0 += rej_uniform(a[2 * param->k + 2].coeffs + ctr0, GCRY_MLKEM_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
   }
 
-  poly_nttunpack(&a[2].vec[2]);
+  poly_nttunpack(&a[2 * param->k + 2]);
 }
 
-static void gen_matrix_k4(polyvec *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
+static void gen_matrix_k4(poly *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
 {
   unsigned int i, ctr0, ctr1, ctr2, ctr3;
   ALIGNED_UINT8(REJ_UNIFORM_AVX_NBLOCKS*SHAKE128_RATE) buf[4];
   __m256i f;
   gcry_mlkem_keccakx4_state state;
+  size_t colsize = sizeof(poly);
+  size_t rowsize = colsize * param->k;
 
   for(i=0;i<4;i++) {
     f = _mm256_loadu_si256((__m256i *)seed);
@@ -384,28 +390,28 @@ static void gen_matrix_k4(polyvec *a, const uint8_t seed[32], int transposed, co
     _gcry_mlkem_avx2_shake128x4_absorb_once(&state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 34);
     _gcry_mlkem_avx2_shake128x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, REJ_UNIFORM_AVX_NBLOCKS, &state);
 
-    ctr0 = rej_uniform_avx(a[i].vec[0].coeffs, buf[0].coeffs);
-    ctr1 = rej_uniform_avx(a[i].vec[1].coeffs, buf[1].coeffs);
-    ctr2 = rej_uniform_avx(a[i].vec[2].coeffs, buf[2].coeffs);
-    ctr3 = rej_uniform_avx(a[i].vec[3].coeffs, buf[3].coeffs);
+    ctr0 = rej_uniform_avx(a[i * param->k + 0].coeffs, buf[0].coeffs);
+    ctr1 = rej_uniform_avx(a[i * param->k + 1].coeffs, buf[1].coeffs);
+    ctr2 = rej_uniform_avx(a[i * param->k + 2].coeffs, buf[2].coeffs);
+    ctr3 = rej_uniform_avx(a[i * param->k + 3].coeffs, buf[3].coeffs);
 
     while(ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N || ctr3 < GCRY_MLKEM_N) {
       _gcry_mlkem_avx2_shake128x4_squeezeblocks(buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 1, &state);
 
-      ctr0 += rej_uniform(a[i].vec[0].coeffs + ctr0, GCRY_MLKEM_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
-      ctr1 += rej_uniform(a[i].vec[1].coeffs + ctr1, GCRY_MLKEM_N - ctr1, buf[1].coeffs, SHAKE128_RATE);
-      ctr2 += rej_uniform(a[i].vec[2].coeffs + ctr2, GCRY_MLKEM_N - ctr2, buf[2].coeffs, SHAKE128_RATE);
-      ctr3 += rej_uniform(a[i].vec[3].coeffs + ctr3, GCRY_MLKEM_N - ctr3, buf[3].coeffs, SHAKE128_RATE);
+      ctr0 += rej_uniform(a[i * param->k + 0].coeffs + ctr0, GCRY_MLKEM_N - ctr0, buf[0].coeffs, SHAKE128_RATE);
+      ctr1 += rej_uniform(a[i * param->k + 1].coeffs + ctr1, GCRY_MLKEM_N - ctr1, buf[1].coeffs, SHAKE128_RATE);
+      ctr2 += rej_uniform(a[i * param->k + 2].coeffs + ctr2, GCRY_MLKEM_N - ctr2, buf[2].coeffs, SHAKE128_RATE);
+      ctr3 += rej_uniform(a[i * param->k + 3].coeffs + ctr3, GCRY_MLKEM_N - ctr3, buf[3].coeffs, SHAKE128_RATE);
     }
 
-    poly_nttunpack(&a[i].vec[0]);
-    poly_nttunpack(&a[i].vec[1]);
-    poly_nttunpack(&a[i].vec[2]);
-    poly_nttunpack(&a[i].vec[3]);
+    poly_nttunpack(&a[i * param->k + 0]);
+    poly_nttunpack(&a[i * param->k + 1]);
+    poly_nttunpack(&a[i * param->k + 2]);
+    poly_nttunpack(&a[i * param->k + 3]);
   }
 }
 
-void gen_matrix(polyvec *a, const uint8_t seed[GCRY_MLKEM_SYMBYTES], int transposed, const gcry_mlkem_param_t *param)
+void gen_matrix(poly *a, const uint8_t seed[GCRY_MLKEM_SYMBYTES], int transposed, const gcry_mlkem_param_t *param)
 {
   if(param->k == 2)
   {
@@ -444,10 +450,10 @@ gcry_err_code_t indcpa_keypair_derand(uint8_t *pk,
   _gcry_mlkem_polyvec_al_create(&e_al, param->k, param->k * sizeof(poly), 1);
   _gcry_mlkem_polyvec_al_create(&pkpv_al, param->k, param->k * sizeof(poly), 1);
   _gcry_mlkem_polyvec_al_create(&skpv_al, param->k, param->k * sizeof(poly), 1);
-  polyvec *a = a_al.vec;
-  polyvec *e = e_al.vec;
-  polyvec *pkpv = pkpv_al.vec;
-  polyvec *skpv = skpv_al.vec;
+  poly *a = a_al.vec;
+  poly *e = e_al.vec;
+  poly *pkpv = pkpv_al.vec;
+  poly *skpv = skpv_al.vec;
 
   hash_g(buf, coins, GCRY_MLKEM_SYMBYTES);
 
@@ -455,17 +461,17 @@ gcry_err_code_t indcpa_keypair_derand(uint8_t *pk,
 
   if(param->k == 2)
   {
-    poly_getnoise_eta1_4x(skpv->vec+0, skpv->vec+1, e->vec+0, e->vec+1, noiseseed, 0, 1, 2, 3, param);
+    poly_getnoise_eta1_4x(&skpv[0], &skpv[1], &e[0], &e[1], noiseseed, 0, 1, 2, 3, param);
   }
   else if(param->k == 3)
   {
-    poly_getnoise_eta1_4x(skpv->vec+0, skpv->vec+1, skpv->vec+2, e->vec+0, noiseseed, 0, 1, 2, 3, param);
-    poly_getnoise_eta1_4x(e->vec+1, e->vec+2, pkpv->vec+0, pkpv->vec+1, noiseseed, 4, 5, 6, 7, param);
+    poly_getnoise_eta1_4x(&skpv[0], &skpv[1], &skpv[2], &e[0], noiseseed, 0, 1, 2, 3, param);
+    poly_getnoise_eta1_4x(&e[1], &e[2], &pkpv[0], &pkpv[1], noiseseed, 4, 5, 6, 7, param);
   }
   else if(param->k == 4)
   {
-    poly_getnoise_eta1_4x(skpv->vec+0, skpv->vec+1, skpv->vec+2, skpv->vec+3, noiseseed,  0, 1, 2, 3, param);
-    poly_getnoise_eta1_4x(e->vec+0, e->vec+1, e->vec+2, e->vec+3, noiseseed, 4, 5, 6, 7, param);
+    poly_getnoise_eta1_4x(&skpv[0], &skpv[1], &skpv[2], &skpv[3], noiseseed,  0, 1, 2, 3, param);
+    poly_getnoise_eta1_4x(&e[0], &e[1], &e[2], &e[3], noiseseed, 4, 5, 6, 7, param);
   }
   else {
     // TODO err
@@ -477,8 +483,8 @@ gcry_err_code_t indcpa_keypair_derand(uint8_t *pk,
 
   // matrix-vector multiplication
   for(i=0;i<param->k;i++) {
-    polyvec_basemul_acc_montgomery(&pkpv->vec[i], &a[i], skpv, param);
-    poly_tomont(&pkpv->vec[i]);
+    polyvec_basemul_acc_montgomery(&pkpv[i], &a[i*param->k], skpv, param);
+    poly_tomont(&pkpv[i]);
   }
 
   polyvec_add(pkpv, pkpv, e, param);
@@ -513,12 +519,13 @@ void indcpa_enc(uint8_t *c,
                 const uint8_t coins[GCRY_MLKEM_SYMBYTES],
                 const gcry_mlkem_param_t *param)
 {
+  gcry_err_code_t ec = 0;
   unsigned int i;
   uint8_t seed[GCRY_MLKEM_SYMBYTES];
   //polyvec sp, pkpv, ep, at[param->k], b;
   poly v, k, epp;
-
-
+  size_t polysize = sizeof(poly);
+  size_t rowsize = sizeof(poly) * param->k;
 
   gcry_mlkem_polyvec_al sp_al;
   gcry_mlkem_polyvec_al pkpv_al;
@@ -530,12 +537,11 @@ void indcpa_enc(uint8_t *c,
   _gcry_mlkem_polyvec_al_create(&ep_al, param->k, param->k * sizeof(poly), 1);
   _gcry_mlkem_polyvec_al_create(&at_al, param->k * param->k, param->k * sizeof(poly), 1);
   _gcry_mlkem_polyvec_al_create(&b_al, param->k, param->k * sizeof(poly), 1);
-
-  polyvec *sp = sp_al.vec;
-  polyvec *pkpv = pkpv_al.vec;
-  polyvec *ep = ep_al.vec;
-  polyvec *at = at_al.vec;
-  polyvec *b = b_al.vec;
+  byte *sp = sp_al.vec;
+  byte *pkpv = pkpv_al.vec;
+  byte *ep = ep_al.vec;
+  byte *at = at_al.vec;
+  byte *b = b_al.vec;
 
 
   unpack_pk(pkpv, seed, pk, param);
@@ -544,18 +550,18 @@ void indcpa_enc(uint8_t *c,
 
 if(param->k == 2)
 {
-  poly_getnoise_eta1122_4x(sp->vec+0, sp->vec+1, ep->vec+0, ep->vec+1, coins, 0, 1, 2, 3, param);
+  poly_getnoise_eta1122_4x(sp + 0*polysize, sp+1*polysize, ep+0*polysize, ep+1*polysize, coins, 0, 1, 2, 3, param);
   poly_getnoise_eta2(&epp, coins, 4);
 }
 else if(param->k == 3)
 {
-  poly_getnoise_eta1_4x(sp->vec+0, sp->vec+1, sp->vec+2, ep->vec+0, coins, 0, 1, 2, 3, param);
-  poly_getnoise_eta1_4x(ep->vec+1, ep->vec+2, &epp, b->vec+0, coins,  4, 5, 6, 7, param);
+  poly_getnoise_eta1_4x(sp+0*polysize, sp+1*polysize, sp+2*polysize, ep+0*polysize, coins, 0, 1, 2, 3, param);
+  poly_getnoise_eta1_4x(ep+1*polysize, ep+2*polysize, &epp, b+0*polysize, coins,  4, 5, 6, 7, param);
 }
 else if(param->k == 4)
 {
-  poly_getnoise_eta1_4x(sp->vec+0, sp->vec+1, sp->vec+2, sp->vec+3, coins, 0, 1, 2, 3, param);
-  poly_getnoise_eta1_4x(ep->vec+0, ep->vec+1, ep->vec+2, ep->vec+3, coins, 4, 5, 6, 7, param);
+  poly_getnoise_eta1_4x(sp+0*polysize, sp+1*polysize, sp+2*polysize, sp+3*polysize, coins, 0, 1, 2, 3, param);
+  poly_getnoise_eta1_4x(ep+0*polysize, ep+1*polysize, ep+2*polysize, ep+3*polysize, coins, 4, 5, 6, 7, param);
   poly_getnoise_eta2(&epp, coins, 8);
 }
 
@@ -563,7 +569,7 @@ else if(param->k == 4)
 
   // matrix-vector multiplication
   for(i=0;i<param->k;i++)
-    polyvec_basemul_acc_montgomery(&b->vec[i], &at[i], sp, param);
+    polyvec_basemul_acc_montgomery(b + i*polysize, at + i*rowsize, sp, param);
   polyvec_basemul_acc_montgomery(&v, pkpv, sp, param);
 
   polyvec_invntt_tomont(b, param);
@@ -599,18 +605,29 @@ void indcpa_dec(uint8_t *m,
                 const uint8_t *sk,
                 const gcry_mlkem_param_t *param)
 {
-  polyvec b, skpv;
+  // polyvec b, skpv;
   poly v, mp;
 
-  unpack_ciphertext(&b, &v, c, param);
-  unpack_sk(&skpv, sk, param);
+  gcry_mlkem_polyvec_al b_al;
+  gcry_mlkem_polyvec_al skpv_al;
+  _gcry_mlkem_polyvec_al_create(&b_al, param->k, param->k * sizeof(poly), 1);
+  _gcry_mlkem_polyvec_al_create(&skpv_al, param->k, param->k * sizeof(poly), 1);
+  byte *b = b_al.vec;
+  byte *skpv = skpv_al.vec;
 
-  polyvec_ntt(&b, param);
-  polyvec_basemul_acc_montgomery(&mp, &skpv, &b, param);
+
+  unpack_ciphertext(b, &v, c, param);
+  unpack_sk(skpv, sk, param);
+
+  polyvec_ntt(b, param);
+  polyvec_basemul_acc_montgomery(&mp, skpv, b, param);
   poly_invntt_tomont(&mp);
 
   poly_sub(&mp, &v, &mp);
   poly_reduce(&mp);
 
   poly_tomsg(m, &mp);
+
+  _gcry_mlkem_polyvec_al_destroy(&b_al);
+  _gcry_mlkem_polyvec_al_destroy(&skpv_al);
 }

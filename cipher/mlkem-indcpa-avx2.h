@@ -7,7 +7,7 @@
 #include "mlkem-params.h"
 #include "g10lib.h"
 
-void gen_matrix(polyvec *a, const uint8_t seed[GCRY_MLKEM_SYMBYTES], int transposed, const gcry_mlkem_param_t *param);
+void gen_matrix(poly *a, const uint8_t seed[GCRY_MLKEM_SYMBYTES], int transposed, const gcry_mlkem_param_t *param);
 void indcpa_keypair(uint8_t *pk,
                     uint8_t *sk);
 
