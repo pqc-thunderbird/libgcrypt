@@ -7,6 +7,39 @@
 #include "mlkem-ntt-avx2.h"
 #include "mlkem-consts-avx2.h"
 
+/* the following functions are for allocating 32-byte aligned memory */
+gcry_err_code_t _gcry_mlkem_polyvec_al_create (gcry_mlkem_polyvec_al *vec,
+                                               size_t num_elems,
+                                               size_t size_elems,
+                                               int secure)
+{
+  const size_t alloc_size = num_elems * size_elems + /*align*/ 32;
+  if (secure)
+    vec->alloc_addr = xtrymalloc_secure (alloc_size);
+  else
+    vec->alloc_addr = xtrymalloc (alloc_size);
+
+  if (!vec->alloc_addr)
+    {
+      vec->vec = NULL;
+      return gpg_error_from_syserror();
+    }
+  vec->vec = (polyvec *)((uintptr_t)vec->alloc_addr + (32 - ((uintptr_t)vec->alloc_addr % 32)));
+
+  memset (vec->alloc_addr, 0, alloc_size);
+  return 0;
+}
+
+void _gcry_mlkem_polyvec_al_destroy (gcry_mlkem_polyvec_al *vec)
+{
+  if (vec->alloc_addr)
+    {
+      xfree (vec->alloc_addr);
+    }
+  vec->vec        = NULL;
+  vec->alloc_addr = NULL;
+}
+
 static void poly_compress10(uint8_t r[320], const poly * restrict a)
 {
   unsigned int i;

@@ -432,7 +432,22 @@ gcry_err_code_t indcpa_keypair_derand(uint8_t *pk,
   uint8_t buf[2*GCRY_MLKEM_SYMBYTES];
   const uint8_t *publicseed = buf;
   const uint8_t *noiseseed = buf + GCRY_MLKEM_SYMBYTES;
-  polyvec a[param->k], e, pkpv, skpv;
+  //polyvec a[param->k];
+  // polyvec e;
+  // polyvec pkpv, skpv;
+
+  gcry_mlkem_polyvec_al a_al;
+  gcry_mlkem_polyvec_al e_al;
+  gcry_mlkem_polyvec_al pkpv_al;
+  gcry_mlkem_polyvec_al skpv_al;
+  _gcry_mlkem_polyvec_al_create(&a_al, param->k * param->k, param->k * sizeof(poly), 1);
+  _gcry_mlkem_polyvec_al_create(&e_al, param->k, param->k * sizeof(poly), 1);
+  _gcry_mlkem_polyvec_al_create(&pkpv_al, param->k, param->k * sizeof(poly), 1);
+  _gcry_mlkem_polyvec_al_create(&skpv_al, param->k, param->k * sizeof(poly), 1);
+  polyvec *a = a_al.vec;
+  polyvec *e = e_al.vec;
+  polyvec *pkpv = pkpv_al.vec;
+  polyvec *skpv = skpv_al.vec;
 
   hash_g(buf, coins, GCRY_MLKEM_SYMBYTES);
 
@@ -440,38 +455,42 @@ gcry_err_code_t indcpa_keypair_derand(uint8_t *pk,
 
   if(param->k == 2)
   {
-    poly_getnoise_eta1_4x(skpv.vec+0, skpv.vec+1, e.vec+0, e.vec+1, noiseseed, 0, 1, 2, 3, param);
+    poly_getnoise_eta1_4x(skpv->vec+0, skpv->vec+1, e->vec+0, e->vec+1, noiseseed, 0, 1, 2, 3, param);
   }
   else if(param->k == 3)
   {
-    poly_getnoise_eta1_4x(skpv.vec+0, skpv.vec+1, skpv.vec+2, e.vec+0, noiseseed, 0, 1, 2, 3, param);
-    poly_getnoise_eta1_4x(e.vec+1, e.vec+2, pkpv.vec+0, pkpv.vec+1, noiseseed, 4, 5, 6, 7, param);
+    poly_getnoise_eta1_4x(skpv->vec+0, skpv->vec+1, skpv->vec+2, e->vec+0, noiseseed, 0, 1, 2, 3, param);
+    poly_getnoise_eta1_4x(e->vec+1, e->vec+2, pkpv->vec+0, pkpv->vec+1, noiseseed, 4, 5, 6, 7, param);
   }
   else if(param->k == 4)
   {
-    poly_getnoise_eta1_4x(skpv.vec+0, skpv.vec+1, skpv.vec+2, skpv.vec+3, noiseseed,  0, 1, 2, 3, param);
-    poly_getnoise_eta1_4x(e.vec+0, e.vec+1, e.vec+2, e.vec+3, noiseseed, 4, 5, 6, 7, param);
+    poly_getnoise_eta1_4x(skpv->vec+0, skpv->vec+1, skpv->vec+2, skpv->vec+3, noiseseed,  0, 1, 2, 3, param);
+    poly_getnoise_eta1_4x(e->vec+0, e->vec+1, e->vec+2, e->vec+3, noiseseed, 4, 5, 6, 7, param);
   }
   else {
     // TODO err
   }
 
-  polyvec_ntt(&skpv, param);
-  polyvec_reduce(&skpv, param);
-  polyvec_ntt(&e, param);
+  polyvec_ntt(skpv, param);
+  polyvec_reduce(skpv, param);
+  polyvec_ntt(e, param);
 
   // matrix-vector multiplication
   for(i=0;i<param->k;i++) {
-    polyvec_basemul_acc_montgomery(&pkpv.vec[i], &a[i], &skpv, param);
-    poly_tomont(&pkpv.vec[i]);
+    polyvec_basemul_acc_montgomery(&pkpv->vec[i], &a[i], skpv, param);
+    poly_tomont(&pkpv->vec[i]);
   }
 
-  polyvec_add(&pkpv, &pkpv, &e, param);
-  polyvec_reduce(&pkpv, param);
+  polyvec_add(pkpv, pkpv, e, param);
+  polyvec_reduce(pkpv, param);
 
-  pack_sk(sk, &skpv, param);
-  pack_pk(pk, &pkpv, publicseed, param);
+  pack_sk(sk, skpv, param);
+  pack_pk(pk, pkpv, publicseed, param);
 
+  _gcry_mlkem_polyvec_al_destroy(&a_al);
+  _gcry_mlkem_polyvec_al_destroy(&e_al);
+  _gcry_mlkem_polyvec_al_destroy(&pkpv_al);
+  _gcry_mlkem_polyvec_al_destroy(&skpv_al);
   return ec;
 }
 
@@ -496,47 +515,73 @@ void indcpa_enc(uint8_t *c,
 {
   unsigned int i;
   uint8_t seed[GCRY_MLKEM_SYMBYTES];
-  polyvec sp, pkpv, ep, at[param->k], b;
+  //polyvec sp, pkpv, ep, at[param->k], b;
   poly v, k, epp;
 
-  unpack_pk(&pkpv, seed, pk, param);
+
+
+  gcry_mlkem_polyvec_al sp_al;
+  gcry_mlkem_polyvec_al pkpv_al;
+  gcry_mlkem_polyvec_al ep_al;
+  gcry_mlkem_polyvec_al at_al;
+  gcry_mlkem_polyvec_al b_al;
+  _gcry_mlkem_polyvec_al_create(&sp_al, param->k, param->k * sizeof(poly), 1);
+  _gcry_mlkem_polyvec_al_create(&pkpv_al, param->k, param->k * sizeof(poly), 1);
+  _gcry_mlkem_polyvec_al_create(&ep_al, param->k, param->k * sizeof(poly), 1);
+  _gcry_mlkem_polyvec_al_create(&at_al, param->k * param->k, param->k * sizeof(poly), 1);
+  _gcry_mlkem_polyvec_al_create(&b_al, param->k, param->k * sizeof(poly), 1);
+
+  polyvec *sp = sp_al.vec;
+  polyvec *pkpv = pkpv_al.vec;
+  polyvec *ep = ep_al.vec;
+  polyvec *at = at_al.vec;
+  polyvec *b = b_al.vec;
+
+
+  unpack_pk(pkpv, seed, pk, param);
   poly_frommsg(&k, m);
   gen_matrix(at, seed, 1, param);
 
 if(param->k == 2)
 {
-  poly_getnoise_eta1122_4x(sp.vec+0, sp.vec+1, ep.vec+0, ep.vec+1, coins, 0, 1, 2, 3, param);
+  poly_getnoise_eta1122_4x(sp->vec+0, sp->vec+1, ep->vec+0, ep->vec+1, coins, 0, 1, 2, 3, param);
   poly_getnoise_eta2(&epp, coins, 4);
 }
 else if(param->k == 3)
 {
-  poly_getnoise_eta1_4x(sp.vec+0, sp.vec+1, sp.vec+2, ep.vec+0, coins, 0, 1, 2, 3, param);
-  poly_getnoise_eta1_4x(ep.vec+1, ep.vec+2, &epp, b.vec+0, coins,  4, 5, 6, 7, param);
+  poly_getnoise_eta1_4x(sp->vec+0, sp->vec+1, sp->vec+2, ep->vec+0, coins, 0, 1, 2, 3, param);
+  poly_getnoise_eta1_4x(ep->vec+1, ep->vec+2, &epp, b->vec+0, coins,  4, 5, 6, 7, param);
 }
 else if(param->k == 4)
 {
-  poly_getnoise_eta1_4x(sp.vec+0, sp.vec+1, sp.vec+2, sp.vec+3, coins, 0, 1, 2, 3, param);
-  poly_getnoise_eta1_4x(ep.vec+0, ep.vec+1, ep.vec+2, ep.vec+3, coins, 4, 5, 6, 7, param);
+  poly_getnoise_eta1_4x(sp->vec+0, sp->vec+1, sp->vec+2, sp->vec+3, coins, 0, 1, 2, 3, param);
+  poly_getnoise_eta1_4x(ep->vec+0, ep->vec+1, ep->vec+2, ep->vec+3, coins, 4, 5, 6, 7, param);
   poly_getnoise_eta2(&epp, coins, 8);
 }
 
-  polyvec_ntt(&sp, param);
+  polyvec_ntt(sp, param);
 
   // matrix-vector multiplication
   for(i=0;i<param->k;i++)
-    polyvec_basemul_acc_montgomery(&b.vec[i], &at[i], &sp, param);
-  polyvec_basemul_acc_montgomery(&v, &pkpv, &sp, param);
+    polyvec_basemul_acc_montgomery(&b->vec[i], &at[i], sp, param);
+  polyvec_basemul_acc_montgomery(&v, pkpv, sp, param);
 
-  polyvec_invntt_tomont(&b, param);
+  polyvec_invntt_tomont(b, param);
   poly_invntt_tomont(&v);
 
-  polyvec_add(&b, &b, &ep, param);
+  polyvec_add(b, b, ep, param);
   poly_add(&v, &v, &epp);
   poly_add(&v, &v, &k);
-  polyvec_reduce(&b, param);
+  polyvec_reduce(b, param);
   poly_reduce(&v);
 
-  pack_ciphertext(c, &b, &v, param);
+  pack_ciphertext(c, b, &v, param);
+
+  _gcry_mlkem_polyvec_al_destroy(&sp_al);
+  _gcry_mlkem_polyvec_al_destroy(&pkpv_al);
+  _gcry_mlkem_polyvec_al_destroy(&ep_al);
+  _gcry_mlkem_polyvec_al_destroy(&at_al);
+  _gcry_mlkem_polyvec_al_destroy(&b_al);
 }
 
 /*************************************************
