@@ -1,3 +1,23 @@
+/* mldsa-packing.c
+ * Copyright (C) 2024 MTG AG
+ * The code was created based on the reference implementation that is part of the ML-DSA NIST submission.
+ *
+ * This file is part of Libgcrypt.
+ *
+ * Libgcrypt is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * Libgcrypt is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <config.h>
 #include "mldsa-params.h"
 #include "mldsa-packing.h"
@@ -13,10 +33,11 @@
  *              - const byte rho[]: byte array containing rho
  *              - const gcry_mldsa_polyvec *t1: pointer to vector t1
  **************************************************/
-void _gcry_mldsa_pack_pk (gcry_mldsa_param_t *params,
-                          byte *pk,
-                          const byte rho[GCRY_MLDSA_SEEDBYTES],
-                          const gcry_mldsa_polyvec *t1)
+void
+_gcry_mldsa_pack_pk (gcry_mldsa_param_t *params,
+                     byte *pk,
+                     const byte rho[GCRY_MLDSA_SEEDBYTES],
+                     const gcry_mldsa_polyvec *t1)
 {
   unsigned int i;
 
@@ -25,7 +46,8 @@ void _gcry_mldsa_pack_pk (gcry_mldsa_param_t *params,
   pk += GCRY_MLDSA_SEEDBYTES;
 
   for (i = 0; i < params->k; ++i)
-    _gcry_mldsa_polyt1_pack (pk + i * GCRY_MLDSA_POLYT1_PACKEDBYTES, &t1->vec[i]);
+    _gcry_mldsa_polyt1_pack (pk + i * GCRY_MLDSA_POLYT1_PACKEDBYTES,
+                             &t1->vec[i]);
 }
 
 /*************************************************
@@ -37,19 +59,20 @@ void _gcry_mldsa_pack_pk (gcry_mldsa_param_t *params,
  *              - const gcry_mldsa_polyvec *t1: pointer to output vector t1
  *              - byte pk[]: byte array containing bit-packed pk
  **************************************************/
-void _gcry_mldsa_unpack_pk (gcry_mldsa_param_t *params,
-                            byte rho[GCRY_MLDSA_SEEDBYTES],
-                            gcry_mldsa_polyvec *t1,
-                            const byte *pk)
+void
+_gcry_mldsa_unpack_pk (gcry_mldsa_param_t *params,
+                       byte rho[GCRY_MLDSA_SEEDBYTES],
+                       gcry_mldsa_polyvec *t1,
+                       const byte *pk)
 {
   unsigned int i;
 
-  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
-    rho[i] = pk[i];
+  memcpy (rho, pk, GCRY_MLDSA_SEEDBYTES);
   pk += GCRY_MLDSA_SEEDBYTES;
 
   for (i = 0; i < params->k; ++i)
-    _gcry_mldsa_polyt1_unpack (&t1->vec[i], pk + i * GCRY_MLDSA_POLYT1_PACKEDBYTES);
+    _gcry_mldsa_polyt1_unpack (&t1->vec[i],
+                               pk + i * GCRY_MLDSA_POLYT1_PACKEDBYTES);
 }
 
 /*************************************************
@@ -65,39 +88,40 @@ void _gcry_mldsa_unpack_pk (gcry_mldsa_param_t *params,
  *              - const gcry_mldsa_polyvec *s1: pointer to vector s1
  *              - const gcry_mldsa_polyvec *s2: pointer to vector s2
  **************************************************/
-void _gcry_mldsa_pack_sk (gcry_mldsa_param_t *params,
-                          byte *sk,
-                          const byte rho[GCRY_MLDSA_SEEDBYTES],
-                          const byte tr[GCRY_MLDSA_TRBYTES],
-                          const byte key[GCRY_MLDSA_SEEDBYTES],
-                          const gcry_mldsa_polyvec *t0,
-                          const gcry_mldsa_polyvec *s1,
-                          const gcry_mldsa_polyvec *s2)
+void
+_gcry_mldsa_pack_sk (gcry_mldsa_param_t *params,
+                     byte *sk,
+                     const byte rho[GCRY_MLDSA_SEEDBYTES],
+                     const byte tr[GCRY_MLDSA_TRBYTES],
+                     const byte key[GCRY_MLDSA_SEEDBYTES],
+                     const gcry_mldsa_polyvec *t0,
+                     const gcry_mldsa_polyvec *s1,
+                     const gcry_mldsa_polyvec *s2)
 {
   unsigned int i;
 
-  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
-    sk[i] = rho[i];
+  memcpy (sk, rho, GCRY_MLDSA_SEEDBYTES);
   sk += GCRY_MLDSA_SEEDBYTES;
 
-  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
-    sk[i] = key[i];
+  memcpy (sk, key, GCRY_MLDSA_SEEDBYTES);
   sk += GCRY_MLDSA_SEEDBYTES;
 
-  for (i = 0; i < GCRY_MLDSA_TRBYTES; ++i)
-    sk[i] = tr[i];
+  memcpy (sk, tr, GCRY_MLDSA_TRBYTES);
   sk += GCRY_MLDSA_TRBYTES;
 
   for (i = 0; i < params->l; ++i)
-    _gcry_mldsa_polyeta_pack (params, sk + i * params->polyeta_packedbytes, &s1->vec[i]);
+    _gcry_mldsa_polyeta_pack (
+        params, sk + i * params->polyeta_packedbytes, &s1->vec[i]);
   sk += params->l * params->polyeta_packedbytes;
 
   for (i = 0; i < params->k; ++i)
-    _gcry_mldsa_polyeta_pack (params, sk + i * params->polyeta_packedbytes, &s2->vec[i]);
+    _gcry_mldsa_polyeta_pack (
+        params, sk + i * params->polyeta_packedbytes, &s2->vec[i]);
   sk += params->k * params->polyeta_packedbytes;
 
   for (i = 0; i < params->k; ++i)
-    _gcry_mldsa_polyt0_pack (sk + i * GCRY_MLDSA_POLYT0_PACKEDBYTES, &t0->vec[i]);
+    _gcry_mldsa_polyt0_pack (sk + i * GCRY_MLDSA_POLYT0_PACKEDBYTES,
+                             &t0->vec[i]);
 }
 
 /*************************************************
@@ -113,39 +137,40 @@ void _gcry_mldsa_pack_sk (gcry_mldsa_param_t *params,
  *              - const gcry_mldsa_polyvec *s2: pointer to output vector s2
  *              - byte sk[]: byte array containing bit-packed sk
  **************************************************/
-void _gcry_mldsa_unpack_sk (gcry_mldsa_param_t *params,
-                            byte rho[GCRY_MLDSA_SEEDBYTES],
-                            byte tr[GCRY_MLDSA_TRBYTES],
-                            byte key[GCRY_MLDSA_SEEDBYTES],
-                            gcry_mldsa_polyvec *t0,
-                            gcry_mldsa_polyvec *s1,
-                            gcry_mldsa_polyvec *s2,
-                            const byte *sk)
+void
+_gcry_mldsa_unpack_sk (gcry_mldsa_param_t *params,
+                       byte rho[GCRY_MLDSA_SEEDBYTES],
+                       byte tr[GCRY_MLDSA_TRBYTES],
+                       byte key[GCRY_MLDSA_SEEDBYTES],
+                       gcry_mldsa_polyvec *t0,
+                       gcry_mldsa_polyvec *s1,
+                       gcry_mldsa_polyvec *s2,
+                       const byte *sk)
 {
   unsigned int i;
 
-  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
-    rho[i] = sk[i];
+  memcpy (rho, sk, GCRY_MLDSA_SEEDBYTES);
   sk += GCRY_MLDSA_SEEDBYTES;
 
-  for (i = 0; i < GCRY_MLDSA_SEEDBYTES; ++i)
-    key[i] = sk[i];
+  memcpy (key, sk, GCRY_MLDSA_SEEDBYTES);
   sk += GCRY_MLDSA_SEEDBYTES;
 
-  for (i = 0; i < GCRY_MLDSA_TRBYTES; ++i)
-    tr[i] = sk[i];
+  memcpy (tr, sk, GCRY_MLDSA_TRBYTES);
   sk += GCRY_MLDSA_TRBYTES;
 
   for (i = 0; i < params->l; ++i)
-    _gcry_mldsa_polyeta_unpack (params, &s1->vec[i], sk + i * params->polyeta_packedbytes);
+    _gcry_mldsa_polyeta_unpack (
+        params, &s1->vec[i], sk + i * params->polyeta_packedbytes);
   sk += params->l * params->polyeta_packedbytes;
 
   for (i = 0; i < params->k; ++i)
-    _gcry_mldsa_polyeta_unpack (params, &s2->vec[i], sk + i * params->polyeta_packedbytes);
+    _gcry_mldsa_polyeta_unpack (
+        params, &s2->vec[i], sk + i * params->polyeta_packedbytes);
   sk += params->k * params->polyeta_packedbytes;
 
   for (i = 0; i < params->k; ++i)
-    _gcry_mldsa_polyt0_unpack (&t0->vec[i], sk + i * GCRY_MLDSA_POLYT0_PACKEDBYTES);
+    _gcry_mldsa_polyt0_unpack (&t0->vec[i],
+                               sk + i * GCRY_MLDSA_POLYT0_PACKEDBYTES);
 }
 
 /*************************************************
@@ -158,22 +183,25 @@ void _gcry_mldsa_unpack_sk (gcry_mldsa_param_t *params,
  *              - const gcry_mldsa_polyvec *z: pointer to vector z
  *              - const gcry_mldsa_polyvec *h: pointer to hint vector h
  **************************************************/
-void _gcry_mldsa_pack_sig (
-    gcry_mldsa_param_t *params, byte *sig, const byte *c, const gcry_mldsa_polyvec *z, const gcry_mldsa_polyvec *h)
+void
+_gcry_mldsa_pack_sig (gcry_mldsa_param_t *params,
+                      byte *sig,
+                      const byte *c,
+                      const gcry_mldsa_polyvec *z,
+                      const gcry_mldsa_polyvec *h)
 {
   unsigned int i, j, k;
 
-  for (i = 0; i < params->ctildebytes; ++i)
-    sig[i] = c[i];
+  memcpy (sig, c, params->ctildebytes);
   sig += params->ctildebytes;
 
   for (i = 0; i < params->l; ++i)
-    _gcry_mldsa_polyz_pack (params, sig + i * params->polyz_packedbytes, &z->vec[i]);
+    _gcry_mldsa_polyz_pack (
+        params, sig + i * params->polyz_packedbytes, &z->vec[i]);
   sig += params->l * params->polyz_packedbytes;
 
   /* Encode h */
-  for (i = 0; i < params->omega + params->k; ++i)
-    sig[i] = 0;
+  memset (sig, 0, params->omega + params->k);
 
   k = 0;
   for (i = 0; i < params->k; ++i)
@@ -199,17 +227,21 @@ void _gcry_mldsa_pack_sig (
  *
  * Returns 1 in case of malformed signature; otherwise 0.
  **************************************************/
-int _gcry_mldsa_unpack_sig (
-    gcry_mldsa_param_t *params, byte *c, gcry_mldsa_polyvec *z, gcry_mldsa_polyvec *h, const byte *sig)
+int
+_gcry_mldsa_unpack_sig (gcry_mldsa_param_t *params,
+                        byte *c,
+                        gcry_mldsa_polyvec *z,
+                        gcry_mldsa_polyvec *h,
+                        const byte *sig)
 {
   unsigned int i, j, k;
 
-  for (i = 0; i < params->ctildebytes; ++i)
-    c[i] = sig[i];
+  memcpy (c, sig, params->ctildebytes);
   sig += params->ctildebytes;
 
   for (i = 0; i < params->l; ++i)
-    _gcry_mldsa_polyz_unpack (params, &z->vec[i], sig + i * params->polyz_packedbytes);
+    _gcry_mldsa_polyz_unpack (
+        params, &z->vec[i], sig + i * params->polyz_packedbytes);
   sig += params->l * params->polyz_packedbytes;
 
   /* Decode h */

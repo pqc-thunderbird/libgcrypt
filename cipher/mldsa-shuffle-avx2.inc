@@ -1,3 +1,23 @@
+/* mldsa-shuffle-avx2.inc
+ * Copyright (C) 2024 MTG AG
+ * The code was created based on the reference implementation that is part of the ML-DSA NIST submission.
+ *
+ * This file is part of Libgcrypt.
+ *
+ * Libgcrypt is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * Libgcrypt is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ */
+
 .macro shuffle8 r0,r1,r2,r3
 vperm2i128	$0x20,%ymm\r1,%ymm\r0,%ymm\r2
 vperm2i128	$0x31,%ymm\r1,%ymm\r0,%ymm\r3

@@ -1,3 +1,22 @@
+/* mldsa.c
+ * Copyright (C) 2024 MTG AG
+ * The code was created based on the reference implementation that is part of the ML-DSA NIST submission.
+ *
+ * This file is part of Libgcrypt.
+ *
+ * Libgcrypt is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * Libgcrypt is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <config.h>
 #include <stdio.h>
@@ -12,7 +31,6 @@
 
 
 static unsigned int
-/* TODO nbits not meaningful for mldsa */
 mldsa_get_nbits (gcry_sexp_t parms)
 {
   gpg_err_code_t ec;
@@ -32,109 +50,81 @@ static const char *mldsa_names[] = {
 };
 
 
-static gcry_err_code_t gcry_mldsa_get_param_from_bit_size (size_t nbits, gcry_mldsa_param_t *param)
+static gcry_err_code_t
+gcry_mldsa_get_param_from_bit_size (size_t nbits, gcry_mldsa_param_t *param)
 {
   /* nbits: mldsa pubkey byte size * 8 */
   switch (nbits)
     {
     case GCRY_MLDSA2_NBITS:
-      param->id          = GCRY_MLDSA2;
-      param->k           = 4;
-      param->l           = 4;
-      param->eta         = 2;
-      param->tau         = 39;
-      param->beta        = 78;
-      param->gamma1      = 1 << 17;
-      param->gamma2      = (GCRY_MLDSA_Q - 1) / 88;
-      param->omega       = 80;
-      param->ctildebytes = 32;
+      param->id                  = GCRY_MLDSA2;
+      param->k                   = 4;
+      param->l                   = 4;
+      param->eta                 = 2;
+      param->tau                 = 39;
+      param->beta                = 78;
+      param->gamma1              = 1 << 17;
+      param->gamma2              = (GCRY_MLDSA_Q - 1) / 88;
+      param->omega               = 80;
+      param->ctildebytes         = 32;
+      param->polyz_packedbytes   = 576;
+      param->polyw1_packedbytes  = 192;
+      param->polyeta_packedbytes = 96;
       break;
     case GCRY_MLDSA3_NBITS:
-      param->id          = GCRY_MLDSA3;
-      param->k           = 6;
-      param->l           = 5;
-      param->eta         = 4;
-      param->tau         = 49;
-      param->beta        = 196;
-      param->gamma1      = 1 << 19;
-      param->gamma2      = (GCRY_MLDSA_Q - 1) / 32;
-      param->omega       = 55;
-      param->ctildebytes = 48;
+      param->id                  = GCRY_MLDSA3;
+      param->k                   = 6;
+      param->l                   = 5;
+      param->eta                 = 4;
+      param->tau                 = 49;
+      param->beta                = 196;
+      param->gamma1              = 1 << 19;
+      param->gamma2              = (GCRY_MLDSA_Q - 1) / 32;
+      param->omega               = 55;
+      param->ctildebytes         = 48;
+      param->polyz_packedbytes   = 640;
+      param->polyw1_packedbytes  = 128;
+      param->polyeta_packedbytes = 128;
       break;
     case GCRY_MLDSA5_NBITS:
-      param->id          = GCRY_MLDSA5;
-      param->k           = 8;
-      param->l           = 7;
-      param->eta         = 2;
-      param->tau         = 60;
-      param->beta        = 120;
-      param->gamma1      = 1 << 19;
-      param->gamma2      = (GCRY_MLDSA_Q - 1) / 32;
-      param->omega       = 75;
-      param->ctildebytes = 64;
+      param->id                  = GCRY_MLDSA5;
+      param->k                   = 8;
+      param->l                   = 7;
+      param->eta                 = 2;
+      param->tau                 = 60;
+      param->beta                = 120;
+      param->gamma1              = 1 << 19;
+      param->gamma2              = (GCRY_MLDSA_Q - 1) / 32;
+      param->omega               = 75;
+      param->ctildebytes         = 64;
+      param->polyz_packedbytes   = 640;
+      param->polyw1_packedbytes  = 128;
+      param->polyeta_packedbytes = 96;
       break;
     default:
       return GPG_ERR_INV_ARG;
     }
 
   param->polyvech_packedbytes = param->omega + param->k;
-
-  if (param->gamma1 == (1 << 17))
-    {
-      param->polyz_packedbytes = 576;
-    }
-  else if (param->gamma1 == (1 << 19))
-    {
-      param->polyz_packedbytes = 640;
-    }
-  else
-    {
-      printf ("error when determining polyz_packedbytes\n");
-      return GPG_ERR_GENERAL;
-    }
-
-
-  if (param->gamma2 == (GCRY_MLDSA_Q - 1) / 88)
-    {
-      param->polyw1_packedbytes = 192;
-    }
-  else if (param->gamma2 == (GCRY_MLDSA_Q - 1) / 32)
-    {
-      param->polyw1_packedbytes = 128;
-    }
-  else
-    {
-      printf ("error when determining polyw1_packedbytes\n");
-      return GPG_ERR_GENERAL;
-    }
-
-  if (param->eta == 2)
-    {
-      param->polyeta_packedbytes = 96;
-    }
-  else if (param->eta == 4)
-    {
-      param->polyeta_packedbytes = 128;
-    }
-  else
-    {
-      printf ("error when determining polyeta_packedbytes\n");
-      return GPG_ERR_GENERAL;
-    }
-
-  param->public_key_bytes = GCRY_MLDSA_SEEDBYTES + param->k * GCRY_MLDSA_POLYT1_PACKEDBYTES;
-  param->secret_key_bytes = 2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES + param->l * param->polyeta_packedbytes
-                            + param->k * param->polyeta_packedbytes + param->k * GCRY_MLDSA_POLYT0_PACKEDBYTES;
-  param->signature_bytes = param->ctildebytes + param->l * param->polyz_packedbytes + param->polyvech_packedbytes;
+  param->public_key_bytes
+      = GCRY_MLDSA_SEEDBYTES + param->k * GCRY_MLDSA_POLYT1_PACKEDBYTES;
+  param->secret_key_bytes = 2 * GCRY_MLDSA_SEEDBYTES + GCRY_MLDSA_TRBYTES
+                            + param->l * param->polyeta_packedbytes
+                            + param->k * param->polyeta_packedbytes
+                            + param->k * GCRY_MLDSA_POLYT0_PACKEDBYTES;
+  param->signature_bytes = param->ctildebytes
+                           + param->l * param->polyz_packedbytes
+                           + param->polyvech_packedbytes;
 
   return 0;
 }
 
 
-static gcry_err_code_t extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
-                                                     const char *label,
-                                                     unsigned char **sk_p,
-                                                     size_t exp_len)
+static gcry_err_code_t
+extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
+                              const char *label,
+                              unsigned char **sk_p,
+                              size_t exp_len)
 {
   gcry_mpi_t sk     = NULL;
   gpg_err_code_t ec = 0;
@@ -155,7 +145,7 @@ static gcry_err_code_t extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
 
   if (!(*sk_p = xtrymalloc (exp_len)))
     {
-      ec = gpg_err_code_from_syserror();
+      ec = gpg_err_code_from_syserror ();
       goto leave;
     }
   _gcry_mpi_print (GCRYMPI_FMT_USG, *sk_p, exp_len, &nwritten, sk);
@@ -180,22 +170,27 @@ leave:
 }
 
 
-static gcry_err_code_t private_key_from_sexp (const gcry_sexp_t keyparms,
-                                              const gcry_mldsa_param_t param,
-                                              unsigned char **sk_p)
+static gcry_err_code_t
+private_key_from_sexp (const gcry_sexp_t keyparms,
+                       const gcry_mldsa_param_t param,
+                       unsigned char **sk_p)
 {
-  return extract_opaque_mpi_from_sexp (keyparms, "/s", sk_p, param.secret_key_bytes);
+  return extract_opaque_mpi_from_sexp (
+      keyparms, "/s", sk_p, param.secret_key_bytes);
 }
 
-static gcry_err_code_t public_key_from_sexp (const gcry_sexp_t keyparms,
-                                             const gcry_mldsa_param_t param,
-                                             unsigned char **pk_p)
+static gcry_err_code_t
+public_key_from_sexp (const gcry_sexp_t keyparms,
+                      const gcry_mldsa_param_t param,
+                      unsigned char **pk_p)
 {
-  return extract_opaque_mpi_from_sexp (keyparms, "/p", pk_p, param.public_key_bytes);
+  return extract_opaque_mpi_from_sexp (
+      keyparms, "/p", pk_p, param.public_key_bytes);
 }
 
 
-static gcry_err_code_t mldsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
+static gcry_err_code_t
+mldsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
 {
   gpg_err_code_t ec = 0;
 
@@ -212,9 +207,10 @@ static gcry_err_code_t mldsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *
   if ((ec = gcry_mldsa_get_param_from_bit_size (nbits, &param)))
     return ec;
 
-  if (!(sk = xtrymalloc_secure (param.secret_key_bytes)) || !(pk = xtrymalloc (param.public_key_bytes)))
+  if (!(sk = xtrymalloc_secure (param.secret_key_bytes))
+      || !(pk = xtrymalloc (param.public_key_bytes)))
     {
-      ec = gpg_err_code_from_syserror();
+      ec = gpg_err_code_from_syserror ();
       goto leave;
     }
   _gcry_mldsa_keypair (&param, pk, sk);
@@ -225,7 +221,7 @@ static gcry_err_code_t mldsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *
   if (!sk_mpi || !pk_mpi)
     {
       printf ("creating sk_mpi or pk_mpi failed!\n");
-      ec = gpg_err_code_from_syserror();
+      ec = gpg_err_code_from_syserror ();
       goto leave;
     }
 
@@ -253,7 +249,8 @@ leave:
   return ec;
 }
 
-static gcry_err_code_t mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
+static gcry_err_code_t
+mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 {
   gpg_err_code_t ec       = 0;
   unsigned char *sig_buf  = NULL;
@@ -290,7 +287,7 @@ static gcry_err_code_t mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_
   data_buf_len = nwritten;
   if (!(data_buf = xtrymalloc (data_buf_len)))
     {
-      ec = gpg_err_code_from_syserror();
+      ec = gpg_err_code_from_syserror ();
       goto leave;
     }
   _gcry_mpi_print (GCRYMPI_FMT_USG, data_buf, data_buf_len, &nwritten, data);
@@ -307,11 +304,13 @@ static gcry_err_code_t mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_
 
   if (!(sig_buf = xtrymalloc (param.signature_bytes)))
     {
-      ec = gpg_err_code_from_syserror();
+      ec = gpg_err_code_from_syserror ();
       goto leave;
     }
 
-  if (0 != _gcry_mldsa_sign (&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
+  if (0
+      != _gcry_mldsa_sign (
+          &param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
     {
       printf ("sign operation failed\n");
       ec = GPG_ERR_GENERAL;
@@ -324,7 +323,8 @@ static gcry_err_code_t mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_
       goto leave;
     }
 
-  ec = sexp_build (r_sig, NULL, "(sig-val(mldsa-ipd(a%b)))", sig_buf_len, sig_buf);
+  ec = sexp_build (
+      r_sig, NULL, "(sig-val(mldsa-ipd(a%b)))", sig_buf_len, sig_buf);
   if (ec)
     printf ("sexp build failed\n");
 
@@ -340,7 +340,8 @@ leave:
 }
 
 
-static gcry_err_code_t mldsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
+static gcry_err_code_t
+mldsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
 {
   gpg_err_code_t ec       = 0;
   unsigned char *sig_buf  = NULL;
@@ -377,7 +378,7 @@ static gcry_err_code_t mldsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry
   data_buf_len = nwritten;
   if (!(data_buf = xtrymalloc (data_buf_len)))
     {
-      ec = gpg_err_code_from_syserror();
+      ec = gpg_err_code_from_syserror ();
       goto leave;
     }
   _gcry_mpi_print (GCRYMPI_FMT_USG, data_buf, data_buf_len, &nwritten, data);
@@ -406,17 +407,24 @@ static gcry_err_code_t mldsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry
   /* extract sig from mpi */
   if (!(sig_buf = xtrymalloc (param.signature_bytes)))
     {
-      ec = gpg_err_code_from_syserror();
+      ec = gpg_err_code_from_syserror ();
       goto leave;
     }
-  _gcry_mpi_print (GCRYMPI_FMT_USG, sig_buf, param.signature_bytes, &nwritten, sig);
+  _gcry_mpi_print (
+      GCRYMPI_FMT_USG, sig_buf, param.signature_bytes, &nwritten, sig);
   if (nwritten != param.signature_bytes)
     {
       ec = GPG_ERR_BAD_SIGNATURE;
       goto leave;
     }
 
-  if (0 != _gcry_mldsa_verify (&param, sig_buf, param.signature_bytes, data_buf, data_buf_len, pk_buf))
+  if (0
+      != _gcry_mldsa_verify (&param,
+                             sig_buf,
+                             param.signature_bytes,
+                             data_buf,
+                             data_buf_len,
+                             pk_buf))
     {
       ec = GPG_ERR_GENERAL;
       goto leave;
