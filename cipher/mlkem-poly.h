@@ -25,6 +25,7 @@
 #include "mlkem-params.h"
 #include "config.h"
 #include "types.h"
+#include "immintrin.h" // TODO ifdef
 
 /*
  * Elements of R_q = Z_q[X]/(X^n + 1). Represents polynomial
@@ -32,9 +33,11 @@
  */
 typedef struct
 {
-  s16 coeffs[GCRY_MLKEM_N];
+    union{
+    s16 coeffs[GCRY_MLKEM_N];
+    __m256i vec[(GCRY_MLKEM_N+15)/16]; // TODO ifdef
+    }
 } gcry_mlkem_poly;
-
 
 void _gcry_mlkem_poly_compress (unsigned char *r,
                                 const gcry_mlkem_poly *a,

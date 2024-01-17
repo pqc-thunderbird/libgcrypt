@@ -34,7 +34,7 @@
  *
  * Arguments:   - unsigned char *r: pointer to output byte array
  *                            (of length MLKEM_POLYCOMPRESSEDBYTES)
- *              - const poly *a: pointer to input polynomial
+ *              - const gcry_mlkem_poly *a: pointer to input polynomial
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 void
@@ -199,7 +199,7 @@ _gcry_mlkem_poly_frombytes (gcry_mlkem_poly *r,
  *
  * Description: Convert 32-byte message to polynomial
  *
- * Arguments:   - poly *r: pointer to output polynomial
+ * Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
  *              - const unsigned char *msg: pointer to input message
  **************************************************/
 void

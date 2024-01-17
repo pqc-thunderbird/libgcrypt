@@ -330,7 +330,7 @@ _gcry_mlkem_polyvec_invntt_tomont (gcry_mlkem_polyvec *r,
  * Description: Multiply elements of a and b in NTT domain, accumulate into r,
  *              and multiply by 2^-16.
  *
- * Arguments: - poly *r: pointer to output polynomial
+ * Arguments: - gcry_mlkem_poly *r: pointer to output polynomial
  *            - const gcry_mlkem_polyvec *a: pointer to first input vector of polynomials
  *            - const gcry_mlkem_polyvec *b: pointer to second input vector of polynomials
  *            - gcry_mlkem_param_t const *param: mlkem parameters

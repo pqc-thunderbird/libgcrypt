@@ -132,8 +132,8 @@ _gcry_mlkem_unpack_sk (gcry_mlkem_polyvec *sk,
  *              and the compressed and serialized polynomial v
  *
  * Arguments:   byte *r: pointer to the output serialized ciphertext
- *              poly *pk: pointer to the input vector of polynomials b
- *              poly *v: pointer to the input polynomial v
+ *              gcry_mlkem_poly *pk: pointer to the input vector of polynomials b
+ *              gcry_mlkem_poly *v: pointer to the input polynomial v
  *              gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/
 static void
@@ -156,7 +156,7 @@ _gcry_mlkem_pack_ciphertext (byte *r,
  *
  * Arguments:   - gcry_mlkem_polyvec *b: pointer to the output vector of
  *polynomials b
- *              - poly *v: pointer to the output polynomial v
+ *              - gcry_mlkem_poly *v: pointer to the output polynomial v
  *              - const byte *c: pointer to the input serialized ciphertext
  *              - gcry_mlkem_param_t const *param: mlkem parameters
  **************************************************/

@@ -3,6 +3,7 @@
 #include "mlkem-params-avx2.h"
 #include "mlkem-params.h"
 #include "mlkem-cbd-avx2.h"
+#include "mlkem-poly.h"
 
 /*************************************************
 * Name:        cbd2
@@ -11,10 +12,10 @@
 *              polynomial with coefficients distributed according to
 *              a centered binomial distribution with parameter eta=2
 *
-* Arguments:   - poly *r: pointer to output polynomial
+* Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
 *              - const __m256i *buf: pointer to aligned input byte array
 **************************************************/
-static void cbd2(poly * restrict r, const __m256i buf[2*GCRY_MLKEM_N/128])
+static void cbd2(gcry_mlkem_poly * restrict r, const __m256i buf[2*GCRY_MLKEM_N/128])
 {
   unsigned int i;
   __m256i f0, f1, f2, f3;
@@ -66,10 +67,10 @@ static void cbd2(poly * restrict r, const __m256i buf[2*GCRY_MLKEM_N/128])
 *              a centered binomial distribution with parameter eta=3
 *              This function is only needed for Kyber-512
 *
-* Arguments:   - poly *r: pointer to output polynomial
+* Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
 *              - const __m256i *buf: pointer to aligned input byte array
 **************************************************/
-static void cbd3(poly * restrict r, const uint8_t buf[3*GCRY_MLKEM_N/4+8])
+static void cbd3(gcry_mlkem_poly * restrict r, const uint8_t buf[3*GCRY_MLKEM_N/4+8])
 {
   unsigned int i;
   __m256i f0, f1, f2, f3;
@@ -122,7 +123,7 @@ static void cbd3(poly * restrict r, const uint8_t buf[3*GCRY_MLKEM_N/4+8])
 }
 
 /* buf 32 bytes longer for cbd3 */
-void poly_cbd_eta1(poly *r, const __m256i *buf, gcry_mlkem_param_t const *param)
+void poly_cbd_eta1(gcry_mlkem_poly *r, const __m256i *buf, gcry_mlkem_param_t const *param)
 {
   if(param->eta1 == 2)
   {
@@ -134,7 +135,7 @@ void poly_cbd_eta1(poly *r, const __m256i *buf, gcry_mlkem_param_t const *param)
   }
 }
 
-void poly_cbd_eta2(poly *r, const __m256i buf[GCRY_MLKEM_ETA2*GCRY_MLKEM_N/128])
+void poly_cbd_eta2(gcry_mlkem_poly *r, const __m256i buf[GCRY_MLKEM_ETA2*GCRY_MLKEM_N/128])
 {
   cbd2(r, buf);
 }

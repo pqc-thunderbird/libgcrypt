@@ -40,7 +40,7 @@ void _gcry_mlkem_polyvec_al_destroy (gcry_mlkem_polyvec_al *vec)
   vec->alloc_addr = NULL;
 }
 
-static void poly_compress10(uint8_t r[320], const poly * restrict a)
+static void poly_compress10(uint8_t r[320], const gcry_mlkem_poly * restrict a)
 {
   unsigned int i;
   __m256i f0, f1, f2;
@@ -79,7 +79,7 @@ static void poly_compress10(uint8_t r[320], const poly * restrict a)
   }
 }
 
-static void poly_decompress10(poly * restrict r, const uint8_t a[320+12])
+static void poly_decompress10(gcry_mlkem_poly * restrict r, const uint8_t a[320+12])
 {
   unsigned int i;
   __m256i f;
@@ -103,7 +103,7 @@ static void poly_decompress10(poly * restrict r, const uint8_t a[320+12])
   }
 }
 
-static void poly_compress11(uint8_t r[352+2], const poly * restrict a)
+static void poly_compress11(uint8_t r[352+2], const gcry_mlkem_poly * restrict a)
 {
   unsigned int i;
   __m256i f0, f1, f2;
@@ -146,7 +146,7 @@ static void poly_compress11(uint8_t r[352+2], const poly * restrict a)
   }
 }
 
-static void poly_decompress11(poly * restrict r, const uint8_t a[352+10])
+static void poly_decompress11(gcry_mlkem_poly * restrict r, const uint8_t a[352+10])
 {
   unsigned int i;
   __m256i f;
@@ -189,12 +189,12 @@ void polyvec_compress(uint8_t *r, const byte *a, const gcry_mlkem_param_t *param
   if(param->polyvec_compressed_bytes == param->k * 320)
   {
   for(i=0;i<param->k;i++)
-    poly_compress10(&r[320*i],a+i*sizeof(poly));
+    poly_compress10(&r[320*i],a+i*sizeof(gcry_mlkem_poly));
   }
   else if(param->polyvec_compressed_bytes == (param->k * 352))
   {
   for(i=0;i<param->k;i++)
-    poly_compress11(&r[352*i],a+i*sizeof(poly));
+    poly_compress11(&r[352*i],a+i*sizeof(gcry_mlkem_poly));
   }
 }
 
@@ -214,12 +214,12 @@ void polyvec_decompress(byte *r, const uint8_t *a, const gcry_mlkem_param_t *par
   if(param->polyvec_compressed_bytes == param->k * 320)
   {
   for(i=0;i<param->k;i++)
-    poly_decompress10(r+i*sizeof(poly),&a[320*i]);
+    poly_decompress10(r+i*sizeof(gcry_mlkem_poly),&a[320*i]);
   }
   else if(param->polyvec_compressed_bytes == (param->k * 352))
   {
   for(i=0;i<param->k;i++)
-    poly_decompress11(r+i*sizeof(poly),&a[352*i]);
+    poly_decompress11(r+i*sizeof(gcry_mlkem_poly),&a[352*i]);
   }
 }
 
@@ -236,7 +236,7 @@ void polyvec_tobytes(uint8_t *r, const byte *a, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
   for(i=0;i<param->k;i++)
-    poly_tobytes(r+i*GCRY_MLKEM_POLYBYTES, a+i*sizeof(poly));
+    poly_tobytes(r+i*GCRY_MLKEM_POLYBYTES, a+i*sizeof(gcry_mlkem_poly));
 }
 
 /*************************************************
@@ -253,7 +253,7 @@ void polyvec_frombytes(byte *r, const uint8_t *a, const gcry_mlkem_param_t *para
 {
   unsigned int i;
   for(i=0;i<param->k;i++)
-    poly_frombytes(r+i*sizeof(poly), a+i*GCRY_MLKEM_POLYBYTES);
+    poly_frombytes(r+i*sizeof(gcry_mlkem_poly), a+i*GCRY_MLKEM_POLYBYTES);
 }
 
 /*************************************************
@@ -267,7 +267,7 @@ void polyvec_ntt(byte *r, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
   for(i=0;i<param->k;i++)
-    poly_ntt(r + i*sizeof(poly));
+    poly_ntt(r + i*sizeof(gcry_mlkem_poly));
 }
 
 /*************************************************
@@ -282,7 +282,7 @@ void polyvec_invntt_tomont(byte *r, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
   for(i=0;i<param->k;i++)
-    poly_invntt_tomont(r + i*sizeof(poly));
+    poly_invntt_tomont(r + i*sizeof(gcry_mlkem_poly));
 }
 
 /*************************************************
@@ -291,18 +291,18 @@ void polyvec_invntt_tomont(byte *r, const gcry_mlkem_param_t *param)
 * Description: Multiply elements in a and b in NTT domain, accumulate into r,
 *              and multiply by 2^-16.
 *
-* Arguments: - poly *r: pointer to output polynomial
+* Arguments: - gcry_mlkem_poly *r: pointer to output polynomial
 *            - const polyvec *a: pointer to first input vector of polynomials
 *            - const polyvec *b: pointer to second input vector of polynomials
 **************************************************/
-void polyvec_basemul_acc_montgomery(poly *r, const byte *a, const byte *b, const gcry_mlkem_param_t *param)
+void polyvec_basemul_acc_montgomery(gcry_mlkem_poly *r, const byte *a, const byte *b, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
-  poly tmp;
+  gcry_mlkem_poly tmp;
 
-  poly_basemul_montgomery(r,(poly*)a,(poly*)b);
+  poly_basemul_montgomery(r,(gcry_mlkem_poly*)a,(gcry_mlkem_poly*)b);
   for(i=1;i<param->k;i++) {
-    poly_basemul_montgomery(&tmp,a + i*sizeof(poly),b+i*sizeof(poly));
+    poly_basemul_montgomery(&tmp,a + i*sizeof(gcry_mlkem_poly),b+i*sizeof(gcry_mlkem_poly));
     poly_add(r,r,&tmp);
   }
 }
@@ -320,7 +320,7 @@ void polyvec_reduce(byte *r, const gcry_mlkem_param_t *param)
 {
   unsigned int i;
   for(i=0;i<param->k;i++)
-    poly_reduce(r + i*sizeof(poly));
+    poly_reduce(r + i*sizeof(gcry_mlkem_poly));
 }
 
 /*************************************************
@@ -336,5 +336,5 @@ void polyvec_add(byte *r, const byte *a, const byte *b, const gcry_mlkem_param_t
 {
   unsigned int i;
   for(i=0;i<param->k;i++)
-    poly_add(r +i*sizeof(poly), a+i*sizeof(poly), b+i*sizeof(poly));
+    poly_add(r +i*sizeof(gcry_mlkem_poly), a+i*sizeof(gcry_mlkem_poly), b+i*sizeof(gcry_mlkem_poly));
 }

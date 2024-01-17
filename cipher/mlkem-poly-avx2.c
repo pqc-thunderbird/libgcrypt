@@ -19,9 +19,9 @@
 *              by poly_reduce().
 *
 * Arguments:   - uint8_t *r: pointer to output byte array
-*              - const poly *a: pointer to input polynomial
+*              - const gcry_mlkem_poly *a: pointer to input polynomial
 **************************************************/
-void poly_compress_128(uint8_t r[128], const poly * restrict a)
+void poly_compress_128(uint8_t r[128], const gcry_mlkem_poly * restrict a)
 {
   unsigned int i;
   __m256i f0, f1, f2, f3;
@@ -58,7 +58,7 @@ void poly_compress_128(uint8_t r[128], const poly * restrict a)
   }
 }
 
-void poly_decompress_128(poly * restrict r, const uint8_t a[128])
+void poly_decompress_128(gcry_mlkem_poly * restrict r, const uint8_t a[128])
 {
   unsigned int i;
   __m128i t;
@@ -80,7 +80,7 @@ void poly_decompress_128(poly * restrict r, const uint8_t a[128])
   }
 }
 
-void poly_compress_160(uint8_t r[160], const poly * restrict a)
+void poly_compress_160(uint8_t r[160], const gcry_mlkem_poly * restrict a)
 {
   unsigned int i;
   __m256i f0, f1;
@@ -117,7 +117,7 @@ void poly_compress_160(uint8_t r[160], const poly * restrict a)
   }
 }
 
-void poly_decompress_160(poly * restrict r, const uint8_t a[160])
+void poly_decompress_160(gcry_mlkem_poly * restrict r, const uint8_t a[160])
 {
   unsigned int i;
   __m128i t;
@@ -156,9 +156,9 @@ void poly_decompress_160(poly * restrict r, const uint8_t a[160])
 *
 * Arguments:   - uint8_t *r: pointer to output byte array
 *                            (needs space for GCRY_MLKEM_POLYBYTES bytes)
-*              - poly *a: pointer to input polynomial
+*              - gcry_mlkem_poly *a: pointer to input polynomial
 **************************************************/
-void poly_tobytes(uint8_t r[GCRY_MLKEM_POLYBYTES], const poly *a)
+void poly_tobytes(uint8_t r[GCRY_MLKEM_POLYBYTES], const gcry_mlkem_poly *a)
 {
   ntttobytes_avx(r, a->vec, qdata.vec);
 }
@@ -169,11 +169,11 @@ void poly_tobytes(uint8_t r[GCRY_MLKEM_POLYBYTES], const poly *a)
 * Description: De-serialization of a polynomial;
 *              inverse of poly_tobytes
 *
-* Arguments:   - poly *r: pointer to output polynomial
+* Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
 *              - const uint8_t *a: pointer to input byte array
 *                                  (of GCRY_MLKEM_POLYBYTES bytes)
 **************************************************/
-void poly_frombytes(poly *r, const uint8_t a[GCRY_MLKEM_POLYBYTES])
+void poly_frombytes(gcry_mlkem_poly *r, const uint8_t a[GCRY_MLKEM_POLYBYTES])
 {
   nttfrombytes_avx(r->vec, a, qdata.vec);
 }
@@ -183,10 +183,10 @@ void poly_frombytes(poly *r, const uint8_t a[GCRY_MLKEM_POLYBYTES])
 *
 * Description: Convert 32-byte message to polynomial
 *
-* Arguments:   - poly *r: pointer to output polynomial
+* Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
 *              - const uint8_t *msg: pointer to input message
 **************************************************/
-void poly_frommsg(poly * restrict r, const uint8_t *msg)
+void poly_frommsg(gcry_mlkem_poly * restrict r, const uint8_t *msg)
 {
   __m256i f, g0, g1, g2, g3, h0, h1, h2, h3;
   const __m256i shift = _mm256_broadcastsi128_si256(_mm_set_epi32(0,1,2,3));
@@ -237,9 +237,9 @@ void poly_frommsg(poly * restrict r, const uint8_t *msg)
 *              by poly_reduce().
 *
 * Arguments:   - uint8_t *msg: pointer to output message
-*              - poly *a: pointer to input polynomial
+*              - gcry_mlkem_poly *a: pointer to input polynomial
 **************************************************/
-void poly_tomsg(uint8_t *msg, const poly * restrict a)
+void poly_tomsg(uint8_t *msg, const gcry_mlkem_poly * restrict a)
 {
   unsigned int i;
   uint32_t small;
@@ -272,12 +272,12 @@ void poly_tomsg(uint8_t *msg, const poly * restrict a)
 *              with output polynomial close to centered binomial distribution
 *              with parameter ETA1
 *
-* Arguments:   - poly *r: pointer to output polynomial
+* Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
 *              - const uint8_t *seed: pointer to input seed
 *                                     (of length GCRY_MLKEM_SYMBYTES bytes)
 *              - uint8_t nonce: one-byte input nonce
 **************************************************/
-void poly_getnoise_eta1(poly *r, const uint8_t seed[GCRY_MLKEM_SYMBYTES], uint8_t nonce, gcry_mlkem_param_t const *param)
+void poly_getnoise_eta1(gcry_mlkem_poly *r, const uint8_t seed[GCRY_MLKEM_SYMBYTES], uint8_t nonce, gcry_mlkem_param_t const *param)
 {
   ALIGNED_UINT8(param->eta1*GCRY_MLKEM_N/4+32) buf; // +32 bytes as required by poly_cbd_eta1
   prf(buf.coeffs, param->eta1*GCRY_MLKEM_N/4, seed, nonce);
@@ -291,12 +291,12 @@ void poly_getnoise_eta1(poly *r, const uint8_t seed[GCRY_MLKEM_SYMBYTES], uint8_
 *              with output polynomial close to centered binomial distribution
 *              with parameter GCRY_MLKEM_ETA2
 *
-* Arguments:   - poly *r: pointer to output polynomial
+* Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
 *              - const uint8_t *seed: pointer to input seed
 *                                     (of length GCRY_MLKEM_SYMBYTES bytes)
 *              - uint8_t nonce: one-byte input nonce
 **************************************************/
-void poly_getnoise_eta2(poly *r, const uint8_t seed[GCRY_MLKEM_SYMBYTES], uint8_t nonce)
+void poly_getnoise_eta2(gcry_mlkem_poly *r, const uint8_t seed[GCRY_MLKEM_SYMBYTES], uint8_t nonce)
 {
   ALIGNED_UINT8(GCRY_MLKEM_ETA2*GCRY_MLKEM_N/4) buf;
   prf(buf.coeffs, GCRY_MLKEM_ETA2*GCRY_MLKEM_N/4, seed, nonce);
@@ -304,10 +304,10 @@ void poly_getnoise_eta2(poly *r, const uint8_t seed[GCRY_MLKEM_SYMBYTES], uint8_
 }
 
 #define NOISE_NBLOCKS ((param->eta1*GCRY_MLKEM_N/4+SHAKE256_RATE-1)/SHAKE256_RATE)
-void poly_getnoise_eta1_4x(poly *r0,
-                           poly *r1,
-                           poly *r2,
-                           poly *r3,
+void poly_getnoise_eta1_4x(gcry_mlkem_poly *r0,
+                           gcry_mlkem_poly *r1,
+                           gcry_mlkem_poly *r2,
+                           gcry_mlkem_poly *r3,
                            const uint8_t seed[32],
                            uint8_t nonce0,
                            uint8_t nonce1,
@@ -340,10 +340,10 @@ void poly_getnoise_eta1_4x(poly *r0,
 }
 
 // #if KYBER_K == 2
-void poly_getnoise_eta1122_4x(poly *r0,
-                              poly *r1,
-                              poly *r2,
-                              poly *r3,
+void poly_getnoise_eta1122_4x(gcry_mlkem_poly *r0,
+                              gcry_mlkem_poly *r1,
+                              gcry_mlkem_poly *r2,
+                              gcry_mlkem_poly *r3,
                               const uint8_t seed[32],
                               uint8_t nonce0,
                               uint8_t nonce1,
@@ -387,9 +387,9 @@ void poly_getnoise_eta1122_4x(poly *r0,
 *              bounded by q in absolute value, output coefficients are bounded
 *              by 16118 in absolute value.
 *
-* Arguments:   - poly *r: pointer to in/output polynomial
+* Arguments:   - gcry_mlkem_poly *r: pointer to in/output polynomial
 **************************************************/
-void poly_ntt(poly *r)
+void poly_ntt(gcry_mlkem_poly *r)
 {
   ntt_avx(r->vec, qdata.vec);
 }
@@ -404,14 +404,14 @@ void poly_ntt(poly *r)
 *              arbitrary 16-bit integers, output coefficients are bounded by 14870
 *              in absolute value.
 *
-* Arguments:   - poly *a: pointer to in/output polynomial
+* Arguments:   - gcry_mlkem_poly *a: pointer to in/output polynomial
 **************************************************/
-void poly_invntt_tomont(poly *r)
+void poly_invntt_tomont(gcry_mlkem_poly *r)
 {
   invntt_avx(r->vec, qdata.vec);
 }
 
-void poly_nttunpack(poly *r)
+void poly_nttunpack(gcry_mlkem_poly *r)
 {
   nttunpack_avx(r->vec, qdata.vec);
 }
@@ -424,11 +424,11 @@ void poly_nttunpack(poly *r)
 *              bounded by q, the other polynomial can have arbitrary
 *              coefficients. Output coefficients are bounded by 6656.
 *
-* Arguments:   - poly *r: pointer to output polynomial
-*              - const poly *a: pointer to first input polynomial
-*              - const poly *b: pointer to second input polynomial
+* Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
+*              - const gcry_mlkem_poly *a: pointer to first input polynomial
+*              - const gcry_mlkem_poly *b: pointer to second input polynomial
 **************************************************/
-void poly_basemul_montgomery(poly *r, const poly *a, const poly *b)
+void poly_basemul_montgomery(gcry_mlkem_poly *r, const gcry_mlkem_poly *a, const gcry_mlkem_poly *b)
 {
   basemul_avx(r->vec, a->vec, b->vec, qdata.vec);
 }
@@ -439,9 +439,9 @@ void poly_basemul_montgomery(poly *r, const poly *a, const poly *b)
 * Description: Inplace conversion of all coefficients of a polynomial
 *              from normal domain to Montgomery domain
 *
-* Arguments:   - poly *r: pointer to input/output polynomial
+* Arguments:   - gcry_mlkem_poly *r: pointer to input/output polynomial
 **************************************************/
-void poly_tomont(poly *r)
+void poly_tomont(gcry_mlkem_poly *r)
 {
   tomont_avx(r->vec, qdata.vec);
 }
@@ -452,9 +452,9 @@ void poly_tomont(poly *r)
 * Description: Applies Barrett reduction to all coefficients of a polynomial
 *              for details of the Barrett reduction see comments in reduce.c
 *
-* Arguments:   - poly *r: pointer to input/output polynomial
+* Arguments:   - gcry_mlkem_poly *r: pointer to input/output polynomial
 **************************************************/
-void poly_reduce(poly *r)
+void poly_reduce(gcry_mlkem_poly *r)
 {
   reduce_avx(r->vec, qdata.vec);
 }
@@ -465,11 +465,11 @@ void poly_reduce(poly *r)
 * Description: Add two polynomials. No modular reduction
 *              is performed.
 *
-* Arguments: - poly *r: pointer to output polynomial
-*            - const poly *a: pointer to first input polynomial
-*            - const poly *b: pointer to second input polynomial
+* Arguments: - gcry_mlkem_poly *r: pointer to output polynomial
+*            - const gcry_mlkem_poly *a: pointer to first input polynomial
+*            - const gcry_mlkem_poly *b: pointer to second input polynomial
 **************************************************/
-void poly_add(poly *r, const poly *a, const poly *b)
+void poly_add(gcry_mlkem_poly *r, const gcry_mlkem_poly *a, const gcry_mlkem_poly *b)
 {
   unsigned int i;
   __m256i f0, f1;
@@ -488,11 +488,11 @@ void poly_add(poly *r, const poly *a, const poly *b)
 * Description: Subtract two polynomials. No modular reduction
 *              is performed.
 *
-* Arguments: - poly *r: pointer to output polynomial
-*            - const poly *a: pointer to first input polynomial
-*            - const poly *b: pointer to second input polynomial
+* Arguments: - gcry_mlkem_poly *r: pointer to output polynomial
+*            - const gcry_mlkem_poly *a: pointer to first input polynomial
+*            - const gcry_mlkem_poly *b: pointer to second input polynomial
 **************************************************/
-void poly_sub(poly *r, const poly *a, const poly *b)
+void poly_sub(gcry_mlkem_poly *r, const gcry_mlkem_poly *a, const gcry_mlkem_poly *b)
 {
   unsigned int i;
   __m256i f0, f1;

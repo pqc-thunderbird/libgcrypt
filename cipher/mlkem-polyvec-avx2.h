@@ -5,6 +5,7 @@
 #include "mlkem-params-avx2.h"
 #include "mlkem-params.h"
 #include "mlkem-poly-avx2.h"
+#include "mlkem-poly.h"
 #include "mlkem-polyvec.h"
 
 typedef struct
@@ -28,7 +29,7 @@ void polyvec_frombytes(byte *r, const uint8_t *a, const gcry_mlkem_param_t *para
 void polyvec_ntt(byte *r, const gcry_mlkem_param_t *param);
 void polyvec_invntt_tomont(byte *r, const gcry_mlkem_param_t *param);
 
-void polyvec_basemul_acc_montgomery(poly *r, const byte *a, const byte *b, const gcry_mlkem_param_t *param);
+void polyvec_basemul_acc_montgomery(gcry_mlkem_poly *r, const byte *a, const byte *b, const gcry_mlkem_param_t *param);
 
 void polyvec_reduce(byte *r, const gcry_mlkem_param_t *param);
 

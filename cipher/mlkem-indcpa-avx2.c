@@ -95,10 +95,10 @@ static void unpack_sk(byte *sk, const uint8_t *packedsk, const gcry_mlkem_param_
 *              by polyvec_reduce() and poly_reduce(), respectively.
 *
 * Arguments:   uint8_t *r: pointer to the output serialized ciphertext
-*              poly *pk: pointer to the input vector of polynomials b
-*              poly *v: pointer to the input polynomial v
+*              gcry_mlkem_poly *pk: pointer to the input vector of polynomials b
+*              gcry_mlkem_poly *v: pointer to the input polynomial v
 **************************************************/
-static void pack_ciphertext(uint8_t *r, byte *b, poly *v, const gcry_mlkem_param_t *param)
+static void pack_ciphertext(uint8_t *r, byte *b, gcry_mlkem_poly *v, const gcry_mlkem_param_t *param)
 {
   polyvec_compress(r, b, param);
   if(param->poly_compressed_bytes == 128)
@@ -117,10 +117,10 @@ static void pack_ciphertext(uint8_t *r, byte *b, poly *v, const gcry_mlkem_param
 *              approximate inverse of pack_ciphertext
 *
 * Arguments:   - polyvec *b: pointer to the output vector of polynomials b
-*              - poly *v: pointer to the output polynomial v
+*              - gcry_mlkem_poly *v: pointer to the output polynomial v
 *              - const uint8_t *c: pointer to the input serialized ciphertext
 **************************************************/
-static void unpack_ciphertext(byte *b, poly *v, const uint8_t *c, const gcry_mlkem_param_t *param)
+static void unpack_ciphertext(byte *b, gcry_mlkem_poly *v, const uint8_t *c, const gcry_mlkem_param_t *param)
 {
   polyvec_decompress(b, c, param);
   if(param->poly_compressed_bytes == 128)
@@ -168,13 +168,13 @@ static unsigned int rej_uniform(int16_t *r,
   return ctr;
 }
 
-static void gen_matrix_k2(poly *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
+static void gen_matrix_k2(gcry_mlkem_poly *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
 {
   unsigned int ctr0, ctr1, ctr2, ctr3;
   ALIGNED_UINT8(REJ_UNIFORM_AVX_NBLOCKS*SHAKE128_RATE) buf[4];
   __m256i f;
   gcry_mlkem_keccakx4_state state;
-  size_t colsize = sizeof(poly);
+  size_t colsize = sizeof(gcry_mlkem_poly);
   size_t rowsize = colsize * param->k;
 
   f = _mm256_loadu_si256((__m256i *)seed);
@@ -227,14 +227,14 @@ static void gen_matrix_k2(poly *a, const uint8_t seed[32], int transposed, const
   poly_nttunpack(&a[1 * param->k + 1]);
 }
 
-static void gen_matrix_k3(poly *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
+static void gen_matrix_k3(gcry_mlkem_poly *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
 {
   unsigned int ctr0, ctr1, ctr2, ctr3;
   ALIGNED_UINT8(REJ_UNIFORM_AVX_NBLOCKS*SHAKE128_RATE) buf[4];
   __m256i f;
   gcry_mlkem_keccakx4_state state;
   keccak_state state1x;
-  size_t colsize = sizeof(poly);
+  size_t colsize = sizeof(gcry_mlkem_poly);
   size_t rowsize = colsize * param->k;
 
   f = _mm256_loadu_si256((__m256i *)seed);
@@ -350,13 +350,13 @@ static void gen_matrix_k3(poly *a, const uint8_t seed[32], int transposed, const
   poly_nttunpack(&a[2 * param->k + 2]);
 }
 
-static void gen_matrix_k4(poly *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
+static void gen_matrix_k4(gcry_mlkem_poly *a, const uint8_t seed[32], int transposed, const gcry_mlkem_param_t *param)
 {
   unsigned int i, ctr0, ctr1, ctr2, ctr3;
   ALIGNED_UINT8(REJ_UNIFORM_AVX_NBLOCKS*SHAKE128_RATE) buf[4];
   __m256i f;
   gcry_mlkem_keccakx4_state state;
-  size_t colsize = sizeof(poly);
+  size_t colsize = sizeof(gcry_mlkem_poly);
   size_t rowsize = colsize * param->k;
 
   for(i=0;i<4;i++) {
@@ -411,7 +411,7 @@ static void gen_matrix_k4(poly *a, const uint8_t seed[32], int transposed, const
   }
 }
 
-void gen_matrix(poly *a, const uint8_t seed[GCRY_MLKEM_SYMBYTES], int transposed, const gcry_mlkem_param_t *param)
+void gen_matrix(gcry_mlkem_poly *a, const uint8_t seed[GCRY_MLKEM_SYMBYTES], int transposed, const gcry_mlkem_param_t *param)
 {
   if(param->k == 2)
   {
@@ -446,14 +446,14 @@ gcry_err_code_t indcpa_keypair_derand(uint8_t *pk,
   gcry_mlkem_polyvec_al e_al;
   gcry_mlkem_polyvec_al pkpv_al;
   gcry_mlkem_polyvec_al skpv_al;
-  _gcry_mlkem_polyvec_al_create(&a_al, param->k * param->k, param->k * sizeof(poly), 1);
-  _gcry_mlkem_polyvec_al_create(&e_al, param->k, param->k * sizeof(poly), 1);
-  _gcry_mlkem_polyvec_al_create(&pkpv_al, param->k, param->k * sizeof(poly), 1);
-  _gcry_mlkem_polyvec_al_create(&skpv_al, param->k, param->k * sizeof(poly), 1);
-  poly *a = a_al.vec;
-  poly *e = e_al.vec;
-  poly *pkpv = pkpv_al.vec;
-  poly *skpv = skpv_al.vec;
+  _gcry_mlkem_polyvec_al_create(&a_al, param->k * param->k, param->k * sizeof(gcry_mlkem_poly), 1);
+  _gcry_mlkem_polyvec_al_create(&e_al, param->k, param->k * sizeof(gcry_mlkem_poly), 1);
+  _gcry_mlkem_polyvec_al_create(&pkpv_al, param->k, param->k * sizeof(gcry_mlkem_poly), 1);
+  _gcry_mlkem_polyvec_al_create(&skpv_al, param->k, param->k * sizeof(gcry_mlkem_poly), 1);
+  gcry_mlkem_poly *a = a_al.vec;
+  gcry_mlkem_poly *e = e_al.vec;
+  gcry_mlkem_poly *pkpv = pkpv_al.vec;
+  gcry_mlkem_poly *skpv = skpv_al.vec;
 
   hash_g(buf, coins, GCRY_MLKEM_SYMBYTES);
 
@@ -523,20 +523,20 @@ void indcpa_enc(uint8_t *c,
   unsigned int i;
   uint8_t seed[GCRY_MLKEM_SYMBYTES];
   //polyvec sp, pkpv, ep, at[param->k], b;
-  poly v, k, epp;
-  size_t polysize = sizeof(poly);
-  size_t rowsize = sizeof(poly) * param->k;
+  gcry_mlkem_poly v, k, epp;
+  size_t polysize = sizeof(gcry_mlkem_poly);
+  size_t rowsize = sizeof(gcry_mlkem_poly) * param->k;
 
   gcry_mlkem_polyvec_al sp_al;
   gcry_mlkem_polyvec_al pkpv_al;
   gcry_mlkem_polyvec_al ep_al;
   gcry_mlkem_polyvec_al at_al;
   gcry_mlkem_polyvec_al b_al;
-  _gcry_mlkem_polyvec_al_create(&sp_al, param->k, param->k * sizeof(poly), 1);
-  _gcry_mlkem_polyvec_al_create(&pkpv_al, param->k, param->k * sizeof(poly), 1);
-  _gcry_mlkem_polyvec_al_create(&ep_al, param->k, param->k * sizeof(poly), 1);
-  _gcry_mlkem_polyvec_al_create(&at_al, param->k * param->k, param->k * sizeof(poly), 1);
-  _gcry_mlkem_polyvec_al_create(&b_al, param->k, param->k * sizeof(poly), 1);
+  _gcry_mlkem_polyvec_al_create(&sp_al, param->k, param->k * sizeof(gcry_mlkem_poly), 1);
+  _gcry_mlkem_polyvec_al_create(&pkpv_al, param->k, param->k * sizeof(gcry_mlkem_poly), 1);
+  _gcry_mlkem_polyvec_al_create(&ep_al, param->k, param->k * sizeof(gcry_mlkem_poly), 1);
+  _gcry_mlkem_polyvec_al_create(&at_al, param->k * param->k, param->k * sizeof(gcry_mlkem_poly), 1);
+  _gcry_mlkem_polyvec_al_create(&b_al, param->k, param->k * sizeof(gcry_mlkem_poly), 1);
   byte *sp = sp_al.vec;
   byte *pkpv = pkpv_al.vec;
   byte *ep = ep_al.vec;
@@ -606,12 +606,12 @@ void indcpa_dec(uint8_t *m,
                 const gcry_mlkem_param_t *param)
 {
   // polyvec b, skpv;
-  poly v, mp;
+  gcry_mlkem_poly v, mp;
 
   gcry_mlkem_polyvec_al b_al;
   gcry_mlkem_polyvec_al skpv_al;
-  _gcry_mlkem_polyvec_al_create(&b_al, param->k, param->k * sizeof(poly), 1);
-  _gcry_mlkem_polyvec_al_create(&skpv_al, param->k, param->k * sizeof(poly), 1);
+  _gcry_mlkem_polyvec_al_create(&b_al, param->k, param->k * sizeof(gcry_mlkem_poly), 1);
+  _gcry_mlkem_polyvec_al_create(&skpv_al, param->k, param->k * sizeof(gcry_mlkem_poly), 1);
   byte *b = b_al.vec;
   byte *skpv = skpv_al.vec;
 
