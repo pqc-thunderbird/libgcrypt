@@ -160,7 +160,7 @@ EXTRA_libcipher_la_SOURCES = \
 	mlkem.h mlkem-common.h \
 	mlkem-ntt.c mlkem-poly.c mlkem-polyvec.c mlkem-symmetric.c \
 	mlkem-ntt.h mlkem-poly.h mlkem-polyvec.h mlkem-symmetric.h \
-    mlkem-align-avx2.h mlkem-cbd-avx2.c mlkem-cbd-avx2.h mlkem-consts-avx2.c mlkem-consts-avx2.h mlkem-fips202.h mlkem-fq-avx2.S mlkem-fq-avx2.inc mlkem-indcpa-avx2.c mlkem-invntt-avx2.S mlkem-kem-avx2.c mlkem-ntt-avx2.S mlkem-ntt-avx2.h mlkem-params-avx2.h mlkem-poly-avx2.c mlkem-poly-avx2.h mlkem-polyvec-avx2.c mlkem-polyvec-avx2.h mlkem-reduce-avx2.h mlkem-rejsample-avx2.c mlkem-rejsample-avx2.h mlkem-sha2-avx2.h mlkem-shuffle-avx2.S mlkem-shuffle-avx2.inc mlkem-symmetric-avx2.h mlkem-verify-avx2.c mlkem-verify-avx2.h \
+    mlkem-align-avx2.h mlkem-cbd-avx2.c mlkem-cbd-avx2.h mlkem-consts-avx2.c mlkem-consts-avx2.h mlkem-fips202.h mlkem-fq-avx2.S mlkem-fq-avx2.inc mlkem-indcpa-avx2.c mlkem-invntt-avx2.S mlkem-kem-avx2.c mlkem-ntt-avx2.S mlkem-ntt-avx2.h mlkem-params-avx2.h mlkem-poly-avx2.c mlkem-poly-avx2.h mlkem-polyvec-avx2.c mlkem-polyvec-avx2.h mlkem-reduce-avx2.h mlkem-rejsample-avx2.c mlkem-rejsample-avx2.h mlkem-sha2-avx2.h mlkem-shuffle-avx2.S mlkem-shuffle-avx2.inc mlkem-verify-avx2.c mlkem-verify-avx2.h \
 	mlkem-kem-avx2.h mlkem-indcpa-avx2.h mlkem-fips202-avx2.c mlkem-basemul-avx2.S
 
 

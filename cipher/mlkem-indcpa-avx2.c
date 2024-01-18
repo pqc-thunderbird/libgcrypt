@@ -9,7 +9,6 @@
 #include "mlkem-ntt-avx2.h"
 #include "mlkem-cbd-avx2.h"
 #include "mlkem-rejsample-avx2.h"
-#include "mlkem-symmetric-avx2.h"
 
 
 /*************************************************
@@ -641,7 +640,7 @@ _gcry_mlkem_avx2_indcpa_keypair_derand (
   gcry_mlkem_poly *pkpv = pkpv_al.vec;
   gcry_mlkem_poly *skpv = skpv_al.vec;
 
-  hash_g (buf, coins, GCRY_MLKEM_SYMBYTES);
+  _gcry_md_hash_buffer (GCRY_MD_SHA3_512, buf, coins, GCRY_MLKEM_SYMBYTES);
 
   _gcry_mlkem_avx2_gen_matrix (a, publicseed, 0, param);
 

@@ -4,7 +4,6 @@
 #include "mlkem-kem-avx2.h"
 #include "mlkem-indcpa-avx2.h"
 #include "mlkem-verify-avx2.h"
-#include "mlkem-symmetric-avx2.h"
 #include "g10lib.h"
 
 
@@ -78,15 +77,18 @@ crypto_kem_enc_derand (uint8_t *ct,
                        const uint8_t *coins,
                        const gcry_mlkem_param_t *param)
 {
-  uint8_t buf[2 * GCRY_MLKEM_SYMBYTES];
+  uint8_t buf[2 * GCRY_MLKEM_SYMBYTES]; // TODO
   /* Will contain key, coins */
-  uint8_t kr[2 * GCRY_MLKEM_SYMBYTES];
+  uint8_t kr[2 * GCRY_MLKEM_SYMBYTES]; // TODO
 
   memcpy (buf, coins, GCRY_MLKEM_SYMBYTES);
 
   /* Multitarget countermeasure for coins + contributory KEM */
-  hash_h (buf + GCRY_MLKEM_SYMBYTES, pk, param->public_key_bytes);
-  hash_g (kr, buf, 2 * GCRY_MLKEM_SYMBYTES);
+  _gcry_md_hash_buffer (GCRY_MD_SHA3_256,
+                        buf + GCRY_MLKEM_SYMBYTES,
+                        pk,
+                        param->public_key_bytes);
+  _gcry_md_hash_buffer (GCRY_MD_SHA3_512, kr, buf, 2 * GCRY_MLKEM_SYMBYTES);
 
   /* coins are in kr+GCRY_MLKEM_SYMBYTES */
   _gcry_mlkem_avx2_indcpa_enc (ct, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
@@ -140,10 +142,10 @@ _gcry_mlkem_avx2_kem_dec (uint8_t *ss,
                           const gcry_mlkem_param_t *param)
 {
   int fail;
-  uint8_t buf[2 * GCRY_MLKEM_SYMBYTES];
+  uint8_t buf[2 * GCRY_MLKEM_SYMBYTES]; // TODO
   /* Will contain key, coins */
-  uint8_t kr[2 * GCRY_MLKEM_SYMBYTES];
-  uint8_t cmp[param->ciphertext_bytes + GCRY_MLKEM_SYMBYTES];
+  uint8_t kr[2 * GCRY_MLKEM_SYMBYTES];                        // TODO
+  uint8_t cmp[param->ciphertext_bytes + GCRY_MLKEM_SYMBYTES]; // TODO
   const uint8_t *pk = sk + param->polyvec_bytes;
 
   _gcry_mlkem_avx2_indcpa_dec (buf, ct, sk, param);
@@ -152,7 +154,7 @@ _gcry_mlkem_avx2_kem_dec (uint8_t *ss,
   memcpy (buf + GCRY_MLKEM_SYMBYTES,
           sk + param->secret_key_bytes - 2 * GCRY_MLKEM_SYMBYTES,
           GCRY_MLKEM_SYMBYTES);
-  hash_g (kr, buf, 2 * GCRY_MLKEM_SYMBYTES);
+  _gcry_md_hash_buffer (GCRY_MD_SHA3_512, kr, buf, 2 * GCRY_MLKEM_SYMBYTES);
 
   /* coins are in kr+GCRY_MLKEM_SYMBYTES */
   _gcry_mlkem_avx2_indcpa_enc (cmp, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
@@ -160,10 +162,11 @@ _gcry_mlkem_avx2_kem_dec (uint8_t *ss,
   fail = _gcry_mlkem_avx2_verify (ct, cmp, param->ciphertext_bytes);
 
   /* Compute rejection key */
-  rkprf (ss,
-         sk + param->secret_key_bytes - GCRY_MLKEM_SYMBYTES,
-         ct,
-         param->secret_key_bytes - GCRY_MLKEM_SYMBYTES);
+  _gcry_mlkem_mlkem_shake256_rkprf (ss,
+                                    sk + param->secret_key_bytes
+                                        - GCRY_MLKEM_SYMBYTES,
+                                    ct,
+                                    param->ciphertext_bytes);
 
   /* Copy true key to return buffer if fail is false */
   _gcry_mlkem_cmov (ss, kr, GCRY_MLKEM_SYMBYTES, !fail);

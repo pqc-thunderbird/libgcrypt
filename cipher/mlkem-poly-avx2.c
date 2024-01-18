@@ -7,7 +7,11 @@
 #include "mlkem-consts-avx2.h"
 #include "mlkem-reduce-avx2.h"
 #include "mlkem-cbd-avx2.h"
-#include "mlkem-symmetric-avx2.h"
+#include "mlkem-symmetric.h"
+
+#include "mlkem-fips202-avx2.h" // TODO needed?
+#include "mlkem-fips202x4-avx2.h" // TODO needed?
+
 
 /*************************************************
  * Name:        poly_compress
@@ -410,7 +414,7 @@ _gcry_mlkem_avx2_poly_getnoise_eta1 (gcry_mlkem_poly *r,
 {
   ALIGNED_UINT8 (param->eta1 * GCRY_MLKEM_N / 4 + 32)
   buf; // +32 bytes as required by _gcry_mlkem_avx2_poly_cbd_eta1
-  prf (buf.coeffs, param->eta1 * GCRY_MLKEM_N / 4, seed, nonce);
+  _gcry_mlkem_shake256_prf (buf.coeffs, param->eta1 * GCRY_MLKEM_N / 4, seed, nonce);
   _gcry_mlkem_avx2_poly_cbd_eta1 (r, buf.vec, param);
 }
 
@@ -432,7 +436,7 @@ _gcry_mlkem_avx2_poly_getnoise_eta2 (gcry_mlkem_poly *r,
                                      uint8_t nonce)
 {
   ALIGNED_UINT8 (GCRY_MLKEM_ETA2 * GCRY_MLKEM_N / 4) buf;
-  prf (buf.coeffs, GCRY_MLKEM_ETA2 * GCRY_MLKEM_N / 4, seed, nonce);
+  _gcry_mlkem_shake256_prf (buf.coeffs, GCRY_MLKEM_ETA2 * GCRY_MLKEM_N / 4, seed, nonce);
   _gcry_mlkem_avx2_poly_cbd_eta2 (r, buf.vec);
 }
 
