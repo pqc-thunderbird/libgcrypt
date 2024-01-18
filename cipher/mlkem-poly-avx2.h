@@ -5,6 +5,7 @@
 #include "mlkem-align-avx2.h"
 #include "mlkem-params.h"
 #include "mlkem-poly.h"
+#include "g10lib.h"
 
 void _gcry_mlkem_avx2_poly_compress_128 (uint8_t r[128],
                                          const gcry_mlkem_poly *a);
@@ -23,18 +24,18 @@ void _gcry_mlkem_avx2_poly_frombytes (gcry_mlkem_poly *r,
 void _gcry_mlkem_avx2_poly_frommsg (gcry_mlkem_poly *r, const uint8_t *msg);
 void _gcry_mlkem_avx2_poly_tomsg (uint8_t *msg, const gcry_mlkem_poly *r);
 
-void _gcry_mlkem_avx2_poly_getnoise_eta1 (
+gcry_err_code_t _gcry_mlkem_avx2_poly_getnoise_eta1 (
     gcry_mlkem_poly *r,
     const uint8_t seed[GCRY_MLKEM_SYMBYTES],
     uint8_t nonce,
     gcry_mlkem_param_t const *param);
 
-void _gcry_mlkem_avx2_poly_getnoise_eta2 (
+gcry_err_code_t _gcry_mlkem_avx2_poly_getnoise_eta2 (
     gcry_mlkem_poly *r,
     const uint8_t seed[GCRY_MLKEM_SYMBYTES],
     uint8_t nonce);
 
-void _gcry_mlkem_avx2_poly_getnoise_eta1_4x (gcry_mlkem_poly *r0,
+gcry_err_code_t _gcry_mlkem_avx2_poly_getnoise_eta1_4x (gcry_mlkem_poly *r0,
                                              gcry_mlkem_poly *r1,
                                              gcry_mlkem_poly *r2,
                                              gcry_mlkem_poly *r3,
@@ -45,7 +46,7 @@ void _gcry_mlkem_avx2_poly_getnoise_eta1_4x (gcry_mlkem_poly *r0,
                                              uint8_t nonce3,
                                              gcry_mlkem_param_t const *param);
 
-void _gcry_mlkem_avx2_poly_getnoise_eta1122_4x (
+gcry_err_code_t _gcry_mlkem_avx2_poly_getnoise_eta1122_4x (
     gcry_mlkem_poly *r0,
     gcry_mlkem_poly *r1,
     gcry_mlkem_poly *r2,

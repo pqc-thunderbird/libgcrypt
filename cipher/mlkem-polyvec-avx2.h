@@ -7,17 +7,28 @@
 #include "mlkem-poly.h"
 #include "mlkem-polyvec.h"
 
+/**
+ * represents the avx2 poly  / polyvec types, each is simply an aligned buffer.
+ */
 typedef struct
 {
-  byte *vec;
+  byte *buf;
   byte *alloc_addr;
-} gcry_mlkem_polyvec_al;
+} gcry_mlkem_polybuf_al;
 
-gcry_err_code_t _gcry_mlkem_polyvec_al_create (gcry_mlkem_polyvec_al *vec,
+/* aligned buffer type */
+typedef gcry_mlkem_polybuf_al gcry_mlkem_buf_al;
+
+gcry_err_code_t _gcry_mlkem_polybuf_al_create (gcry_mlkem_polybuf_al *vec,
                                                size_t num_elems,
                                                size_t size_elems,
                                                int secure);
-void _gcry_mlkem_polyvec_al_destroy (gcry_mlkem_polyvec_al *vec);
+void _gcry_mlkem_polybuf_al_destroy (gcry_mlkem_polybuf_al *vec);
+
+gcry_err_code_t _gcry_mlkem_buf_al_create (gcry_mlkem_buf_al *buf, size_t size, int secure);
+
+void _gcry_mlkem_buf_al_destroy (gcry_mlkem_buf_al *buf);
+
 
 void _gcry_mlkem_avx2_polyvec_compress (uint8_t *r,
                                         const gcry_mlkem_poly *a,

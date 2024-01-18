@@ -194,86 +194,100 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
                int transposed,
                const gcry_mlkem_param_t *param)
 {
+  gcry_err_code_t ec = 0;
   unsigned int ctr0, ctr1, ctr2, ctr3;
-  ALIGNED_UINT8 (GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * SHAKE128_RATE) buf[4];
   __m256i f;
-  gcry_mlkem_keccakx4_state state;
-  size_t colsize = sizeof (gcry_mlkem_poly);
-  size_t rowsize = colsize * param->k;
+  gcry_mlkem_keccakx4_state state; // TODO
+  byte *buf;
+  gcry_mlkem_buf_al buf_al = {};
+  size_t buf_elem_len = GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * SHAKE128_RATE;
+  /* make sure each sub structure starts memory aligned */
+  size_t offset_al = buf_elem_len + (32 - (buf_elem_len % 32));
+
+  ec = _gcry_mlkem_buf_al_create (&buf_al, 4 * offset_al, 1);
+  if (ec)
+    {
+      goto leave;
+    }
+  buf = buf_al.buf;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
-  _mm256_store_si256 (buf[0].vec, f);
-  _mm256_store_si256 (buf[1].vec, f);
-  _mm256_store_si256 (buf[2].vec, f);
-  _mm256_store_si256 (buf[3].vec, f);
+  _mm256_store_si256 (&buf[0 * offset_al], f);
+  _mm256_store_si256 (&buf[1 * offset_al], f);
+  _mm256_store_si256 (&buf[2 * offset_al], f);
+  _mm256_store_si256 (&buf[3 * offset_al], f);
 
   if (transposed)
     {
-      buf[0].coeffs[32] = 0;
-      buf[0].coeffs[33] = 0;
-      buf[1].coeffs[32] = 0;
-      buf[1].coeffs[33] = 1;
-      buf[2].coeffs[32] = 1;
-      buf[2].coeffs[33] = 0;
-      buf[3].coeffs[32] = 1;
-      buf[3].coeffs[33] = 1;
+      buf[0 * offset_al + 32] = 0;
+      buf[0 * offset_al + 33] = 0;
+      buf[1 * offset_al + 32] = 0;
+      buf[1 * offset_al + 33] = 1;
+      buf[2 * offset_al + 32] = 1;
+      buf[2 * offset_al + 33] = 0;
+      buf[3 * offset_al + 32] = 1;
+      buf[3 * offset_al + 33] = 1;
     }
   else
     {
-      buf[0].coeffs[32] = 0;
-      buf[0].coeffs[33] = 0;
-      buf[1].coeffs[32] = 1;
-      buf[1].coeffs[33] = 0;
-      buf[2].coeffs[32] = 0;
-      buf[2].coeffs[33] = 1;
-      buf[3].coeffs[32] = 1;
-      buf[3].coeffs[33] = 1;
+      buf[0 * offset_al + 32] = 0;
+      buf[0 * offset_al + 33] = 0;
+      buf[1 * offset_al + 32] = 1;
+      buf[1 * offset_al + 33] = 0;
+      buf[2 * offset_al + 32] = 0;
+      buf[2 * offset_al + 33] = 1;
+      buf[3 * offset_al + 32] = 1;
+      buf[3 * offset_al + 33] = 1;
     }
 
-  _gcry_mlkem_avx2_shake128x4_absorb_once (
-      &state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 34);
+  _gcry_mlkem_avx2_shake128x4_absorb_once (&state,
+                                           &buf[0 * offset_al],
+                                           &buf[1 * offset_al],
+                                           &buf[2 * offset_al],
+                                           &buf[3 * offset_al],
+                                           34);
   _gcry_mlkem_avx2_shake128x4_squeezeblocks (
-      buf[0].coeffs,
-      buf[1].coeffs,
-      buf[2].coeffs,
-      buf[3].coeffs,
+      &buf[0 * offset_al],
+      &buf[1 * offset_al],
+      &buf[2 * offset_al],
+      &buf[3 * offset_al],
       GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS,
       &state);
 
   ctr0 = _gcry_mlkem_avx2_rej_uniform_avx (a[0 * param->k + 0].coeffs,
-                                           buf[0].coeffs);
+                                           &buf[0 * offset_al]);
   ctr1 = _gcry_mlkem_avx2_rej_uniform_avx (a[0 * param->k + 1].coeffs,
-                                           buf[1].coeffs);
+                                           &buf[1 * offset_al]);
   ctr2 = _gcry_mlkem_avx2_rej_uniform_avx (a[1 * param->k + 0].coeffs,
-                                           buf[2].coeffs);
+                                           &buf[2 * offset_al]);
   ctr3 = _gcry_mlkem_avx2_rej_uniform_avx (a[1 * param->k + 1].coeffs,
-                                           buf[3].coeffs);
+                                           &buf[3 * offset_al]);
 
   while (ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N
          || ctr3 < GCRY_MLKEM_N)
     {
-      _gcry_mlkem_avx2_shake128x4_squeezeblocks (buf[0].coeffs,
-                                                 buf[1].coeffs,
-                                                 buf[2].coeffs,
-                                                 buf[3].coeffs,
+      _gcry_mlkem_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
+                                                 &buf[1 * offset_al],
+                                                 &buf[2 * offset_al],
+                                                 &buf[3 * offset_al],
                                                  1,
                                                  &state);
 
       ctr0 += _gcry_mlkem_avx2_rej_uniform (a[0 * param->k + 0].coeffs + ctr0,
                                             GCRY_MLKEM_N - ctr0,
-                                            buf[0].coeffs,
+                                            &buf[0 * offset_al],
                                             SHAKE128_RATE);
       ctr1 += _gcry_mlkem_avx2_rej_uniform (a[0 * param->k + 1].coeffs + ctr1,
                                             GCRY_MLKEM_N - ctr1,
-                                            buf[1].coeffs,
+                                            &buf[1 * offset_al],
                                             SHAKE128_RATE);
       ctr2 += _gcry_mlkem_avx2_rej_uniform (a[1 * param->k + 0].coeffs + ctr2,
                                             GCRY_MLKEM_N - ctr2,
-                                            buf[2].coeffs,
+                                            &buf[2 * offset_al],
                                             SHAKE128_RATE);
       ctr3 += _gcry_mlkem_avx2_rej_uniform (a[1 * param->k + 1].coeffs + ctr3,
                                             GCRY_MLKEM_N - ctr3,
-                                            buf[3].coeffs,
+                                            &buf[3 * offset_al],
                                             SHAKE128_RATE);
     }
 
@@ -281,95 +295,113 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
   _gcry_mlkem_avx2_poly_nttunpack (&a[0 * param->k + 1]);
   _gcry_mlkem_avx2_poly_nttunpack (&a[1 * param->k + 0]);
   _gcry_mlkem_avx2_poly_nttunpack (&a[1 * param->k + 1]);
+
+leave:
+  _gcry_mlkem_buf_al_destroy (&buf_al);
 }
 
-static void
+static gcry_err_code_t
 gen_matrix_k3 (gcry_mlkem_poly *a,
                const uint8_t seed[32],
                int transposed,
                const gcry_mlkem_param_t *param)
 {
+  gcry_err_code_t ec = 0;
   unsigned int ctr0, ctr1, ctr2, ctr3;
-  ALIGNED_UINT8 (GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * SHAKE128_RATE) buf[4];
   __m256i f;
-  gcry_mlkem_keccakx4_state state;
-  keccak_state state1x;
-  size_t colsize = sizeof (gcry_mlkem_poly);
-  size_t rowsize = colsize * param->k;
+  gcry_mlkem_keccakx4_state state; // TODO
+  keccak_state state1x;            // TODO
+
+  byte *buf;
+  gcry_mlkem_buf_al buf_al = {};
+  size_t buf_elem_len = GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * SHAKE128_RATE;
+  /* make sure each sub structure starts memory aligned */
+  size_t offset_al = buf_elem_len + (32 - (buf_elem_len % 32));
+
+  ec = _gcry_mlkem_buf_al_create (&buf_al, 4 * offset_al, 1);
+  if (ec)
+    {
+      goto leave;
+    }
+  buf = buf_al.buf;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
-  _mm256_store_si256 (buf[0].vec, f);
-  _mm256_store_si256 (buf[1].vec, f);
-  _mm256_store_si256 (buf[2].vec, f);
-  _mm256_store_si256 (buf[3].vec, f);
+  _mm256_store_si256 (&buf[0 * offset_al], f);
+  _mm256_store_si256 (&buf[1 * offset_al], f);
+  _mm256_store_si256 (&buf[2 * offset_al], f);
+  _mm256_store_si256 (&buf[3 * offset_al], f);
 
   if (transposed)
     {
-      buf[0].coeffs[32] = 0;
-      buf[0].coeffs[33] = 0;
-      buf[1].coeffs[32] = 0;
-      buf[1].coeffs[33] = 1;
-      buf[2].coeffs[32] = 0;
-      buf[2].coeffs[33] = 2;
-      buf[3].coeffs[32] = 1;
-      buf[3].coeffs[33] = 0;
+      buf[0 * offset_al + 32] = 0;
+      buf[0 * offset_al + 33] = 0;
+      buf[1 * offset_al + 32] = 0;
+      buf[1 * offset_al + 33] = 1;
+      buf[2 * offset_al + 32] = 0;
+      buf[2 * offset_al + 33] = 2;
+      buf[3 * offset_al + 32] = 1;
+      buf[3 * offset_al + 33] = 0;
     }
   else
     {
-      buf[0].coeffs[32] = 0;
-      buf[0].coeffs[33] = 0;
-      buf[1].coeffs[32] = 1;
-      buf[1].coeffs[33] = 0;
-      buf[2].coeffs[32] = 2;
-      buf[2].coeffs[33] = 0;
-      buf[3].coeffs[32] = 0;
-      buf[3].coeffs[33] = 1;
+      buf[0 * offset_al + 32] = 0;
+      buf[0 * offset_al + 33] = 0;
+      buf[1 * offset_al + 32] = 1;
+      buf[1 * offset_al + 33] = 0;
+      buf[2 * offset_al + 32] = 2;
+      buf[2 * offset_al + 33] = 0;
+      buf[3 * offset_al + 32] = 0;
+      buf[3 * offset_al + 33] = 1;
     }
 
-  _gcry_mlkem_avx2_shake128x4_absorb_once (
-      &state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 34);
+  _gcry_mlkem_avx2_shake128x4_absorb_once (&state,
+                                           &buf[0 * offset_al],
+                                           &buf[1 * offset_al],
+                                           &buf[2 * offset_al],
+                                           &buf[3 * offset_al],
+                                           34);
   _gcry_mlkem_avx2_shake128x4_squeezeblocks (
-      buf[0].coeffs,
-      buf[1].coeffs,
-      buf[2].coeffs,
-      buf[3].coeffs,
+      &buf[0 * offset_al],
+      &buf[1 * offset_al],
+      &buf[2 * offset_al],
+      &buf[3 * offset_al],
       GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS,
       &state);
 
   ctr0 = _gcry_mlkem_avx2_rej_uniform_avx (a[0 * param->k + 0].coeffs,
-                                           buf[0].coeffs);
+                                           &buf[0 * offset_al]);
   ctr1 = _gcry_mlkem_avx2_rej_uniform_avx (a[0 * param->k + 1].coeffs,
-                                           buf[1].coeffs);
+                                           &buf[1 * offset_al]);
   ctr2 = _gcry_mlkem_avx2_rej_uniform_avx (a[0 * param->k + 2].coeffs,
-                                           buf[2].coeffs);
+                                           &buf[2 * offset_al]);
   ctr3 = _gcry_mlkem_avx2_rej_uniform_avx (a[1 * param->k + 0].coeffs,
-                                           buf[3].coeffs);
+                                           &buf[3 * offset_al]);
 
   while (ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N
          || ctr3 < GCRY_MLKEM_N)
     {
-      _gcry_mlkem_avx2_shake128x4_squeezeblocks (buf[0].coeffs,
-                                                 buf[1].coeffs,
-                                                 buf[2].coeffs,
-                                                 buf[3].coeffs,
+      _gcry_mlkem_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
+                                                 &buf[1 * offset_al],
+                                                 &buf[2 * offset_al],
+                                                 &buf[3 * offset_al],
                                                  1,
                                                  &state);
 
       ctr0 += _gcry_mlkem_avx2_rej_uniform (a[0 * param->k + 0].coeffs + ctr0,
                                             GCRY_MLKEM_N - ctr0,
-                                            buf[0].coeffs,
+                                            &buf[0 * offset_al],
                                             SHAKE128_RATE);
       ctr1 += _gcry_mlkem_avx2_rej_uniform (a[0 * param->k + 1].coeffs + ctr1,
                                             GCRY_MLKEM_N - ctr1,
-                                            buf[1].coeffs,
+                                            &buf[1 * offset_al],
                                             SHAKE128_RATE);
       ctr2 += _gcry_mlkem_avx2_rej_uniform (a[0 * param->k + 2].coeffs + ctr2,
                                             GCRY_MLKEM_N - ctr2,
-                                            buf[2].coeffs,
+                                            &buf[2 * offset_al],
                                             SHAKE128_RATE);
       ctr3 += _gcry_mlkem_avx2_rej_uniform (a[1 * param->k + 0].coeffs + ctr3,
                                             GCRY_MLKEM_N - ctr3,
-                                            buf[3].coeffs,
+                                            &buf[3 * offset_al],
                                             SHAKE128_RATE);
     }
 
@@ -379,78 +411,82 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
   _gcry_mlkem_avx2_poly_nttunpack (&a[1 * param->k + 0]);
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
-  _mm256_store_si256 (buf[0].vec, f);
-  _mm256_store_si256 (buf[1].vec, f);
-  _mm256_store_si256 (buf[2].vec, f);
-  _mm256_store_si256 (buf[3].vec, f);
+  _mm256_store_si256 (&buf[0 * offset_al], f);
+  _mm256_store_si256 (&buf[1 * offset_al], f);
+  _mm256_store_si256 (&buf[2 * offset_al], f);
+  _mm256_store_si256 (&buf[3 * offset_al], f);
 
   if (transposed)
     {
-      buf[0].coeffs[32] = 1;
-      buf[0].coeffs[33] = 1;
-      buf[1].coeffs[32] = 1;
-      buf[1].coeffs[33] = 2;
-      buf[2].coeffs[32] = 2;
-      buf[2].coeffs[33] = 0;
-      buf[3].coeffs[32] = 2;
-      buf[3].coeffs[33] = 1;
+      buf[0 * offset_al + 32] = 1;
+      buf[0 * offset_al + 33] = 1;
+      buf[1 * offset_al + 32] = 1;
+      buf[1 * offset_al + 33] = 2;
+      buf[2 * offset_al + 32] = 2;
+      buf[2 * offset_al + 33] = 0;
+      buf[3 * offset_al + 32] = 2;
+      buf[3 * offset_al + 33] = 1;
     }
   else
     {
-      buf[0].coeffs[32] = 1;
-      buf[0].coeffs[33] = 1;
-      buf[1].coeffs[32] = 2;
-      buf[1].coeffs[33] = 1;
-      buf[2].coeffs[32] = 0;
-      buf[2].coeffs[33] = 2;
-      buf[3].coeffs[32] = 1;
-      buf[3].coeffs[33] = 2;
+      buf[0 * offset_al + 32] = 1;
+      buf[0 * offset_al + 33] = 1;
+      buf[1 * offset_al + 32] = 2;
+      buf[1 * offset_al + 33] = 1;
+      buf[2 * offset_al + 32] = 0;
+      buf[2 * offset_al + 33] = 2;
+      buf[3 * offset_al + 32] = 1;
+      buf[3 * offset_al + 33] = 2;
     }
 
-  _gcry_mlkem_avx2_shake128x4_absorb_once (
-      &state, buf[0].coeffs, buf[1].coeffs, buf[2].coeffs, buf[3].coeffs, 34);
+  _gcry_mlkem_avx2_shake128x4_absorb_once (&state,
+                                           &buf[0 * offset_al],
+                                           &buf[1 * offset_al],
+                                           &buf[2 * offset_al],
+                                           &buf[3 * offset_al],
+                                           34);
   _gcry_mlkem_avx2_shake128x4_squeezeblocks (
-      buf[0].coeffs,
-      buf[1].coeffs,
-      buf[2].coeffs,
-      buf[3].coeffs,
+      &buf[0 * offset_al],
+      &buf[1 * offset_al],
+      &buf[2 * offset_al],
+      &buf[3 * offset_al],
       GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS,
       &state);
 
   ctr0 = _gcry_mlkem_avx2_rej_uniform_avx (a[1 * param->k + 1].coeffs,
-                                           buf[0].coeffs);
+                                           &buf[0 * offset_al]);
   ctr1 = _gcry_mlkem_avx2_rej_uniform_avx (a[1 * param->k + 2].coeffs,
-                                           buf[1].coeffs);
+                                           &buf[1 * offset_al]);
   ctr2 = _gcry_mlkem_avx2_rej_uniform_avx (a[2 * param->k + 0].coeffs,
-                                           buf[2].coeffs);
+                                           &buf[2 * offset_al]);
   ctr3 = _gcry_mlkem_avx2_rej_uniform_avx (a[2 * param->k + 1].coeffs,
-                                           buf[3].coeffs);
+                                           &buf[3 * offset_al]);
 
   while (ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N
          || ctr3 < GCRY_MLKEM_N)
     {
-      _gcry_mlkem_avx2_shake128x4_squeezeblocks (buf[0].coeffs,
-                                                 buf[1].coeffs,
-                                                 buf[2].coeffs,
-                                                 buf[3].coeffs,
+      _gcry_mlkem_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
+                                                 &buf[1 * offset_al],
+                                                 &buf[2 * offset_al],
+                                                 &buf[3 * offset_al],
                                                  1,
                                                  &state);
 
       ctr0 += _gcry_mlkem_avx2_rej_uniform (a[1 * param->k + 1].coeffs + ctr0,
                                             GCRY_MLKEM_N - ctr0,
-                                            buf[0].coeffs,
+                                            &buf[0 * offset_al],
                                             SHAKE128_RATE);
       ctr1 += _gcry_mlkem_avx2_rej_uniform (a[1 * param->k + 2].coeffs + ctr1,
                                             GCRY_MLKEM_N - ctr1,
-                                            buf[1].coeffs,
+                                            &buf[1 * offset_al],
                                             SHAKE128_RATE);
       ctr2 += _gcry_mlkem_avx2_rej_uniform (a[2 * param->k + 0].coeffs + ctr2,
                                             GCRY_MLKEM_N - ctr2,
-                                            buf[2].coeffs,
+                                            &buf[2 * offset_al],
                                             SHAKE128_RATE);
       ctr3 += _gcry_mlkem_avx2_rej_uniform (a[2 * param->k + 1].coeffs + ctr3,
                                             GCRY_MLKEM_N - ctr3,
-                                            buf[3].coeffs,
+                                            &buf[3 * offset_al],
                                             SHAKE128_RATE);
     }
 
@@ -460,122 +496,137 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
   _gcry_mlkem_avx2_poly_nttunpack (&a[2 * param->k + 1]);
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
-  _mm256_store_si256 (buf[0].vec, f);
-  buf[0].coeffs[32] = 2;
-  buf[0].coeffs[33] = 2;
-  shake128_absorb_once (&state1x, buf[0].coeffs, 34); // TODO
+  _mm256_store_si256 (&buf[0 * offset_al], f);
+  buf[0 * offset_al + 32] = 2;
+  buf[0 * offset_al + 33] = 2;
+  shake128_absorb_once (&state1x, &buf[0 * offset_al], 34); // TODO
   shake128_squeezeblocks (
-      buf[0].coeffs, GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS, &state1x);
+      &buf[0 * offset_al], GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS, &state1x);
   ctr0 = _gcry_mlkem_avx2_rej_uniform_avx (a[2 * param->k + 2].coeffs,
-                                           buf[0].coeffs);
+                                           &buf[0 * offset_al]);
   while (ctr0 < GCRY_MLKEM_N)
     {
-      shake128_squeezeblocks (buf[0].coeffs, 1, &state1x);
+      shake128_squeezeblocks (&buf[0 * offset_al], 1, &state1x);
       ctr0 += _gcry_mlkem_avx2_rej_uniform (a[2 * param->k + 2].coeffs + ctr0,
                                             GCRY_MLKEM_N - ctr0,
-                                            buf[0].coeffs,
+                                            &buf[0 * offset_al],
                                             SHAKE128_RATE);
     }
 
   _gcry_mlkem_avx2_poly_nttunpack (&a[2 * param->k + 2]);
+
+leave:
+  _gcry_mlkem_buf_al_destroy (&buf_al);
+  return ec;
 }
 
-static void
+static gcry_err_code_t
 gen_matrix_k4 (gcry_mlkem_poly *a,
                const uint8_t seed[32],
                int transposed,
                const gcry_mlkem_param_t *param)
 {
+  gcry_err_code_t ec = 0;
   unsigned int i, ctr0, ctr1, ctr2, ctr3;
-  ALIGNED_UINT8 (GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * SHAKE128_RATE) buf[4];
   __m256i f;
-  gcry_mlkem_keccakx4_state state;
-  size_t colsize = sizeof (gcry_mlkem_poly);
-  size_t rowsize = colsize * param->k;
+  gcry_mlkem_keccakx4_state state; // TODO
+
+  byte *buf;
+  gcry_mlkem_buf_al buf_al = {};
+  size_t buf_elem_len = GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * SHAKE128_RATE;
+  /* make sure each sub structure starts memory aligned */
+  size_t offset_al = buf_elem_len + (32 - (buf_elem_len % 32));
+
+  ec = _gcry_mlkem_buf_al_create (&buf_al, 4 * offset_al, 1);
+  if (ec)
+    {
+      goto leave;
+    }
+  buf = buf_al.buf;
 
   for (i = 0; i < 4; i++)
     {
       f = _mm256_loadu_si256 ((__m256i *)seed);
-      _mm256_store_si256 (buf[0].vec, f);
-      _mm256_store_si256 (buf[1].vec, f);
-      _mm256_store_si256 (buf[2].vec, f);
-      _mm256_store_si256 (buf[3].vec, f);
+      _mm256_store_si256 (&buf[0 * offset_al], f);
+      _mm256_store_si256 (&buf[1 * offset_al], f);
+      _mm256_store_si256 (&buf[2 * offset_al], f);
+      _mm256_store_si256 (&buf[3 * offset_al], f);
 
       if (transposed)
         {
-          buf[0].coeffs[32] = i;
-          buf[0].coeffs[33] = 0;
-          buf[1].coeffs[32] = i;
-          buf[1].coeffs[33] = 1;
-          buf[2].coeffs[32] = i;
-          buf[2].coeffs[33] = 2;
-          buf[3].coeffs[32] = i;
-          buf[3].coeffs[33] = 3;
+          buf[0 * offset_al + 32] = i;
+          buf[0 * offset_al + 33] = 0;
+          buf[1 * offset_al + 32] = i;
+          buf[1 * offset_al + 33] = 1;
+          buf[2 * offset_al + 32] = i;
+          buf[2 * offset_al + 33] = 2;
+          buf[3 * offset_al + 32] = i;
+          buf[3 * offset_al + 33] = 3;
         }
       else
         {
-          buf[0].coeffs[32] = 0;
-          buf[0].coeffs[33] = i;
-          buf[1].coeffs[32] = 1;
-          buf[1].coeffs[33] = i;
-          buf[2].coeffs[32] = 2;
-          buf[2].coeffs[33] = i;
-          buf[3].coeffs[32] = 3;
-          buf[3].coeffs[33] = i;
+          buf[0 * offset_al + 32] = 0;
+          buf[0 * offset_al + 33] = i;
+          buf[1 * offset_al + 32] = 1;
+          buf[1 * offset_al + 33] = i;
+          buf[2 * offset_al + 32] = 2;
+          buf[2 * offset_al + 33] = i;
+          buf[3 * offset_al + 32] = 3;
+          buf[3 * offset_al + 33] = i;
         }
 
       _gcry_mlkem_avx2_shake128x4_absorb_once (&state,
-                                               buf[0].coeffs,
-                                               buf[1].coeffs,
-                                               buf[2].coeffs,
-                                               buf[3].coeffs,
+                                               &buf[0 * offset_al],
+                                               &buf[1 * offset_al],
+                                               &buf[2 * offset_al],
+                                               &buf[3 * offset_al],
                                                34);
       _gcry_mlkem_avx2_shake128x4_squeezeblocks (
-          buf[0].coeffs,
-          buf[1].coeffs,
-          buf[2].coeffs,
-          buf[3].coeffs,
+          &buf[0 * offset_al],
+          &buf[1 * offset_al],
+          &buf[2 * offset_al],
+          &buf[3 * offset_al],
           GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS,
           &state);
 
       ctr0 = _gcry_mlkem_avx2_rej_uniform_avx (a[i * param->k + 0].coeffs,
-                                               buf[0].coeffs);
+                                               &buf[0 * offset_al]);
       ctr1 = _gcry_mlkem_avx2_rej_uniform_avx (a[i * param->k + 1].coeffs,
-                                               buf[1].coeffs);
+                                               &buf[1 * offset_al]);
       ctr2 = _gcry_mlkem_avx2_rej_uniform_avx (a[i * param->k + 2].coeffs,
-                                               buf[2].coeffs);
+                                               &buf[2 * offset_al]);
       ctr3 = _gcry_mlkem_avx2_rej_uniform_avx (a[i * param->k + 3].coeffs,
-                                               buf[3].coeffs);
+                                               &buf[3 * offset_al]);
 
       while (ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N
              || ctr3 < GCRY_MLKEM_N)
         {
-          _gcry_mlkem_avx2_shake128x4_squeezeblocks (buf[0].coeffs,
-                                                     buf[1].coeffs,
-                                                     buf[2].coeffs,
-                                                     buf[3].coeffs,
+          _gcry_mlkem_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
+                                                     &buf[1 * offset_al],
+                                                     &buf[2 * offset_al],
+                                                     &buf[3 * offset_al],
                                                      1,
                                                      &state);
 
           ctr0 += _gcry_mlkem_avx2_rej_uniform (a[i * param->k + 0].coeffs
                                                     + ctr0,
                                                 GCRY_MLKEM_N - ctr0,
-                                                buf[0].coeffs,
+                                                &buf[0 * offset_al],
                                                 SHAKE128_RATE);
           ctr1 += _gcry_mlkem_avx2_rej_uniform (a[i * param->k + 1].coeffs
                                                     + ctr1,
                                                 GCRY_MLKEM_N - ctr1,
-                                                buf[1].coeffs,
+                                                &buf[1 * offset_al],
                                                 SHAKE128_RATE);
           ctr2 += _gcry_mlkem_avx2_rej_uniform (a[i * param->k + 2].coeffs
                                                     + ctr2,
                                                 GCRY_MLKEM_N - ctr2,
-                                                buf[2].coeffs,
+                                                &buf[2 * offset_al],
                                                 SHAKE128_RATE);
           ctr3 += _gcry_mlkem_avx2_rej_uniform (a[i * param->k + 3].coeffs
                                                     + ctr3,
                                                 GCRY_MLKEM_N - ctr3,
-                                                buf[3].coeffs,
+                                                &buf[3 * offset_al],
                                                 SHAKE128_RATE);
         }
 
@@ -584,9 +635,13 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
       _gcry_mlkem_avx2_poly_nttunpack (&a[i * param->k + 2]);
       _gcry_mlkem_avx2_poly_nttunpack (&a[i * param->k + 3]);
     }
+
+leave:
+  _gcry_mlkem_buf_al_destroy (&buf_al);
+  return ec;
 }
 
-void
+gcry_err_code_t
 _gcry_mlkem_avx2_gen_matrix (gcry_mlkem_poly *a,
                              const uint8_t seed[GCRY_MLKEM_SYMBYTES],
                              int transposed,
@@ -616,32 +671,50 @@ _gcry_mlkem_avx2_indcpa_keypair_derand (
 {
   gcry_err_code_t ec = 0;
   unsigned int i;
-  uint8_t buf[2 * GCRY_MLKEM_SYMBYTES];
-  const uint8_t *publicseed = buf;
-  const uint8_t *noiseseed  = buf + GCRY_MLKEM_SYMBYTES;
-  // polyvec a[param->k];
-  //  polyvec e;
-  //  polyvec pkpv, skpv;
+  byte *buf = NULL;
+  const uint8_t *publicseed;
+  const uint8_t *noiseseed;
+  gcry_mlkem_polybuf_al a_al    = {};
+  gcry_mlkem_polybuf_al e_al    = {};
+  gcry_mlkem_polybuf_al pkpv_al = {};
+  gcry_mlkem_polybuf_al skpv_al = {};
+  gcry_mlkem_poly *a            = NULL;
+  gcry_mlkem_poly *e            = NULL;
+  gcry_mlkem_poly *pkpv         = NULL;
+  gcry_mlkem_poly *skpv         = NULL;
 
-  gcry_mlkem_polyvec_al a_al;
-  gcry_mlkem_polyvec_al e_al;
-  gcry_mlkem_polyvec_al pkpv_al;
-  gcry_mlkem_polyvec_al skpv_al;
-  _gcry_mlkem_polyvec_al_create (
+  buf = xtrymalloc_secure (2 * GCRY_MLKEM_SYMBYTES);
+  if (!buf)
+    {
+      ec = gpg_err_code_from_syserror ();
+      goto leave;
+    }
+  publicseed = buf;
+  noiseseed  = buf + GCRY_MLKEM_SYMBYTES;
+
+  ec = _gcry_mlkem_polybuf_al_create (
       &a_al, param->k * param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  _gcry_mlkem_polyvec_al_create (
+  if (ec)
+    goto leave;
+  ec = _gcry_mlkem_polybuf_al_create (
       &e_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  _gcry_mlkem_polyvec_al_create (
+  if (ec)
+    goto leave;
+  ec = _gcry_mlkem_polybuf_al_create (
       &pkpv_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  _gcry_mlkem_polyvec_al_create (
+  if (ec)
+    goto leave;
+  ec = _gcry_mlkem_polybuf_al_create (
       &skpv_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  gcry_mlkem_poly *a    = a_al.vec;
-  gcry_mlkem_poly *e    = e_al.vec;
-  gcry_mlkem_poly *pkpv = pkpv_al.vec;
-  gcry_mlkem_poly *skpv = skpv_al.vec;
+  if (ec)
+    goto leave;
+
+  a    = (gcry_mlkem_poly *)a_al.buf;
+  e    = (gcry_mlkem_poly *)e_al.buf;
+  pkpv = (gcry_mlkem_poly *)pkpv_al.buf;
+  skpv = (gcry_mlkem_poly *)skpv_al.buf;
 
   _gcry_md_hash_buffer (GCRY_MD_SHA3_512, buf, coins, GCRY_MLKEM_SYMBYTES);
-
   _gcry_mlkem_avx2_gen_matrix (a, publicseed, 0, param);
 
   if (param->k == 2)
@@ -694,10 +767,12 @@ _gcry_mlkem_avx2_indcpa_keypair_derand (
   pack_sk (sk, skpv, param);
   pack_pk (pk, pkpv, publicseed, param);
 
-  _gcry_mlkem_polyvec_al_destroy (&a_al);
-  _gcry_mlkem_polyvec_al_destroy (&e_al);
-  _gcry_mlkem_polyvec_al_destroy (&pkpv_al);
-  _gcry_mlkem_polyvec_al_destroy (&skpv_al);
+leave:
+  _gcry_mlkem_polybuf_al_destroy (&a_al);
+  _gcry_mlkem_polybuf_al_destroy (&e_al);
+  _gcry_mlkem_polybuf_al_destroy (&pkpv_al);
+  _gcry_mlkem_polybuf_al_destroy (&skpv_al);
+  xfree (buf);
   return ec;
 }
 
@@ -713,7 +788,7 @@ _gcry_mlkem_avx2_indcpa_keypair_derand (
  *              - const uint8_t *coins: pointer to input random coins used as
  *seed to deterministically generate all randomness
  **************************************************/
-void
+gcry_err_code_t
 _gcry_mlkem_avx2_indcpa_enc (uint8_t *c,
                              const uint8_t *m,
                              const uint8_t *pk,
@@ -722,33 +797,51 @@ _gcry_mlkem_avx2_indcpa_enc (uint8_t *c,
 {
   gcry_err_code_t ec = 0;
   unsigned int i;
-  uint8_t seed[GCRY_MLKEM_SYMBYTES];
-  // polyvec sp, pkpv, ep, at[param->k], b;
+  byte *seed = NULL;
   gcry_mlkem_poly v, k, epp;
-  size_t polysize = sizeof (gcry_mlkem_poly);
-  size_t rowsize  = sizeof (gcry_mlkem_poly) * param->k;
+  gcry_mlkem_polybuf_al sp_al   = {};
+  gcry_mlkem_polybuf_al pkpv_al = {};
+  gcry_mlkem_polybuf_al ep_al   = {};
+  gcry_mlkem_polybuf_al at_al   = {};
+  gcry_mlkem_polybuf_al b_al    = {};
+  gcry_mlkem_poly *sp;
+  gcry_mlkem_poly *pkpv;
+  gcry_mlkem_poly *ep;
+  gcry_mlkem_poly *at;
+  gcry_mlkem_poly *b;
 
-  gcry_mlkem_polyvec_al sp_al;
-  gcry_mlkem_polyvec_al pkpv_al;
-  gcry_mlkem_polyvec_al ep_al;
-  gcry_mlkem_polyvec_al at_al;
-  gcry_mlkem_polyvec_al b_al;
-  _gcry_mlkem_polyvec_al_create (
+  seed = xtrymalloc_secure (GCRY_MLKEM_SYMBYTES);
+  if (!seed)
+    {
+      ec = gpg_err_code_from_syserror ();
+      goto leave;
+    }
+
+  ec = _gcry_mlkem_polybuf_al_create (
       &sp_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  _gcry_mlkem_polyvec_al_create (
+  if (ec)
+    goto leave;
+  ec = _gcry_mlkem_polybuf_al_create (
       &pkpv_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  _gcry_mlkem_polyvec_al_create (
+  if (ec)
+    goto leave;
+  ec = _gcry_mlkem_polybuf_al_create (
       &ep_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  _gcry_mlkem_polyvec_al_create (
+  if (ec)
+    goto leave;
+  ec = _gcry_mlkem_polybuf_al_create (
       &at_al, param->k * param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  _gcry_mlkem_polyvec_al_create (
+  if (ec)
+    goto leave;
+  ec = _gcry_mlkem_polybuf_al_create (
       &b_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  gcry_mlkem_poly *sp   = sp_al.vec;
-  gcry_mlkem_poly *pkpv = pkpv_al.vec;
-  gcry_mlkem_poly *ep   = ep_al.vec;
-  gcry_mlkem_poly *at   = at_al.vec;
-  gcry_mlkem_poly *b    = b_al.vec;
-
+  if (ec)
+    goto leave;
+  sp   = (gcry_mlkem_poly *)sp_al.buf;
+  pkpv = (gcry_mlkem_poly *)pkpv_al.buf;
+  ep   = (gcry_mlkem_poly *)ep_al.buf;
+  at   = (gcry_mlkem_poly *)at_al.buf;
+  b    = (gcry_mlkem_poly *)b_al.buf;
 
   unpack_pk (pkpv, seed, pk, param);
   _gcry_mlkem_avx2_poly_frommsg (&k, m);
@@ -795,11 +888,14 @@ _gcry_mlkem_avx2_indcpa_enc (uint8_t *c,
 
   pack_ciphertext (c, b, &v, param);
 
-  _gcry_mlkem_polyvec_al_destroy (&sp_al);
-  _gcry_mlkem_polyvec_al_destroy (&pkpv_al);
-  _gcry_mlkem_polyvec_al_destroy (&ep_al);
-  _gcry_mlkem_polyvec_al_destroy (&at_al);
-  _gcry_mlkem_polyvec_al_destroy (&b_al);
+leave:
+  _gcry_mlkem_polybuf_al_destroy (&sp_al);
+  _gcry_mlkem_polybuf_al_destroy (&pkpv_al);
+  _gcry_mlkem_polybuf_al_destroy (&ep_al);
+  _gcry_mlkem_polybuf_al_destroy (&at_al);
+  _gcry_mlkem_polybuf_al_destroy (&b_al);
+  xfree (seed);
+  return ec;
 }
 
 /*************************************************
@@ -812,23 +908,33 @@ _gcry_mlkem_avx2_indcpa_enc (uint8_t *c,
  *              - const uint8_t *c: pointer to input ciphertext
  *              - const uint8_t *sk: pointer to input secret key
  **************************************************/
-void
+gcry_err_code_t
 _gcry_mlkem_avx2_indcpa_dec (uint8_t *m,
                              const uint8_t *c,
                              const uint8_t *sk,
                              const gcry_mlkem_param_t *param)
 {
-  // polyvec b, skpv;
-  gcry_mlkem_poly v, mp;
+  gcry_err_code_t ec = 0;
+  gcry_mlkem_poly v, mp; // TODO
 
-  gcry_mlkem_polyvec_al b_al;
-  gcry_mlkem_polyvec_al skpv_al;
-  _gcry_mlkem_polyvec_al_create (
+  gcry_mlkem_polybuf_al b_al    = {};
+  gcry_mlkem_polybuf_al skpv_al = {};
+
+  gcry_mlkem_poly *b;
+  gcry_mlkem_poly *skpv;
+
+
+  ec = _gcry_mlkem_polybuf_al_create (
       &b_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  _gcry_mlkem_polyvec_al_create (
+  if (ec)
+    goto leave;
+  ec = _gcry_mlkem_polybuf_al_create (
       &skpv_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
-  gcry_mlkem_poly *b    = b_al.vec;
-  gcry_mlkem_poly *skpv = skpv_al.vec;
+  if (ec)
+    goto leave;
+
+  b    = (gcry_mlkem_poly *)b_al.buf;
+  skpv = (gcry_mlkem_poly *)skpv_al.buf;
 
 
   unpack_ciphertext (b, &v, c, param);
@@ -843,6 +949,8 @@ _gcry_mlkem_avx2_indcpa_dec (uint8_t *m,
 
   _gcry_mlkem_avx2_poly_tomsg (m, &mp);
 
-  _gcry_mlkem_polyvec_al_destroy (&b_al);
-  _gcry_mlkem_polyvec_al_destroy (&skpv_al);
+leave:
+  _gcry_mlkem_polybuf_al_destroy (&b_al);
+  _gcry_mlkem_polybuf_al_destroy (&skpv_al);
+  return ec;
 }

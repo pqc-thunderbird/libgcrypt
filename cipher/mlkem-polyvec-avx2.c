@@ -8,38 +8,67 @@
 
 /* the following functions are for allocating 32-byte aligned memory */
 gcry_err_code_t
-_gcry_mlkem_polyvec_al_create (gcry_mlkem_polyvec_al *vec,
+_gcry_mlkem_polybuf_al_create (gcry_mlkem_polybuf_al *buf,
                                size_t num_elems,
                                size_t size_elems,
                                int secure)
 {
   const size_t alloc_size = num_elems * size_elems + /*align*/ 32;
   if (secure)
-    vec->alloc_addr = xtrymalloc_secure (alloc_size);
+    buf->alloc_addr = xtrymalloc_secure (alloc_size);
   else
-    vec->alloc_addr = xtrymalloc (alloc_size);
+    buf->alloc_addr = xtrymalloc (alloc_size);
 
-  if (!vec->alloc_addr)
+  if (!buf->alloc_addr)
     {
-      vec->vec = NULL;
+      buf->buf = NULL;
       return gpg_error_from_syserror ();
     }
-  vec->vec = (byte *)((uintptr_t)vec->alloc_addr
-                      + (32 - ((uintptr_t)vec->alloc_addr % 32)));
+  buf->buf = (byte *)((uintptr_t)buf->alloc_addr
+                      + (32 - ((uintptr_t)buf->alloc_addr % 32)));
 
-  memset (vec->alloc_addr, 0, alloc_size);
+  memset (buf->alloc_addr, 0, alloc_size);
   return 0;
 }
 
 void
-_gcry_mlkem_polyvec_al_destroy (gcry_mlkem_polyvec_al *vec)
+_gcry_mlkem_polybuf_al_destroy (gcry_mlkem_polybuf_al *buf)
 {
-  if (vec->alloc_addr)
+  if (buf->alloc_addr)
     {
-      xfree (vec->alloc_addr);
+      xfree (buf->alloc_addr);
     }
-  vec->vec        = NULL;
-  vec->alloc_addr = NULL;
+  buf->buf        = NULL;
+  buf->alloc_addr = NULL;
+}
+
+gcry_err_code_t _gcry_mlkem_buf_al_create (gcry_mlkem_buf_al *buf, size_t size, int secure)
+{
+  const size_t alloc_size = size + /*align*/ 32;
+  if (secure)
+    buf->alloc_addr = xtrymalloc_secure (alloc_size);
+  else
+    buf->alloc_addr = xtrymalloc (alloc_size);
+
+  if (!buf->alloc_addr)
+    {
+      buf->buf = NULL;
+      return gpg_error_from_syserror();
+    }
+  buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (32 - ((uintptr_t)buf->alloc_addr % 32)));
+
+  memset (buf->alloc_addr, 0, alloc_size);
+  return 0;
+}
+
+void _gcry_mlkem_buf_al_destroy (gcry_mlkem_buf_al *buf)
+{
+  if (buf->alloc_addr)
+    {
+      xfree (buf->alloc_addr);
+    }
+  buf->buf        = NULL;
+  buf->alloc_addr = NULL;
 }
 
 static void
