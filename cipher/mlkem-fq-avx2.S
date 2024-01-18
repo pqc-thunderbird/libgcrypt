@@ -34,8 +34,8 @@ vmovdqa		%ymm9,224(%rdi)
 
 ret
 
-.global cdecl(reduce_avx)
-cdecl(reduce_avx):
+.global cdecl(_gcry_mlkem_avx2_reduce_avx)
+cdecl(_gcry_mlkem_avx2_reduce_avx):
 #consts
 vmovdqa		_16XQ*2(%rsi),%ymm0
 vmovdqa		_16XV*2(%rsi),%ymm1
@@ -76,8 +76,8 @@ vmovdqa		%ymm10,224(%rdi)
 
 ret
 
-.global cdecl(tomont_avx)
-cdecl(tomont_avx):
+.global cdecl(_gcry_mlkem_avx2_tomont_avx)
+cdecl(_gcry_mlkem_avx2_tomont_avx):
 #consts
 vmovdqa		_16XQ*2(%rsi),%ymm0
 vmovdqa		_16XMONTSQLO*2(%rsi),%ymm1

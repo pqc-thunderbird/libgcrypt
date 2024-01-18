@@ -83,8 +83,8 @@ vmovdqa		%ymm11,(64*\off+48)*2(%rdi)
 .endm
 
 .text
-.global cdecl(basemul_avx)
-cdecl(basemul_avx):
+.global cdecl(_gcry_mlkem_avx2_basemul_avx)
+cdecl(_gcry_mlkem_avx2_basemul_avx):
 mov		%rsp,%r8
 and		$-32,%rsp
 sub		$32,%rsp

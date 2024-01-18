@@ -36,7 +36,7 @@ typedef struct
     union{
     s16 coeffs[GCRY_MLKEM_N];
     __m256i vec[(GCRY_MLKEM_N+15)/16]; // TODO ifdef
-    }
+    };
 } gcry_mlkem_poly;
 
 void _gcry_mlkem_poly_compress (unsigned char *r,

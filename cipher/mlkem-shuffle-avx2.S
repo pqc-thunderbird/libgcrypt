@@ -3,7 +3,7 @@
 .include "mlkem-shuffle-avx2.inc"
 
 /*
-nttpack_avx:
+_gcry_mlkem_avx2_nttpack_avx:
 #load
 vmovdqa		(%rdi),%ymm4
 vmovdqa		32(%rdi),%ymm5
@@ -91,8 +91,8 @@ vmovdqa		%ymm11,224(%rdi)
 
 ret
 
-.global cdecl(nttunpack_avx)
-cdecl(nttunpack_avx):
+.global cdecl(_gcry_mlkem_avx2_nttunpack_avx)
+cdecl(_gcry_mlkem_avx2_nttunpack_avx):
 call		nttunpack128_avx
 add		$256,%rdi
 call		nttunpack128_avx
@@ -168,8 +168,8 @@ vmovdqu		%ymm9,160(%rdi)
 
 ret
 
-.global cdecl(ntttobytes_avx)
-cdecl(ntttobytes_avx):
+.global cdecl(_gcry_mlkem_avx2_ntttobytes_avx)
+cdecl(_gcry_mlkem_avx2_ntttobytes_avx):
 #consts
 vmovdqa		_16XQ*2(%rdx),%ymm0
 call		ntttobytes128_avx
@@ -244,8 +244,8 @@ vmovdqa		%ymm1,224(%rdi)
 
 ret
 
-.global cdecl(nttfrombytes_avx)
-cdecl(nttfrombytes_avx):
+.global cdecl(_gcry_mlkem_avx2_nttfrombytes_avx)
+cdecl(_gcry_mlkem_avx2_nttfrombytes_avx):
 #consts
 vmovdqa		_16XMASK*2(%rdx),%ymm0
 call		nttfrombytes128_avx

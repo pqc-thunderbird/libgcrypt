@@ -3,10 +3,9 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "mlkem-params-avx2.h"
 
-int verify(const uint8_t *a, const uint8_t *b, size_t len);
+int _gcry_mlkem_avx2_verify (const uint8_t *a, const uint8_t *b, size_t len);
 
-void cmov(uint8_t *r, const uint8_t *x, size_t len, uint8_t b);
+void _gcry_mlkem_cmov (uint8_t *r, const uint8_t *x, size_t len, uint8_t b);
 
 #endif

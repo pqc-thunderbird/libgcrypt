@@ -295,7 +295,7 @@ leave:
 }
 
 /*************************************************
- * Name:        indcpa_keypair
+ * Name:        _gcry_mlkem_indcpa_keypair
  *
  * Description: Generates public and private key for the CPA-secure
  *              public-key encryption scheme underlying ML-KEM
@@ -399,7 +399,7 @@ leave:
 }
 
 /*************************************************
- * Name:        indcpa_enc
+ * Name:        _gcry_mlkem_indcpa_enc
  *
  * Description: Encryption function of the CPA-secure
  *              public-key encryption scheme underlying ML-KEM.
@@ -534,7 +534,7 @@ leave:
 }
 
 /*************************************************
- * Name:        indcpa_dec
+ * Name:        _gcry_mlkem_indcpa_dec
  *
  * Description: Decryption function of the CPA-secure
  *              public-key encryption scheme underlying ML-KEM.
@@ -659,16 +659,16 @@ _gcry_mlkem_kem_keypair (byte *pk, byte *sk, gcry_mlkem_param_t *param)
     byte ss3[GCRY_MLKEM_SSBYTES];
 
     int ret_keygen = _gcry_mlkem_avx2_kem_keypair(pk_avx2, sk_avx2, param);
-    int ret_enc = crypto_kem_enc(ct, ss, pk_avx2, param);
+    int ret_enc = _gcry_mlkem_avx2_kem_enc(ct, ss, pk_avx2, param);
     //int ret_enc = _gcry_mlkem_kem_enc(ct, ss, pk_avx2, param);
-    crypto_kem_dec(ss2, ct, sk_avx2, param);
+    _gcry_mlkem_avx2_kem_dec(ss2, ct, sk_avx2, param);
     _gcry_mlkem_kem_dec(ss3, ct, sk_avx2, param);
     printf("K: %d\n", param->k);
     printf("ret_keygen, ret_enc, memcmp1, memcp2: %d, %d, %d, %d\n", ret_keygen, ret_enc, memcmp(ss, ss2, GCRY_MLKEM_SSBYTES), memcmp(ss, ss3, GCRY_MLKEM_SSBYTES));
 
     // same with standard pk/sk and swap enc
     ret_enc = _gcry_mlkem_kem_enc(ct, ss, pk, param);
-    crypto_kem_dec(ss2, ct, sk, param);
+    _gcry_mlkem_avx2_kem_dec(ss2, ct, sk, param);
     _gcry_mlkem_kem_dec(ss3, ct, sk, param);
     printf("ret_enc, memcmp1, memcp2: %d, %d, %d\n", ret_enc, memcmp(ss, ss2, GCRY_MLKEM_SSBYTES), memcmp(ss, ss3, GCRY_MLKEM_SSBYTES));
     printf("------\n\n");
