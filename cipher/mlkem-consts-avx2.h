@@ -32,10 +32,14 @@
 #endif
 
 #ifndef __ASSEMBLER__
-#include "mlkem-align-avx2.h"
-typedef ALIGNED_INT16 (640) qdata_t;
-#define qdata qdata
+#include <immintrin.h>
+typedef union
+{
+    int16_t coeffs[640];
+  __m256i vec[(640 + 7) / 8];
+} qdata_t;
 extern const qdata_t qdata;
+
 #endif
 
 #endif

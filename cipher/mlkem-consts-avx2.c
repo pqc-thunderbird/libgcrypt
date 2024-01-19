@@ -1,4 +1,3 @@
-#include "mlkem-align-avx2.h"
 #include "mlkem-params.h"
 #include "mlkem-consts-avx2.h"
 

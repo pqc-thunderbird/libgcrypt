@@ -70,16 +70,30 @@ leave:
  **
  * Returns 0 (success)
  **************************************************/
-int
+static gcry_err_code_t
 crypto_kem_enc_derand (uint8_t *ct,
                        uint8_t *ss,
                        const uint8_t *pk,
                        const uint8_t *coins,
                        const gcry_mlkem_param_t *param)
 {
-  uint8_t buf[2 * GCRY_MLKEM_SYMBYTES]; // TODO
+  gcry_err_code_t ec = 0;
+  byte *buf = NULL;
   /* Will contain key, coins */
-  uint8_t kr[2 * GCRY_MLKEM_SYMBYTES]; // TODO
+  byte *kr = NULL;
+
+  buf = xtrymalloc_secure (2 * GCRY_MLKEM_SYMBYTES);
+  if (!buf)
+    {
+      ec = gpg_error_from_syserror ();
+      goto leave;
+    }
+  kr = xtrymalloc_secure (2 * GCRY_MLKEM_SYMBYTES);
+  if (!kr)
+    {
+      ec = gpg_error_from_syserror ();
+      goto leave;
+    }
 
   memcpy (buf, coins, GCRY_MLKEM_SYMBYTES);
 
@@ -91,10 +105,16 @@ crypto_kem_enc_derand (uint8_t *ct,
   _gcry_md_hash_buffer (GCRY_MD_SHA3_512, kr, buf, 2 * GCRY_MLKEM_SYMBYTES);
 
   /* coins are in kr+GCRY_MLKEM_SYMBYTES */
-  _gcry_mlkem_avx2_indcpa_enc (ct, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
+  ec = _gcry_mlkem_avx2_indcpa_enc (ct, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
+  if (ec)
+    goto leave;
 
   memcpy (ss, kr, GCRY_MLKEM_SYMBYTES);
-  return 0;
+
+leave:
+  return ec;
+  xfree(buf);
+  xfree(kr);
 }
 
 /*************************************************
@@ -109,16 +129,27 @@ crypto_kem_enc_derand (uint8_t *ct,
  *
  * Returns 0 (success)
  **************************************************/
-int
+gcry_err_code_t
 _gcry_mlkem_avx2_kem_enc (uint8_t *ct,
                           uint8_t *ss,
                           const uint8_t *pk,
                           const gcry_mlkem_param_t *param)
 {
-  uint8_t coins[GCRY_MLKEM_SYMBYTES];
+  gcry_err_code_t ec = 0;
+  byte *coins        = NULL;
+  coins              = xtrymalloc_secure (GCRY_MLKEM_SYMBYTES);
+  if (!coins)
+    {
+      ec = gpg_error_from_syserror ();
+      goto leave;
+    }
+
   _gcry_randomize (coins, GCRY_MLKEM_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
   crypto_kem_enc_derand (ct, ss, pk, coins, param);
-  return 0;
+
+leave:
+  xfree (coins);
+  return ec;
 }
 
 /*************************************************
@@ -135,18 +166,38 @@ _gcry_mlkem_avx2_kem_enc (uint8_t *ct,
  *
  * On failure, ss will contain a pseudo-random value.
  **************************************************/
-int
+gcry_err_code_t
 _gcry_mlkem_avx2_kem_dec (uint8_t *ss,
                           const uint8_t *ct,
                           const uint8_t *sk,
                           const gcry_mlkem_param_t *param)
 {
+  gcry_err_code_t ec = 0;
   int fail;
-  uint8_t buf[2 * GCRY_MLKEM_SYMBYTES]; // TODO
+  byte *buf = NULL;
   /* Will contain key, coins */
-  uint8_t kr[2 * GCRY_MLKEM_SYMBYTES];                        // TODO
-  uint8_t cmp[param->ciphertext_bytes + GCRY_MLKEM_SYMBYTES]; // TODO
+  byte *kr          = NULL;
+  byte *cmp         = NULL;
   const uint8_t *pk = sk + param->polyvec_bytes;
+
+  buf = xtrymalloc_secure (2 * GCRY_MLKEM_SYMBYTES);
+  if (!buf)
+    {
+      ec = gpg_error_from_syserror ();
+      goto leave;
+    }
+  kr = xtrymalloc_secure (2 * GCRY_MLKEM_SYMBYTES);
+  if (!kr)
+    {
+      ec = gpg_error_from_syserror ();
+      goto leave;
+    }
+  cmp = xtrymalloc_secure (param->ciphertext_bytes + GCRY_MLKEM_SYMBYTES);
+  if (!cmp)
+    {
+      ec = gpg_error_from_syserror ();
+      goto leave;
+    }
 
   _gcry_mlkem_avx2_indcpa_dec (buf, ct, sk, param);
 
@@ -171,5 +222,9 @@ _gcry_mlkem_avx2_kem_dec (uint8_t *ss,
   /* Copy true key to return buffer if fail is false */
   _gcry_mlkem_cmov (ss, kr, GCRY_MLKEM_SYMBYTES, !fail);
 
-  return 0;
+leave:
+  xfree (buf);
+  xfree (kr);
+  xfree (cmp);
+  return ec;
 }

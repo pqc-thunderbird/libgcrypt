@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <immintrin.h>
 #include <string.h>
-#include "mlkem-align-avx2.h"
 #include "mlkem-indcpa-avx2.h"
 #include "mlkem-polyvec-avx2.h"
 #include "mlkem-poly-avx2.h"
@@ -197,10 +196,12 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
   gcry_err_code_t ec = 0;
   unsigned int ctr0, ctr1, ctr2, ctr3;
   __m256i f;
-  gcry_mlkem_keccakx4_state state; // TODO
-  byte *buf;
-  gcry_mlkem_buf_al buf_al = {};
-  size_t buf_elem_len = GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * SHAKE128_RATE;
+  gcry_mlkem_buf_al state_al       = {};
+  gcry_mlkem_keccakx4_state *state = NULL;
+  byte *buf                        = NULL;
+  gcry_mlkem_buf_al buf_al         = {};
+  size_t buf_elem_len
+      = GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * GCRY_SHAKE128_RATE;
   /* make sure each sub structure starts memory aligned */
   size_t offset_al = buf_elem_len + (32 - (buf_elem_len % 32));
 
@@ -210,6 +211,13 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
       goto leave;
     }
   buf = buf_al.buf;
+  ec  = _gcry_mlkem_buf_al_create (
+      &state_al, sizeof (gcry_mlkem_keccakx4_state), 1);
+  if (ec)
+    {
+      goto leave;
+    }
+  state = (gcry_mlkem_keccakx4_state *)state_al.buf;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
   _mm256_store_si256 (&buf[0 * offset_al], f);
@@ -240,7 +248,7 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
       buf[3 * offset_al + 33] = 1;
     }
 
-  _gcry_mlkem_avx2_shake128x4_absorb_once (&state,
+  _gcry_mlkem_avx2_shake128x4_absorb_once (state,
                                            &buf[0 * offset_al],
                                            &buf[1 * offset_al],
                                            &buf[2 * offset_al],
@@ -252,7 +260,7 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
       &buf[2 * offset_al],
       &buf[3 * offset_al],
       GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS,
-      &state);
+      state);
 
   ctr0 = _gcry_mlkem_avx2_rej_uniform_avx (a[0 * param->k + 0].coeffs,
                                            &buf[0 * offset_al]);
@@ -271,24 +279,24 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
                                                  &buf[2 * offset_al],
                                                  &buf[3 * offset_al],
                                                  1,
-                                                 &state);
+                                                 state);
 
       ctr0 += _gcry_mlkem_avx2_rej_uniform (a[0 * param->k + 0].coeffs + ctr0,
                                             GCRY_MLKEM_N - ctr0,
                                             &buf[0 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
       ctr1 += _gcry_mlkem_avx2_rej_uniform (a[0 * param->k + 1].coeffs + ctr1,
                                             GCRY_MLKEM_N - ctr1,
                                             &buf[1 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
       ctr2 += _gcry_mlkem_avx2_rej_uniform (a[1 * param->k + 0].coeffs + ctr2,
                                             GCRY_MLKEM_N - ctr2,
                                             &buf[2 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
       ctr3 += _gcry_mlkem_avx2_rej_uniform (a[1 * param->k + 1].coeffs + ctr3,
                                             GCRY_MLKEM_N - ctr3,
                                             &buf[3 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
     }
 
   _gcry_mlkem_avx2_poly_nttunpack (&a[0 * param->k + 0]);
@@ -298,6 +306,7 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
 
 leave:
   _gcry_mlkem_buf_al_destroy (&buf_al);
+  _gcry_mlkem_buf_al_destroy (&state_al);
 }
 
 static gcry_err_code_t
@@ -309,12 +318,13 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
   gcry_err_code_t ec = 0;
   unsigned int ctr0, ctr1, ctr2, ctr3;
   __m256i f;
-  gcry_mlkem_keccakx4_state state; // TODO
-  keccak_state state1x;            // TODO
-
-  byte *buf;
-  gcry_mlkem_buf_al buf_al = {};
-  size_t buf_elem_len = GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * SHAKE128_RATE;
+  gcry_md_hd_t h;
+  gcry_mlkem_buf_al state_al       = {};
+  gcry_mlkem_keccakx4_state *state = NULL;
+  byte *buf                        = NULL;
+  gcry_mlkem_buf_al buf_al         = {};
+  size_t buf_elem_len
+      = GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * GCRY_SHAKE128_RATE;
   /* make sure each sub structure starts memory aligned */
   size_t offset_al = buf_elem_len + (32 - (buf_elem_len % 32));
 
@@ -324,6 +334,13 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
       goto leave;
     }
   buf = buf_al.buf;
+  ec  = _gcry_mlkem_buf_al_create (
+      &state_al, sizeof (gcry_mlkem_keccakx4_state), 1);
+  if (ec)
+    {
+      goto leave;
+    }
+  state = (gcry_mlkem_keccakx4_state *)state_al.buf;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
   _mm256_store_si256 (&buf[0 * offset_al], f);
@@ -354,7 +371,7 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
       buf[3 * offset_al + 33] = 1;
     }
 
-  _gcry_mlkem_avx2_shake128x4_absorb_once (&state,
+  _gcry_mlkem_avx2_shake128x4_absorb_once (state,
                                            &buf[0 * offset_al],
                                            &buf[1 * offset_al],
                                            &buf[2 * offset_al],
@@ -366,7 +383,7 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
       &buf[2 * offset_al],
       &buf[3 * offset_al],
       GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS,
-      &state);
+      state);
 
   ctr0 = _gcry_mlkem_avx2_rej_uniform_avx (a[0 * param->k + 0].coeffs,
                                            &buf[0 * offset_al]);
@@ -385,24 +402,24 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
                                                  &buf[2 * offset_al],
                                                  &buf[3 * offset_al],
                                                  1,
-                                                 &state);
+                                                 state);
 
       ctr0 += _gcry_mlkem_avx2_rej_uniform (a[0 * param->k + 0].coeffs + ctr0,
                                             GCRY_MLKEM_N - ctr0,
                                             &buf[0 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
       ctr1 += _gcry_mlkem_avx2_rej_uniform (a[0 * param->k + 1].coeffs + ctr1,
                                             GCRY_MLKEM_N - ctr1,
                                             &buf[1 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
       ctr2 += _gcry_mlkem_avx2_rej_uniform (a[0 * param->k + 2].coeffs + ctr2,
                                             GCRY_MLKEM_N - ctr2,
                                             &buf[2 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
       ctr3 += _gcry_mlkem_avx2_rej_uniform (a[1 * param->k + 0].coeffs + ctr3,
                                             GCRY_MLKEM_N - ctr3,
                                             &buf[3 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
     }
 
   _gcry_mlkem_avx2_poly_nttunpack (&a[0 * param->k + 0]);
@@ -439,7 +456,7 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
       buf[3 * offset_al + 33] = 2;
     }
 
-  _gcry_mlkem_avx2_shake128x4_absorb_once (&state,
+  _gcry_mlkem_avx2_shake128x4_absorb_once (state,
                                            &buf[0 * offset_al],
                                            &buf[1 * offset_al],
                                            &buf[2 * offset_al],
@@ -451,7 +468,7 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
       &buf[2 * offset_al],
       &buf[3 * offset_al],
       GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS,
-      &state);
+      state);
 
   ctr0 = _gcry_mlkem_avx2_rej_uniform_avx (a[1 * param->k + 1].coeffs,
                                            &buf[0 * offset_al]);
@@ -470,24 +487,24 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
                                                  &buf[2 * offset_al],
                                                  &buf[3 * offset_al],
                                                  1,
-                                                 &state);
+                                                 state);
 
       ctr0 += _gcry_mlkem_avx2_rej_uniform (a[1 * param->k + 1].coeffs + ctr0,
                                             GCRY_MLKEM_N - ctr0,
                                             &buf[0 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
       ctr1 += _gcry_mlkem_avx2_rej_uniform (a[1 * param->k + 2].coeffs + ctr1,
                                             GCRY_MLKEM_N - ctr1,
                                             &buf[1 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
       ctr2 += _gcry_mlkem_avx2_rej_uniform (a[2 * param->k + 0].coeffs + ctr2,
                                             GCRY_MLKEM_N - ctr2,
                                             &buf[2 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
       ctr3 += _gcry_mlkem_avx2_rej_uniform (a[2 * param->k + 1].coeffs + ctr3,
                                             GCRY_MLKEM_N - ctr3,
                                             &buf[3 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
     }
 
   _gcry_mlkem_avx2_poly_nttunpack (&a[1 * param->k + 1]);
@@ -495,28 +512,38 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
   _gcry_mlkem_avx2_poly_nttunpack (&a[2 * param->k + 0]);
   _gcry_mlkem_avx2_poly_nttunpack (&a[2 * param->k + 1]);
 
+  ec = _gcry_md_open (&h, GCRY_MD_SHAKE128, GCRY_MD_FLAG_SECURE);
+  if (ec)
+    goto leave;
+
   f = _mm256_loadu_si256 ((__m256i *)seed);
   _mm256_store_si256 (&buf[0 * offset_al], f);
   buf[0 * offset_al + 32] = 2;
   buf[0 * offset_al + 33] = 2;
-  shake128_absorb_once (&state1x, &buf[0 * offset_al], 34); // TODO
-  shake128_squeezeblocks (
-      &buf[0 * offset_al], GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS, &state1x);
+  _gcry_md_write (h, buf, 34);
+  ec = _gcry_mlkem_shake128_squeezeblocks (
+      h, buf, GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS);
+  if (ec)
+    goto leave;
   ctr0 = _gcry_mlkem_avx2_rej_uniform_avx (a[2 * param->k + 2].coeffs,
                                            &buf[0 * offset_al]);
   while (ctr0 < GCRY_MLKEM_N)
     {
-      shake128_squeezeblocks (&buf[0 * offset_al], 1, &state1x);
+      ec = _gcry_mlkem_shake128_squeezeblocks (h, buf, 1);
+      if (ec)
+        goto leave;
       ctr0 += _gcry_mlkem_avx2_rej_uniform (a[2 * param->k + 2].coeffs + ctr0,
                                             GCRY_MLKEM_N - ctr0,
                                             &buf[0 * offset_al],
-                                            SHAKE128_RATE);
+                                            GCRY_SHAKE128_RATE);
     }
 
   _gcry_mlkem_avx2_poly_nttunpack (&a[2 * param->k + 2]);
 
 leave:
   _gcry_mlkem_buf_al_destroy (&buf_al);
+  _gcry_mlkem_buf_al_destroy (&state_al);
+  _gcry_md_close (h);
   return ec;
 }
 
@@ -529,11 +556,12 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
   gcry_err_code_t ec = 0;
   unsigned int i, ctr0, ctr1, ctr2, ctr3;
   __m256i f;
-  gcry_mlkem_keccakx4_state state; // TODO
-
-  byte *buf;
-  gcry_mlkem_buf_al buf_al = {};
-  size_t buf_elem_len = GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * SHAKE128_RATE;
+  gcry_mlkem_buf_al state_al       = {};
+  gcry_mlkem_keccakx4_state *state = NULL;
+  byte *buf                        = NULL;
+  gcry_mlkem_buf_al buf_al         = {};
+  size_t buf_elem_len
+      = GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS * GCRY_SHAKE128_RATE;
   /* make sure each sub structure starts memory aligned */
   size_t offset_al = buf_elem_len + (32 - (buf_elem_len % 32));
 
@@ -543,6 +571,13 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
       goto leave;
     }
   buf = buf_al.buf;
+  ec  = _gcry_mlkem_buf_al_create (
+      &state_al, sizeof (gcry_mlkem_keccakx4_state), 1);
+  if (ec)
+    {
+      goto leave;
+    }
+  state = (gcry_mlkem_keccakx4_state *)state_al.buf;
 
   for (i = 0; i < 4; i++)
     {
@@ -575,7 +610,7 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
           buf[3 * offset_al + 33] = i;
         }
 
-      _gcry_mlkem_avx2_shake128x4_absorb_once (&state,
+      _gcry_mlkem_avx2_shake128x4_absorb_once (state,
                                                &buf[0 * offset_al],
                                                &buf[1 * offset_al],
                                                &buf[2 * offset_al],
@@ -587,7 +622,7 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
           &buf[2 * offset_al],
           &buf[3 * offset_al],
           GCRY_MLKEM_REJ_UNIFORM_AVX_NBLOCKS,
-          &state);
+          state);
 
       ctr0 = _gcry_mlkem_avx2_rej_uniform_avx (a[i * param->k + 0].coeffs,
                                                &buf[0 * offset_al]);
@@ -606,28 +641,28 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
                                                      &buf[2 * offset_al],
                                                      &buf[3 * offset_al],
                                                      1,
-                                                     &state);
+                                                     state);
 
           ctr0 += _gcry_mlkem_avx2_rej_uniform (a[i * param->k + 0].coeffs
                                                     + ctr0,
                                                 GCRY_MLKEM_N - ctr0,
                                                 &buf[0 * offset_al],
-                                                SHAKE128_RATE);
+                                                GCRY_SHAKE128_RATE);
           ctr1 += _gcry_mlkem_avx2_rej_uniform (a[i * param->k + 1].coeffs
                                                     + ctr1,
                                                 GCRY_MLKEM_N - ctr1,
                                                 &buf[1 * offset_al],
-                                                SHAKE128_RATE);
+                                                GCRY_SHAKE128_RATE);
           ctr2 += _gcry_mlkem_avx2_rej_uniform (a[i * param->k + 2].coeffs
                                                     + ctr2,
                                                 GCRY_MLKEM_N - ctr2,
                                                 &buf[2 * offset_al],
-                                                SHAKE128_RATE);
+                                                GCRY_SHAKE128_RATE);
           ctr3 += _gcry_mlkem_avx2_rej_uniform (a[i * param->k + 3].coeffs
                                                     + ctr3,
                                                 GCRY_MLKEM_N - ctr3,
                                                 &buf[3 * offset_al],
-                                                SHAKE128_RATE);
+                                                GCRY_SHAKE128_RATE);
         }
 
       _gcry_mlkem_avx2_poly_nttunpack (&a[i * param->k + 0]);
@@ -638,6 +673,7 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
 
 leave:
   _gcry_mlkem_buf_al_destroy (&buf_al);
+  _gcry_mlkem_buf_al_destroy (&state_al);
   return ec;
 }
 

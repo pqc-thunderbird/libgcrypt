@@ -2,7 +2,6 @@
 #define POLY_H
 
 #include <stdint.h>
-#include "mlkem-align-avx2.h"
 #include "mlkem-params.h"
 #include "mlkem-poly.h"
 #include "g10lib.h"
