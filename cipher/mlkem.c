@@ -418,7 +418,11 @@ mlkem_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
       ec = gpg_err_code_from_syserror ();
       goto leave;
     }
-  _gcry_mlkem_kem_keypair (pk, sk, &param);
+  ec = _gcry_mlkem_kem_keypair (pk, sk, &param);
+  if(ec)
+    {
+        goto leave;
+    }
 
   sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
   pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
