@@ -17,7 +17,7 @@ _gcry_mlkem_avx2_kem_keypair_derand (uint8_t *pk,
   ec = _gcry_mlkem_avx2_indcpa_keypair_derand (pk, sk, coins, param);
   if (ec)
     {
-      return ec;
+      goto leave;
     }
   memcpy (&sk[param->indcpa_secret_key_bytes], pk, param->public_key_bytes);
   _gcry_md_hash_buffer (GCRY_MD_SHA3_256,
@@ -28,6 +28,8 @@ _gcry_mlkem_avx2_kem_keypair_derand (uint8_t *pk,
   memcpy (sk + param->secret_key_bytes - GCRY_MLKEM_SYMBYTES,
           coins + GCRY_MLKEM_SYMBYTES,
           GCRY_MLKEM_SYMBYTES);
+
+leave:
   return ec;
 }
 
@@ -78,7 +80,7 @@ crypto_kem_enc_derand (uint8_t *ct,
                        const gcry_mlkem_param_t *param)
 {
   gcry_err_code_t ec = 0;
-  byte *buf = NULL;
+  byte *buf          = NULL;
   /* Will contain key, coins */
   byte *kr = NULL;
 
@@ -105,7 +107,8 @@ crypto_kem_enc_derand (uint8_t *ct,
   _gcry_md_hash_buffer (GCRY_MD_SHA3_512, kr, buf, 2 * GCRY_MLKEM_SYMBYTES);
 
   /* coins are in kr+GCRY_MLKEM_SYMBYTES */
-  ec = _gcry_mlkem_avx2_indcpa_enc (ct, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
+  ec = _gcry_mlkem_avx2_indcpa_enc (
+      ct, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
   if (ec)
     goto leave;
 
@@ -113,8 +116,8 @@ crypto_kem_enc_derand (uint8_t *ct,
 
 leave:
   return ec;
-  xfree(buf);
-  xfree(kr);
+  xfree (buf);
+  xfree (kr);
 }
 
 /*************************************************
@@ -208,16 +211,21 @@ _gcry_mlkem_avx2_kem_dec (uint8_t *ss,
   _gcry_md_hash_buffer (GCRY_MD_SHA3_512, kr, buf, 2 * GCRY_MLKEM_SYMBYTES);
 
   /* coins are in kr+GCRY_MLKEM_SYMBYTES */
-  _gcry_mlkem_avx2_indcpa_enc (cmp, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
+  ec = _gcry_mlkem_avx2_indcpa_enc (
+      cmp, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
+  if (ec)
+    goto leave;
 
   fail = _gcry_mlkem_avx2_verify (ct, cmp, param->ciphertext_bytes);
 
   /* Compute rejection key */
-  _gcry_mlkem_mlkem_shake256_rkprf (ss,
-                                    sk + param->secret_key_bytes
-                                        - GCRY_MLKEM_SYMBYTES,
-                                    ct,
-                                    param->ciphertext_bytes);
+  ec = _gcry_mlkem_mlkem_shake256_rkprf (ss,
+                                         sk + param->secret_key_bytes
+                                             - GCRY_MLKEM_SYMBYTES,
+                                         ct,
+                                         param->ciphertext_bytes);
+  if (ec)
+    goto leave;
 
   /* Copy true key to return buffer if fail is false */
   _gcry_mlkem_cmov (ss, kr, GCRY_MLKEM_SYMBYTES, !fail);

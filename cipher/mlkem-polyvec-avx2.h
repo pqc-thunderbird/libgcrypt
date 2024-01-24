@@ -25,7 +25,9 @@ gcry_err_code_t _gcry_mlkem_polybuf_al_create (gcry_mlkem_polybuf_al *vec,
                                                int secure);
 void _gcry_mlkem_polybuf_al_destroy (gcry_mlkem_polybuf_al *vec);
 
-gcry_err_code_t _gcry_mlkem_buf_al_create (gcry_mlkem_buf_al *buf, size_t size, int secure);
+gcry_err_code_t _gcry_mlkem_buf_al_create (gcry_mlkem_buf_al *buf,
+                                           size_t size,
+                                           int secure);
 
 void _gcry_mlkem_buf_al_destroy (gcry_mlkem_buf_al *buf);
 
@@ -49,7 +51,7 @@ void _gcry_mlkem_avx2_polyvec_ntt (gcry_mlkem_poly *r,
 void _gcry_mlkem_avx2_polyvec_invntt_tomont (gcry_mlkem_poly *r,
                                              const gcry_mlkem_param_t *param);
 
-void _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (
+gcry_err_code_t _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (
     gcry_mlkem_poly *r,
     const gcry_mlkem_poly *a,
     const gcry_mlkem_poly *b,

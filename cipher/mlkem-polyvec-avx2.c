@@ -42,7 +42,8 @@ _gcry_mlkem_polybuf_al_destroy (gcry_mlkem_polybuf_al *buf)
   buf->alloc_addr = NULL;
 }
 
-gcry_err_code_t _gcry_mlkem_buf_al_create (gcry_mlkem_buf_al *buf, size_t size, int secure)
+gcry_err_code_t
+_gcry_mlkem_buf_al_create (gcry_mlkem_buf_al *buf, size_t size, int secure)
 {
   const size_t alloc_size = size + /*align*/ 32;
   if (secure)
@@ -53,15 +54,17 @@ gcry_err_code_t _gcry_mlkem_buf_al_create (gcry_mlkem_buf_al *buf, size_t size, 
   if (!buf->alloc_addr)
     {
       buf->buf = NULL;
-      return gpg_error_from_syserror();
+      return gpg_error_from_syserror ();
     }
-  buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (32 - ((uintptr_t)buf->alloc_addr % 32)));
+  buf->buf = (byte *)((uintptr_t)buf->alloc_addr
+                      + (32 - ((uintptr_t)buf->alloc_addr % 32)));
 
   memset (buf->alloc_addr, 0, alloc_size);
   return 0;
 }
 
-void _gcry_mlkem_buf_al_destroy (gcry_mlkem_buf_al *buf)
+void
+_gcry_mlkem_buf_al_destroy (gcry_mlkem_buf_al *buf)
 {
   if (buf->alloc_addr)
     {
@@ -470,22 +473,36 @@ _gcry_mlkem_avx2_polyvec_invntt_tomont (gcry_mlkem_poly *r,
  *            - const polyvec *a: pointer to first input vector of polynomials
  *            - const polyvec *b: pointer to second input vector of polynomials
  **************************************************/
-void
+gcry_err_code_t
 _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (
     gcry_mlkem_poly *r,
     const gcry_mlkem_poly *a,
     const gcry_mlkem_poly *b,
     const gcry_mlkem_param_t *param)
 {
+  gcry_err_code_t ec = 0;
   unsigned int i;
-  gcry_mlkem_poly tmp;
+  gcry_mlkem_buf_al tmp_al = {};
+  gcry_mlkem_poly *tmp     = NULL;
+
+  ec = _gcry_mlkem_buf_al_create (&tmp_al, sizeof (gcry_mlkem_poly), 1);
+  if (ec)
+    {
+      goto leave;
+    }
+  tmp = (gcry_mlkem_poly *)tmp_al.buf;
+
 
   _gcry_mlkem_avx2_poly_basemul_montgomery (r, a, b);
   for (i = 1; i < param->k; i++)
     {
-      _gcry_mlkem_avx2_poly_basemul_montgomery (&tmp, &a[i], &b[i]);
-      _gcry_mlkem_avx2_poly_add (r, r, &tmp);
+      _gcry_mlkem_avx2_poly_basemul_montgomery (tmp, &a[i], &b[i]);
+      _gcry_mlkem_avx2_poly_add (r, r, tmp);
     }
+
+leave:
+  _gcry_mlkem_buf_al_destroy (&tmp_al);
+  return ec;
 }
 
 /*************************************************

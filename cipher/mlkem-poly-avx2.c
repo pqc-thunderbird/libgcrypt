@@ -394,42 +394,6 @@ _gcry_mlkem_avx2_poly_tomsg (uint8_t *msg, const gcry_mlkem_poly *restrict a)
 }
 
 /*************************************************
- * Name:        _gcry_mlkem_avx2_poly_getnoise_eta1
- *
- * Description: Sample a polynomial deterministically from a seed and a nonce,
- *              with output polynomial close to centered binomial distribution
- *              with parameter ETA1
- *
- * Arguments:   - gcry_mlkem_poly *r: pointer to output polynomial
- *              - const uint8_t *seed: pointer to input seed
- *                                     (of length GCRY_MLKEM_SYMBYTES bytes)
- *              - uint8_t nonce: one-byte input nonce
- **************************************************/
-gcry_err_code_t
-_gcry_mlkem_avx2_poly_getnoise_eta1 (gcry_mlkem_poly *r,
-                                     const uint8_t seed[GCRY_MLKEM_SYMBYTES],
-                                     uint8_t nonce,
-                                     gcry_mlkem_param_t const *param)
-{
-  gcry_err_code_t ec       = 0;
-  gcry_mlkem_buf_al buf_al = {};
-  ec                       = _gcry_mlkem_buf_al_create (
-      &buf_al, param->eta1 * GCRY_MLKEM_N / 4 + 32, 1);
-  if (ec)
-    {
-      goto leave;
-    }
-
-  _gcry_mlkem_shake256_prf (
-      buf_al.buf, param->eta1 * GCRY_MLKEM_N / 4, seed, nonce);
-  _gcry_mlkem_avx2_poly_cbd_eta1 (r, buf_al.buf, param);
-
-leave:
-  _gcry_mlkem_buf_al_destroy (&buf_al);
-  return ec;
-}
-
-/*************************************************
  * Name:        _gcry_mlkem_avx2_poly_getnoise_eta2
  *
  * Description: Sample a polynomial deterministically from a seed and a nonce,

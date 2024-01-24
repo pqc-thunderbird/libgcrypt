@@ -23,12 +23,6 @@ void _gcry_mlkem_avx2_poly_frombytes (gcry_mlkem_poly *r,
 void _gcry_mlkem_avx2_poly_frommsg (gcry_mlkem_poly *r, const uint8_t *msg);
 void _gcry_mlkem_avx2_poly_tomsg (uint8_t *msg, const gcry_mlkem_poly *r);
 
-gcry_err_code_t _gcry_mlkem_avx2_poly_getnoise_eta1 (
-    gcry_mlkem_poly *r,
-    const uint8_t seed[GCRY_MLKEM_SYMBYTES],
-    uint8_t nonce,
-    gcry_mlkem_param_t const *param);
-
 gcry_err_code_t _gcry_mlkem_avx2_poly_getnoise_eta2 (
     gcry_mlkem_poly *r,
     const uint8_t seed[GCRY_MLKEM_SYMBYTES],

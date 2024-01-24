@@ -187,7 +187,7 @@ _gcry_mlkem_avx2_rej_uniform (int16_t *r,
   return ctr;
 }
 
-static void
+static gcry_err_code_t
 gen_matrix_k2 (gcry_mlkem_poly *a,
                const uint8_t seed[32],
                int transposed,
@@ -307,6 +307,7 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
 leave:
   _gcry_mlkem_buf_al_destroy (&buf_al);
   _gcry_mlkem_buf_al_destroy (&state_al);
+  return ec;
 }
 
 static gcry_err_code_t
@@ -685,15 +686,15 @@ _gcry_mlkem_avx2_gen_matrix (gcry_mlkem_poly *a,
 {
   if (param->k == 2)
     {
-      gen_matrix_k2 (a, seed, transposed, param);
+      return gen_matrix_k2 (a, seed, transposed, param);
     }
   if (param->k == 3)
     {
-      gen_matrix_k3 (a, seed, transposed, param);
+      return gen_matrix_k3 (a, seed, transposed, param);
     }
   if (param->k == 4)
     {
-      gen_matrix_k4 (a, seed, transposed, param);
+      return gen_matrix_k4 (a, seed, transposed, param);
     }
 }
 
@@ -751,34 +752,46 @@ _gcry_mlkem_avx2_indcpa_keypair_derand (
   skpv = (gcry_mlkem_poly *)skpv_al.buf;
 
   _gcry_md_hash_buffer (GCRY_MD_SHA3_512, buf, coins, GCRY_MLKEM_SYMBYTES);
-  _gcry_mlkem_avx2_gen_matrix (a, publicseed, 0, param);
+  ec = _gcry_mlkem_avx2_gen_matrix (a, publicseed, 0, param);
+  if (ec)
+    goto leave;
 
   if (param->k == 2)
     {
-      _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
           &skpv[0], &skpv[1], &e[0], &e[1], noiseseed, 0, 1, 2, 3, param);
+      if (ec)
+        goto leave;
     }
   else if (param->k == 3)
     {
-      _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
           &skpv[0], &skpv[1], &skpv[2], &e[0], noiseseed, 0, 1, 2, 3, param);
-      _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
+      if (ec)
+        goto leave;
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
           &e[1], &e[2], &pkpv[0], &pkpv[1], noiseseed, 4, 5, 6, 7, param);
+      if (ec)
+        goto leave;
     }
   else if (param->k == 4)
     {
-      _gcry_mlkem_avx2_poly_getnoise_eta1_4x (&skpv[0],
-                                              &skpv[1],
-                                              &skpv[2],
-                                              &skpv[3],
-                                              noiseseed,
-                                              0,
-                                              1,
-                                              2,
-                                              3,
-                                              param);
-      _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta1_4x (&skpv[0],
+                                                   &skpv[1],
+                                                   &skpv[2],
+                                                   &skpv[3],
+                                                   noiseseed,
+                                                   0,
+                                                   1,
+                                                   2,
+                                                   3,
+                                                   param);
+      if (ec)
+        goto leave;
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
           &e[0], &e[1], &e[2], &e[3], noiseseed, 4, 5, 6, 7, param);
+      if (ec)
+        goto leave;
     }
   else
     {
@@ -792,8 +805,10 @@ _gcry_mlkem_avx2_indcpa_keypair_derand (
   // matrix-vector multiplication
   for (i = 0; i < param->k; i++)
     {
-      _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (
+      ec = _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (
           &pkpv[i], &a[i * param->k], skpv, param);
+      if (ec)
+        goto leave;
       _gcry_mlkem_avx2_poly_tomont (&pkpv[i]);
     }
 
@@ -881,27 +896,42 @@ _gcry_mlkem_avx2_indcpa_enc (uint8_t *c,
 
   unpack_pk (pkpv, seed, pk, param);
   _gcry_mlkem_avx2_poly_frommsg (&k, m);
-  _gcry_mlkem_avx2_gen_matrix (at, seed, 1, param);
+  ec = _gcry_mlkem_avx2_gen_matrix (at, seed, 1, param);
+  if (ec)
+    goto leave;
 
   if (param->k == 2)
     {
-      _gcry_mlkem_avx2_poly_getnoise_eta1122_4x (
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta1122_4x (
           &sp[0], &sp[1], &ep[0], &ep[1], coins, 0, 1, 2, 3, param);
-      _gcry_mlkem_avx2_poly_getnoise_eta2 (&epp, coins, 4);
+      if (ec)
+        goto leave;
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta2 (&epp, coins, 4);
+      if (ec)
+        goto leave;
     }
   else if (param->k == 3)
     {
-      _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
           &sp[0], &sp[1], &sp[2], &ep[0], coins, 0, 1, 2, 3, param);
-      _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
+      if (ec)
+        goto leave;
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
           &ep[1], &ep[2], &epp, &b[0], coins, 4, 5, 6, 7, param);
+      if (ec)
+        goto leave;
     }
+
   else if (param->k == 4)
     {
-      _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
           &sp[0], &sp[1], &sp[2], &sp[3], coins, 0, 1, 2, 3, param);
-      _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
+      if (ec)
+        goto leave;
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta1_4x (
           &ep[0], &ep[1], &ep[2], &ep[3], coins, 4, 5, 6, 7, param);
+      if (ec)
+        goto leave;
       _gcry_mlkem_avx2_poly_getnoise_eta2 (&epp, coins, 8);
     }
 
@@ -909,9 +939,13 @@ _gcry_mlkem_avx2_indcpa_enc (uint8_t *c,
 
   // matrix-vector multiplication
   for (i = 0; i < param->k; i++)
-    _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (
+    ec = _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (
         &b[i], &at[i * param->k], sp, param);
-  _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (&v, pkpv, sp, param);
+  if (ec)
+    goto leave;
+  ec = _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (&v, pkpv, sp, param);
+  if (ec)
+    goto leave;
 
   _gcry_mlkem_avx2_polyvec_invntt_tomont (b, param);
   _gcry_mlkem_avx2_poly_invntt_tomont (&v);
@@ -977,7 +1011,9 @@ _gcry_mlkem_avx2_indcpa_dec (uint8_t *m,
   unpack_sk (skpv, sk, param);
 
   _gcry_mlkem_avx2_polyvec_ntt (b, param);
-  _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (&mp, skpv, b, param);
+  ec = _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (&mp, skpv, b, param);
+  if (ec)
+    goto leave;
   _gcry_mlkem_avx2_poly_invntt_tomont (&mp);
 
   _gcry_mlkem_avx2_poly_sub (&mp, &v, &mp);
