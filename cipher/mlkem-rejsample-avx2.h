@@ -1,5 +1,5 @@
-#ifndef REJSAMPLE_H
-#define REJSAMPLE_H
+#ifndef GCRYPT_MLKEM_REJSAMPLE_AVX2_H
+#define GCRYPT_MLKEM_REJSAMPLE_AVX2_H
 
 #include <stdint.h>
 #include "mlkem-params.h"

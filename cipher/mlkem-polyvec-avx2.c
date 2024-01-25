@@ -80,7 +80,7 @@ poly_compress10 (uint8_t r[320], const gcry_mlkem_poly *restrict a)
   unsigned int i;
   __m256i f0, f1, f2;
   __m128i t0, t1;
-  const __m256i v      = _mm256_load_si256 (&qdata.vec[_16XV / 16]);
+  const __m256i v = _mm256_load_si256 (&gcry_mlkem_avx2_qdata.vec[_16XV / 16]);
   const __m256i v8     = _mm256_slli_epi16 (v, 3);
   const __m256i off    = _mm256_set1_epi16 (15);
   const __m256i shift1 = _mm256_set1_epi16 (1 << 12);
@@ -207,7 +207,7 @@ poly_compress11 (uint8_t r[352 + 2], const gcry_mlkem_poly *restrict a)
   unsigned int i;
   __m256i f0, f1, f2;
   __m128i t0, t1;
-  const __m256i v      = _mm256_load_si256 (&qdata.vec[_16XV / 16]);
+  const __m256i v = _mm256_load_si256 (&gcry_mlkem_avx2_qdata.vec[_16XV / 16]);
   const __m256i v8     = _mm256_slli_epi16 (v, 3);
   const __m256i off    = _mm256_set1_epi16 (36);
   const __m256i shift1 = _mm256_set1_epi16 (1 << 13);
@@ -282,7 +282,7 @@ poly_decompress11 (gcry_mlkem_poly *restrict r, const uint8_t a[352 + 10])
 {
   unsigned int i;
   __m256i f;
-  const __m256i q        = _mm256_load_si256 (&qdata.vec[_16XQ / 16]);
+  const __m256i q = _mm256_load_si256 (&gcry_mlkem_avx2_qdata.vec[_16XQ / 16]);
   const __m256i shufbidx = _mm256_set_epi8 (13,
                                             12,
                                             12,

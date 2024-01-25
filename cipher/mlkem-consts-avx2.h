@@ -1,5 +1,5 @@
-#ifndef CONSTS_H
-#define CONSTS_H
+#ifndef GCRYPT_MLKEM_CONSTS_AVX2_H
+#define GCRYPT_MLKEM_CONSTS_AVX2_H
 
 #define _16XQ 0
 #define _16XQINV 16
@@ -35,10 +35,10 @@
 #include <immintrin.h>
 typedef union
 {
-    int16_t coeffs[640];
+  int16_t coeffs[640];
   __m256i vec[(640 + 7) / 8];
-} qdata_t;
-extern const qdata_t qdata;
+} gcry_mlkem_avx2_qdata_t;
+extern const gcry_mlkem_avx2_qdata_t gcry_mlkem_avx2_qdata;
 
 #endif
 

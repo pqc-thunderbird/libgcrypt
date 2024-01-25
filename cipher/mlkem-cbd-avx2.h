@@ -1,5 +1,5 @@
-#ifndef CBD_H
-#define CBD_H
+#ifndef GCRY_MLKEM_CBD_AVX2_H
+#define GCRY_MLKEM_CBD_AVX2_H
 
 #include <stdint.h>
 #include <immintrin.h>

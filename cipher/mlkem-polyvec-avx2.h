@@ -1,5 +1,5 @@
-#ifndef POLYVEC_H
-#define POLYVEC_H
+#ifndef GCRYPT_MLKEM_POLYVEC_AVX2_H
+#define GCRYPT_MLKEM_POLYVEC_AVX2_H
 
 #include <stdint.h>
 #include "mlkem-params.h"

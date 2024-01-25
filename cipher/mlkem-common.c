@@ -109,6 +109,7 @@ _gcry_mlkem_pack_sk (byte *r,
   _gcry_mlkem_polyvec_tobytes (r, sk, param);
 }
 
+#ifndef USE_AVX2
 /*************************************************
  * Name:        _gcry_mlkem_unpack_sk
  *
@@ -127,6 +128,7 @@ _gcry_mlkem_unpack_sk (gcry_mlkem_polyvec *sk,
 {
   _gcry_mlkem_polyvec_frombytes (sk, packedsk, param);
 }
+#endif
 
 /*************************************************
  * Name:        _gcry_mlkem_pack_ciphertext
@@ -152,6 +154,7 @@ _gcry_mlkem_pack_ciphertext (byte *r,
       r + param->polyvec_compressed_bytes, v, param, workspace_8_uint16);
 }
 
+#ifndef USE_AVX2
 /*************************************************
  * Name:        _gcry_mlkem_unpack_ciphertext
  *
@@ -173,6 +176,7 @@ _gcry_mlkem_unpack_ciphertext (gcry_mlkem_polyvec *b,
   _gcry_mlkem_polyvec_decompress (b, c, param);
   _gcry_mlkem_poly_decompress (v, c + param->polyvec_compressed_bytes, param);
 }
+#endif
 
 /*************************************************
  * Name:        rej_uniform
@@ -537,6 +541,7 @@ leave:
   return ec;
 }
 
+#ifndef USE_AVX2
 /*************************************************
  * Name:        _gcry_mlkem_indcpa_dec
  *
@@ -594,7 +599,7 @@ leave:
   _gcry_mlkem_polyvec_destroy (&b);
   return ec;
 }
-
+#endif
 
 gcry_err_code_t
 _gcry_mlkem_kem_keypair_derand (byte *pk,

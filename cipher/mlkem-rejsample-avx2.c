@@ -151,10 +151,11 @@ _gcry_mlkem_avx2_rej_uniform_avx (int16_t *restrict r, const uint8_t *buf)
 #ifdef BMI
   uint64_t idx0, idx1, idx2, idx3;
 #endif
-  const __m256i bound = _mm256_load_si256 (&qdata.vec[_16XQ / 16]);
-  const __m256i ones  = _mm256_set1_epi8 (1);
-  const __m256i mask  = _mm256_set1_epi16 (0xFFF);
-  const __m256i idx8  = _mm256_set_epi8 (15,
+  const __m256i bound
+      = _mm256_load_si256 (&gcry_mlkem_avx2_qdata.vec[_16XQ / 16]);
+  const __m256i ones = _mm256_set1_epi8 (1);
+  const __m256i mask = _mm256_set1_epi16 (0xFFF);
+  const __m256i idx8 = _mm256_set_epi8 (15,
                                         14,
                                         14,
                                         13,

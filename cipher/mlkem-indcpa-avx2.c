@@ -8,6 +8,7 @@
 #include "mlkem-ntt-avx2.h"
 #include "mlkem-cbd-avx2.h"
 #include "mlkem-rejsample-avx2.h"
+#include "mlkem-symmetric.h"
 
 
 /*************************************************
@@ -220,10 +221,10 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
   state = (gcry_mlkem_keccakx4_state *)state_al.buf;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
-  _mm256_store_si256 (&buf[0 * offset_al], f);
-  _mm256_store_si256 (&buf[1 * offset_al], f);
-  _mm256_store_si256 (&buf[2 * offset_al], f);
-  _mm256_store_si256 (&buf[3 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[0 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[1 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[2 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[3 * offset_al], f);
 
   if (transposed)
     {
@@ -344,10 +345,10 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
   state = (gcry_mlkem_keccakx4_state *)state_al.buf;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
-  _mm256_store_si256 (&buf[0 * offset_al], f);
-  _mm256_store_si256 (&buf[1 * offset_al], f);
-  _mm256_store_si256 (&buf[2 * offset_al], f);
-  _mm256_store_si256 (&buf[3 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[0 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[1 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[2 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[3 * offset_al], f);
 
   if (transposed)
     {
@@ -429,10 +430,10 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
   _gcry_mlkem_avx2_poly_nttunpack (&a[1 * param->k + 0]);
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
-  _mm256_store_si256 (&buf[0 * offset_al], f);
-  _mm256_store_si256 (&buf[1 * offset_al], f);
-  _mm256_store_si256 (&buf[2 * offset_al], f);
-  _mm256_store_si256 (&buf[3 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[0 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[1 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[2 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[3 * offset_al], f);
 
   if (transposed)
     {
@@ -518,7 +519,7 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
     goto leave;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
-  _mm256_store_si256 (&buf[0 * offset_al], f);
+  _mm256_store_si256 ((__m256i *)&buf[0 * offset_al], f);
   buf[0 * offset_al + 32] = 2;
   buf[0 * offset_al + 33] = 2;
   _gcry_md_write (h, buf, 34);
@@ -583,10 +584,10 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
   for (i = 0; i < 4; i++)
     {
       f = _mm256_loadu_si256 ((__m256i *)seed);
-      _mm256_store_si256 (&buf[0 * offset_al], f);
-      _mm256_store_si256 (&buf[1 * offset_al], f);
-      _mm256_store_si256 (&buf[2 * offset_al], f);
-      _mm256_store_si256 (&buf[3 * offset_al], f);
+      _mm256_store_si256 ((__m256i *)&buf[0 * offset_al], f);
+      _mm256_store_si256 ((__m256i *)&buf[1 * offset_al], f);
+      _mm256_store_si256 ((__m256i *)&buf[2 * offset_al], f);
+      _mm256_store_si256 ((__m256i *)&buf[3 * offset_al], f);
 
       if (transposed)
         {
@@ -688,13 +689,17 @@ _gcry_mlkem_avx2_gen_matrix (gcry_mlkem_poly *a,
     {
       return gen_matrix_k2 (a, seed, transposed, param);
     }
-  if (param->k == 3)
+  else if (param->k == 3)
     {
       return gen_matrix_k3 (a, seed, transposed, param);
     }
-  if (param->k == 4)
+  else if (param->k == 4)
     {
       return gen_matrix_k4 (a, seed, transposed, param);
+    }
+  else
+    {
+      return GPG_ERR_INV_STATE;
     }
 }
 
@@ -795,7 +800,7 @@ _gcry_mlkem_avx2_indcpa_keypair_derand (
     }
   else
     {
-      // TODO err
+      return GPG_ERR_INV_STATE;
     }
 
   _gcry_mlkem_avx2_polyvec_ntt (skpv, param);
@@ -932,7 +937,9 @@ _gcry_mlkem_avx2_indcpa_enc (uint8_t *c,
           &ep[0], &ep[1], &ep[2], &ep[3], coins, 4, 5, 6, 7, param);
       if (ec)
         goto leave;
-      _gcry_mlkem_avx2_poly_getnoise_eta2 (&epp, coins, 8);
+      ec = _gcry_mlkem_avx2_poly_getnoise_eta2 (&epp, coins, 8);
+      if (ec)
+        goto leave;
     }
 
   _gcry_mlkem_avx2_polyvec_ntt (sp, param);
@@ -985,14 +992,16 @@ _gcry_mlkem_avx2_indcpa_dec (uint8_t *m,
                              const gcry_mlkem_param_t *param)
 {
   gcry_err_code_t ec = 0;
-  gcry_mlkem_poly v, mp; // TODO
 
+  gcry_mlkem_polybuf_al v_al    = {};
+  gcry_mlkem_polybuf_al mp_al   = {};
   gcry_mlkem_polybuf_al b_al    = {};
   gcry_mlkem_polybuf_al skpv_al = {};
 
+  gcry_mlkem_poly *v;
+  gcry_mlkem_poly *mp;
   gcry_mlkem_poly *b;
   gcry_mlkem_poly *skpv;
-
 
   ec = _gcry_mlkem_polybuf_al_create (
       &b_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
@@ -1002,27 +1011,36 @@ _gcry_mlkem_avx2_indcpa_dec (uint8_t *m,
       &skpv_al, param->k, param->k * sizeof (gcry_mlkem_poly), 1);
   if (ec)
     goto leave;
+  ec = _gcry_mlkem_polybuf_al_create (&v_al, 1, sizeof (gcry_mlkem_poly), 1);
+  if (ec)
+    goto leave;
+  ec = _gcry_mlkem_polybuf_al_create (&mp_al, 1, sizeof (gcry_mlkem_poly), 1);
+  if (ec)
+    goto leave;
 
   b    = (gcry_mlkem_poly *)b_al.buf;
   skpv = (gcry_mlkem_poly *)skpv_al.buf;
+  v    = (gcry_mlkem_poly *)v_al.buf;
+  mp   = (gcry_mlkem_poly *)mp_al.buf;
 
-
-  unpack_ciphertext (b, &v, c, param);
+  unpack_ciphertext (b, v, c, param);
   unpack_sk (skpv, sk, param);
 
   _gcry_mlkem_avx2_polyvec_ntt (b, param);
-  ec = _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (&mp, skpv, b, param);
+  ec = _gcry_mlkem_avx2_polyvec_basemul_acc_montgomery (mp, skpv, b, param);
   if (ec)
     goto leave;
-  _gcry_mlkem_avx2_poly_invntt_tomont (&mp);
+  _gcry_mlkem_avx2_poly_invntt_tomont (mp);
 
-  _gcry_mlkem_avx2_poly_sub (&mp, &v, &mp);
-  _gcry_mlkem_avx2_poly_reduce (&mp);
+  _gcry_mlkem_avx2_poly_sub (mp, v, mp);
+  _gcry_mlkem_avx2_poly_reduce (mp);
 
-  _gcry_mlkem_avx2_poly_tomsg (m, &mp);
+  _gcry_mlkem_avx2_poly_tomsg (m, mp);
 
 leave:
   _gcry_mlkem_polybuf_al_destroy (&b_al);
   _gcry_mlkem_polybuf_al_destroy (&skpv_al);
+  _gcry_mlkem_polybuf_al_destroy (&v_al);
+  _gcry_mlkem_polybuf_al_destroy (&mp_al);
   return ec;
 }

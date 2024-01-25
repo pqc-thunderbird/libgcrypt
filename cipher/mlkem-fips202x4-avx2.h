@@ -1,5 +1,5 @@
-#ifndef _GCRY_MLKEM_FIPS202X4_AVX2_H
-#define _GCRY_MLKEM_FIPS202X4_AVX2_H
+#ifndef GCRY_MLKEM_FIPS202X4_AVX2_H
+#define GCRY_MLKEM_FIPS202X4_AVX2_H
 
 #ifdef __ASSEMBLER__
 /* The C ABI on MacOS exports all symbols with a leading

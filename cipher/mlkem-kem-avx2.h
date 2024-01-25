@@ -1,5 +1,5 @@
-#ifndef KEM_H
-#define KEM_H
+#ifndef GCRYPT_MLKEM_KEM_AVX2_H
+#define GCRYPT_MLKEM_KEM_AVX2_H
 
 #include <stdint.h>
 #include "mlkem-params.h"

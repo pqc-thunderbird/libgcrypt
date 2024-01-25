@@ -12,7 +12,7 @@
 #define MASK 4095
 #define SHIFT 32
 
-const qdata_t qdata = {{
+const gcry_mlkem_avx2_qdata_t gcry_mlkem_avx2_qdata = {{
 #define _16XQ 0
     Q,        Q,        Q,        Q,        Q,        Q,        Q,
     Q,        Q,        Q,        Q,        Q,        Q,        Q,
