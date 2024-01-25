@@ -30,8 +30,12 @@
 #include "mlkem-symmetric.h"
 #include "gcrypt.h"
 #include "bufhelp.h"
-#include "mlkem-indcpa-avx2.h" // TODO
-#include "mlkem-kem-avx2.h" // TODO
+
+#include "avx2-immintrin-support.h"
+#ifdef USE_AVX2
+#include "mlkem-indcpa-avx2.h"
+#include "mlkem-kem-avx2.h"
+#endif
 
 #include "g10lib.h"
 
@@ -648,32 +652,12 @@ _gcry_mlkem_kem_keypair (byte *pk, byte *sk, gcry_mlkem_param_t *param)
       goto leave;
     }
   _gcry_randomize (coins, GCRY_MLKEM_COINS_SIZE, GCRY_VERY_STRONG_RANDOM);
+#ifdef USE_AVX2
+  ec = _gcry_mlkem_avx2_kem_keypair_derand (pk, sk, param, coins);
+#else
   ec = _gcry_mlkem_kem_keypair_derand (pk, sk, param, coins);
-  /* TODO: remove */
-  {
-    byte pk_avx2[param->public_key_bytes];
-    byte sk_avx2[param->secret_key_bytes];
-    byte ct[param->ciphertext_bytes];
-    byte ss[GCRY_MLKEM_SSBYTES];
-    byte ss2[GCRY_MLKEM_SSBYTES];
-    byte ss3[GCRY_MLKEM_SSBYTES];
+#endif
 
-    int ret_keygen = _gcry_mlkem_avx2_kem_keypair(pk_avx2, sk_avx2, param);
-    int ret_enc = _gcry_mlkem_avx2_kem_enc(ct, ss, pk_avx2, param);
-    //int ret_enc = _gcry_mlkem_kem_enc(ct, ss, pk_avx2, param);
-    _gcry_mlkem_avx2_kem_dec(ss2, ct, sk_avx2, param);
-    _gcry_mlkem_kem_dec(ss3, ct, sk_avx2, param);
-    printf("K: %d\n", param->k);
-    printf("ret_keygen, ret_enc, memcmp1, memcp2: %d, %d, %d, %d\n", ret_keygen, ret_enc, memcmp(ss, ss2, GCRY_MLKEM_SSBYTES), memcmp(ss, ss3, GCRY_MLKEM_SSBYTES));
-
-    // same with standard pk/sk and swap enc
-    ret_enc = _gcry_mlkem_kem_enc(ct, ss, pk, param);
-    _gcry_mlkem_avx2_kem_dec(ss2, ct, sk, param);
-    _gcry_mlkem_kem_dec(ss3, ct, sk, param);
-    printf("ret_enc, memcmp1, memcp2: %d, %d, %d\n", ret_enc, memcmp(ss, ss2, GCRY_MLKEM_SSBYTES), memcmp(ss, ss3, GCRY_MLKEM_SSBYTES));
-    printf("------\n\n");
-  }
-  /* /TODO */
 leave:
   xfree (coins);
   return ec;
@@ -695,7 +679,11 @@ _gcry_mlkem_kem_dec (byte *ss,
 
   const byte *pk = sk + param->indcpa_secret_key_bytes;
 
+#ifdef USE_AVX2
+  ec = _gcry_mlkem_avx2_indcpa_dec (buf, ct, sk, param);
+#else
   ec = _gcry_mlkem_indcpa_dec (buf, ct, sk, param);
+#endif
   if (ec)
     {
       goto end;
@@ -714,7 +702,12 @@ _gcry_mlkem_kem_dec (byte *ss,
       ec = gpg_err_code_from_syserror ();
       goto end;
     }
+#ifdef USE_AVX2
+  ec = _gcry_mlkem_avx2_indcpa_enc (
+      cmp, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
+#else
   ec = _gcry_mlkem_indcpa_enc (cmp, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
+#endif
   /* coins are in kr+GCRY_MLKEM_SYMBYTES */
   if (ec)
     {
@@ -757,7 +750,11 @@ _gcry_mlkem_kem_enc (byte *ct,
     }
 
   _gcry_randomize (coins, GCRY_MLKEM_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
+#ifdef USE_AVX2
+  ec = _gcry_mlkem_avx2_kem_enc_derand (ct, ss, pk, param, coins);
+#else
   ec = _gcry_mlkem_kem_enc_derand (ct, ss, pk, param, coins);
+#endif
   if (ec)
     {
       goto leave;

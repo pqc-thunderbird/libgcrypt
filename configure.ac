@@ -3349,11 +3349,13 @@ AM_CONDITIONAL(USE_MLKEM, [test "$found" = "1"])
 if test "$found" = "1" ; then
    GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mlkem.lo mlkem-common.lo mlkem-ntt.lo mlkem-poly.lo mlkem-polyvec.lo  mlkem-symmetric.lo  mlkem-cbd.lo mlkem-aux.lo"
 
-   if test "$have_immintrin" = "yes" ; then
-      CFLAGS="$CFLAGS -mavx2 -maes -mbmi2"
-      GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mlkem-fips202x4-avx2.lo mlkem-f1600x4-avx2.lo mlkem-cbd-avx2.lo mlkem-consts-avx2.lo mlkem-fq-avx2.lo mlkem-invntt-avx2.lo mlkem-kem-avx2.lo mlkem-ntt-avx2.lo mlkem-poly-avx2.lo mlkem-polyvec-avx2.lo mlkem-rejsample-avx2.lo mlkem-shuffle-avx2.lo mlkem-verify-avx2.lo"
-      GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mlkem-indcpa-avx2.lo mlkem-basemul-avx2.lo"
-   fi
+  if test x"$avx2support" = xyes ; then
+    if test "$have_immintrin" = "yes" ; then
+        CFLAGS="$CFLAGS -mavx2 -mbmi2"
+        GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mlkem-fips202x4-avx2.lo mlkem-f1600x4-avx2.lo mlkem-cbd-avx2.lo mlkem-consts-avx2.lo mlkem-fq-avx2.lo mlkem-invntt-avx2.lo \
+        mlkem-kem-avx2.lo mlkem-ntt-avx2.lo mlkem-poly-avx2.lo mlkem-polyvec-avx2.lo mlkem-rejsample-avx2.lo mlkem-shuffle-avx2.lo mlkem-verify-avx2.lo mlkem-indcpa-avx2.lo mlkem-basemul-avx2.lo"
+    fi
+  fi
   AC_DEFINE(USE_MLKEM, 1, [Defined if this module should be included])
 fi
 

@@ -8,8 +8,7 @@
 #include "mlkem-cbd-avx2.h"
 #include "mlkem-symmetric.h"
 #include "mlkem-polyvec-avx2.h"
-
-#include "mlkem-fips202x4-avx2.h" // TODO needed?
+#include "mlkem-fips202x4-avx2.h"
 
 
 /*************************************************

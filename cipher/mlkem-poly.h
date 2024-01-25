@@ -25,7 +25,11 @@
 #include "mlkem-params.h"
 #include "config.h"
 #include "types.h"
-#include "immintrin.h" // TODO ifdef
+
+#include "avx2-immintrin-support.h"
+#ifdef USE_AVX2
+#include "immintrin.h"
+#endif
 
 /*
  * Elements of R_q = Z_q[X]/(X^n + 1). Represents polynomial
@@ -35,7 +39,9 @@ typedef struct
 {
     union{
     s16 coeffs[GCRY_MLKEM_N];
-    __m256i vec[(GCRY_MLKEM_N+15)/16]; // TODO ifdef
+#ifdef USE_AVX2
+    __m256i vec[(GCRY_MLKEM_N+15)/16];
+#endif
     };
 } gcry_mlkem_poly;
 

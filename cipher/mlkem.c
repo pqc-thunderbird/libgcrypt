@@ -33,7 +33,6 @@
 #include "mlkem-aux.h"
 #include "bufhelp.h"
 
-
 static gcry_err_code_t
 _gcry_mlkem_get_param_from_bitstrength (size_t nbits,
                                         gcry_mlkem_param_t *param)
@@ -226,13 +225,13 @@ extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
                               const char *label,
                               unsigned char **data_p,
                               size_t *data_len_p,
-                              const u16 * expected_size_bytes_opt,
+                              const u16 *expected_size_bytes_opt,
                               xtry_alloc_func_t alloc_func)
 {
   gcry_mpi_t sk     = NULL;
   gpg_err_code_t ec = 0;
   size_t nwritten   = 0;
-  size_t data_len = 0;
+  size_t data_len   = 0;
 
   *data_p = 0;
 
@@ -244,10 +243,10 @@ extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
       goto leave;
     }
   data_len = mpi_get_nbits (sk);
-  if(data_len % 8)
-  {
+  if (data_len % 8)
+    {
       return GPG_ERR_INV_PARAMETER;
-  }
+    }
   data_len /= 8;
   if (expected_size_bytes_opt
       && mpi_get_nbits (sk) != *expected_size_bytes_opt * 8)
@@ -296,8 +295,13 @@ private_key_from_sexp (const gcry_sexp_t keyparms,
                        size_t *sk_len_p,
                        const gcry_mlkem_param_t *param)
 {
-  return extract_opaque_mpi_from_sexp (
-      keyparms, "/z", sk_p, sk_len_p, param != NULL ? &param->secret_key_bytes: (u16*) NULL, _gcry_malloc_secure);
+  return extract_opaque_mpi_from_sexp (keyparms,
+                                       "/z",
+                                       sk_p,
+                                       sk_len_p,
+                                       param != NULL ? &param->secret_key_bytes
+                                                     : (u16 *)NULL,
+                                       _gcry_malloc_secure);
 }
 
 
@@ -312,8 +316,13 @@ ciphertext_from_sexp (const gcry_sexp_t keyparms,
                       const gcry_mlkem_param_t *param)
 {
 
-  return extract_opaque_mpi_from_sexp (
-      keyparms, "/c", ct_p, ct_len_p, param != NULL ? &param->ciphertext_bytes: (u16*) NULL, _gcry_malloc);
+  return extract_opaque_mpi_from_sexp (keyparms,
+                                       "/c",
+                                       ct_p,
+                                       ct_len_p,
+                                       param != NULL ? &param->ciphertext_bytes
+                                                     : (u16 *)NULL,
+                                       _gcry_malloc);
 }
 
 
@@ -328,8 +337,13 @@ public_key_from_sexp (const gcry_sexp_t keyparms,
                       const gcry_mlkem_param_t *param)
 {
 
-  return extract_opaque_mpi_from_sexp (
-      keyparms, "/y", pk_p, pk_len_p, param != NULL ? &param->public_key_bytes : (u16*) NULL, _gcry_malloc);
+  return extract_opaque_mpi_from_sexp (keyparms,
+                                       "/y",
+                                       pk_p,
+                                       pk_len_p,
+                                       param != NULL ? &param->public_key_bytes
+                                                     : (u16 *)NULL,
+                                       _gcry_malloc);
 }
 
 
@@ -347,7 +361,8 @@ mlkem_check_secret_key (gcry_sexp_t keyparms)
   gcry_mlkem_param_t param;
 
   /* Extract the key MPI from the SEXP.  */
-  ec = private_key_from_sexp (keyparms, &private_key, &private_key_size_bytes, NULL);
+  ec = private_key_from_sexp (
+      keyparms, &private_key, &private_key_size_bytes, NULL);
   if (ec)
     {
       goto leave;
@@ -419,9 +434,9 @@ mlkem_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
       goto leave;
     }
   ec = _gcry_mlkem_kem_keypair (pk, sk, &param);
-  if(ec)
+  if (ec)
     {
-        goto leave;
+      goto leave;
     }
 
   sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
@@ -462,13 +477,13 @@ mlkem_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
     printf("mlkem_generate(): s-expr = %s\n", buf);
       }
 #endif
-    // <=== dbg code
+      // <=== dbg code
     }
   /* call the key check function for now so that we know that it is working: */
-  if(!ec)
-  {
-    ec = mlkem_check_secret_key (*r_skey);
-  }
+  if (!ec)
+    {
+      ec = mlkem_check_secret_key (*r_skey);
+    }
   if (ec)
     {
       goto leave;
@@ -490,25 +505,26 @@ mlkem_encap (gcry_sexp_t *r_ciph,
 
   gpg_err_code_t ec         = 0;
   unsigned char *ciphertext = NULL, *public_key = NULL, *shared_secret = NULL;
-    size_t public_key_size_bytes;
-    size_t bit_strength;
+  size_t public_key_size_bytes;
+  size_t bit_strength;
   gcry_mlkem_param_t param;
 
 
   /* Extract the public key MPI from the SEXP.  */
-  ec = public_key_from_sexp (keyparms, &public_key, &public_key_size_bytes, NULL);
+  ec = public_key_from_sexp (
+      keyparms, &public_key, &public_key_size_bytes, NULL);
   if (ec)
     {
       goto leave;
     }
-  bit_strength = bitstrength_from_public_size_bytes(public_key_size_bytes);
-  if(!bit_strength)
-  {
-     ec = GPG_ERR_INV_PARAMETER;
-     goto leave;
-  }
+  bit_strength = bitstrength_from_public_size_bytes (public_key_size_bytes);
+  if (!bit_strength)
+    {
+      ec = GPG_ERR_INV_PARAMETER;
+      goto leave;
+    }
 
-  ec = _gcry_mlkem_get_param_from_bitstrength(bit_strength, &param);
+  ec = _gcry_mlkem_get_param_from_bitstrength (bit_strength, &param);
   if (ec)
     {
       goto leave;
@@ -530,7 +546,6 @@ mlkem_encap (gcry_sexp_t *r_ciph,
     {
       goto leave;
     }
-
 
   ec = sexp_build (r_shared_key,
                    NULL,
@@ -575,20 +590,21 @@ mlkem_decrypt (gcry_sexp_t *r_plain, gcry_sexp_t s_data, gcry_sexp_t keyparms)
 
 
   /* Extract the key MPI from the SEXP.  */
-  ec = private_key_from_sexp (keyparms, &private_key, &private_key_size_bytes, NULL);
+  ec = private_key_from_sexp (
+      keyparms, &private_key, &private_key_size_bytes, NULL);
   if (ec)
     {
       goto leave;
     }
 
-  bit_strength = bitstrength_from_private_size_bytes(private_key_size_bytes);
-  if(!bit_strength)
-  {
+  bit_strength = bitstrength_from_private_size_bytes (private_key_size_bytes);
+  if (!bit_strength)
+    {
       ec = GPG_ERR_INV_PARAMETER;
       goto leave;
-  }
+    }
 
-  ec = _gcry_mlkem_get_param_from_bitstrength(bit_strength, &param);
+  ec = _gcry_mlkem_get_param_from_bitstrength (bit_strength, &param);
   if (ec)
     {
       goto leave;
@@ -626,8 +642,8 @@ mlkem_get_nbits (gcry_sexp_t parms)
   gcry_sexp_t l1;
   unsigned int bit_strength, bit_length;
   gcry_mpi_t p;
-  //unsigned char* dbg_buf;
-  //size_t dbg_buf_size;
+  // unsigned char* dbg_buf;
+  // size_t dbg_buf_size;
   l1 = sexp_find_token (parms, "y", 1);
   if (!l1)
     return 0; /* Parameter N not found.  */
@@ -641,9 +657,9 @@ mlkem_get_nbits (gcry_sexp_t parms)
 #endif
   // <=== debug code
   sexp_release (l1);
-  bit_length = p? mpi_get_nbits (p) : 0;
+  bit_length = p ? mpi_get_nbits (p) : 0;
   _gcry_mpi_release (p);
-  bit_strength = bitstrength_from_public_size_bytes((bit_length + 7) / 8);
+  bit_strength = bitstrength_from_public_size_bytes ((bit_length + 7) / 8);
   return bit_strength;
 }
 
@@ -672,7 +688,6 @@ compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparam)
 }
 
 
-
 static const char *mlkem_names[] = {
     "mlkem",
     "openpgp-mlkem", /* ? leave? */
@@ -698,8 +713,8 @@ gcry_pk_spec_t _gcry_pubkey_spec_mlkem = {
     NULL, /* sign */
     NULL, /* verify */
     mlkem_get_nbits,
-    NULL, /* run_selftests */
+    NULL,            /* run_selftests */
     compute_keygrip, /* compute_keygrip */
-    NULL, /* get_curve */
-    NULL  /* get_curve_param */
+    NULL,            /* get_curve */
+    NULL             /* get_curve_param */
 };
