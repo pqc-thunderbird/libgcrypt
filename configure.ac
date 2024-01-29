@@ -3056,9 +3056,11 @@ if test "$found" = "1" ; then
   AC_DEFINE(USE_SLHDSA, 1, [Defined if this module should be included])
   require_mgf1=yes
 
-  if test "$have_immintrin" = "yes" ; then
-     GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS slhdsa-sha512x4.lo slhdsa-fips202x4.lo slhdsa-sha256x8.lo"
-     CFLAGS="$CFLAGS -mavx2"
+  if test x"$avx2support" = xyes ; then
+    if test "$have_immintrin" = "yes" ; then
+      GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS slhdsa-sha512x4.lo slhdsa-fips202x4.lo slhdsa-sha256x8.lo"
+      CFLAGS="$CFLAGS -mavx2"
+    fi
   fi
 fi
 
