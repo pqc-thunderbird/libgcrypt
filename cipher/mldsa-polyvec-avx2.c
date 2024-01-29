@@ -28,12 +28,14 @@
 #include "mldsa-consts-avx2.h"
 
 /* the following functions are for allocating 32-byte aligned memory */
-gcry_err_code_t _gcry_mldsa_polybuf_al_create (gcry_mldsa_polybuf_al *polybuf,
-                                               size_t mat_elems,
-                                               size_t vec_elems,
-                                               int secure)
+gcry_err_code_t
+_gcry_mldsa_polybuf_al_create (gcry_mldsa_polybuf_al *polybuf,
+                               size_t mat_elems,
+                               size_t vec_elems,
+                               int secure)
 {
-  const size_t alloc_size = mat_elems * vec_elems * sizeof (gcry_mldsa_poly) + /*align*/ 32;
+  const size_t alloc_size
+      = mat_elems * vec_elems * sizeof (gcry_mldsa_poly) + /*align*/ 32;
   if (secure)
     polybuf->alloc_addr = xtrymalloc_secure (alloc_size);
   else
@@ -42,15 +44,17 @@ gcry_err_code_t _gcry_mldsa_polybuf_al_create (gcry_mldsa_polybuf_al *polybuf,
   if (!polybuf->alloc_addr)
     {
       polybuf->buf = NULL;
-      return gpg_error_from_syserror();
+      return gpg_error_from_syserror ();
     }
-  polybuf->buf = (byte *)((uintptr_t)polybuf->alloc_addr + (32 - ((uintptr_t)polybuf->alloc_addr % 32)));
+  polybuf->buf = (byte *)((uintptr_t)polybuf->alloc_addr
+                          + (32 - ((uintptr_t)polybuf->alloc_addr % 32)));
 
   memset (polybuf->alloc_addr, 0, alloc_size);
   return 0;
 }
 
-void _gcry_mldsa_polybuf_al_destroy (gcry_mldsa_polybuf_al *polybuf)
+void
+_gcry_mldsa_polybuf_al_destroy (gcry_mldsa_polybuf_al *polybuf)
 {
   if (polybuf->alloc_addr)
     {
@@ -60,7 +64,8 @@ void _gcry_mldsa_polybuf_al_destroy (gcry_mldsa_polybuf_al *polybuf)
   polybuf->alloc_addr = NULL;
 }
 
-gcry_err_code_t _gcry_mldsa_buf_al_create (gcry_mldsa_buf_al *buf, size_t size, int secure)
+gcry_err_code_t
+_gcry_mldsa_buf_al_create (gcry_mldsa_buf_al *buf, size_t size, int secure)
 {
   const size_t alloc_size = size + /*align*/ 32;
   if (secure)
@@ -71,15 +76,17 @@ gcry_err_code_t _gcry_mldsa_buf_al_create (gcry_mldsa_buf_al *buf, size_t size, 
   if (!buf->alloc_addr)
     {
       buf->buf = NULL;
-      return gpg_error_from_syserror();
+      return gpg_error_from_syserror ();
     }
-  buf->buf = (byte *)((uintptr_t)buf->alloc_addr + (32 - ((uintptr_t)buf->alloc_addr % 32)));
+  buf->buf = (byte *)((uintptr_t)buf->alloc_addr
+                      + (32 - ((uintptr_t)buf->alloc_addr % 32)));
 
   memset (buf->alloc_addr, 0, alloc_size);
   return 0;
 }
 
-void _gcry_mldsa_buf_al_destroy (gcry_mldsa_buf_al *buf)
+void
+_gcry_mldsa_buf_al_destroy (gcry_mldsa_buf_al *buf)
 {
   if (buf->alloc_addr)
     {
@@ -100,25 +107,30 @@ void _gcry_mldsa_buf_al_destroy (gcry_mldsa_buf_al *buf)
  *              - const byte rho[]: byte array containing seed rho
  **************************************************/
 
-gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand (gcry_mldsa_param_t *params,
-                                                        byte *mat,
-                                                        const byte rho[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t
+_gcry_mldsa_avx2_polyvec_matrix_expand (gcry_mldsa_param_t *params,
+                                        byte *mat,
+                                        const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;
   const size_t rowsize  = sizeof (gcry_mldsa_poly) * params->l;
   gcry_mldsa_buf_al tmp = {};
   if (params->l == 4 && params->k == 4)
     {
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0 (params, &mat[0 * rowsize], NULL, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0 (
+          params, &mat[0 * rowsize], NULL, rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row1 (params, &mat[1 * rowsize], NULL, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row1 (
+          params, &mat[1 * rowsize], NULL, rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2 (params, &mat[2 * rowsize], NULL, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2 (
+          params, &mat[2 * rowsize], NULL, rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3 (params, &mat[3 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3 (
+          params, &mat[3 * rowsize], rho);
       if (ec)
         goto leave;
     }
@@ -127,49 +139,63 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand (gcry_mldsa_param_t *para
       ec = _gcry_mldsa_buf_al_create (&tmp, rowsize, 1);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0 (params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0 (
+          params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row1 (params, &mat[1 * rowsize], &mat[2 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row1 (
+          params, &mat[1 * rowsize], &mat[2 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2 (params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2 (
+          params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3 (params, &mat[3 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3 (
+          params, &mat[3 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row4 (params, &mat[4 * rowsize], &mat[5 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row4 (
+          params, &mat[4 * rowsize], &mat[5 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row5 (params, &mat[5 * rowsize], tmp.buf, rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row5 (
+          params, &mat[5 * rowsize], tmp.buf, rho);
       if (ec)
         goto leave;
     }
   else if (params->k == 8 && params->l == 7)
     {
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0 (params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row0 (
+          params, &mat[0 * rowsize], &mat[1 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row1 (params, &mat[1 * rowsize], &mat[2 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row1 (
+          params, &mat[1 * rowsize], &mat[2 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2 (params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row2 (
+          params, &mat[2 * rowsize], &mat[3 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3 (params, &mat[3 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row3 (
+          params, &mat[3 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row4 (params, &mat[4 * rowsize], &mat[5 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row4 (
+          params, &mat[4 * rowsize], &mat[5 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row5 (params, &mat[5 * rowsize], &mat[6 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row5 (
+          params, &mat[5 * rowsize], &mat[6 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row6 (params, &mat[6 * rowsize], &mat[7 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row6 (
+          params, &mat[6 * rowsize], &mat[7 * rowsize], rho);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row7 (params, &mat[7 * rowsize], rho);
+      ec = _gcry_mldsa_avx2_polyvec_matrix_expand_row7 (
+          params, &mat[7 * rowsize], rho);
       if (ec)
         goto leave;
     }
@@ -184,17 +210,26 @@ leave:
   return ec;
 }
 
-gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row0 (gcry_mldsa_param_t *params,
-                                                             byte *rowa,
-                                                             byte *rowb,
-                                                             const byte rho[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t
+_gcry_mldsa_avx2_polyvec_matrix_expand_row0 (
+    gcry_mldsa_param_t *params,
+    byte *rowa,
+    byte *rowb,
+    const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;
   const size_t polysize = sizeof (gcry_mldsa_poly);
   if (params->l == 4 && params->k == 4)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 0, 1, 2, 3);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[0 * polysize],
+                                             &rowa[1 * polysize],
+                                             &rowa[2 * polysize],
+                                             &rowa[3 * polysize],
+                                             rho,
+                                             0,
+                                             1,
+                                             2,
+                                             3);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[0 * polysize]);
@@ -204,12 +239,26 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row0 (gcry_mldsa_param_t 
     }
   else if (params->k == 6 && params->l == 5)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 0, 1, 2, 3);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[0 * polysize],
+                                             &rowa[1 * polysize],
+                                             &rowa[2 * polysize],
+                                             &rowa[3 * polysize],
+                                             rho,
+                                             0,
+                                             1,
+                                             2,
+                                             3);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[4 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], &rowb[2 * polysize], rho, 4, 256, 257, 258);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[4 * polysize],
+                                             &rowb[0 * polysize],
+                                             &rowb[1 * polysize],
+                                             &rowb[2 * polysize],
+                                             rho,
+                                             4,
+                                             256,
+                                             257,
+                                             258);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[0 * polysize]);
@@ -223,12 +272,26 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row0 (gcry_mldsa_param_t 
     }
   else if (params->k == 8 && params->l == 7)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 0, 1, 2, 3);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[0 * polysize],
+                                             &rowa[1 * polysize],
+                                             &rowa[2 * polysize],
+                                             &rowa[3 * polysize],
+                                             rho,
+                                             0,
+                                             1,
+                                             2,
+                                             3);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[4 * polysize], &rowa[5 * polysize], &rowa[6 * polysize], &rowb[0 * polysize], rho, 4, 5, 6, 256);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[4 * polysize],
+                                             &rowa[5 * polysize],
+                                             &rowa[6 * polysize],
+                                             &rowb[0 * polysize],
+                                             rho,
+                                             4,
+                                             5,
+                                             6,
+                                             256);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[0 * polysize]);
@@ -249,17 +312,26 @@ leave:
   return ec;
 }
 
-gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row1 (gcry_mldsa_param_t *params,
-                                                             byte *rowa,
-                                                             byte *rowb,
-                                                             const byte rho[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t
+_gcry_mldsa_avx2_polyvec_matrix_expand_row1 (
+    gcry_mldsa_param_t *params,
+    byte *rowa,
+    byte *rowb,
+    const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;
   const size_t polysize = sizeof (gcry_mldsa_poly);
   if (params->l == 4 && params->k == 4)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 256, 257, 258, 259);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[0 * polysize],
+                                             &rowa[1 * polysize],
+                                             &rowa[2 * polysize],
+                                             &rowa[3 * polysize],
+                                             rho,
+                                             256,
+                                             257,
+                                             258,
+                                             259);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[0 * polysize]);
@@ -269,8 +341,15 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row1 (gcry_mldsa_param_t 
     }
   else if (params->k == 6 && params->l == 5)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[3 * polysize], &rowa[4 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], rho, 259, 260, 512, 513);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[3 * polysize],
+                                             &rowa[4 * polysize],
+                                             &rowb[0 * polysize],
+                                             &rowb[1 * polysize],
+                                             rho,
+                                             259,
+                                             260,
+                                             512,
+                                             513);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[3 * polysize]);
@@ -280,12 +359,26 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row1 (gcry_mldsa_param_t 
     }
   else if (params->k == 8 && params->l == 7)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], rho, 257, 258, 259, 260);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[1 * polysize],
+                                             &rowa[2 * polysize],
+                                             &rowa[3 * polysize],
+                                             &rowa[4 * polysize],
+                                             rho,
+                                             257,
+                                             258,
+                                             259,
+                                             260);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[5 * polysize], &rowa[6 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], rho, 261, 262, 512, 513);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[5 * polysize],
+                                             &rowa[6 * polysize],
+                                             &rowb[0 * polysize],
+                                             &rowb[1 * polysize],
+                                             rho,
+                                             261,
+                                             262,
+                                             512,
+                                             513);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[1 * polysize]);
@@ -306,18 +399,27 @@ leave:
   return ec;
 }
 
-gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row2 (gcry_mldsa_param_t *params,
-                                                             byte *rowa,
-                                                             byte *rowb,
-                                                             const byte rho[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t
+_gcry_mldsa_avx2_polyvec_matrix_expand_row2 (
+    gcry_mldsa_param_t *params,
+    byte *rowa,
+    byte *rowb,
+    const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;
   const size_t polysize = sizeof (gcry_mldsa_poly);
 
   if (params->l == 4 && params->k == 4)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 512, 513, 514, 515);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[0 * polysize],
+                                             &rowa[1 * polysize],
+                                             &rowa[2 * polysize],
+                                             &rowa[3 * polysize],
+                                             rho,
+                                             512,
+                                             513,
+                                             514,
+                                             515);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[0 * polysize]);
@@ -327,8 +429,15 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row2 (gcry_mldsa_param_t 
     }
   else if (params->k == 6 && params->l == 5)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], &rowb[0 * polysize], rho, 514, 515, 516, 768);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[2 * polysize],
+                                             &rowa[3 * polysize],
+                                             &rowa[4 * polysize],
+                                             &rowb[0 * polysize],
+                                             rho,
+                                             514,
+                                             515,
+                                             516,
+                                             768);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[2 * polysize]);
@@ -338,12 +447,26 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row2 (gcry_mldsa_param_t 
     }
   else if (params->k == 8 && params->l == 7)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], &rowa[5 * polysize], rho, 514, 515, 516, 517);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[2 * polysize],
+                                             &rowa[3 * polysize],
+                                             &rowa[4 * polysize],
+                                             &rowa[5 * polysize],
+                                             rho,
+                                             514,
+                                             515,
+                                             516,
+                                             517);
       if (ec)
         goto leave;
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[6 * polysize], &rowb[0 * polysize], &rowb[1 * polysize], &rowb[2 * polysize], rho, 518, 768, 769, 770);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[6 * polysize],
+                                             &rowb[0 * polysize],
+                                             &rowb[1 * polysize],
+                                             &rowb[2 * polysize],
+                                             rho,
+                                             518,
+                                             768,
+                                             769,
+                                             770);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[2 * polysize]);
@@ -364,16 +487,25 @@ leave:
   return ec;
 }
 
-gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row3 (gcry_mldsa_param_t *params,
-                                                             byte *rowa,
-                                                             const byte rho[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t
+_gcry_mldsa_avx2_polyvec_matrix_expand_row3 (
+    gcry_mldsa_param_t *params,
+    byte *rowa,
+    const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;
   const size_t polysize = sizeof (gcry_mldsa_poly);
   if (params->l == 4 && params->k == 4)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[0 * polysize], &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], rho, 768, 769, 770, 771);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[0 * polysize],
+                                             &rowa[1 * polysize],
+                                             &rowa[2 * polysize],
+                                             &rowa[3 * polysize],
+                                             rho,
+                                             768,
+                                             769,
+                                             770,
+                                             771);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[0 * polysize]);
@@ -383,8 +515,15 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row3 (gcry_mldsa_param_t 
     }
   else if (params->k == 6 && params->l == 5)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[1 * polysize], &rowa[2 * polysize], &rowa[3 * polysize], &rowa[4 * polysize], rho, 769, 770, 771, 772);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[1 * polysize],
+                                             &rowa[2 * polysize],
+                                             &rowa[3 * polysize],
+                                             &rowa[4 * polysize],
+                                             rho,
+                                             769,
+                                             770,
+                                             771,
+                                             772);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[1 * polysize]);
@@ -394,8 +533,15 @@ gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row3 (gcry_mldsa_param_t 
     }
   else if (params->k == 8 && params->l == 7)
     {
-      ec = _gcry_mldsa_avx2_poly_uniform_4x (
-          &rowa[3 * polysize], &rowa[4 * polysize], &rowa[5 * polysize], &rowa[6 * polysize], rho, 771, 772, 773, 774);
+      ec = _gcry_mldsa_avx2_poly_uniform_4x (&rowa[3 * polysize],
+                                             &rowa[4 * polysize],
+                                             &rowa[5 * polysize],
+                                             &rowa[6 * polysize],
+                                             rho,
+                                             771,
+                                             772,
+                                             773,
+                                             774);
       if (ec)
         goto leave;
       _gcry_mldsa_avx2_poly_nttunpack (&rowa[3 * polysize]);
@@ -413,10 +559,12 @@ leave:
 }
 
 
-gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row4 (gcry_mldsa_param_t *params,
-                                                             byte *rowa,
-                                                             byte *rowb,
-                                                             const byte rho[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t
+_gcry_mldsa_avx2_polyvec_matrix_expand_row4 (
+    gcry_mldsa_param_t *params,
+    byte *rowa,
+    byte *rowb,
+    const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;
   const size_t polysize = sizeof (gcry_mldsa_poly);
@@ -497,10 +645,12 @@ leave:
   return ec;
 }
 
-gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row5 (gcry_mldsa_param_t *params,
-                                                             byte *rowa,
-                                                             byte *rowb,
-                                                             const byte rho[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t
+_gcry_mldsa_avx2_polyvec_matrix_expand_row5 (
+    gcry_mldsa_param_t *params,
+    byte *rowa,
+    byte *rowb,
+    const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;
   const size_t polysize = sizeof (gcry_mldsa_poly);
@@ -563,10 +713,12 @@ leave:
   return ec;
 }
 
-gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row6 (gcry_mldsa_param_t *params,
-                                                             byte *rowa,
-                                                             byte *rowb,
-                                                             const byte rho[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t
+_gcry_mldsa_avx2_polyvec_matrix_expand_row6 (
+    gcry_mldsa_param_t *params,
+    byte *rowa,
+    byte *rowb,
+    const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;
   const size_t polysize = sizeof (gcry_mldsa_poly);
@@ -613,9 +765,11 @@ leave:
   return ec;
 }
 
-gcry_err_code_t _gcry_mldsa_avx2_polyvec_matrix_expand_row7 (gcry_mldsa_param_t *params,
-                                                             byte *rowa,
-                                                             const byte rho[GCRY_MLDSA_SEEDBYTES])
+gcry_err_code_t
+_gcry_mldsa_avx2_polyvec_matrix_expand_row7 (
+    gcry_mldsa_param_t *params,
+    byte *rowa,
+    const byte rho[GCRY_MLDSA_SEEDBYTES])
 {
   gcry_err_code_t ec    = 0;
   const size_t polysize = sizeof (gcry_mldsa_poly);
@@ -647,10 +801,9 @@ leave:
   return ec;
 }
 
-void _gcry_mldsa_avx2_polyvec_matrix_pointwise_montgomery (gcry_mldsa_param_t *params,
-                                                           byte *t,
-                                                           const byte *mat,
-                                                           const byte *v)
+void
+_gcry_mldsa_avx2_polyvec_matrix_pointwise_montgomery (
+    gcry_mldsa_param_t *params, byte *t, const byte *mat, const byte *v)
 {
   unsigned int i;
   const size_t polysize = sizeof (gcry_mldsa_poly);
@@ -670,12 +823,14 @@ void _gcry_mldsa_avx2_polyvec_matrix_pointwise_montgomery (gcry_mldsa_param_t *p
  *
  * Arguments:   - polyvecl *v: pointer to input/output vector
  **************************************************/
-void _gcry_mldsa_avx2_polyvecl_ntt (gcry_mldsa_param_t *params, byte *v)
+void
+_gcry_mldsa_avx2_polyvecl_ntt (gcry_mldsa_param_t *params, byte *v)
 {
   unsigned int i;
 
   for (i = 0; i < params->l; ++i)
-    _gcry_mldsa_avx2_poly_ntt ((gcry_mldsa_poly *)&v[i * sizeof (gcry_mldsa_poly)]);
+    _gcry_mldsa_avx2_poly_ntt (
+        (gcry_mldsa_poly *)&v[i * sizeof (gcry_mldsa_poly)]);
 }
 
 
@@ -690,22 +845,26 @@ void _gcry_mldsa_avx2_polyvecl_ntt (gcry_mldsa_param_t *params, byte *v)
  *              - const polyvecl *u: pointer to first input vector
  *              - const polyvecl *v: pointer to second input vector
  **************************************************/
-void _gcry_mldsa_avx2_polyvecl_pointwise_acc_montgomery (gcry_mldsa_param_t *params,
-                                                         gcry_mldsa_poly *w,
-                                                         const byte *u,
-                                                         const byte *v)
+void
+_gcry_mldsa_avx2_polyvecl_pointwise_acc_montgomery (gcry_mldsa_param_t *params,
+                                                    gcry_mldsa_poly *w,
+                                                    const byte *u,
+                                                    const byte *v)
 {
   if (params->l == 4)
     {
-      _gcry_mldsa_avx2_pointwise_acc_avx_L4 (w->vec, (__m256i *)u, (__m256i *)v, qdata.vec);
+      _gcry_mldsa_avx2_pointwise_acc_avx_L4 (
+          w->vec, (__m256i *)u, (__m256i *)v, gcry_mldsa_qdata.vec);
     }
   else if (params->l == 5)
     {
-      _gcry_mldsa_avx2_pointwise_acc_avx_L5 (w->vec, (__m256i *)u, (__m256i *)v, qdata.vec);
+      _gcry_mldsa_avx2_pointwise_acc_avx_L5 (
+          w->vec, (__m256i *)u, (__m256i *)v, gcry_mldsa_qdata.vec);
     }
   else
     {
-      _gcry_mldsa_avx2_pointwise_acc_avx_L7 (w->vec, (__m256i *)u, (__m256i *)v, qdata.vec);
+      _gcry_mldsa_avx2_pointwise_acc_avx_L7 (
+          w->vec, (__m256i *)u, (__m256i *)v, gcry_mldsa_qdata.vec);
     }
 }
 
@@ -718,12 +877,14 @@ void _gcry_mldsa_avx2_polyvecl_pointwise_acc_montgomery (gcry_mldsa_param_t *par
  *
  * Arguments:   - polyveck *v: pointer to input/output vector
  **************************************************/
-void _gcry_mldsa_avx2_polyveck_caddq (gcry_mldsa_param_t *params, byte *v)
+void
+_gcry_mldsa_avx2_polyveck_caddq (gcry_mldsa_param_t *params, byte *v)
 {
   unsigned int i;
 
   for (i = 0; i < params->k; ++i)
-    _gcry_mldsa_avx2_poly_caddq ((gcry_mldsa_poly *)&v[i * sizeof (gcry_mldsa_poly)]);
+    _gcry_mldsa_avx2_poly_caddq (
+        (gcry_mldsa_poly *)&v[i * sizeof (gcry_mldsa_poly)]);
 }
 
 
@@ -735,12 +896,14 @@ void _gcry_mldsa_avx2_polyveck_caddq (gcry_mldsa_param_t *params, byte *v)
  *
  * Arguments:   - polyveck *v: pointer to input/output vector
  **************************************************/
-void _gcry_mldsa_avx2_polyveck_ntt (gcry_mldsa_param_t *params, byte *v)
+void
+_gcry_mldsa_avx2_polyveck_ntt (gcry_mldsa_param_t *params, byte *v)
 {
   unsigned int i;
 
   for (i = 0; i < params->k; ++i)
-    _gcry_mldsa_avx2_poly_ntt ((gcry_mldsa_poly *)&v[i * sizeof (gcry_mldsa_poly)]);
+    _gcry_mldsa_avx2_poly_ntt (
+        (gcry_mldsa_poly *)&v[i * sizeof (gcry_mldsa_poly)]);
 }
 
 /*************************************************
@@ -752,12 +915,14 @@ void _gcry_mldsa_avx2_polyveck_ntt (gcry_mldsa_param_t *params, byte *v)
  *
  * Arguments:   - polyveck *v: pointer to input/output vector
  **************************************************/
-void _gcry_mldsa_avx2_polyveck_invntt_tomont (gcry_mldsa_param_t *params, byte *v)
+void
+_gcry_mldsa_avx2_polyveck_invntt_tomont (gcry_mldsa_param_t *params, byte *v)
 {
   unsigned int i;
 
   for (i = 0; i < params->k; ++i)
-    _gcry_mldsa_avx2_poly_invntt_tomont ((gcry_mldsa_poly *)&v[i * sizeof (gcry_mldsa_poly)]);
+    _gcry_mldsa_avx2_poly_invntt_tomont (
+        (gcry_mldsa_poly *)&v[i * sizeof (gcry_mldsa_poly)]);
 }
 
 
@@ -776,7 +941,11 @@ void _gcry_mldsa_avx2_polyveck_invntt_tomont (gcry_mldsa_param_t *params, byte *
  *                              coefficients a0
  *              - const polyveck *v: pointer to input vector
  **************************************************/
-void _gcry_mldsa_avx2_polyveck_decompose (gcry_mldsa_param_t *params, byte *v1, byte *v0, const byte *v)
+void
+_gcry_mldsa_avx2_polyveck_decompose (gcry_mldsa_param_t *params,
+                                     byte *v1,
+                                     byte *v0,
+                                     const byte *v)
 {
   unsigned int i;
   const size_t polysize = sizeof (gcry_mldsa_poly);
@@ -789,12 +958,17 @@ void _gcry_mldsa_avx2_polyveck_decompose (gcry_mldsa_param_t *params, byte *v1, 
 }
 
 
-void _gcry_mldsa_avx2_polyveck_pack_w1 (gcry_mldsa_param_t *params, byte *r, const byte *w1)
+void
+_gcry_mldsa_avx2_polyveck_pack_w1 (gcry_mldsa_param_t *params,
+                                   byte *r,
+                                   const byte *w1)
 {
   unsigned int i;
 
   for (i = 0; i < params->k; ++i)
     _gcry_mldsa_avx2_polyw1_pack (
-        params, &r[i * params->polyw1_packedbytes], (gcry_mldsa_poly *)&w1[i * sizeof (gcry_mldsa_poly)]);
+        params,
+        &r[i * params->polyw1_packedbytes],
+        (gcry_mldsa_poly *)&w1[i * sizeof (gcry_mldsa_poly)]);
 }
 #endif

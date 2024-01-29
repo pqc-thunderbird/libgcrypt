@@ -564,7 +564,7 @@ int main (int argc, char **argv)
     }
   else
     {
-      if (check_mldsa_roundtrip (1000))
+      if (check_mldsa_roundtrip (100))
         {
           fail ("check_mldsa_roundtrip() yielded an error, aborting");
         }

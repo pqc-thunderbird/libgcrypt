@@ -27,8 +27,10 @@
 #include "mldsa-rejsample-avx2.h"
 #include "mldsa-consts-avx2.h"
 
-#define _mm256_blendv_epi32(a, b, mask)                                                                                \
-  _mm256_castps_si256 (_mm256_blendv_ps (_mm256_castsi256_ps (a), _mm256_castsi256_ps (b), _mm256_castsi256_ps (mask)))
+#define _mm256_blendv_epi32(a, b, mask)                                       \
+  _mm256_castps_si256 (_mm256_blendv_ps (_mm256_castsi256_ps (a),             \
+                                         _mm256_castsi256_ps (b),             \
+                                         _mm256_castsi256_ps (mask)))
 
 /*************************************************
  * Name:        power2round
@@ -42,7 +44,8 @@
  *              - const __m256i *a: input array of length GCRY_MLDSA_N/8
  *
  **************************************************/
-void _gcry_mldsa_avx2_power2round_avx (__m256i *a1, __m256i *a0, const __m256i *a)
+void
+_gcry_mldsa_avx2_power2round_avx (__m256i *a1, __m256i *a0, const __m256i *a)
 {
   unsigned int i;
   __m256i f, f0, f1;
@@ -62,12 +65,13 @@ void _gcry_mldsa_avx2_power2round_avx (__m256i *a1, __m256i *a0, const __m256i *
 }
 
 
-static void decompose_avx_32 (__m256i *a1, __m256i *a0, const __m256i *a)
+static void
+decompose_avx_32 (__m256i *a1, __m256i *a0, const __m256i *a)
 {
   const size_t gamma2 = (GCRY_MLDSA_Q - 1) / 32;
   unsigned int i;
   __m256i f, f0, f1;
-  const __m256i q     = _mm256_load_si256 (&qdata.vec[_8XQ / 8]);
+  const __m256i q     = _mm256_load_si256 (&gcry_mldsa_qdata.vec[_8XQ / 8]);
   const __m256i hq    = _mm256_srli_epi32 (q, 1);
   const __m256i v     = _mm256_set1_epi32 (1025);
   const __m256i alpha = _mm256_set1_epi32 (2 * gamma2);
@@ -93,19 +97,20 @@ static void decompose_avx_32 (__m256i *a1, __m256i *a0, const __m256i *a)
     }
 }
 
-static void decompose_avx_88 (__m256i *a1, __m256i *a0, const __m256i *a)
+static void
+decompose_avx_88 (__m256i *a1, __m256i *a0, const __m256i *a)
 {
   const size_t gamma2 = (GCRY_MLDSA_Q - 1) / 88;
   unsigned int i;
   __m256i f, f0, f1, t;
-  const __m256i q     = _mm256_load_si256 (&qdata.vec[_8XQ / 8]);
+  const __m256i q     = _mm256_load_si256 (&gcry_mldsa_qdata.vec[_8XQ / 8]);
   const __m256i hq    = _mm256_srli_epi32 (q, 1);
   const __m256i v     = _mm256_set1_epi32 (11275);
   const __m256i alpha = _mm256_set1_epi32 (2 * gamma2);
   const __m256i off   = _mm256_set1_epi32 (127);
   const __m256i shift = _mm256_set1_epi32 (128);
   const __m256i max   = _mm256_set1_epi32 (43);
-  const __m256i zero  = _mm256_setzero_si256();
+  const __m256i zero  = _mm256_setzero_si256 ();
 
   for (i = 0; i < GCRY_MLDSA_N / 8; i++)
     {
@@ -140,7 +145,11 @@ static void decompose_avx_88 (__m256i *a1, __m256i *a0, const __m256i *a)
  *              - const __m256i *a: input array of length GCRY_MLDSA_N/8
  *
  **************************************************/
-void _gcry_mldsa_avx2_decompose_avx (gcry_mldsa_param_t *params, __m256i *a1, __m256i *a0, const __m256i *a)
+void
+_gcry_mldsa_avx2_decompose_avx (gcry_mldsa_param_t *params,
+                                __m256i *a1,
+                                __m256i *a0,
+                                const __m256i *a)
 {
   if (params->gamma2 == (GCRY_MLDSA_Q - 1) / 32)
     {
@@ -164,10 +173,11 @@ void _gcry_mldsa_avx2_decompose_avx (gcry_mldsa_param_t *params, __m256i *a1, __
  *
  * Returns number of overflowing low bits
  **************************************************/
-unsigned int _gcry_mldsa_avx2_make_hint_avx (gcry_mldsa_param_t *params,
-                                             byte hint[GCRY_MLDSA_N],
-                                             const __m256i *restrict a0,
-                                             const __m256i *restrict a1)
+unsigned int
+_gcry_mldsa_avx2_make_hint_avx (gcry_mldsa_param_t *params,
+                                byte hint[GCRY_MLDSA_N],
+                                const __m256i *restrict a0,
+                                const __m256i *restrict a1)
 {
   unsigned int i, n = 0;
   __m256i f0, f1, g0, g1;
@@ -206,15 +216,16 @@ unsigned int _gcry_mldsa_avx2_make_hint_avx (gcry_mldsa_param_t *params,
  *              - const __m256i *a: input array of length GCRY_MLDSA_N/8 with hint bits
  *
  **************************************************/
-void _gcry_mldsa_avx2_use_hint_avx (gcry_mldsa_param_t *params,
-                                    __m256i *b,
-                                    const __m256i *a,
-                                    const __m256i *restrict hint)
+void
+_gcry_mldsa_avx2_use_hint_avx (gcry_mldsa_param_t *params,
+                               __m256i *b,
+                               const __m256i *a,
+                               const __m256i *restrict hint)
 {
   unsigned int i;
   __m256i a0[GCRY_MLDSA_N / 8];
   __m256i f, g, h, t;
-  const __m256i zero = _mm256_setzero_si256();
+  const __m256i zero = _mm256_setzero_si256 ();
   __m256i mask       = _mm256_set1_epi32 (15);
   __m256i max        = _mm256_set1_epi32 (43);
 

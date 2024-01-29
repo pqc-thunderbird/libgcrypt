@@ -50,9 +50,9 @@ typedef union
 {
   s32 coeffs[624];
   __m256i vec[(624 + 7) / 8];
-} qdata_t;
+} gcry_mldsa_gcry_mldsa_qdata_t;
 
-extern const qdata_t qdata;
+extern const gcry_mldsa_gcry_mldsa_qdata_t gcry_mldsa_qdata;
 
 #endif
 #endif
