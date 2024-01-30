@@ -26,6 +26,7 @@
 #include "mldsa-params.h"
 #include "mldsa-polyvec.h"
 #include "mldsa-poly.h"
+#include "avx2-immintrin-support.h"
 
 gcry_err_code_t _gcry_mldsa_keypair (gcry_mldsa_param_t *params, byte *pk, byte *sk);
 
@@ -34,5 +35,15 @@ gcry_err_code_t _gcry_mldsa_sign (
 
 gcry_err_code_t _gcry_mldsa_verify (
     gcry_mldsa_param_t *params, const byte *sig, size_t siglen, const byte *m, size_t mlen, const byte *pk);
+
+#ifdef USE_AVX2
+gcry_err_code_t _gcry_mldsa_avx2_keypair (gcry_mldsa_param_t *params, byte *pk, byte *sk);
+
+gcry_err_code_t _gcry_mldsa_avx2_sign (
+    gcry_mldsa_param_t *params, byte *sig, size_t *siglen, const byte *m, size_t mlen, const byte *sk);
+
+gcry_err_code_t _gcry_mldsa_avx2_verify (
+    gcry_mldsa_param_t *params, const byte *sig, size_t siglen, const byte *m, size_t mlen, const byte *pk);
+#endif
 
 #endif

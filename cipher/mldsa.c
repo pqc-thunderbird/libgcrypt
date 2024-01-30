@@ -28,7 +28,7 @@
 #include "mpi.h"
 #include "cipher.h"
 #include "pubkey-internal.h"
-
+#include "avx2-immintrin-support.h"
 
 static unsigned int
 mldsa_get_nbits (gcry_sexp_t parms)
@@ -53,6 +53,10 @@ static const char *mldsa_names[] = {
 static gcry_err_code_t
 gcry_mldsa_get_param_from_bit_size (size_t nbits, gcry_mldsa_param_t *param)
 {
+#ifdef USE_AVX2
+  unsigned int hwfeatures;
+#endif
+
   /* nbits: mldsa pubkey byte size * 8 */
   switch (nbits)
     {
@@ -115,6 +119,11 @@ gcry_mldsa_get_param_from_bit_size (size_t nbits, gcry_mldsa_param_t *param)
   param->signature_bytes = param->ctildebytes
                            + param->l * param->polyz_packedbytes
                            + param->polyvech_packedbytes;
+
+#ifdef USE_AVX2
+  hwfeatures      = _gcry_get_hw_features ();
+  param->use_avx2 = !!(hwfeatures & HWF_INTEL_AVX2);
+#endif
 
   return 0;
 }
@@ -213,7 +222,17 @@ mldsa_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
       ec = gpg_err_code_from_syserror ();
       goto leave;
     }
-  _gcry_mldsa_keypair (&param, pk, sk);
+
+#ifdef USE_AVX2
+  if (param.use_avx2)
+    {
+      _gcry_mldsa_avx2_keypair (&param, pk, sk);
+    }
+  else
+#endif
+    {
+      _gcry_mldsa_keypair (&param, pk, sk);
+    }
 
   sk_mpi = _gcry_mpi_set_opaque_copy (sk_mpi, sk, param.secret_key_bytes * 8);
   pk_mpi = _gcry_mpi_set_opaque_copy (pk_mpi, pk, param.public_key_bytes * 8);
@@ -308,9 +327,19 @@ mldsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry_sexp_t keyparms)
       goto leave;
     }
 
-  if (0
-      != _gcry_mldsa_sign (
-          &param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
+#ifdef USE_AVX2
+  if (param.use_avx2)
+    {
+      ec = _gcry_mldsa_avx2_sign (
+          &param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf);
+    }
+  else
+#endif
+    {
+      ec = _gcry_mldsa_sign (
+          &param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf);
+    }
+  if (ec)
     {
       printf ("sign operation failed\n");
       ec = GPG_ERR_GENERAL;
@@ -418,13 +447,28 @@ mldsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcry_sexp_t s_keyparms)
       goto leave;
     }
 
-  if (0
-      != _gcry_mldsa_verify (&param,
-                             sig_buf,
-                             param.signature_bytes,
-                             data_buf,
-                             data_buf_len,
-                             pk_buf))
+
+#ifdef USE_AVX2
+  if (param.use_avx2)
+    {
+      ec = _gcry_mldsa_avx2_verify (&param,
+                                    sig_buf,
+                                    param.signature_bytes,
+                                    data_buf,
+                                    data_buf_len,
+                                    pk_buf);
+    }
+  else
+#endif
+    {
+      ec = _gcry_mldsa_verify (&param,
+                               sig_buf,
+                               param.signature_bytes,
+                               data_buf,
+                               data_buf_len,
+                               pk_buf);
+    }
+  if (ec)
     {
       ec = GPG_ERR_GENERAL;
       goto leave;

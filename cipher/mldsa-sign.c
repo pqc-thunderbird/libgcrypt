@@ -29,7 +29,6 @@
 #include "g10lib.h"
 #include "avx2-immintrin-support.h"
 
-#ifndef USE_AVX2
 /*************************************************
  * Name:        _gcry_mldsa_keypair
  *
@@ -421,4 +420,3 @@ leave:
   _gcry_mldsa_polyvec_destroy (&h);
   return ec;
 }
-#endif

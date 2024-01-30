@@ -22,6 +22,7 @@
 #define _GCRY_MLDSA_PARAMS_H
 
 #include "types.h"
+#include "avx2-immintrin-support.h"
 
 #define GCRY_MLDSA_SEEDBYTES 32
 #define GCRY_MLDSA_CRHBYTES 64
@@ -68,6 +69,9 @@ typedef struct
   u16 public_key_bytes;
   u16 secret_key_bytes;
   u16 signature_bytes;
+#ifdef USE_AVX2
+  byte use_avx2;
+#endif
 } gcry_mldsa_param_t;
 
 #endif
