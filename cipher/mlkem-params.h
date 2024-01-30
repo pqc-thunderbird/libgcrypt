@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include "config.h"
 #include "types.h"
+#include "avx2-immintrin-support.h"
 
 typedef enum
 {
@@ -44,6 +45,9 @@ typedef struct
   u16 indcpa_secret_key_bytes;
   u16 secret_key_bytes;
   u16 ciphertext_bytes;
+#ifdef USE_AVX2
+  byte use_avx2;
+#endif
 } gcry_mlkem_param_t;
 
 

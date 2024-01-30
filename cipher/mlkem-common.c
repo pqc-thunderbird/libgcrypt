@@ -109,7 +109,6 @@ _gcry_mlkem_pack_sk (byte *r,
   _gcry_mlkem_polyvec_tobytes (r, sk, param);
 }
 
-#ifndef USE_AVX2
 /*************************************************
  * Name:        _gcry_mlkem_unpack_sk
  *
@@ -128,7 +127,6 @@ _gcry_mlkem_unpack_sk (gcry_mlkem_polyvec *sk,
 {
   _gcry_mlkem_polyvec_frombytes (sk, packedsk, param);
 }
-#endif
 
 /*************************************************
  * Name:        _gcry_mlkem_pack_ciphertext
@@ -154,7 +152,6 @@ _gcry_mlkem_pack_ciphertext (byte *r,
       r + param->polyvec_compressed_bytes, v, param, workspace_8_uint16);
 }
 
-#ifndef USE_AVX2
 /*************************************************
  * Name:        _gcry_mlkem_unpack_ciphertext
  *
@@ -176,7 +173,6 @@ _gcry_mlkem_unpack_ciphertext (gcry_mlkem_polyvec *b,
   _gcry_mlkem_polyvec_decompress (b, c, param);
   _gcry_mlkem_poly_decompress (v, c + param->polyvec_compressed_bytes, param);
 }
-#endif
 
 /*************************************************
  * Name:        rej_uniform
@@ -541,7 +537,6 @@ leave:
   return ec;
 }
 
-#ifndef USE_AVX2
 /*************************************************
  * Name:        _gcry_mlkem_indcpa_dec
  *
@@ -599,7 +594,6 @@ leave:
   _gcry_mlkem_polyvec_destroy (&b);
   return ec;
 }
-#endif
 
 gcry_err_code_t
 _gcry_mlkem_kem_keypair_derand (byte *pk,
@@ -685,10 +679,15 @@ _gcry_mlkem_kem_dec (byte *ss,
   const byte *pk = sk + param->indcpa_secret_key_bytes;
 
 #ifdef USE_AVX2
-  ec = _gcry_mlkem_avx2_indcpa_dec (buf, ct, sk, param);
-#else
-  ec = _gcry_mlkem_indcpa_dec (buf, ct, sk, param);
+  if (param->use_avx2)
+    {
+      ec = _gcry_mlkem_avx2_indcpa_dec (buf, ct, sk, param);
+    }
+  else
 #endif
+    {
+      ec = _gcry_mlkem_indcpa_dec (buf, ct, sk, param);
+    }
   if (ec)
     {
       goto end;
@@ -708,11 +707,17 @@ _gcry_mlkem_kem_dec (byte *ss,
       goto end;
     }
 #ifdef USE_AVX2
-  ec = _gcry_mlkem_avx2_indcpa_enc (
-      cmp, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
-#else
-  ec = _gcry_mlkem_indcpa_enc (cmp, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
+  if (param->use_avx2)
+    {
+      ec = _gcry_mlkem_avx2_indcpa_enc (
+          cmp, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
+    }
+  else
 #endif
+    {
+      ec = _gcry_mlkem_indcpa_enc (
+          cmp, buf, pk, kr + GCRY_MLKEM_SYMBYTES, param);
+    }
   /* coins are in kr+GCRY_MLKEM_SYMBYTES */
   if (ec)
     {
@@ -756,10 +761,15 @@ _gcry_mlkem_kem_enc (byte *ct,
 
   _gcry_randomize (coins, GCRY_MLKEM_SYMBYTES, GCRY_VERY_STRONG_RANDOM);
 #ifdef USE_AVX2
-  ec = _gcry_mlkem_avx2_kem_enc_derand (ct, ss, pk, param, coins);
-#else
-  ec = _gcry_mlkem_kem_enc_derand (ct, ss, pk, param, coins);
+  if (param->use_avx2)
+    {
+      ec = _gcry_mlkem_avx2_kem_enc_derand (ct, ss, pk, param, coins);
+    }
+  else
 #endif
+    {
+      ec = _gcry_mlkem_kem_enc_derand (ct, ss, pk, param, coins);
+    }
   if (ec)
     {
       goto leave;

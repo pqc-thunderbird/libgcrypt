@@ -37,6 +37,10 @@ static gcry_err_code_t
 _gcry_mlkem_get_param_from_bitstrength (size_t nbits,
                                         gcry_mlkem_param_t *param)
 {
+#ifdef USE_AVX2
+  unsigned int hwfeatures;
+#endif
+
   switch (nbits)
     {
     case 128:
@@ -72,6 +76,11 @@ _gcry_mlkem_get_param_from_bitstrength (size_t nbits,
   param->secret_key_bytes = param->indcpa_secret_key_bytes
                             + param->public_key_bytes
                             + 2 * GCRY_MLKEM_SYMBYTES;
+
+#ifdef USE_AVX2
+  hwfeatures      = _gcry_get_hw_features();
+  param->use_avx2 = !!(hwfeatures & HWF_INTEL_AVX2);
+#endif
 
   return 0;
 }
