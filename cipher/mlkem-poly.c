@@ -57,6 +57,9 @@ _gcry_mlkem_poly_compress (unsigned char *r,
               /* map to positive standard representatives */
               u = a->coeffs[8 * i + j];
               u += (u >> 15) & GCRY_MLKEM_Q;
+
+              /* fixing potential for the compiler to introduce a division operation:
+               * https://github.com/pq-crystals/kyber/commit/11d00ff1f20cfca1f72d819e5a45165c1e0a2816 */
               /* t[j] = ((((u16)u << 4) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q) & 15; */
 
               d0 = u << 4;
@@ -253,10 +256,10 @@ _gcry_mlkem_poly_tomsg (unsigned char msg[GCRY_MLKEM_INDCPA_MSGBYTES],
       for (j = 0; j < 8; j++)
         {
           t = a->coeffs[8 * i + j];
-          // fixing potential for the compiler to introduce a division operation:
-          // https://github.com/pq-crystals/kyber/commit/dda29cc63af721981ee2c831cf00822e69be3220
-          // t += ((s16)t >> 15) & GCRY_MLKEM_Q;
-          // t = (((t << 1) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q) & 1;
+          /* fixing potential for the compiler to introduce a division operation:
+           https://github.com/pq-crystals/kyber/commit/dda29cc63af721981ee2c831cf00822e69be3220 */
+          /* t += ((s16)t >> 15) & GCRY_MLKEM_Q;
+           t = (((t << 1) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q) & 1; */
           t <<= 1;
           t += 1665;
           t *= 80635;

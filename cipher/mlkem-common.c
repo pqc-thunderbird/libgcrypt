@@ -803,7 +803,8 @@ _gcry_mlkem_kem_enc_derand (
     }
 
   /* Don't release system RNG output */
-  _gcry_md_hash_buffer (GCRY_MD_SHA3_256, buf, coins, GCRY_MLKEM_SYMBYTES);
+  /* _gcry_md_hash_buffer (GCRY_MD_SHA3_256, buf, coins, GCRY_MLKEM_SYMBYTES); */
+   memcpy(buf, coins, GCRY_MLKEM_SYMBYTES);
 
   /* Multitarget countermeasure for coins + contributory KEM */
 

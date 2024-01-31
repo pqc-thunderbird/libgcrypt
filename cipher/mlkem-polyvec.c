@@ -119,6 +119,8 @@ _gcry_mlkem_polyvec_compress (byte *r,
                   {
                     t[k] = a->vec[i].coeffs[8 * j + k];
                     t[k] += ((s16)t[k] >> 15) & GCRY_MLKEM_Q;
+                    /* fixing potential for the compiler to introduce a division operation:
+                     * https://github.com/pq-crystals/kyber/commit/11d00ff1f20cfca1f72d819e5a45165c1e0a2816 */
                     /*t[k] = ((((uint32_t)t[k] << 11) + GCRY_MLKEM_Q / 2)
                             / GCRY_MLKEM_Q)
                            & 0x7ff;*/
@@ -160,6 +162,10 @@ _gcry_mlkem_polyvec_compress (byte *r,
                   {
                     t[k] = a->vec[i].coeffs[4 * j + k];
                     t[k] += ((s16)t[k] >> 15) & GCRY_MLKEM_Q;
+
+                    /* fixing potential for the compiler to introduce a division operation:
+                     * https://github.com/pq-crystals/kyber/commit/11d00ff1f20cfca1f72d819e5a45165c1e0a2816 */
+                    /* t[j] = ((((u16)u << 4) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q) & 15; */
                     /* t[k] = ((((uint32_t)t[k] << 10) + GCRY_MLKEM_Q / 2)
                             / GCRY_MLKEM_Q)
                            & 0x3ff; */
