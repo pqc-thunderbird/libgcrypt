@@ -161,8 +161,14 @@ EXTRA_libcipher_la_SOURCES = \
 	mlkem-ntt.c mlkem-poly.c mlkem-polyvec.c mlkem-symmetric.c \
 	mlkem-ntt.h mlkem-poly.h mlkem-polyvec.h mlkem-symmetric.h \
     mlkem-cbd-avx2.c mlkem-cbd-avx2.h mlkem-consts-avx2.c mlkem-consts-avx2.h mlkem-fips202.h mlkem-fq-avx2.S mlkem-fq-avx2.inc mlkem-indcpa-avx2.c mlkem-invntt-avx2.S mlkem-kem-avx2.c mlkem-ntt-avx2.S mlkem-ntt-avx2.h mlkem-params-avx2.h mlkem-poly-avx2.c mlkem-poly-avx2.h mlkem-polyvec-avx2.c mlkem-polyvec-avx2.h mlkem-reduce-avx2.h mlkem-rejsample-avx2.c mlkem-rejsample-avx2.h mlkem-sha2-avx2.h mlkem-shuffle-avx2.S mlkem-shuffle-avx2.inc mlkem-verify-avx2.c mlkem-verify-avx2.h \
-	mlkem-kem-avx2.h mlkem-indcpa-avx2.h mlkem-basemul-avx2.S
-
+	mlkem-kem-avx2.h mlkem-indcpa-avx2.h mlkem-basemul-avx2.S \
+	slhdsa-address.c slhdsa-merkle.c slhdsa-wots.c slhdsa-utils.c slhdsa-treehash.c slhdsa-fors.c slhdsa-sign.c slhdsa-sign.h \
+	slhdsa-params.h slhdsa-address.h slhdsa-merkle.h slhdsa-wots.h slhdsa-utils.h slhdsa-treehash.h slhdsa-fors.h slhdsa-hash.h slhdsa-thash.h \
+	slhdsa-hash_shake.c \
+	slhdsa.c \
+	slhdsa-thash.c \
+	slhdsa-sha256x8.c slhdsa-sha256x8.h slhdsa-sha512x4.c slhdsa-sha512x4.h slhdsa-fips202x4.c slhdsa-fips202x4.h \
+	mgf.c mgf.h
 
 gost28147.lo: gost-sb.h
 gost-sb.h: gost-s-box$(EXEEXT_FOR_BUILD)

@@ -61,6 +61,7 @@ enum pk_encoding
     PUBKEY_ENC_PKCS1_RAW,
     PUBKEY_ENC_OAEP,
     PUBKEY_ENC_PSS,
+    PUBKEY_ENC_RAW_OPAQUE,
     PUBKEY_ENC_UNKNOWN
   };
 
@@ -223,6 +224,7 @@ extern gcry_pk_spec_t _gcry_pubkey_spec_elg_e;
 extern gcry_pk_spec_t _gcry_pubkey_spec_dsa;
 extern gcry_pk_spec_t _gcry_pubkey_spec_ecc;
 extern gcry_pk_spec_t _gcry_pubkey_spec_mlkem;
+extern gcry_pk_spec_t _gcry_pubkey_spec_slhdsa;
 
 
 #endif /*G10_CIPHER_H*/

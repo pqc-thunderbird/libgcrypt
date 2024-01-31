@@ -35,6 +35,10 @@ if USE_MLKEM
 tests_bin += mlkem-test
 endif
 
+if USE_SLHDSA
+tests_bin += t-slhdsa
+endif
+
 if USE_DSA
 tests_bin += fips186-dsa dsa-rfc6979 t-dsa
 endif
