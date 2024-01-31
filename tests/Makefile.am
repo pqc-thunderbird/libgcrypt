@@ -32,7 +32,7 @@ tests_bin += pkcs1v2 t-rsa-pss t-rsa-15 t-rsa-testparm
 endif
 
 if USE_MLKEM
-tests_bin += mlkem-test
+tests_bin += t-mlkem
 endif
 
 if USE_MLDSA
