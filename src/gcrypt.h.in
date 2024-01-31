@@ -1156,6 +1156,7 @@ enum gcry_pk_algos
     GCRY_PK_ECDH  = 302,    /* (only for external use).  */
     GCRY_PK_EDDSA = 303,    /* (only for external use).  */
     GCRY_PK_MLKEM = 401,    /* ML-KEM (Crystals-Kyber) */
+    GCRY_PK_MLDSA = 402,    /* CRYSTALS-MLDSA*/
     GCRY_PK_SLHDSA = 403    /* slhdsa */
   };
 

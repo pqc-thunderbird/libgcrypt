@@ -216,7 +216,7 @@ available_ciphers="$available_ciphers sm4 aria"
 enabled_ciphers=""
 
 # Definitions for public-key ciphers.
-available_pubkey_ciphers="dsa elgamal rsa ecc mlkem slhdsa"
+available_pubkey_ciphers="dsa elgamal rsa ecc mlkem mldsa slhdsa"
 enabled_pubkey_ciphers=""
 
 # Definitions for message digests.
@@ -2605,6 +2605,7 @@ if test "$gcry_cv_gcc_inline_asm_s390x_vx" = "yes" ; then
      [Defined if inline assembler supports zSeries vector instructions])
 fi
 
+
 if test "$have_immintrin" = "yes" ; then
    AC_DEFINE(HAVE_IMMINTRIN_H,1,
      [Defined if immintrin.h is available])
@@ -3335,6 +3336,21 @@ AM_CONDITIONAL(USE_DSA, [test "$found" = "1"])
 if test "$found" = "1" ; then
    GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS dsa.lo"
    AC_DEFINE(USE_DSA, 1, [Defined if this module should be included])
+fi
+
+LIST_MEMBER(mldsa, $enabled_pubkey_ciphers)
+AM_CONDITIONAL(USE_MLDSA, [test "$found" = "1"])
+if test "$found" = "1" ; then
+  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mldsa.lo mldsa-ntt.lo mldsa-packing.lo mldsa-poly.lo mldsa-polyvec.lo mldsa-reduce.lo mldsa-rounding.lo mldsa-sign.lo mldsa-symmetric.lo"
+
+  if test x"$avx2support" = xyes ; then
+    if test "$have_immintrin" = "yes" ; then
+      CFLAGS="$CFLAGS -mavx2"
+      GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mldsa-sign-avx2.lo mldsa-polyvec-avx2.lo mldsa-poly-avx2.lo mldsa-ntt-avx2.lo mldsa-invntt-avx2.lo mldsa-pointwise-avx2.lo mldsa-fips202x4-avx2.lo mldsa-f1600x4-avx2.lo mldsa-rejsample-avx2.lo mldsa-consts-avx2.lo mldsa-rounding-avx2.lo mldsa-shuffle-avx2.lo"
+    fi
+  fi
+
+  AC_DEFINE(USE_MLDSA, 1, [Defined if this module should be included])
 fi
 
 LIST_MEMBER(slhdsa, $enabled_pubkey_ciphers)

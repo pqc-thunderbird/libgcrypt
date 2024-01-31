@@ -35,6 +35,10 @@ if USE_MLKEM
 tests_bin += mlkem-test
 endif
 
+if USE_MLDSA
+tests_bin += t-mldsa
+endif
+
 if USE_SLHDSA
 tests_bin += t-slhdsa
 endif

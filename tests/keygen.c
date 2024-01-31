@@ -281,6 +281,30 @@ check_mlkem_keys (void)
 #endif /* USE_MLKEM */
 }
 
+static void
+check_mldsa_keys (void)
+{
+#if USE_MLDSA
+  gcry_sexp_t keyparm, key;
+  int rc;
+
+  if (verbose)
+    info ("creating ML-DSA key\n");
+  rc = gcry_sexp_new (&keyparm,
+                      "(genkey\n"
+                      " (mldsa-ipd\n"
+                      "  (nbits 3:5)\n"
+                      " ))", 0, 1);
+  if (rc)
+    die ("error creating S-expression: %s\n", gpg_strerror (rc));
+  rc = gcry_pk_genkey (&key, keyparm);
+  gcry_sexp_release (keyparm);
+  if (rc)
+    die ("error generating ML-DSA key: %s\n", gpg_strerror (rc));
+
+#endif /* USE_MLDSA */
+}
+
 
 static void
 check_elg_keys (void)
@@ -785,6 +809,7 @@ main (int argc, char **argv)
       check_dsa_keys ();
       check_ecc_keys ();
       check_mlkem_keys ();
+      check_mldsa_keys ();
       check_nonce ();
     }
   else
@@ -800,6 +825,8 @@ main (int argc, char **argv)
           check_ecc_keys ();
         else if (!strcmp (*argv, "mlkem"))
           check_mlkem_keys ();
+        else if (!strcmp (*argv, "mldsa"))
+          check_mldsa_keys ();
         else if (!strcmp (*argv, "nonce"))
           check_nonce ();
         else

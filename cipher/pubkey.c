@@ -54,6 +54,9 @@ static gcry_pk_spec_t * const pubkey_list[] =
 #if USE_SLHDSA
     &_gcry_pubkey_spec_slhdsa,
 #endif
+#if USE_MLDSA
+    &_gcry_pubkey_spec_mldsa,
+#endif
     NULL
   };
 

@@ -224,6 +224,7 @@ extern gcry_pk_spec_t _gcry_pubkey_spec_elg_e;
 extern gcry_pk_spec_t _gcry_pubkey_spec_dsa;
 extern gcry_pk_spec_t _gcry_pubkey_spec_ecc;
 extern gcry_pk_spec_t _gcry_pubkey_spec_mlkem;
+extern gcry_pk_spec_t _gcry_pubkey_spec_mldsa;
 extern gcry_pk_spec_t _gcry_pubkey_spec_slhdsa;
 
 
