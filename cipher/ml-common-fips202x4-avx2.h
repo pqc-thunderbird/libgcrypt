@@ -1,4 +1,4 @@
-/* mldsa-fips202x4-avx2.c
+/* ml-common-fips202x4-avx2.h
  * Copyright (C) 2024 MTG AG
  * The code was created based on the reference implementation that is part of the ML-DSA NIST submission.
  *
@@ -18,8 +18,8 @@
  * License along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _GCRY_MLDSA_AVX2_FIPS202X4_H
-#define _GCRY_MLDSA_AVX2_FIPS202X4_H
+#ifndef _GCRY_ML_COMMON_NFIPS202X4_AVX_H
+#define _GCRY_ML_COMMON_NFIPS202X4_AVX_H
 
 #ifdef __ASSEMBLER__
 /* The C ABI on MacOS exports all symbols with a leading
@@ -45,21 +45,21 @@
 typedef struct
 {
   __m256i s[25];
-} gcry_mldsa_keccakx4_state;
+} gcry_ml_common_keccakx4_state;
 
-void _gcry_mldsa_avx2_f1600x4 (__m256i *s, const u64 *rc);
+void _gcry_ml_common_avx2_f1600x4 (__m256i *s, const u64 *rc);
 
-void _gcry_mldsa_avx2_shake128x4_absorb_once (
-    gcry_mldsa_keccakx4_state *state, const byte *in0, const byte *in1, const byte *in2, const byte *in3, size_t inlen);
+void _gcry_ml_common_avx2_shake128x4_absorb_once (
+    gcry_ml_common_keccakx4_state *state, const byte *in0, const byte *in1, const byte *in2, const byte *in3, size_t inlen);
 
-void _gcry_mldsa_avx2_shake128x4_squeezeblocks (
-    byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_mldsa_keccakx4_state *state);
+void _gcry_ml_common_avx2_shake128x4_squeezeblocks (
+    byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_ml_common_keccakx4_state *state);
 
-void _gcry_mldsa_avx2_shake256x4_absorb_once (
-    gcry_mldsa_keccakx4_state *state, const byte *in0, const byte *in1, const byte *in2, const byte *in3, size_t inlen);
+void _gcry_ml_common_avx2_shake256x4_absorb_once (
+    gcry_ml_common_keccakx4_state *state, const byte *in0, const byte *in1, const byte *in2, const byte *in3, size_t inlen);
 
-void _gcry_mldsa_avx2_shake256x4_squeezeblocks (
-    byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_mldsa_keccakx4_state *state);
+void _gcry_ml_common_avx2_shake256x4_squeezeblocks (
+    byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_ml_common_keccakx4_state *state);
 
 #endif
 #endif

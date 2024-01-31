@@ -25,6 +25,7 @@
 #include "config.h"
 #include "types.h"
 #include "avx2-immintrin-support.h"
+#include "ml-common-symmetric.h"
 
 typedef enum
 {
@@ -67,16 +68,7 @@ typedef struct
 #error "GCRY_MLKEM_INDCPA_MSGBYTES must be equal to GCRY_MLKEM_N/8 bytes!"
 #endif
 
-
 #define GCRY_MLKEM_COINS_SIZE (2 * GCRY_MLKEM_SYMBYTES)
-
-
-#define GCRY_SHAKE128_RATE 168
-#define GCRY_SHAKE256_RATE 136
-#define GCRY_SHA3_256_RATE 136
-#define GCRY_SHA3_512_RATE 72
-
-
 #define GCRY_MLKEM_XOF_BLOCKBYTES GCRY_SHAKE128_RATE
 
 #endif /* GCRYPT_MLKEM_PARAMS_H */

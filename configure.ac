@@ -3346,11 +3346,12 @@ if test "$found" = "1" ; then
   if test x"$avx2support" = xyes ; then
     if test "$have_immintrin" = "yes" ; then
       CFLAGS="$CFLAGS -mavx2"
-      GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mldsa-sign-avx2.lo mldsa-polyvec-avx2.lo mldsa-poly-avx2.lo mldsa-ntt-avx2.lo mldsa-invntt-avx2.lo mldsa-pointwise-avx2.lo mldsa-fips202x4-avx2.lo mldsa-f1600x4-avx2.lo mldsa-rejsample-avx2.lo mldsa-consts-avx2.lo mldsa-rounding-avx2.lo mldsa-shuffle-avx2.lo"
+      GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mldsa-sign-avx2.lo mldsa-polyvec-avx2.lo mldsa-poly-avx2.lo mldsa-ntt-avx2.lo mldsa-invntt-avx2.lo mldsa-pointwise-avx2.lo mldsa-rejsample-avx2.lo mldsa-consts-avx2.lo mldsa-rounding-avx2.lo mldsa-shuffle-avx2.lo"
     fi
   fi
 
   AC_DEFINE(USE_MLDSA, 1, [Defined if this module should be included])
+  require_ml_common=yes
 fi
 
 LIST_MEMBER(slhdsa, $enabled_pubkey_ciphers)
@@ -3389,11 +3390,17 @@ if test "$found" = "1" ; then
   if test x"$avx2support" = xyes ; then
     if test "$have_immintrin" = "yes" ; then
         CFLAGS="$CFLAGS -mavx2 -mbmi2"
-        GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mlkem-fips202x4-avx2.lo mlkem-f1600x4-avx2.lo mlkem-cbd-avx2.lo mlkem-consts-avx2.lo mlkem-fq-avx2.lo mlkem-invntt-avx2.lo \
+        GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS mlkem-cbd-avx2.lo mlkem-consts-avx2.lo mlkem-fq-avx2.lo mlkem-invntt-avx2.lo \
         mlkem-kem-avx2.lo mlkem-ntt-avx2.lo mlkem-poly-avx2.lo mlkem-polyvec-avx2.lo mlkem-rejsample-avx2.lo mlkem-shuffle-avx2.lo mlkem-verify-avx2.lo mlkem-indcpa-avx2.lo mlkem-basemul-avx2.lo"
     fi
   fi
   AC_DEFINE(USE_MLKEM, 1, [Defined if this module should be included])
+  require_ml_common=yes
+fi
+
+if test "x$require_ml_common" = "xyes" ; then
+  # required by either ML-KEM or ML-DSA
+  GCRYPT_PUBKEY_CIPHERS="$GCRYPT_PUBKEY_CIPHERS ml-common-fips202x4-avx2.lo ml-common-f1600x4-avx2.lo"
 fi
 
 LIST_MEMBER(elgamal, $enabled_pubkey_ciphers)

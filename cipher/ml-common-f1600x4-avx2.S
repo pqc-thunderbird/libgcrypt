@@ -1,4 +1,4 @@
-/* mldsa-f1600x4-avx2.
+/* ml-common-f1600x4-avx2.
  * Copyright (C) 2024 MTG AG
  * The code was created based on the reference implementation that is part of the ML-DSA NIST submission.
  *
@@ -22,7 +22,7 @@
  * for Sphincs+ (https://github.com/sphincs/sphincsplus/pull/14/),
  * but uses vpshufb for byte-granular rotations as in the Keccak Code Package. */
 
-#include "mldsa-fips202x4-avx2.h"
+#include "ml-common-fips202x4-avx2.h"
 
 .data
 .p2align 5
@@ -32,8 +32,8 @@ rho56:
 .byte 1,2,3,4,5,6,7,0,9,10,11,12,13,14,15,8,1,2,3,4,5,6,7,0,9,10,11,12,13,14,15,8
 
 .text
-.global cdecl(_gcry_mldsa_avx2_f1600x4)
-cdecl(_gcry_mldsa_avx2_f1600x4):
+.global cdecl(_gcry_ml_common_avx2_f1600x4)
+cdecl(_gcry_ml_common_avx2_f1600x4):
 vmovdqa		rho8(%rip), %ymm0
 movq		$6, %rax
 looptop:

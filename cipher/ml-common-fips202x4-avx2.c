@@ -1,4 +1,4 @@
-/* mldsa-fips202x4-avx2.c
+/* ml-common-fips202x4-avx2.c
  * Copyright (C) 2024 MTG AG
  * The code was created based on the reference implementation that is part of the ML-DSA NIST submission.
  *
@@ -20,14 +20,14 @@
 
 #include "config.h"
 #include "types.h"
-#include "mldsa-fips202x4-avx2.h"
+#include "ml-common-fips202x4-avx2.h"
 #include "avx2-immintrin-support.h"
 #ifdef USE_AVX2
 #include <stddef.h>
 #include <stdint.h>
 #include <immintrin.h>
 #include <string.h>
-#include "mldsa-symmetric.h"
+#include "ml-common-symmetric.h"
 
 /* Keccak round constants */
 #define NROUNDS 24
@@ -66,7 +66,7 @@ static void keccakx4_absorb_once(__m256i s[25],
         }
       inlen -= r;
 
-      _gcry_mldsa_avx2_f1600x4(s, KeccakF_RoundConstants);
+      _gcry_ml_common_avx2_f1600x4(s, KeccakF_RoundConstants);
     }
 
   for (i = 0; i < inlen / 8; ++i)
@@ -99,7 +99,7 @@ static void keccakx4_squeezeblocks(
 
   while (nblocks > 0)
     {
-      _gcry_mldsa_avx2_f1600x4(s, KeccakF_RoundConstants);
+      _gcry_ml_common_avx2_f1600x4(s, KeccakF_RoundConstants);
       for (i = 0; i < r / 8; ++i)
         {
           t = _mm_castsi128_pd(_mm256_castsi256_si128(s[i]));
@@ -118,26 +118,26 @@ static void keccakx4_squeezeblocks(
     }
 }
 
-void _gcry_mldsa_avx2_shake128x4_absorb_once(
-    gcry_mldsa_keccakx4_state *state, const byte *in0, const byte *in1, const byte *in2, const byte *in3, size_t inlen)
+void _gcry_ml_common_avx2_shake128x4_absorb_once(
+    gcry_ml_common_keccakx4_state *state, const byte *in0, const byte *in1, const byte *in2, const byte *in3, size_t inlen)
 {
   keccakx4_absorb_once(state->s, GCRY_SHAKE128_RATE, in0, in1, in2, in3, inlen, 0x1F);
 }
 
-void _gcry_mldsa_avx2_shake128x4_squeezeblocks(
-    byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_mldsa_keccakx4_state *state)
+void _gcry_ml_common_avx2_shake128x4_squeezeblocks(
+    byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_ml_common_keccakx4_state *state)
 {
   keccakx4_squeezeblocks(out0, out1, out2, out3, nblocks, GCRY_SHAKE128_RATE, state->s);
 }
 
-void _gcry_mldsa_avx2_shake256x4_absorb_once(
-    gcry_mldsa_keccakx4_state *state, const byte *in0, const byte *in1, const byte *in2, const byte *in3, size_t inlen)
+void _gcry_ml_common_avx2_shake256x4_absorb_once(
+    gcry_ml_common_keccakx4_state *state, const byte *in0, const byte *in1, const byte *in2, const byte *in3, size_t inlen)
 {
   keccakx4_absorb_once(state->s, GCRY_SHAKE256_RATE, in0, in1, in2, in3, inlen, 0x1F);
 }
 
-void _gcry_mldsa_avx2_shake256x4_squeezeblocks(
-    byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_mldsa_keccakx4_state *state)
+void _gcry_ml_common_avx2_shake256x4_squeezeblocks(
+    byte *out0, byte *out1, byte *out2, byte *out3, size_t nblocks, gcry_ml_common_keccakx4_state *state)
 {
   keccakx4_squeezeblocks(out0, out1, out2, out3, nblocks, GCRY_SHAKE256_RATE, state->s);
 }

@@ -218,7 +218,7 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
   unsigned int ctr0, ctr1, ctr2, ctr3;
   __m256i f;
   gcry_mlkem_buf_al state_al       = {};
-  gcry_mlkem_keccakx4_state *state = NULL;
+  gcry_ml_common_keccakx4_state *state = NULL;
   byte *buf                        = NULL;
   gcry_mlkem_buf_al buf_al         = {};
   size_t buf_elem_len
@@ -233,12 +233,12 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
     }
   buf = buf_al.buf;
   ec  = _gcry_mlkem_buf_al_create (
-      &state_al, sizeof (gcry_mlkem_keccakx4_state), 1);
+      &state_al, sizeof (gcry_ml_common_keccakx4_state), 1);
   if (ec)
     {
       goto leave;
     }
-  state = (gcry_mlkem_keccakx4_state *)state_al.buf;
+  state = (gcry_ml_common_keccakx4_state *)state_al.buf;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
   _mm256_store_si256 ((__m256i *)&buf[0 * offset_al], f);
@@ -269,13 +269,13 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
       buf[3 * offset_al + 33] = 1;
     }
 
-  _gcry_mlkem_avx2_shake128x4_absorb_once (state,
+  _gcry_ml_common_avx2_shake128x4_absorb_once (state,
                                            &buf[0 * offset_al],
                                            &buf[1 * offset_al],
                                            &buf[2 * offset_al],
                                            &buf[3 * offset_al],
                                            34);
-  _gcry_mlkem_avx2_shake128x4_squeezeblocks (
+  _gcry_ml_common_avx2_shake128x4_squeezeblocks (
       &buf[0 * offset_al],
       &buf[1 * offset_al],
       &buf[2 * offset_al],
@@ -295,7 +295,7 @@ gen_matrix_k2 (gcry_mlkem_poly *a,
   while (ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N
          || ctr3 < GCRY_MLKEM_N)
     {
-      _gcry_mlkem_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
+      _gcry_ml_common_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
                                                  &buf[1 * offset_al],
                                                  &buf[2 * offset_al],
                                                  &buf[3 * offset_al],
@@ -342,7 +342,7 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
   __m256i f;
   gcry_md_hd_t h;
   gcry_mlkem_buf_al state_al       = {};
-  gcry_mlkem_keccakx4_state *state = NULL;
+  gcry_ml_common_keccakx4_state *state = NULL;
   byte *buf                        = NULL;
   gcry_mlkem_buf_al buf_al         = {};
   size_t buf_elem_len
@@ -357,12 +357,12 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
     }
   buf = buf_al.buf;
   ec  = _gcry_mlkem_buf_al_create (
-      &state_al, sizeof (gcry_mlkem_keccakx4_state), 1);
+      &state_al, sizeof (gcry_ml_common_keccakx4_state), 1);
   if (ec)
     {
       goto leave;
     }
-  state = (gcry_mlkem_keccakx4_state *)state_al.buf;
+  state = (gcry_ml_common_keccakx4_state *)state_al.buf;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
   _mm256_store_si256 ((__m256i *)&buf[0 * offset_al], f);
@@ -393,13 +393,13 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
       buf[3 * offset_al + 33] = 1;
     }
 
-  _gcry_mlkem_avx2_shake128x4_absorb_once (state,
+  _gcry_ml_common_avx2_shake128x4_absorb_once (state,
                                            &buf[0 * offset_al],
                                            &buf[1 * offset_al],
                                            &buf[2 * offset_al],
                                            &buf[3 * offset_al],
                                            34);
-  _gcry_mlkem_avx2_shake128x4_squeezeblocks (
+  _gcry_ml_common_avx2_shake128x4_squeezeblocks (
       &buf[0 * offset_al],
       &buf[1 * offset_al],
       &buf[2 * offset_al],
@@ -419,7 +419,7 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
   while (ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N
          || ctr3 < GCRY_MLKEM_N)
     {
-      _gcry_mlkem_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
+      _gcry_ml_common_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
                                                  &buf[1 * offset_al],
                                                  &buf[2 * offset_al],
                                                  &buf[3 * offset_al],
@@ -478,13 +478,13 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
       buf[3 * offset_al + 33] = 2;
     }
 
-  _gcry_mlkem_avx2_shake128x4_absorb_once (state,
+  _gcry_ml_common_avx2_shake128x4_absorb_once (state,
                                            &buf[0 * offset_al],
                                            &buf[1 * offset_al],
                                            &buf[2 * offset_al],
                                            &buf[3 * offset_al],
                                            34);
-  _gcry_mlkem_avx2_shake128x4_squeezeblocks (
+  _gcry_ml_common_avx2_shake128x4_squeezeblocks (
       &buf[0 * offset_al],
       &buf[1 * offset_al],
       &buf[2 * offset_al],
@@ -504,7 +504,7 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
   while (ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N
          || ctr3 < GCRY_MLKEM_N)
     {
-      _gcry_mlkem_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
+      _gcry_ml_common_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
                                                  &buf[1 * offset_al],
                                                  &buf[2 * offset_al],
                                                  &buf[3 * offset_al],
@@ -579,7 +579,7 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
   unsigned int i, ctr0, ctr1, ctr2, ctr3;
   __m256i f;
   gcry_mlkem_buf_al state_al       = {};
-  gcry_mlkem_keccakx4_state *state = NULL;
+  gcry_ml_common_keccakx4_state *state = NULL;
   byte *buf                        = NULL;
   gcry_mlkem_buf_al buf_al         = {};
   size_t buf_elem_len
@@ -594,12 +594,12 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
     }
   buf = buf_al.buf;
   ec  = _gcry_mlkem_buf_al_create (
-      &state_al, sizeof (gcry_mlkem_keccakx4_state), 1);
+      &state_al, sizeof (gcry_ml_common_keccakx4_state), 1);
   if (ec)
     {
       goto leave;
     }
-  state = (gcry_mlkem_keccakx4_state *)state_al.buf;
+  state = (gcry_ml_common_keccakx4_state *)state_al.buf;
 
   for (i = 0; i < 4; i++)
     {
@@ -632,13 +632,13 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
           buf[3 * offset_al + 33] = i;
         }
 
-      _gcry_mlkem_avx2_shake128x4_absorb_once (state,
+      _gcry_ml_common_avx2_shake128x4_absorb_once (state,
                                                &buf[0 * offset_al],
                                                &buf[1 * offset_al],
                                                &buf[2 * offset_al],
                                                &buf[3 * offset_al],
                                                34);
-      _gcry_mlkem_avx2_shake128x4_squeezeblocks (
+      _gcry_ml_common_avx2_shake128x4_squeezeblocks (
           &buf[0 * offset_al],
           &buf[1 * offset_al],
           &buf[2 * offset_al],
@@ -658,7 +658,7 @@ gen_matrix_k4 (gcry_mlkem_poly *a,
       while (ctr0 < GCRY_MLKEM_N || ctr1 < GCRY_MLKEM_N || ctr2 < GCRY_MLKEM_N
              || ctr3 < GCRY_MLKEM_N)
         {
-          _gcry_mlkem_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
+          _gcry_ml_common_avx2_shake128x4_squeezeblocks (&buf[0 * offset_al],
                                                      &buf[1 * offset_al],
                                                      &buf[2 * offset_al],
                                                      &buf[3 * offset_al],

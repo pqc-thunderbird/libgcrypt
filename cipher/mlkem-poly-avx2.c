@@ -28,7 +28,7 @@
 #include "mlkem-cbd-avx2.h"
 #include "mlkem-symmetric.h"
 #include "mlkem-polyvec-avx2.h"
-#include "mlkem-fips202x4-avx2.h"
+#include "ml-common-fips202x4-avx2.h"
 
 
 /*************************************************
@@ -465,7 +465,7 @@ _gcry_mlkem_avx2_poly_getnoise_eta1_4x (gcry_mlkem_poly *r0,
   gcry_err_code_t ec = 0;
   __m256i f;
   gcry_mlkem_buf_al state_al       = {};
-  gcry_mlkem_keccakx4_state *state = NULL;
+  gcry_ml_common_keccakx4_state *state = NULL;
   byte *buf                        = NULL;
   gcry_mlkem_buf_al buf_al         = {};
   size_t buf_elem_len              = NOISE_NBLOCKS * GCRY_SHAKE256_RATE;
@@ -479,12 +479,12 @@ _gcry_mlkem_avx2_poly_getnoise_eta1_4x (gcry_mlkem_poly *r0,
     }
   buf = buf_al.buf;
   ec  = _gcry_mlkem_buf_al_create (
-      &state_al, sizeof (gcry_mlkem_keccakx4_state), 1);
+      &state_al, sizeof (gcry_ml_common_keccakx4_state), 1);
   if (ec)
     {
       goto leave;
     }
-  state = (gcry_mlkem_keccakx4_state *)state_al.buf;
+  state = (gcry_ml_common_keccakx4_state *)state_al.buf;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
   _mm256_store_si256 ((__m256i *)&buf[0 * offset_al], f);
@@ -497,13 +497,13 @@ _gcry_mlkem_avx2_poly_getnoise_eta1_4x (gcry_mlkem_poly *r0,
   buf[2 * offset_al + 32] = nonce2;
   buf[3 * offset_al + 32] = nonce3;
 
-  _gcry_mlkem_avx2_shake256x4_absorb_once (state,
+  _gcry_ml_common_avx2_shake256x4_absorb_once (state,
                                            &buf[0 * offset_al],
                                            &buf[1 * offset_al],
                                            &buf[2 * offset_al],
                                            &buf[3 * offset_al],
                                            33);
-  _gcry_mlkem_avx2_shake256x4_squeezeblocks (&buf[0 * offset_al],
+  _gcry_ml_common_avx2_shake256x4_squeezeblocks (&buf[0 * offset_al],
                                              &buf[1 * offset_al],
                                              &buf[2 * offset_al],
                                              &buf[3 * offset_al],
@@ -536,7 +536,7 @@ _gcry_mlkem_avx2_poly_getnoise_eta1122_4x (gcry_mlkem_poly *r0,
   gcry_err_code_t ec = 0;
   __m256i f;
   gcry_mlkem_buf_al state_al       = {};
-  gcry_mlkem_keccakx4_state *state = NULL;
+  gcry_ml_common_keccakx4_state *state = NULL;
   byte *buf                        = NULL;
   gcry_mlkem_buf_al buf_al         = {};
   size_t buf_elem_len              = NOISE_NBLOCKS * GCRY_SHAKE256_RATE;
@@ -550,12 +550,12 @@ _gcry_mlkem_avx2_poly_getnoise_eta1122_4x (gcry_mlkem_poly *r0,
     }
   buf = buf_al.buf;
   ec  = _gcry_mlkem_buf_al_create (
-      &state_al, sizeof (gcry_mlkem_keccakx4_state), 1);
+      &state_al, sizeof (gcry_ml_common_keccakx4_state), 1);
   if (ec)
     {
       goto leave;
     }
-  state = (gcry_mlkem_keccakx4_state *)state_al.buf;
+  state = (gcry_ml_common_keccakx4_state *)state_al.buf;
 
   f = _mm256_loadu_si256 ((__m256i *)seed);
   _mm256_store_si256 ((__m256i *)&buf[0 * offset_al], f);
@@ -568,13 +568,13 @@ _gcry_mlkem_avx2_poly_getnoise_eta1122_4x (gcry_mlkem_poly *r0,
   buf[2 * offset_al + 32] = nonce2;
   buf[3 * offset_al + 32] = nonce3;
 
-  _gcry_mlkem_avx2_shake256x4_absorb_once (state,
+  _gcry_ml_common_avx2_shake256x4_absorb_once (state,
                                            &buf[0 * offset_al],
                                            &buf[1 * offset_al],
                                            &buf[2 * offset_al],
                                            &buf[3 * offset_al],
                                            33);
-  _gcry_mlkem_avx2_shake256x4_squeezeblocks (&buf[0 * offset_al],
+  _gcry_ml_common_avx2_shake256x4_squeezeblocks (&buf[0 * offset_al],
                                              &buf[1 * offset_al],
                                              &buf[2 * offset_al],
                                              &buf[3 * offset_al],

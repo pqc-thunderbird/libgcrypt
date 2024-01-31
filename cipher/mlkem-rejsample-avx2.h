@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 #include "mlkem-params.h"
-#include "mlkem-fips202x4-avx2.h"
+#include "ml-common-fips202x4-avx2.h"
 
 #define XOF_BLOCKBYTES GCRY_SHAKE128_RATE
 
