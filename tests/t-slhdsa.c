@@ -227,7 +227,7 @@ static byte *fill_bin_buf_from_hex_line (size_t *r_length, const char tag_char, 
 
 const char SLHDSA_MESSAGE_TMPL[] = "(data (flags raw_opaque) (value %b))";
 
-static int check_slhdsa_roundtrip (size_t n_tests, int full)
+static int check_slhdsa_roundtrip (size_t n_tests)
 {
   const char *hashalgs[] = {"SHA2", "SHAKE"};
   const char *variants[] = {"128f", "128s", "192f", "192s", "256f", "256s"};
@@ -255,16 +255,6 @@ static int check_slhdsa_roundtrip (size_t n_tests, int full)
 
           if (verbose)
             info ("creating %s-%s key\n", hashalg, variant);
-
-          if(!full)
-          {
-            // skip all but a few
-            if((strcmp(hashalg, "SHA2") && strcmp(variant, "128s"))
-                || (strcmp(hashalg, "SHAKE") && strcmp(variant, "128f")))
-                {
-                  continue;
-                }
-          }
 
           rc = gcry_sexp_build (
               &keyparm, NULL, "(genkey (slhdsa-ipd (hash-alg%s) (variant%s)))", hashalg, variant, NULL);
@@ -660,7 +650,6 @@ int main (int argc, char **argv)
 {
 
   int last_argc = -1;
-  int full = 0;
   char *fname   = NULL;
   if (argc)
     {
@@ -682,7 +671,6 @@ int main (int argc, char **argv)
           fputs ("usage: " PGM " [options]\n"
                  "Options:\n"
                   "  --verbose       print timings etc.\n"
-                 "  --full          test all parameter sets instead of just SHA2-128s and SHAKE-128f\n"
                 //  "  --debug         flyswatter\n"
                  "  --data FNAME    take test data from file FNAME\n",
                  stdout);
@@ -691,12 +679,6 @@ int main (int argc, char **argv)
       else if (!strcmp (*argv, "--verbose"))
         {
           verbose++;
-          argc--;
-          argv++;
-        }
-      else if (!strcmp (*argv, "--full"))
-        {
-          full++;
           argc--;
           argv++;
         }
@@ -731,7 +713,7 @@ int main (int argc, char **argv)
     }
   else
     {
-      if (check_slhdsa_roundtrip (1, full))
+      if (check_slhdsa_roundtrip (1))
         {
           fail ("check_slhdsa_roundtrip() yielded an error, aborting");
         }
