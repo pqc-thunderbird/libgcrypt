@@ -503,6 +503,7 @@ gcry_pk_spec_t _gcry_pubkey_spec_mldsa = {
     NULL, /*mldsa_check_secret_key*/
     NULL,
     NULL,
+    NULL,
     mldsa_sign,
     mldsa_verify,
     mldsa_get_nbits,

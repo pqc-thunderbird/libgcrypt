@@ -34,8 +34,8 @@ typedef struct
   byte *alloc_addr;
 } gcry_slhdsa_buf_al;
 
-gcry_err_code_t _gcry_mldsa_buf_al_create (gcry_slhdsa_buf_al *buf, size_t size);
-void _gcry_mldsa_buf_al_destroy (gcry_slhdsa_buf_al *buf);
+gcry_err_code_t _gcry_slhdsa_buf_al_create (gcry_slhdsa_buf_al *buf, size_t size);
+void _gcry_slhdsa_buf_al_destroy (gcry_slhdsa_buf_al *buf);
 
 /**
  * Converts the value of 'in' to 'outlen' bytes in big-endian byte order.

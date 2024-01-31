@@ -174,7 +174,7 @@ gcry_err_code_t _gcry_slhdsa_shake256x4 (byte *out0,
   unsigned int i;
 
   /* we need 32-byte aligned state */
-  ec = _gcry_mldsa_buf_al_create (&state_alloc, sizeof (__m256i[25]));
+  ec = _gcry_slhdsa_buf_al_create (&state_alloc, sizeof (__m256i[25]));
   if (ec)
     {
       goto leave;
@@ -208,7 +208,7 @@ gcry_err_code_t _gcry_slhdsa_shake256x4 (byte *out0,
         }
     }
 leave:
-  _gcry_mldsa_buf_al_destroy (&state_alloc);
+  _gcry_slhdsa_buf_al_destroy (&state_alloc);
   return ec;
 }
 

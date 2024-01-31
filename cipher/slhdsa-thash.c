@@ -363,7 +363,7 @@ gcry_err_code_t _gcry_slhdsa_thash_avx2_shake (byte *out0,
       __m256i *state = NULL;
 
       /* we need 32-byte aligned state */
-      ec = _gcry_mldsa_buf_al_create (&state_alloc, sizeof (__m256i[25]));
+      ec = _gcry_slhdsa_buf_al_create (&state_alloc, sizeof (__m256i[25]));
       if (ec)
         {
           goto leave;
@@ -466,7 +466,7 @@ leave:
   xfree (buf1);
   xfree (buf2);
   xfree (buf3);
-  _gcry_mldsa_buf_al_destroy (&state_alloc);
+  _gcry_slhdsa_buf_al_destroy (&state_alloc);
   return ec;
 }
 #endif

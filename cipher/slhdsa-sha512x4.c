@@ -404,7 +404,7 @@ gcry_err_code_t _gcry_slhdsa_sha512x4_seeded (byte *out0,
   unsigned long i;
 
   /* we need 32-byte aligned state */
-  ec = _gcry_mldsa_buf_al_create (&ctx_alloc, sizeof (gcry_slhdsa_sha512ctx4x));
+  ec = _gcry_slhdsa_buf_al_create (&ctx_alloc, sizeof (gcry_slhdsa_sha512ctx4x));
   if (ec)
     {
       goto leave;
@@ -424,7 +424,7 @@ gcry_err_code_t _gcry_slhdsa_sha512x4_seeded (byte *out0,
   _sha512x4 (ctx, out0, out1, out2, out3, in0, in1, in2, in3, inlen);
 
 leave:
-  _gcry_mldsa_buf_al_destroy (&ctx_alloc);
+  _gcry_slhdsa_buf_al_destroy (&ctx_alloc);
   return ec;
 }
 

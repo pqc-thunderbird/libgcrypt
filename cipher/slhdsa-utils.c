@@ -30,7 +30,7 @@
 #include "g10lib.h"
 
 /* create 32-byte memory aligned buf on secure heap */
-gcry_err_code_t _gcry_mldsa_buf_al_create (gcry_slhdsa_buf_al *buf, size_t size)
+gcry_err_code_t _gcry_slhdsa_buf_al_create (gcry_slhdsa_buf_al *buf, size_t size)
 {
   const size_t alloc_size = size + /*align*/ 32;
   buf->alloc_addr         = xtrymalloc_secure (alloc_size);
@@ -46,7 +46,7 @@ gcry_err_code_t _gcry_mldsa_buf_al_create (gcry_slhdsa_buf_al *buf, size_t size)
   return 0;
 }
 
-void _gcry_mldsa_buf_al_destroy (gcry_slhdsa_buf_al *buf)
+void _gcry_slhdsa_buf_al_destroy (gcry_slhdsa_buf_al *buf)
 {
   if (buf->alloc_addr)
     {

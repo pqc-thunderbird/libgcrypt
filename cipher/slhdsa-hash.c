@@ -246,7 +246,7 @@ gcry_err_code_t _gcry_slhdsa_prf_avx2_shake (
   gcry_slhdsa_buf_al state_alloc = {};
   __m256i *state                 = NULL;
 
-  ec = _gcry_mldsa_buf_al_create (&state_alloc, sizeof (__m256i[25]));
+  ec = _gcry_slhdsa_buf_al_create (&state_alloc, sizeof (__m256i[25]));
   if (ec)
     {
       goto leave;
@@ -297,7 +297,7 @@ gcry_err_code_t _gcry_slhdsa_prf_avx2_shake (
       ((int64_t *)out3)[i] = _mm256_extract_epi64 (state[i], 3);
     }
 leave:
-  _gcry_mldsa_buf_al_destroy (&state_alloc);
+  _gcry_slhdsa_buf_al_destroy (&state_alloc);
   return ec;
 }
 
