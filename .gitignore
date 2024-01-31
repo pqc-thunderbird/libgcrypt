@@ -109,6 +109,9 @@ tests/t-mpi-point
 tests/t-sexp
 tests/t-secmem
 tests/t-x448
+tests/t-mlkem
+tests/t-mldsa
+tests/t-slhdsa
 tests/tsexp
 tests/version
 tests/*.exe
