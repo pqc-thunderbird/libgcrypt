@@ -248,7 +248,6 @@ extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
   ec = sexp_extract_param (keyparms, NULL, label, &sk, NULL);
   if (ec)
     {
-      printf ("error from sexp_extract_param (keyparms)\n");
       goto leave;
     }
   data_len = mpi_get_nbits (sk);

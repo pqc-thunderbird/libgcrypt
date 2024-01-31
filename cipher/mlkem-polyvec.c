@@ -105,6 +105,7 @@ _gcry_mlkem_polyvec_compress (byte *r,
                               u16 *workspace_8_uint16)
 {
   unsigned int i, j, k;
+  u64 d0;
   switch (param->id)
     {
     case GCRY_MLKEM_1024:
@@ -118,9 +119,16 @@ _gcry_mlkem_polyvec_compress (byte *r,
                   {
                     t[k] = a->vec[i].coeffs[8 * j + k];
                     t[k] += ((s16)t[k] >> 15) & GCRY_MLKEM_Q;
-                    t[k] = ((((uint32_t)t[k] << 11) + GCRY_MLKEM_Q / 2)
+                    /*t[k] = ((((uint32_t)t[k] << 11) + GCRY_MLKEM_Q / 2)
                             / GCRY_MLKEM_Q)
-                           & 0x7ff;
+                           & 0x7ff;*/
+
+                    d0 = t[k];
+                    d0 <<= 11;
+                    d0 += 1664;
+                    d0 *= 645084;
+                    d0 >>= 31;
+                    t[k] = d0 & 0x7ff;
                   }
 
                 r[0]  = (t[0] >> 0);
@@ -152,9 +160,16 @@ _gcry_mlkem_polyvec_compress (byte *r,
                   {
                     t[k] = a->vec[i].coeffs[4 * j + k];
                     t[k] += ((s16)t[k] >> 15) & GCRY_MLKEM_Q;
-                    t[k] = ((((uint32_t)t[k] << 10) + GCRY_MLKEM_Q / 2)
+                    /* t[k] = ((((uint32_t)t[k] << 10) + GCRY_MLKEM_Q / 2)
                             / GCRY_MLKEM_Q)
-                           & 0x3ff;
+                           & 0x3ff; */
+
+                    d0 = t[k];
+                    d0 <<= 10;
+                    d0 += 1665;
+                    d0 *= 1290167;
+                    d0 >>= 32;
+                    t[k] = d0 & 0x3ff;
                   }
 
                 r[0] = (t[0] >> 0);

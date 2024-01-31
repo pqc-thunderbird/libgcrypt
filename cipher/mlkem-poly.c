@@ -44,7 +44,8 @@ _gcry_mlkem_poly_compress (unsigned char *r,
                            u16 *workspace_8_uint16)
 {
   unsigned int i, j;
-  s16 u;
+  s32 u;
+  u32 d0;
   unsigned char *t = (unsigned char *)workspace_8_uint16; /* need 8 byte */
 
   if (param->id != GCRY_MLKEM_1024)
@@ -56,7 +57,13 @@ _gcry_mlkem_poly_compress (unsigned char *r,
               /* map to positive standard representatives */
               u = a->coeffs[8 * i + j];
               u += (u >> 15) & GCRY_MLKEM_Q;
-              t[j] = ((((u16)u << 4) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q) & 15;
+              /* t[j] = ((((u16)u << 4) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q) & 15; */
+
+              d0 = u << 4;
+              d0 += 1665;
+              d0 *= 80635;
+              d0 >>= 28;
+              t[j] = d0 & 0xf;
             }
 
           r[0] = t[0] | (t[1] << 4);
@@ -75,8 +82,13 @@ _gcry_mlkem_poly_compress (unsigned char *r,
               /* map to positive standard representatives */
               u = a->coeffs[8 * i + j];
               u += (u >> 15) & GCRY_MLKEM_Q;
-              t[j] = ((((uint32_t)u << 5) + GCRY_MLKEM_Q / 2) / GCRY_MLKEM_Q)
-                     & 31;
+              /* t[j] = ((((uint32_t)u << 5) + GCRY_MLKEM_Q / 2) /
+                 GCRY_MLKEM_Q) & 31;*/
+              d0 = u << 5;
+              d0 += 1664;
+              d0 *= 40318;
+              d0 >>= 27;
+              t[j] = d0 & 0x1f;
             }
 
           r[0] = (t[0] >> 0) | (t[1] << 5);
