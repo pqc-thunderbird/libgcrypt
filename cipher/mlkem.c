@@ -470,9 +470,9 @@ mlkem_generate (const gcry_sexp_t genparms, gcry_sexp_t *r_skey)
                        NULL,
                        "(key-data"
                        " (public-key"
-                       "  (mlkem(y%M) ))"
+                       "  (mlkem-ipd(y%M) ))"
                        " (private-key"
-                       "  (mlkem(y%M)(z%M) )))",
+                       "  (mlkem-ipd(y%M)(z%M) )))",
                        pk_mpi,
                        pk_mpi,
                        sk_mpi,
@@ -567,7 +567,7 @@ mlkem_encap (gcry_sexp_t *r_ciph,
 
   ec = sexp_build (r_ciph,
                    NULL,
-                   "(ciphertext (mlkem(c %b)))",
+                   "(ciphertext (mlkem-ipd(c %b)))",
                    (int)param.ciphertext_bytes,
                    ciphertext);
 
@@ -697,8 +697,8 @@ compute_keygrip (gcry_md_hd_t md, gcry_sexp_t keyparam)
 
 
 static const char *mlkem_names[] = {
-    "mlkem",
-    "openpgp-mlkem", /* ? leave? */
+    "mlkem-ipd",
+    "openpgp-mlkem-ipd",
     NULL,
 };
 

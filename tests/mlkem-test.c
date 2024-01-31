@@ -109,7 +109,7 @@ check_mlkem_gen_enc_dec (unsigned mlkem_bits, int do_print_secmem_peak_usages)
   rc = gcry_sexp_build (&keyparm,
                         NULL,
                         "(genkey\n"
-                        " (mlkem\n"
+                        " (mlkem-ipd\n"
                         "  (nbits%u)\n"
                         " ))",
                         mlkem_bits,
@@ -334,7 +334,7 @@ check_mlkem_kat (const char *fname, unsigned mlkem_bits)
       test_count++;
       err = gcry_sexp_build (&private_key_sx,
                              NULL,
-                             "(private-key (mlkem (z %b) (nbits%u) ))",
+                             "(private-key (mlkem-ipd (z %b)))",
                              (int)test_vec[privat_key_idx].result_buf_len,
                              test_vec[privat_key_idx].result_buf,
                              mlkem_bits,
@@ -373,7 +373,7 @@ check_mlkem_kat (const char *fname, unsigned mlkem_bits)
 
       err = gcry_sexp_build (&ciphertext_sx,
                              NULL,
-                             "(ciphertext (mlkem(c %b)))",
+                             "(ciphertext (mlkem-ipd(c %b)))",
                              (int)test_vec[ciphertext_idx].result_buf_len,
                              test_vec[ciphertext_idx].result_buf);
       if (err)
