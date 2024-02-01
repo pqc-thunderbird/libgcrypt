@@ -44,8 +44,8 @@
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
-#define MINIMUM_POOL_SIZE 65536
-#define STANDARD_POOL_SIZE 8*65536
+#define MINIMUM_POOL_SIZE 2*65536
+#define STANDARD_POOL_SIZE 2*16*65536
 #define DEFAULT_PAGE_SIZE 4096
 
 typedef struct memblock
