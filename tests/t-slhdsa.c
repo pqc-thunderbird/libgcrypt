@@ -227,7 +227,7 @@ static byte *fill_bin_buf_from_hex_line (size_t *r_length, const char tag_char, 
 
 const char SLHDSA_MESSAGE_TMPL[] = "(data (flags raw_opaque) (value %b))";
 
-static int check_slhdsa_roundtrip (size_t n_tests)
+static int check_slhdsa_roundtrip (size_t n_tests, int short_opt)
 {
   const char *hashalgs[] = {"SHA2", "SHAKE"};
   const char *variants[] = {"128f", "128s", "192f", "192s", "256f", "256s"};
@@ -252,6 +252,13 @@ static int check_slhdsa_roundtrip (size_t n_tests)
 
           byte *msg = NULL;
           unsigned msg_len;
+
+          if(short_opt)
+          {
+            // skip all 192{f,s} and 256{f,s} parameter sets.
+            if(strcmp(variant, "128f") && strcmp(variant, "128s"))
+              continue;
+          }
 
           if (verbose)
             info ("creating %s-%s key\n", hashalg, variant);
@@ -650,6 +657,7 @@ int main (int argc, char **argv)
 {
 
   int last_argc = -1;
+  int short_opt = 0;
   char *fname   = NULL;
   if (argc)
     {
@@ -671,6 +679,7 @@ int main (int argc, char **argv)
           fputs ("usage: " PGM " [options]\n"
                  "Options:\n"
                   "  --verbose       print timings etc.\n"
+                  "  --short         Only test the four {SHA2,SHAKE}-{128s,128f} parameter sets (due to the full test taking a long time on slower systems).\n"
                 //  "  --debug         flyswatter\n"
                  "  --data FNAME    take test data from file FNAME\n",
                  stdout);
@@ -686,6 +695,13 @@ int main (int argc, char **argv)
         {
           verbose += 2;
           debug++;
+          argc--;
+          argv++;
+        }
+      else if (!strcmp (*argv, "--short"))
+        {
+          verbose += 2;
+          short_opt++;
           argc--;
           argv++;
         }
@@ -713,7 +729,7 @@ int main (int argc, char **argv)
     }
   else
     {
-      if (check_slhdsa_roundtrip (1))
+      if (check_slhdsa_roundtrip (1, short_opt))
         {
           fail ("check_slhdsa_roundtrip() yielded an error, aborting");
         }
