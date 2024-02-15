@@ -275,7 +275,7 @@ static void message_to_indices (const _gcry_slhdsa_param_t *ctx, u32 *indices, c
       indices[i] = 0;
       for (j = 0; j < ctx->FORS_height; j++)
         {
-          indices[i] ^= ((m[offset >> 3] >> (offset & 0x7)) & 1u) << j;
+          indices[i] ^= ((m[offset >> 3] >> (~offset & 0x7)) & 1u) << (ctx->FORS_height-1-j);
           offset++;
         }
     }
