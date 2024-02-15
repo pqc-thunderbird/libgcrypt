@@ -958,7 +958,6 @@ void _gcry_mldsa_polyz_unpack (gcry_mldsa_param_t *params, gcry_mldsa_poly *r, c
           r->coeffs[2 * i + 1] = a[5 * i + 2] >> 4;
           r->coeffs[2 * i + 1] |= (u32)a[5 * i + 3] << 4;
           r->coeffs[2 * i + 1] |= (u32)a[5 * i + 4] << 12;
-          r->coeffs[2 * i + 0] &= 0xFFFFF;
 
           r->coeffs[2 * i + 0] = params->gamma1 - r->coeffs[2 * i + 0];
           r->coeffs[2 * i + 1] = params->gamma1 - r->coeffs[2 * i + 1];
