@@ -340,7 +340,7 @@ gen_matrix_k3 (gcry_mlkem_poly *a,
   gcry_err_code_t ec = 0;
   unsigned int ctr0, ctr1, ctr2, ctr3;
   __m256i f;
-  gcry_md_hd_t h;
+  gcry_md_hd_t h = NULL;
   gcry_mlkem_buf_al state_al       = {};
   gcry_ml_common_keccakx4_state *state = NULL;
   byte *buf                        = NULL;
