@@ -32,7 +32,7 @@ _gcry_mlkem_polymatrix_create (gcry_mlkem_polyvec **polymat,
   gcry_error_t ec = 0;
   unsigned i;
   *polymat = xtrymalloc (sizeof (**polymat) * param->k);
-  if (!polymat)
+  if (!(*polymat))
     {
       ec = gpg_error_from_syserror ();
       goto leave;
