@@ -280,8 +280,8 @@ check_mlkem_kat (const char *fname, unsigned mlkem_bits)
                                     }};
   size_t test_count              = 0;
   gcry_sexp_t public_key_sx = NULL, private_key_sx = NULL,
-              ciphertext_sx = NULL, shared_secret_expected_sx = NULL,
-              shared_secret_sx = NULL;
+              ciphertext_sx = NULL, ciphertext_wrong_sx = NULL, shared_secret_expected_sx = NULL,
+              shared_secret_sx = NULL, shared_secret_wrong_sx = NULL;
 
   info ("Checking ML-KEM KAT.\n");
 
@@ -293,7 +293,7 @@ check_mlkem_kat (const char *fname, unsigned mlkem_bits)
          && !(nb_kat_tests && nb_kat_tests <= test_count))
     {
       gcry_sexp_t l;
-      gcry_mpi_t ss_expected, ss;
+      gcry_mpi_t ss_expected = NULL, ss = NULL, ss_wrong = NULL;
       int have_flags;
       int rc;
       int is_complete = 1;
@@ -384,6 +384,21 @@ check_mlkem_kat (const char *fname, unsigned mlkem_bits)
           goto leave;
         }
 
+      /* invalidated the ciphertext */
+      test_vec[ciphertext_idx].result_buf[5] += 1;
+      err = gcry_sexp_build (&ciphertext_wrong_sx,
+                             NULL,
+                             "(ciphertext (mlkem-ipd(c %b)))",
+                             (int)test_vec[ciphertext_idx].result_buf_len,
+                             test_vec[ciphertext_idx].result_buf);
+      if (err)
+        {
+          fail ("error building invalid ciphertext SEXP for test, %s: %s",
+                "pk",
+                gpg_strerror (err));
+          goto leave;
+        }
+
       l          = gcry_sexp_find_token (ciphertext_sx, "flags", 0);
       have_flags = !!l;
       gcry_sexp_release (l);
@@ -442,20 +457,64 @@ check_mlkem_kat (const char *fname, unsigned mlkem_bits)
           e->result_buf_len = 0;
         }
 
+      /* decrypt the invalid ciphertext */
+      rc = gcry_pk_decrypt (&shared_secret_wrong_sx, ciphertext_wrong_sx, private_key_sx);
+      if (rc)
+        {
+          die ("decryption failed: %s\n", gcry_strerror (rc));
+        }
+
+      l = gcry_sexp_find_token (shared_secret_wrong_sx, "value", 0);
+      if (l)
+        {
+          if (!have_flags)
+            {
+              /* something to be done ? */
+            }
+          ss_wrong = gcry_sexp_nth_mpi (l, 1, GCRYMPI_FMT_USG);
+          gcry_sexp_release (l);
+        }
+      else
+        {
+          if (have_flags)
+            {
+              /* something to be done ? */
+              ss_wrong = gcry_sexp_nth_mpi (shared_secret_wrong_sx, 0, GCRYMPI_FMT_USG);
+            }
+        }
+      if (!ss_wrong)
+        {
+          die ("ss_wrong = NULL\n");
+        }
+
+      /* Compare.  */
+      if (!gcry_mpi_cmp (ss_expected, ss_wrong))
+        {
+          die ("error with decryption result: wrong ciphertext decrypted to correct shared secret\n");
+        }
+      printf (".");
+
+
       gcry_sexp_release (public_key_sx);
       public_key_sx = NULL;
       gcry_sexp_release (private_key_sx);
       private_key_sx = NULL;
       gcry_sexp_release (ciphertext_sx);
       ciphertext_sx = NULL;
+      gcry_sexp_release (ciphertext_wrong_sx);
+      ciphertext_wrong_sx = NULL;
       gcry_sexp_release (shared_secret_sx);
       shared_secret_sx = NULL;
+      gcry_sexp_release (shared_secret_wrong_sx);
+      shared_secret_wrong_sx = NULL;
       gcry_sexp_release (shared_secret_expected_sx);
       shared_secret_expected_sx = NULL;
       gcry_mpi_release (ss_expected);
       ss_expected = NULL;
       gcry_mpi_release (ss);
       ss = NULL;
+      gcry_mpi_release (ss_wrong);
+      ss_wrong = NULL;
     }
 
   printf ("\n");
