@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <consttime.h>
 
+volatile u32 _gcry_u32_opt_blocker_mask_zero = 0;
 
 void _gcry_consttime_cmov(uint8_t *r, const uint8_t *x, size_t len, uint8_t b)
 {

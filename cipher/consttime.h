@@ -3,7 +3,10 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "config.h"
+#include "types.h"
 
+extern volatile u32 _gcry_u32_opt_blocker_mask_zero;
 
 /*************************************************
  * Name:        _gcry_consttime_cmov

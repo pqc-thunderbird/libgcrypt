@@ -19,6 +19,7 @@
  */
 
 #include <stdint.h>
+#include "consttime.h"
 #include "mlkem-params.h"
 #include "mlkem-poly.h"
 #include "mlkem-ntt.h"
@@ -224,13 +225,14 @@ _gcry_mlkem_poly_frommsg (gcry_mlkem_poly *r,
   unsigned int i, j;
   s16 mask;
 
+  s16 local_opt_blocker = _gcry_u32_opt_blocker_mask_zero;
 
   for (i = 0; i < GCRY_MLKEM_N / 8; i++)
     {
       for (j = 0; j < 8; j++)
         {
           mask                 = -(s16)((msg[i] >> j) & 1);
-          r->coeffs[8 * i + j] = mask & ((GCRY_MLKEM_Q + 1) / 2);
+          r->coeffs[8 * i + j] = (mask ^ local_opt_blocker) & ((GCRY_MLKEM_Q + 1) / 2);
         }
     }
 }
