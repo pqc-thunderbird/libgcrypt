@@ -423,7 +423,7 @@ static gcry_err_code_t extract_opaque_mpi_from_sexp (const gcry_sexp_t keyparms,
   ec = sexp_extract_param (keyparms, NULL, label, &sk, NULL);
   if (ec)
     {
-      printf ("error from sexp_extract_param (keyparms)\n");
+      // printf ("error from sexp_extract_param (keyparms)\n");
       goto leave;
     }
 
@@ -501,7 +501,7 @@ static gcry_err_code_t slhdsa_generate (const gcry_sexp_t genparms, gcry_sexp_t 
 
   if (!sk_mpi || !pk_mpi)
     {
-      printf ("creating sk_mpi or pk_mpi failed!\n");
+      // printf ("creating sk_mpi or pk_mpi failed!\n");
       ec = gpg_err_code_from_syserror();
       goto leave;
     }
@@ -566,7 +566,7 @@ static gcry_err_code_t slhdsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry
     goto leave;
   if (!mpi_is_opaque (data))
     {
-      printf ("slhdsa only works with opaque mpis!\n");
+      // printf ("slhdsa only works with opaque mpis!\n");
       ec = GPG_ERR_INV_ARG;
       goto leave;
     }
@@ -582,7 +582,8 @@ static gcry_err_code_t slhdsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry
   _gcry_mpi_print (GCRYMPI_FMT_USG, data_buf, data_buf_len, &nwritten, data);
   if (nwritten != data_buf_len)
     {
-      printf ("nwritten != data_buf_len\n");
+      ec = GPG_ERR_INV_ARG;
+      goto leave;
     }
 
   /* extract sk */
@@ -599,20 +600,23 @@ static gcry_err_code_t slhdsa_sign (gcry_sexp_t *r_sig, gcry_sexp_t s_data, gcry
 
   if (0 != _gcry_slhdsa_signature (&param, sig_buf, &sig_buf_len, data_buf, data_buf_len, sk_buf))
     {
-      printf ("sign operation failed\n");
+      // printf ("sign operation failed\n");
       ec = GPG_ERR_GENERAL;
       goto leave;
     }
   if (sig_buf_len != param.signature_bytes)
     {
-      printf ("unexpected sig buf length\n");
+      // printf ("unexpected sig buf length\n");
       ec = GPG_ERR_GENERAL;
       goto leave;
     }
 
   ec = sexp_build (r_sig, NULL, "(sig-val(slhdsa-ipd(a%b)))", sig_buf_len, sig_buf);
   if (ec)
-    printf ("sexp build failed\n");
+    {
+      // printf ("sexp build failed\n");
+      goto leave;
+    }
 
 leave:
   _gcry_pk_util_free_encoding_ctx (&ctx);
@@ -660,7 +664,7 @@ static gcry_err_code_t slhdsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcr
     goto leave;
   if (!mpi_is_opaque (data))
     {
-      printf ("slhdsa only works with opaque mpis!\n");
+      // printf ("slhdsa only works with opaque mpis!\n");
       ec = GPG_ERR_INV_ARG;
       goto leave;
     }
@@ -676,14 +680,15 @@ static gcry_err_code_t slhdsa_verify (gcry_sexp_t s_sig, gcry_sexp_t s_data, gcr
   _gcry_mpi_print (GCRYMPI_FMT_USG, data_buf, data_buf_len, &nwritten, data);
   if (nwritten != data_buf_len)
     {
-      printf ("nwritten != data_buf_len\n");
+      ec = GPG_ERR_INV_ARG;
+      goto leave;
     }
 
   /* extract pk */
   ec = public_key_from_sexp (s_keyparms, param, &pk_buf);
   if (ec)
     {
-      printf ("failed to parse public key\n");
+      // printf ("failed to parse public key\n");
       goto leave;
     }
 
